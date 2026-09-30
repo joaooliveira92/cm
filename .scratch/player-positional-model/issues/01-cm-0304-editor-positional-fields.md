@@ -2,8 +2,11 @@
 
 Type: research
 Blocked by: None (can start immediately)
+Status: resolved
 
 ## Question
+
+Findings: [What the CM 03/04 database stores about a player's positions](../../../docs/research/player-positional-model-cm0304-positional-fields.md)
 
 Establish, from primary or near-primary evidence, how Championship Manager 03/04 represents where a
 player can play. The representation this effort chooses rests on the answer, so every claim must be
@@ -39,3 +42,13 @@ Settle:
 Deliverable: a findings file captured with the `research` skill, on a throwaway
 `research/cm-0304-positional-fields` branch, with a context pointer appended to this ticket. The
 findings feed tickets 03, 04, 05, 07 and 08; this ticket decides nothing about this codebase.
+
+## Answer
+
+**Nine independent 0-20 line ratings (GK, SW, D, DM, M, AM, Attacker, WB, Free Role) and three side
+ratings (R, L, C), no per-cell value; how a line and a side combine into slot fit is unverified for
+CM 03/04.** Labels show a line or side at 15 or above, `F`/`S` is derived from the Attacker line,
+Wing Back never appears in a label, Free Role is simultaneously a hidden rating and a per-player
+instruction, and the out-of-position penalty is documented only for CM 01/02 (tactical attributes
+cut, scaled by Versatility). Full detail, labels and sources in the findings file linked above. No
+Agent Note: fact-finding only.

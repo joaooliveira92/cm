@@ -50,14 +50,14 @@ const mount = () => {
 afterEach(() => cleanup());
 
 describe("FixturesScreen", () => {
-  // One wording for "not played yet" across every Fixture list in the game. This screen used to
-  // render a bare `-`, which reads as a missing value rather than a state and announces as
-  // nothing at all; the Competition Fixtures list already said "Unplayed".
-  it("reads an unplayed Fixture as Unplayed and fabricates no score", async () => {
+  // The calendar opens on the game date, so both August fixtures are on screen. A played Fixture's
+  // chip carries its score; an unplayed one reads "vs" and has no score slot at all, so there is no
+  // bare `-` or `null - null` to mistake for a result.
+  it("shows each Fixture on the calendar with a score only once it is played", async () => {
     mount();
-    expect(await screen.findByText("Unplayed")).toBeDefined();
-    expect(screen.getByText("3 - 1")).toBeDefined();
-    expect(screen.queryByText("-")).toBeNull();
-    expect(screen.queryByText("null - null")).toBeNull();
+    expect(await screen.findByText("Ashford Athletic 3 - 1 Bridgeport City")).toBeDefined();
+    expect(screen.getByText("Ashford Athletic vs Bridgeport City")).toBeDefined();
+    expect(screen.getByText("August 2024")).toBeDefined();
+    expect(screen.queryByText(/null/)).toBeNull();
   });
 });

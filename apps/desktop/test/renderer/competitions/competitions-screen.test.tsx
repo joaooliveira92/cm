@@ -8,6 +8,7 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CompetitionId, SaveId } from "@cm-clone/contracts";
 import { CompetitionsScreen } from "../../../src/renderer/competitions/CompetitionsScreen.js";
+import { nationFlagUrl } from "../../../src/renderer/activeLeagues/nationFlags.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
@@ -22,6 +23,7 @@ const league = {
   competitionName: "English First Division",
   kind: "league",
   nationName: "England",
+  nationCode: "ENG",
   tier: 1,
   clubCount: 20,
 };
@@ -32,6 +34,7 @@ const cup = {
   competitionName: "English Cup",
   kind: "cup",
   nationName: "England",
+  nationCode: "ENG",
   tier: null,
   clubCount: null,
 };
@@ -99,6 +102,17 @@ describe("CompetitionsScreen", () => {
       expect(screen.getByRole("button", { name: "English Cup — overview" })).toBeTruthy(),
     );
     expect(screen.getByRole("button", { name: "English First Division — overview" })).toBeTruthy();
+  });
+
+  /** The flag sits beside the name, decorative: the name already says it in text. */
+  it("shows the nation's flag beside its name", async () => {
+    respondWith([league]);
+    const { container } = renderScreen();
+
+    await waitFor(() => expect(screen.getByText("England")).toBeTruthy());
+    const flag = container.querySelector("img");
+    expect(flag?.getAttribute("src")).toBe(nationFlagUrl("ENG"));
+    expect(flag?.getAttribute("alt")).toBe("");
   });
 
   /** An empty cell reads as missing data; an em dash reads as an answer. */

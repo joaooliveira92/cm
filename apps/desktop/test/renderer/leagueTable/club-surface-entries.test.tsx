@@ -44,6 +44,13 @@ const mount = () => {
   );
 };
 
+/** Every surface but Staff sits behind the row's options popover; the club's name opens Staff. */
+const surfaceControl = async (clubName: string, label: string) => {
+  if (label !== "club staff")
+    fireEvent.click(await screen.findByRole("button", { name: `${clubName} — club options` }));
+  return screen.findByRole("button", { name: `${clubName} — ${label}` });
+};
+
 let navigateSpy: ReturnType<typeof vi.fn>;
 
 beforeEach(() => {
@@ -79,13 +86,13 @@ describe("the league table row is the entry point to every club-scoped surface",
   it.each(SURFACES)("each club's row reaches its own $label page", async ({ label, to }) => {
     mount();
 
-    fireEvent.click(await screen.findByRole("button", { name: `Northport Rovers — ${label}` }));
+    fireEvent.click(await surfaceControl("Northport Rovers", label));
     expect(navigateSpy).toHaveBeenLastCalledWith({
       to,
       params: { saveId: SaveId.make("s1"), clubId: ClubId.make("club-7") },
     });
 
-    fireEvent.click(screen.getByRole("button", { name: `Eastvale United — ${label}` }));
+    fireEvent.click(await surfaceControl("Eastvale United", label));
     expect(navigateSpy).toHaveBeenLastCalledWith({
       to,
       params: { saveId: SaveId.make("s1"), clubId: ClubId.make("club-9") },
@@ -94,32 +101,38 @@ describe("the league table row is the entry point to every club-scoped surface",
 
   it.each(SURFACES)("the $label entry is reachable as a control, so keyboard users get there too", async ({ label }) => {
     mount();
-    const control = await screen.findByRole("button", { name: `Northport Rovers — ${label}` });
+    const control = await surfaceControl("Northport Rovers", label);
     // A keyboard activation reports `detail: 0`, which is what makes the adapter request focus on
     // the arriving screen rather than leaving it stranded on the table.
     fireEvent.click(control, { detail: 0 });
     expect(navigateSpy).toHaveBeenCalled();
   });
 
-  it("only the club surfaces are controls — the result cells stay unclickable", async () => {
+  it("the row is the club name and an options control — the result cells stay unclickable", async () => {
     mount();
     await screen.findByRole("button", { name: "Northport Rovers — club staff" });
-    const buttons = [...document.querySelectorAll("button")];
-    expect(buttons.map((button) => button.getAttribute("aria-label"))).toEqual([
+    const labels = () =>
+      [...document.querySelectorAll("button")].map((button) => button.getAttribute("aria-label"));
+    expect(labels()).toEqual([
       "Northport Rovers — club staff",
+      "Northport Rovers — club options",
+      "Eastvale United — club staff",
+      "Eastvale United — club options",
+    ]);
+
+    fireEvent.click(screen.getByRole("button", { name: "Northport Rovers — club options" }));
+    await screen.findByRole("button", { name: "Northport Rovers — scout report" });
+    expect(labels()).toEqual([
+      "Northport Rovers — club staff",
+      "Northport Rovers — club options",
+      "Eastvale United — club staff",
+      "Eastvale United — club options",
       "Northport Rovers — scout report",
       "Northport Rovers — club information",
       "Northport Rovers — club fixtures",
       "Northport Rovers — club transfers",
       "Northport Rovers — club finances",
       "Northport Rovers — club squad",
-      "Eastvale United — club staff",
-      "Eastvale United — scout report",
-      "Eastvale United — club information",
-      "Eastvale United — club fixtures",
-      "Eastvale United — club transfers",
-      "Eastvale United — club finances",
-      "Eastvale United — club squad",
     ]);
   });
 });

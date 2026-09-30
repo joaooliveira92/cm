@@ -1,15 +1,19 @@
 import { formatCalendarDate } from "@cm-clone/shared";
-import { type SaveId } from "@cm-clone/contracts";
+import { type ClubId, type SaveId } from "@cm-clone/contracts";
 import type { ReactNode } from "react";
-import { Alert } from "../components/ui/alert.js";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table.js";
+  ArrowLeftRightIcon,
+  BanknoteIcon,
+  BinocularsIcon,
+  CalendarDaysIcon,
+  EllipsisIcon,
+  InfoIcon,
+  UsersIcon,
+} from "lucide-react";
+import { Alert } from "../components/ui/alert.js";
+import { Button } from "../components/ui/button.js";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.js";
+import type { CareerDestination } from "../navigation/destinations.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
   describeRpcError,
@@ -18,6 +22,7 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
+import { StandingsGrid, type ClubCellProps } from "./StandingsGrid.js";
 
 const LEAGUE_PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -33,6 +38,118 @@ const LeagueMain = ({ children }: { readonly children: ReactNode }) => (
   >
     {children}
   </main>
+);
+
+/** A club-scoped surface the row's options popover links to. `label` is what the popover shows;
+ *  `name` finishes the control's accessible name, which carries the club (see below). */
+interface ClubSurface {
+  readonly label: string;
+  readonly name: string;
+  readonly icon: ReactNode;
+  readonly route: (saveId: SaveId, clubId: ClubId) => CareerDestination;
+}
+
+/** Read left to right as the ledger reads: report, information, fixtures, transfers, money, squad.
+ *  Staff isn't listed because the club's name opens it. */
+const CLUB_SURFACES: ReadonlyArray<ClubSurface> = [
+  {
+    label: "Scout report",
+    name: "scout report",
+    icon: <BinocularsIcon />,
+    route: (saveId, clubId) => ({ type: "teamScoutReport", saveId, clubId }),
+  },
+  {
+    label: "Information",
+    name: "club information",
+    icon: <InfoIcon />,
+    route: (saveId, clubId) => ({ type: "clubInformation", saveId, clubId }),
+  },
+  {
+    label: "Fixtures",
+    name: "club fixtures",
+    icon: <CalendarDaysIcon />,
+    route: (saveId, clubId) => ({ type: "clubFixturesDetail", saveId, clubId }),
+  },
+  {
+    label: "Transfers",
+    name: "club transfers",
+    icon: <ArrowLeftRightIcon />,
+    route: (saveId, clubId) => ({ type: "clubTransfersDetail", saveId, clubId }),
+  },
+  {
+    label: "Finances",
+    name: "club finances",
+    icon: <BanknoteIcon />,
+    route: (saveId, clubId) => ({ type: "clubFinancesDetail", saveId, clubId }),
+  },
+  {
+    label: "Squad",
+    name: "club squad",
+    icon: <UsersIcon />,
+    route: (saveId, clubId) => ({ type: "clubSquad", saveId, clubId }),
+  },
+];
+
+/** The row is the entry point to every club surface: it names a club, which is what a
+ *  club-scoped surface needs and what nothing else on this screen has. The club's name opens
+ *  Staff, and the other surfaces sit behind one options popover (`@reui/c-popover-10`'s layout:
+ *  a header naming the club over a list of controls), so the row reads as a club name instead
+ *  of six links. Buttons rather than links: navigation goes through the adapter so focus follows
+ *  the intent, and `intentOfClick` keeps a keyboard activation from being reported as a pointer
+ *  arrival. Each control names its club, because "Scout report" repeated down twenty rows
+ *  tells a screen-reader user nothing about which. */
+const LeagueClubCell = ({ saveId, standing }: ClubCellProps) => (
+  <div className="flex items-center justify-between gap-2">
+    <button
+      type="button"
+      className="underline-offset-2 hover:underline focus-visible:underline"
+      aria-label={`${standing.clubName} — club staff`}
+      onClick={(event) =>
+        navigateCareer(
+          { type: "clubStaff", saveId, clubId: standing.clubId },
+          intentOfClick(event),
+        )
+      }
+    >
+      {standing.clubName}
+    </button>
+    <Popover>
+      <PopoverTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-6 w-6"
+            aria-label={`${standing.clubName} — club options`}
+          />
+        }
+      >
+        <EllipsisIcon aria-hidden="true" />
+      </PopoverTrigger>
+      <PopoverContent className="w-56 p-0" align="end">
+        <div className="border-b border-panel-border px-3 py-2">
+          <p className="text-heading">{standing.clubName}</p>
+          <p className="text-data text-text-secondary">Club pages</p>
+        </div>
+        <div className="flex flex-col gap-0.5 p-1">
+          {CLUB_SURFACES.map((surface) => (
+            <button
+              key={surface.name}
+              type="button"
+              className="flex w-full items-center gap-2 rounded-sm px-2 py-1.5 text-body text-text-secondary hover:bg-surface-raised hover:text-text-primary [&_svg]:size-3.5 [&_svg]:shrink-0"
+              aria-label={`${standing.clubName} — ${surface.name}`}
+              onClick={(event) =>
+                navigateCareer(surface.route(saveId, standing.clubId), intentOfClick(event))
+              }
+            >
+              {surface.icon}
+              <span>{surface.label}</span>
+            </button>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
+  </div>
 );
 
 export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -80,152 +197,7 @@ export const LeagueTableScreen = ({ saveId }: { readonly saveId: SaveId }) => {
 
       {tableResult.waiting && <p className="mt-2 text-body text-text-muted">Refreshing…</p>}
 
-      <div className="mt-6 overflow-x-auto">
-        <Table className="min-w-full text-left">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="pr-4">#</TableHead>
-              <TableHead className="pr-4">Club</TableHead>
-              <TableHead className="pr-2 text-center">P</TableHead>
-              <TableHead className="pr-2 text-center">W</TableHead>
-              <TableHead className="pr-2 text-center">D</TableHead>
-              <TableHead className="pr-2 text-center">L</TableHead>
-              <TableHead className="pr-2 text-center">GF</TableHead>
-              <TableHead className="pr-2 text-center">GA</TableHead>
-              <TableHead className="pr-2 text-center">GD</TableHead>
-              <TableHead className="pr-2 text-center">Pts</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {table.standings.map((row, index) => (
-              <TableRow key={row.clubId}>
-                <TableCell className="pr-4">{index + 1}</TableCell>
-                {/* The row is the entry point to both of that club's surfaces — it already names a
-                    club, which is what a club-scoped surface needs and what nothing else on this
-                    screen has. Two of them now hang off the club segment, so the row carries one
-                    control each rather than one club surface quietly taking the other's place.
-                    Buttons rather than links: navigation goes through the adapter so focus follows
-                    the intent, and `intentOfClick` keeps a keyboard activation from being reported
-                    as a pointer arrival. Each control names its club, because "Scout report"
-                    repeated down twenty rows tells a screen-reader user nothing about which. */}
-                <TableCell className="pr-4 whitespace-nowrap">
-                  <button
-                    type="button"
-                    className="underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club staff`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubStaff", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    {row.clubName}
-                  </button>
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — scout report`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "teamScoutReport", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Scout report
-                  </button>
-                  {/* Screen 34, group-c ticket 06. A third club surface, so a third control, per
-                      the one-control-per-surface rule above. Note the row's *name* button still
-                      opens Staff rather than Information — a pre-existing choice from when Staff
-                      was the only club surface, and arguably backwards now that a club has a
-                      general page. Left alone deliberately: changing it is a navigation decision,
-                      not this ticket's. */}
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club information`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubInformation", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Information
-                  </button>
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club fixtures`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubFixturesDetail", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Fixtures
-                  </button>
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club transfers`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubTransfersDetail", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Transfers
-                  </button>
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club finances`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubFinancesDetail", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Finances
-                  </button>
-                  {/* Screen 35, group-c ticket 10. A seventh club surface, so a seventh control,
-                      per the one-control-per-surface rule above. Opened last but drawn rightmost
-                      so the ledger's own reading order — identity, staff, report, information,
-                      fixtures, transfers, money — is the screen's. The any-club squad is the
-                      roster, read-only; the manager's own club reaches the lineup manager from the
-                      Squad section instead. */}
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club squad`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubSquad", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Squad
-                  </button>
-                </TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.drawn}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.lost}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.goalsFor}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.goalsAgainst}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.goalDifference}</TableCell>
-                <TableCell className="pr-2 text-center font-semibold tabular-nums">{row.points}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <StandingsGrid saveId={saveId} standings={table.standings} ClubCell={LeagueClubCell} />
     </LeagueMain>
   );
 };

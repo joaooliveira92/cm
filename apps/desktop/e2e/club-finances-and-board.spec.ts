@@ -1,4 +1,5 @@
 import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -34,11 +35,8 @@ test("a league row opens a rival club's finances", async ({ window: page, userDa
   const ownName =
     (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
-  const rival = table
-    .getByRole("button", { name: /— club finances$/ })
-    .filter({ hasNotText: ownName })
-    .first();
-  await rival.click();
+  await expect(table).toBeVisible();
+  await openClubSurface(page, { not: ownName }, "club finances");
 
   // Budgets are not withheld from a rival: CONTEXT.md says a Club carries no hidden value of its
   // own, so there is no club-level fog for this screen to model.

@@ -1,4 +1,5 @@
 import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchApp.js";
+import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -91,7 +92,7 @@ test("the league table row reaches both club surfaces, not one at the other's ex
   await pressPrefix(page, "b");
   await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
 
-  await table.getByRole("button", { name: `${clubName} — scout report`, exact: true }).click();
+  await openClubSurface(page, clubName, "scout report");
   // On the ready state the `<h1>` is the club's name and "Team Scout Report" is the line beneath
   // it; on loading and error it is the heading. Asserting the text covers the screen either way.
   await expect(page.getByText("Team Scout Report").first()).toBeVisible();

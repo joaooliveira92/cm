@@ -2,7 +2,7 @@ import { type SaveId } from "@cm-clone/contracts";
 import { Alert } from "../components/ui/alert.js";
 import { Spinner } from "../components/ui/spinner.js";
 import { FOCUS_RING } from "../focus.js";
-import { FixtureDayList } from "./FixtureDayList.js";
+import { FixtureCalendar } from "./FixtureCalendar.js";
 import { describeRpcError, fixturesAtom, typedError, useAtomValue } from "../rpc.js";
 
 export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -68,7 +68,7 @@ export const FixturesScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         )}
       </p>
 
-      <FixtureDayList fixtures={fixtures.fixtures} />
+      <FixtureCalendar fixtures={fixtures.fixtures} currentDate={fixtures.season.currentDate} />
     </main>
   );
 };

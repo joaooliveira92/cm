@@ -3,6 +3,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchApp.js";
+import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedScouted } from "./seedSaves.js";
 import { displayNames } from "../src/main/world/displayNames.js";
 
@@ -59,9 +60,7 @@ test("a league row opens that club's squad, marked and read-only, ranged by scou
   await goto(page, "league table");
   await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
 
-  const squad = page.getByRole("button", { name: `${target.clubName} — club squad` });
-  await expect(squad).toBeVisible();
-  await squad.click();
+  await openClubSurface(page, target.clubName, "club squad");
 
   // The club header names the club and, because it is not the manager's, carries the marker.
   await expect(page.getByRole("heading", { name: new RegExp(`^${target.clubName}`) })).toBeVisible();
@@ -109,12 +108,7 @@ test("the manager's own club row opens its squad exact and unmarked", async ({
     (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
   expect(ownName.length).toBeGreaterThan(0);
 
-  const ownRow = page
-    .getByRole("main")
-    .getByRole("table")
-    .getByRole("button", { name: `${ownName} — club squad`, exact: true });
-  await expect(ownRow).toBeVisible();
-  await ownRow.click();
+  await openClubSurface(page, ownName, "club squad");
 
   await expect(page.getByRole("heading", { name: new RegExp(`^${ownName}`) })).toBeVisible();
   await expect(page.getByText("[Not your club]")).toHaveCount(0);

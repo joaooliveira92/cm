@@ -637,6 +637,21 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
     "vendored reui data grid; kept whole so it can be re-synced against upstream",
   "apps/desktop/src/renderer/components/reui/data-grid/data-grid-table.tsx":
     "vendored reui data grid; kept whole so it can be re-synced against upstream",
+  // Vendored from the reui registry (`@reui/event-calendar`), same terms as the data grid above.
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-dnd.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-lib.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-month-view.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-nav.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-resource-view.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-time-grid.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

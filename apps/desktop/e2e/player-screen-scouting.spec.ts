@@ -4,6 +4,7 @@ import { type Locator } from "@playwright/test";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedScouted } from "./seedSaves.js";
 import { displayNames } from "../src/main/world/displayNames.js";
 
@@ -66,9 +67,7 @@ test("a rival Player's Profile shows exact figures only at Fully Scouted; mid-pr
   const openReport = async () => {
     await goto(page, "league table");
     await expect(page.getByRole("heading", { name: "League Table", level: 1 })).toBeVisible();
-    const report = page.getByRole("button", { name: `${target.clubName} — scout report` });
-    await expect(report).toBeVisible();
-    await report.click();
+    await openClubSurface(page, target.clubName, "scout report");
     await expect(page.getByRole("heading", { name: target.clubName, level: 1 })).toBeVisible();
     // The "Key players" section is named by its heading (`aria-labelledby`), so it is a region.
     return page.getByRole("region", { name: "Key players" });

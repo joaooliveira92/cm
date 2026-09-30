@@ -1,4 +1,5 @@
 import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -22,12 +23,8 @@ test("a league row opens that club's fixtures and its transfers", async ({
   const ownName =
     (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
-  const rivalFixtures = table
-    .getByRole("button", { name: /— club fixtures$/ })
-    .filter({ hasNotText: ownName })
-    .first();
-  await expect(rivalFixtures).toBeVisible();
-  await rivalFixtures.click();
+  await expect(table).toBeVisible();
+  await openClubSurface(page, { not: ownName }, "club fixtures");
 
   // A club in a league has fixtures, and a fresh save has played none of them — so the shared
   // list's "Unplayed" wording is what proves the list rendered rather than an empty state.
@@ -36,11 +33,8 @@ test("a league row opens that club's fixtures and its transfers", async ({
 
   // Back to the table for the second surface, the way a player would.
   await goto(page, "league table");
-  const rivalTransfers = table
-    .getByRole("button", { name: /— club transfers$/ })
-    .filter({ hasNotText: ownName })
-    .first();
-  await rivalTransfers.click();
+  await expect(table).toBeVisible();
+  await openClubSurface(page, { not: ownName }, "club transfers");
 
   // A fresh career has played no Transfer Window, so the empty state is the correct answer here —
   // and it is a sentence, not a blank page.

@@ -282,6 +282,13 @@
  * semi-transparent panels' contrast.
  */
 @layer base {
+  /* A bare `border` otherwise falls back to currentColor, a near-white line on the dark palettes. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
   html,
   body,
   #root {

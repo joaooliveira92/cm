@@ -1,14 +1,6 @@
 import { type CompetitionId, type SaveId } from "@cm-clone/contracts";
 import type { ReactNode } from "react";
 import { Alert } from "../components/ui/alert.js";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "../components/ui/table.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
   competitionTableAtom,
@@ -17,6 +9,7 @@ import {
   useAtomValue,
 } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
+import { StandingsGrid, type ClubCellProps } from "../leagueTable/StandingsGrid.js";
 
 const COMPETITION_TABLE_PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -32,6 +25,39 @@ const CompetitionMain = ({ children }: { readonly children: ReactNode }) => (
   >
     {children}
   </main>
+);
+
+/** The same club controls as the League Table's rows, whose comment explains them: a row names a
+ *  club, so it carries one control per club surface. */
+const CompetitionClubCell = ({ saveId, standing }: ClubCellProps) => (
+  <>
+    <button
+      type="button"
+      className="underline-offset-2 hover:underline focus-visible:underline"
+      aria-label={`${standing.clubName} — club staff`}
+      onClick={(event) =>
+        navigateCareer(
+          { type: "clubStaff", saveId, clubId: standing.clubId },
+          intentOfClick(event),
+        )
+      }
+    >
+      {standing.clubName}
+    </button>
+    <button
+      type="button"
+      className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
+      aria-label={`${standing.clubName} — scout report`}
+      onClick={(event) =>
+        navigateCareer(
+          { type: "teamScoutReport", saveId, clubId: standing.clubId },
+          intentOfClick(event),
+        )
+      }
+    >
+      Scout report
+    </button>
+  </>
 );
 
 export const CompetitionTableScreen = ({
@@ -75,67 +101,7 @@ export const CompetitionTableScreen = ({
 
       {tableResult.waiting && <p className="mt-2 text-body text-text-muted">Refreshing…</p>}
 
-      <div className="mt-6 overflow-x-auto">
-        <Table className="min-w-full text-left">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="pr-4">#</TableHead>
-              <TableHead className="pr-4">Club</TableHead>
-              <TableHead className="pr-2 text-center">P</TableHead>
-              <TableHead className="pr-2 text-center">W</TableHead>
-              <TableHead className="pr-2 text-center">D</TableHead>
-              <TableHead className="pr-2 text-center">L</TableHead>
-              <TableHead className="pr-2 text-center">GF</TableHead>
-              <TableHead className="pr-2 text-center">GA</TableHead>
-              <TableHead className="pr-2 text-center">GD</TableHead>
-              <TableHead className="pr-2 text-center">Pts</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {table.standings.map((row, index) => (
-              <TableRow key={row.clubId}>
-                <TableCell className="pr-4">{index + 1}</TableCell>
-                <TableCell className="pr-4 whitespace-nowrap">
-                  <button
-                    type="button"
-                    className="underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — club staff`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "clubStaff", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    {row.clubName}
-                  </button>
-                  <button
-                    type="button"
-                    className="ml-2 text-data text-text-secondary underline-offset-2 hover:underline focus-visible:underline"
-                    aria-label={`${row.clubName} — scout report`}
-                    onClick={(event) =>
-                      navigateCareer(
-                        { type: "teamScoutReport", saveId, clubId: row.clubId },
-                        intentOfClick(event),
-                      )
-                    }
-                  >
-                    Scout report
-                  </button>
-                </TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.played}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.won}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.drawn}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.lost}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.goalsFor}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.goalsAgainst}</TableCell>
-                <TableCell className="pr-2 text-center tabular-nums">{row.goalDifference}</TableCell>
-                <TableCell className="pr-2 text-center font-semibold tabular-nums">{row.points}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
+      <StandingsGrid saveId={saveId} standings={table.standings} ClubCell={CompetitionClubCell} />
     </CompetitionMain>
   );
 };

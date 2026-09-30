@@ -1,4 +1,5 @@
 import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -43,14 +44,10 @@ test("a league row opens that club's information, marked as not the manager's", 
   const ownName =
     (await page.getByRole("banner").locator("span.truncate.text-title").textContent())?.trim() ?? "";
 
-  // Selected by its own label: the row carries one control per club surface, so picking the
-  // row's first button would exercise Staff instead and pass for the wrong reason.
-  const rivalRow = table
-    .getByRole("button", { name: /— club information$/ })
-    .filter({ hasNotText: ownName })
-    .first();
-  await expect(rivalRow).toBeVisible();
-  await rivalRow.click();
+  // Selected by its own label: the row's name button opens Staff, so clicking the row's first
+  // button would exercise Staff instead and pass for the wrong reason.
+  await expect(table).toBeVisible();
+  await openClubSurface(page, { not: ownName }, "club information");
 
   await expect(page.getByText("[Not your club]")).toBeVisible();
   // The ground is the field Screen 46's facilities fold into, and the one thing here that is not

@@ -298,6 +298,8 @@ export class CompetitionListItemView extends Schema.Class<CompetitionListItemVie
   kind: Schema.String,
   /** `null` for a cross-border tournament, which has no `nations` row to point at. */
   nationName: Schema.NullOr(Schema.String),
+  /** The nation's catalogue code (`ENG`), which keys its flag; `null` alongside `nationName`. */
+  nationCode: Schema.NullOr(Schema.String),
   /** Pyramid tier, 1 = highest. `null` for a kind that does not sit on the ladder. */
   tier: Schema.NullOr(Schema.Finite),
   clubCount: Schema.NullOr(Schema.Finite),

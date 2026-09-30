@@ -1,10 +1,8 @@
 /**
  * A fixture list, grouped by the day it is played on.
  *
- * Extracted so the manager's own calendar (`FixturesScreen`) and any club's fixtures
- * (`ClubFixturesDetailScreen`, Screen 40) render the same list rather than two that drift. The
- * club-scoped rule asks for one implementation per subject; this is that implementation, and the
- * two screens differ only in whose fixtures they ask for and what they title the page.
+ * Any club's fixtures (`ClubFixturesDetailScreen`, Screen 40) render through this list. The
+ * manager's own Fixtures screen moved to the event calendar (`FixtureCalendar`).
  */
 import type { FixtureView } from "@cm-clone/contracts";
 import { formatCalendarDate } from "@cm-clone/shared";

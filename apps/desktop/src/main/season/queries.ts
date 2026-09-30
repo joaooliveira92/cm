@@ -276,6 +276,7 @@ export const getCompetitions = (savesDir: string, saveId: SaveId) =>
               kind: row.kind,
               // Nations are named from code, never the content pack.
               nationName: row.nationId === null ? null : nationName(row.nationId),
+              nationCode: row.nationId,
               tier: row.tier,
               clubCount: row.clubCount,
             }),

@@ -82,6 +82,10 @@ side, a derived suitability, a display label, or a broad category).
   older saves are refused by the DDL-hashed schema version under the disposable-saves policy, with no
   upgrade transformer or migration infrastructure, and fixtures move to the new schema.
 
+- [What the CM 03/04 editor stores about a player's positions](issues/01-cm-0304-editor-positional-fields.md):
+  independent 0-20 ratings for nine lines and three sides, no per-cell value; slot fit from line and
+  side is unverified for CM 03/04 (CM 01/02 has per-slot special cases).
+
 ## Not yet specified
 
 - **Development and training.** Whether line and side ratings move over a career (training toward a

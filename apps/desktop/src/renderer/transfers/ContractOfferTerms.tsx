@@ -13,9 +13,15 @@
  * and only a mounted leaf guarantees one. The live terms are mirrored into the ref the stable
  * `sign-free-agent` Action handler reads, so the command palette signs the offer on screen instead of
  * needing a second form of the same numbers.
+ *
+ * The component is an orchestrator: it owns the offer read, holds the three term controls' state via
+ * `useContractOfferTerms`, and lays the extracted sections out. Each section — the offer summary,
+ * the three term fields, the Sign action, and the wage-basis hint — is its own component with one
+ * responsibility. The whole tree stays in this one file because the Transfers screen parcels it into
+ * the context region as a single leaf; nothing here is shared with another screen.
  */
 import { useEffect, useRef, useState } from "react";
-import type { PlayerId, Role, SaveId } from "@cm-clone/contracts";
+import type { ContractOfferView, PlayerId, Role, SaveId } from "@cm-clone/contracts";
 import {
   DEFAULT_CONTRACT_YEARS,
   MAX_CONTRACT_YEARS,
@@ -76,17 +82,165 @@ export interface ContractOfferTermsProps {
   readonly termsRef: React.MutableRefObject<ContractTerms | null>;
 }
 
-export const ContractOfferTerms = ({
-  saveId,
-  playerId,
-  playerName,
-  windowOpen,
-  termsRef,
-}: ContractOfferTermsProps) => {
-  const offerResult = useAtomValue(contractOfferAtom(saveId, playerId));
-  const offer = Option.getOrUndefined(AsyncResult.value(offerResult));
-  const offerError = typedError(offerResult);
+/** The offer's headline — what the player is worth and what wage the offer may carry. The figures are
+ *  the read's own, so this section is the one place the form draws them from. */
+const OfferSummary = ({
+  overallRating,
+  wage,
+}: {
+  readonly overallRating: KnownFigure;
+  readonly wage: KnownFigure;
+}) => (
+  <p className="text-body text-text-secondary">
+    Free Agent &mdash; signable for Credits 0. Overall Rating {formatFigure(overallRating)},
+    weekly wage {formatFigureCredits(wage)}.
+  </p>
+);
 
+/** The Role field: one of the player's own Positions, named by its Role. The option list is the
+ *  offer's `positions` — mapping each to `POSITION_ROLES` is this field's whole job. */
+const RoleChoice = ({
+  value,
+  positions,
+  playerName,
+  onValueChange,
+}: {
+  readonly value: Role | null;
+  readonly positions: ContractOfferView["positions"];
+  readonly playerName: string;
+  readonly onValueChange: (role: Role | null) => void;
+}) => (
+  <label className="text-label text-text-soft" htmlFor="offer-role">
+    Role
+    <Select
+      value={value ?? ""}
+      onValueChange={(next) => {
+        if (next !== null) onValueChange(next as Role);
+      }}
+    >
+      <SelectTrigger
+        id="offer-role"
+        aria-label={`Role offered to ${playerName}`}
+        className="w-44"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {positions.map((entry) => (
+          <SelectItem key={entry.position} value={POSITION_ROLES[entry.position]}>
+            {POSITION_ROLES[entry.position]} ({entry.position})
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </label>
+);
+
+/** The Length field: the shared `CONTRACT_LENGTHS` bounds, labelled in years. */
+const LengthChoice = ({
+  value,
+  playerName,
+  onValueChange,
+}: {
+  readonly value: number;
+  readonly playerName: string;
+  readonly onValueChange: (years: number) => void;
+}) => (
+  <label className="text-label text-text-soft" htmlFor="offer-years">
+    Length
+    <Select
+      value={String(value)}
+      onValueChange={(next) => {
+        if (next !== null) onValueChange(Number(next));
+      }}
+    >
+      <SelectTrigger
+        id="offer-years"
+        aria-label={`Contract length offered to ${playerName}`}
+        className="w-32"
+      >
+        <SelectValue />
+      </SelectTrigger>
+      <SelectContent>
+        {CONTRACT_LENGTHS.map((length) => (
+          <SelectItem key={length} value={String(length)}>
+            {length} {length === 1 ? "year" : "years"}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </label>
+);
+
+/** The Weekly wage field: a whole-number Credits input, seeded by `useContractOfferTerms` and
+ *  validated against the band the offer published. */
+const WageField = ({
+  value,
+  onValueChange,
+}: {
+  readonly value: string;
+  readonly onValueChange: (input: string) => void;
+}) => (
+  <label className="text-label text-text-soft" htmlFor="offer-wage">
+    Weekly wage
+    <Input
+      id="offer-wage"
+      type="number"
+      min={1}
+      step={1}
+      className="w-32"
+      value={value}
+      onChange={(event) => onValueChange(event.target.value)}
+    />
+  </label>
+);
+
+/** The form's single action: dispatch the live terms to the `sign-free-agent` Action. Whether the
+ *  offer may be signed is the parent's call — this section just carries the verb. */
+const SignTermButton = ({
+  disabled,
+  onSign,
+}: {
+  readonly disabled: boolean;
+  readonly onSign: () => void;
+}) => (
+  <Button type="button" data-action-id="sign-free-agent" disabled={disabled} onClick={onSign}>
+    Sign (0 Cr)
+  </Button>
+);
+
+/** The refusal the form shows when the typed wage has left the band the offer published — the
+ *  honest answer to the manager's own knowledge having moved under the offer. */
+const WageBasisHint = ({ wage }: { readonly wage: KnownFigure }) => (
+  <p className="mt-2 text-body text-text-muted">
+    The wage must be {formatFigureCredits(wage)} &mdash; what your knowledge of this player
+    supports.
+  </p>
+);
+
+/** The live terms of the offer under edit: the three fields' state, the two seeds that start a
+ *  player, the band check that gates the Sign action, and the outward mirror.
+ *
+ *  The Role and the wage are each seeded once per *player*. The wage seed is keyed on the player the
+ *  seeded number belongs to (`seededForPlayer`), not the read — a re-read of the same player carries
+ *  the same offer, and it moves whenever the manager's Scouting Progress for that player advances, so
+ *  keying on the read would quietly replace the number the manager is in the middle of offering with
+ *  a midpoint of a band they never saw, including the moment their own scouting narrows the band
+ *  under their typing. A *different* player still starts over. */
+const useContractOfferTerms = (
+  offer: ContractOfferView | undefined,
+  playerId: PlayerId,
+  termsRef: React.MutableRefObject<ContractTerms | null>,
+): {
+  readonly role: Role | null;
+  readonly setRole: (role: Role | null) => void;
+  readonly years: number;
+  readonly setYears: (years: number) => void;
+  readonly wageInput: string;
+  readonly setWageInput: (input: string) => void;
+  readonly wageValid: boolean;
+  readonly terms: ContractTerms | null;
+} => {
   const [role, setRole] = useState<Role | null>(null);
   const [years, setYears] = useState(DEFAULT_CONTRACT_YEARS);
   const [wageInput, setWageInput] = useState("");
@@ -105,14 +259,11 @@ export const ContractOfferTerms = ({
         : POSITION_ROLES[first.position],
     );
   }, [offer, playerId]);
-  // The wage is a seed, and it is seeded once per *player* rather than once per read. A re-read of
-  // the same player carries the same offer, and it moves whenever the manager's Scouting Progress
-  // for that player advances, so keying the seed on the read would quietly replace the number the
-  // manager is in the middle of offering with a midpoint of a band they never saw — including the
-  // moment their own scouting narrows the band under their typing. The ref records which player the
-  // seeded number belongs to, so a *different* player still starts over, and the same player keeps
-  // what they typed. If a re-read does leave the wage outside the new band, the submit button
-  // refuses it, which is the honest answer: the manager's own knowledge moved under the offer.
+
+  // The wage is a seed, and it is seeded once per *player* rather than once per read. See the hook's
+  // doc comment for the reasoning — the ref records which player the seeded number belongs to, so a
+  // different player starts over, the same player keeps what they typed, and a re-read that leaves
+  // the wage outside the new band is refused by the Sign gate, which is the honest answer.
   const seededForPlayer = useRef<PlayerId | null>(null);
   useEffect(() => {
     if (offer === undefined) return;
@@ -127,6 +278,23 @@ export const ContractOfferTerms = ({
     offer !== undefined && role !== null && wageValid ? { role, years, wage } : null;
   termsRef.current = terms;
 
+  return { role, setRole, years, setYears, wageInput, setWageInput, wageValid, terms };
+};
+
+export const ContractOfferTerms = ({
+  saveId,
+  playerId,
+  playerName,
+  windowOpen,
+  termsRef,
+}: ContractOfferTermsProps) => {
+  const offerResult = useAtomValue(contractOfferAtom(saveId, playerId));
+  const offer = Option.getOrUndefined(AsyncResult.value(offerResult));
+  const offerError = typedError(offerResult);
+
+  const { role, setRole, years, setYears, wageInput, setWageInput, wageValid, terms } =
+    useContractOfferTerms(offer, playerId, termsRef);
+
   if (offerError !== null) {
     return <p className="mt-1 text-body text-text-secondary">{describeRpcError(offerError)}</p>;
   }
@@ -140,89 +308,25 @@ export const ContractOfferTerms = ({
 
   return (
     <div className="mt-3" data-action-region="sign-free-agent">
-      <p className="text-body text-text-secondary">
-        Free Agent &mdash; signable for Credits 0. Overall Rating {formatFigure(offer.overallRating)},
-        weekly wage {formatFigureCredits(offer.wage)}.
-      </p>
+      <OfferSummary overallRating={offer.overallRating} wage={offer.wage} />
       <div className="mt-3 flex flex-wrap items-end gap-3">
-        <label className="text-label text-text-soft" htmlFor="offer-role">
-          Role
-          <Select
-            value={role ?? ""}
-            onValueChange={(value) => {
-              if (value !== null) setRole(value as Role);
-            }}
-          >
-            <SelectTrigger
-              id="offer-role"
-              aria-label={`Role offered to ${playerName}`}
-              className="w-44"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {offer.positions.map((entry) => (
-                <SelectItem key={entry.position} value={POSITION_ROLES[entry.position]}>
-                  {POSITION_ROLES[entry.position]} ({entry.position})
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-        <label className="text-label text-text-soft" htmlFor="offer-years">
-          Length
-          <Select
-            value={String(years)}
-            onValueChange={(value) => {
-              if (value !== null) setYears(Number(value));
-            }}
-          >
-            <SelectTrigger
-              id="offer-years"
-              aria-label={`Contract length offered to ${playerName}`}
-              className="w-32"
-            >
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {CONTRACT_LENGTHS.map((length) => (
-                <SelectItem key={length} value={String(length)}>
-                  {length} {length === 1 ? "year" : "years"}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </label>
-        <label className="text-label text-text-soft" htmlFor="offer-wage">
-          Weekly wage
-          <Input
-            id="offer-wage"
-            type="number"
-            min={1}
-            step={1}
-            className="w-32"
-            value={wageInput}
-            onChange={(event) => setWageInput(event.target.value)}
-          />
-        </label>
-        <Button
-          type="button"
-          data-action-id="sign-free-agent"
+        <RoleChoice
+          value={role}
+          positions={offer.positions}
+          playerName={playerName}
+          onValueChange={setRole}
+        />
+        <LengthChoice value={years} playerName={playerName} onValueChange={setYears} />
+        <WageField value={wageInput} onValueChange={setWageInput} />
+        <SignTermButton
           disabled={!windowOpen || terms === null}
-          onClick={() => {
+          onSign={() => {
             if (terms === null) return;
             void dispatchAction("sign-free-agent", { playerId, ...terms });
           }}
-        >
-          Sign (0 Cr)
-        </Button>
+        />
       </div>
-      {!wageValid && (
-        <p className="mt-2 text-body text-text-muted">
-          The wage must be {formatFigureCredits(offer.wage)} &mdash; what your knowledge of this
-          player supports.
-        </p>
-      )}
+      {!wageValid && <WageBasisHint wage={offer.wage} />}
     </div>
   );
 };

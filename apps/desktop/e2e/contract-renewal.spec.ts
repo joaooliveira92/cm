@@ -20,8 +20,7 @@ test("the Player Contract screen renews an own-club Player's Contract for a chos
   await continueSeededCareer(page, "Seed: renewable");
 
   // The career opens on the two-column position list; each row's name button opens the player.
-  const firstRow = page.locator("li:has(button[data-focus-id])").first();
-  const nameButton = firstRow.locator("button[data-focus-id]");
+  const nameButton = page.locator("[data-squad-layout='positions'] button[data-focus-id]").first();
   const [last, first] = (await nameButton.innerText()).trim().split(", ");
   const playerName = `${first} ${last}`;
   expect(playerName.length).toBeGreaterThan(0);

@@ -133,8 +133,9 @@ test("selecting an empty starter slot brings the players who fit it to the top, 
   await expect(window.getByRole("button", { name: "GK slot", exact: true })).toHaveCount(0);
 
   // Unassign the keeper. The drop target is the bar's own surface rather than a slot, because a
-  // drop on another slot is a swap and a drop on the bar is the unassign.
-  await namedKeeper.dragTo(window.getByRole("heading", { name: "Positions" }));
+  // drop on another slot is a swap and a drop on the bar is the unassign. The corner, because the
+  // slots sit in the bar's centre.
+  await namedKeeper.dragTo(window.getByTestId("lineup-bar"), { targetPosition: { x: 4, y: 4 } });
   const emptyKeeper = window.getByRole("button", { name: "GK slot", exact: true });
   await expect(emptyKeeper).toBeVisible();
 
@@ -244,13 +245,15 @@ test("League Table screen shows the 20-row table", async ({ userDataDir, window 
   await expect(window.locator("tbody tr")).toHaveCount(20);
 });
 
-test("Fixtures screen renders the fixture list", async ({ userDataDir, window }) => {
+test("Fixtures screen renders the fixture calendar", async ({ userDataDir, window }) => {
   await seedAndContinue(window, userDataDir, "Seed: fresh", seedFresh);
   await goto(window, "fixtures");
 
   await expect(window.getByRole("heading", { name: "Fixtures" })).toBeVisible();
-  // The list groups by round with a date header ("1 Aug 2026 · Round 1").
-  await expect(window.getByText(/· Round \d+/).first()).toBeVisible();
+  // The calendar opens on the game date. A fresh save sits in pre-season, so step one month on,
+  // into the season, where every chip reads "Home vs Away" until it is played.
+  await window.getByRole("button", { name: "Next" }).click();
+  await expect(window.locator('[data-slot="event-calendar-event"]').filter({ hasText: " vs " }).first()).toBeVisible();
 });
 
 test("Match Day starts a match, reveals a feed, and applies a live control command", async ({ userDataDir, window }) => {

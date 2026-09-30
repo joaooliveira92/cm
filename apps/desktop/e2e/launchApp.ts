@@ -229,6 +229,10 @@ export const dismissTeachingSplash = async (page: Page): Promise<void> => {
   // so a spec that opens a second career in the same fixture will not see it again. Requiring it
   // here would fail those specs for doing nothing wrong. That the splash *does* appear on a real
   // first run is asserted on its own, unconditionally, in `teaching-splash-dismiss.spec.ts`.
+  // Read the flag first so a second career skips the 15s wait below. The key literal mirrors
+  // `teachingSplashStorageKey`; importing it would drag React into the Playwright process.
+  const seen = await page.evaluate(() => localStorage.getItem("cmClone.teachingSplashSeen") === "1");
+  if (seen) return;
   if (!(await gotIt.isVisible().catch(() => false))) {
     await gotIt.waitFor({ state: "visible", timeout: 15_000 }).catch(() => undefined);
   }
