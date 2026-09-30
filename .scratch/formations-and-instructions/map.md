@@ -84,6 +84,9 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
   coverage-scaled Phase Strength, runs in possession, the suitability curve, new stats and commentary.
 - [The set-piece model](issues/18-the-set-piece-model.md): instructions and roles in templates,
   captain and takers on the live Tactic, used by the engine through set-piece events.
+- [Transcribe CM's set-piece screens](issues/19-transcribe-cm-set-piece-screens.md): every setting has a
+  "(default)" state; player roles are attack/defend for free kicks and corners plus per-side
+  attacking throw-ins; eight uncapped priority lists; five mismatches with ticket 18 raised.
 
 ## Not yet specified
 

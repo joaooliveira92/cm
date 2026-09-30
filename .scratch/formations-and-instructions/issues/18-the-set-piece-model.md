@@ -25,3 +25,9 @@ and Penalty events and long throws in the chance pipeline; absent nominees fall 
 then to the best relevant attribute; the captain has no match effect.** Values for the roles and
 priorities are transcribed in [ticket 19](19-transcribe-cm-set-piece-screens.md). See
 [Agent Note](../../../.agents/notes/proposed/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md).
+
+Amended 2026-09-29 after [ticket 19](19-transcribe-cm-set-piece-screens.md): every set-piece setting
+gains a `default` value; the roles are CM's five (attack and defend for free kicks and corners,
+attacking throw-ins per side), stored per slot; attacking-third throw-ins resolve without a visible
+event so every throw-in setting has an effect; the best-attribute taker fallback is labelled this
+game's rule, and a missing captain is picked automatically.
