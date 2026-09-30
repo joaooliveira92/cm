@@ -39,3 +39,9 @@ Testing Decisions, seam 1.
 exit 0; shared (601 + new), game-engine and contracts suites pass. The desktop suite was not waited
 on, at the user's instruction: this ticket adds pure code with no caller yet. effect-lint's one
 violation (`actionsRowClasses.ts`) is in a parallel session's staged file, not this change.
+
+Later the same day: the background desktop run finished with 38 failures in 16 files. Ten node files
+timed out, consistent with contention from parallel runs. The renderer failures are in club detail,
+club information and club staff screens, which a parallel session's staged work touches; this ticket
+changed only shared-package exports and the repo typechecks. Not investigated further, per the
+user's instruction not to wait on the desktop suite.
