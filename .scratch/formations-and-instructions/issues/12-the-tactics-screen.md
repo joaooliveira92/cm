@@ -1,7 +1,7 @@
 # 12: The Tactics screen
 
 Type: prototype
-Blocked by: 05, 06, 07
+Blocked by: 05, 06, 07, 18, 19
 
 ## Question
 

@@ -1,0 +1,59 @@
+# Agent Note: CM 03/04 set pieces: instructions and roles in templates, takers on the Tactic, used by the engine
+
+Status: proposed
+
+## Problem
+
+[Set pieces ship, as a Tactic field](2026-09-19-set-pieces-ship-as-a-tactic-field.md) put set-piece
+takers on the Tactic and left open whether the match engine uses a nomination. Championship Manager
+03/04 had a fuller model (see the
+[instructions research](../../../../docs/research/formations-and-instructions-cm0304-team-and-player-instructions.md)):
+team set-piece instructions, per-player set-piece roles, and Set Priorities. The rebuilt Tactic
+separates templates (no players) from the live Tactic (players), so each part needs a home, and the
+engine needs set-piece events to act on.
+
+## Proposal
+
+- **In the Tactic Template:** team set-piece instructions per side, with CM's values (corners:
+  short, near post, far post, edge of area, edge of six-yard box; free kicks: short, long, cross near,
+  cross far, cross centre, aim for best header; throw-ins: short, long, quick), and each slot's
+  attacking and defending set-piece roles, with values transcribed from the shipped files.
+- **On the live Tactic only:** the priorities, which name players: captain, and penalty, free-kick
+  (left and right), corner (left and right) and throw-in (left and right) takers, each an ordered list.
+- **The engine uses them.** Corner events arise from saved or blocked shots and cleared crosses;
+  Free Kick events from fouls, becoming chances in the attacking third; Penalty events from a small
+  share of fouls on attacking-phase players; a long throw in the attacking third becomes a cross-like
+  chance, other throw-ins produce no event. The nominated taker delivers, scaled by crossing (corners
+  and crossed free kicks) or shooting and composure (direct free kicks, penalties). Team set-piece
+  instructions choose the chance type; attacking roles choose the target; defending roles weigh the
+  marking. All of it runs through the chance pipeline of
+  [the engine framework note](../architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).
+- **Fallbacks.** An absent nominee passes to the next in the list, then to the on-pitch player with
+  the best relevant attribute. The captaincy passes down the order the same way. The captain shows on
+  the team sheet and in commentary and has no effect on morale or the match.
+
+## Relationship to existing notes
+
+Answers the open question of
+[Set pieces ship, as a Tactic field](2026-09-19-set-pieces-ship-as-a-tactic-field.md) and extends
+it; that note stands.
+
+## Alternatives considered
+
+- **Takers stored in templates.** Rejected: templates hold no players, as CM's tactic files held
+  none.
+- **Record nominations without engine use.** Rejected: a taker who changes nothing is a dead setting.
+- **Simulate every throw-in.** Rejected: most throw-ins change nothing a three-phase engine can show.
+- **A captain effect on morale.** Rejected: no morale model to feed, and nothing verified for CM
+  03/04.
+
+## Acceptance criteria
+
+- Changing a penalty taker changes who takes penalties, and conversion follows his attributes.
+- Directional tests for each team set-piece instruction.
+- A captain substituted off passes the armband to the next nominee on the pitch.
+
+## Risks
+
+- More events shift the calibration targets; set-piece goals should be about a quarter to a third of
+  all goals.

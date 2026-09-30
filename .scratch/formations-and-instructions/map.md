@@ -82,19 +82,12 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
   seeded CM preferences, a deterministic rule table, a controller outside the engine.
 - [Formation, run and suitability effects](issues/17-formation-run-and-suitability-effects.md):
   coverage-scaled Phase Strength, runs in possession, the suitability curve, new stats and commentary.
+- [The set-piece model](issues/18-the-set-piece-model.md): instructions and roles in templates,
+  captain and takers on the live Tactic, used by the engine through set-piece events.
 
 ## Not yet specified
 
-- **Set pieces.** Whether takers and set-piece routines belong to the Tactic.
-  [group-f's decision request](../group-f-tactics-and-match-preparation/decision-request-01-are-set-pieces-in-scope.md)
-  is still open; this effort should either consume its answer or rule set pieces out.
-- **Captain and set-piece takers.** CM 03/04's tactics screen had Set Priorities panels (captain,
-  penalty, free kick, corner and throw-in takers), but its tactic files did not store them. Decide
-  with set pieces whether they belong to the Tactic, the squad, or neither.
-- **Tactic familiarity**, meaning whether a squad plays a new shape worse until it has trained on it.
-  Only if research shows CM 03/04 modelled it; otherwise out of scope.
-- **Scouting and reports.** The Team Scout Report predicts an opponent's shape from the old
-  five-template vocabulary. It needs a successor once presets are fixed.
+<!-- Set pieces and the captain graduated to ticket 18 on 2026-09-29; tactic familiarity ruled out of scope. -->
 
 ## Out of scope
 
@@ -109,3 +102,5 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
   Versatility, Work Rate). A separate effort: it reaches generation, development, ratings, scouting
   and every player screen. This effort maps instructions onto the closest existing attributes in one
   swappable table ([ticket 08](issues/08-mapping-tactics-onto-the-three-phase-engine.md)).
+- **Tactic familiarity** (a squad playing a new shape worse until trained on it). The CM 03/04
+  research found no sign of it, and the map ruled it in only if research showed it.
