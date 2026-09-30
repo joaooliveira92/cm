@@ -69,6 +69,9 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 - [Transcribe CM's seven player-instruction templates](issues/14-transcribe-cm-instruction-templates.md):
   values decoded from `tactical_templates.xml` (4.1.4 byte-identical); every template sets Passing,
   Tackling and Mentality explicitly, so ticket 07 seeds only the non-override instructions.
+- [How each tactical setting acts on the three-phase engine](issues/08-mapping-tactics-onto-the-three-phase-engine.md):
+  a chance pipeline, Foul and Offside events, per-slot behaviour vectors resolved outside the engine,
+  a suitability cost, runs counted in possession, tuning proved by tests and calibration.
 
 ## Not yet specified
 
@@ -93,3 +96,7 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 - **Football Manager Roles and duties.** Not CM 03/04. See the Agent Note linked from ticket 01.
 - **The positional model itself** (player line and side ratings, the slot vocabulary, compact
   labels). Owned by player-positional-model.
+- **CM 03/04's full attribute set** (Long Shots, Off The Ball, Marking, Anticipation, Creativity,
+  Versatility, Work Rate). A separate effort: it reaches generation, development, ratings, scouting
+  and every player screen. This effort maps instructions onto the closest existing attributes in one
+  swappable table ([ticket 08](issues/08-mapping-tactics-onto-the-three-phase-engine.md)).

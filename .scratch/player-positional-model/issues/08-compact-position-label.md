@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 01, 03
+Status: resolved
 
 ## Question
 
@@ -16,3 +17,8 @@ as the reference behaviour:
 
 The rule lives in `packages/shared` beside the rating rules, so the renderer and any main-process
 surface render one label. Include a table of worked examples; they become the rule's tests.
+
+## Answer
+
+**CM Scout's reconstruction exactly: threshold 15, GK short-circuit, SW/D/DM/M/AM/F-or-S with its
+M and AM suppression, the F/S rule, no WB, sides in R-L-C order after a space.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-compact-position-label-follows-cm-scout.md).

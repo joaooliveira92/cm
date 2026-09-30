@@ -89,23 +89,16 @@ side, a derived suitability, a display label, or a broad category).
   eight Line Ratings and three Side Ratings, 1-20, persisted in one row per player.
 - [Free Role](issues/04-free-role.md): a hidden twelfth 1-20 rating; the instruction lives in
   formations-and-instructions.
+- [The tactical slot vocabulary](issues/05-tactical-slot-vocabulary.md): (row, column) cells;
+  weights by row and width; phase by row.
+- [Slot suitability and Familiarity Tier](issues/07-slot-suitability-and-familiarity-tier.md):
+  min(line, side) with CM 01/02 special cases; tiers derived; the match cost moves to formations 08.
+- [The compact position label](issues/08-compact-position-label.md): CM Scout's reconstruction
+  exactly.
 
 ## Not yet specified
 
-- **Development and training.** Whether line and side ratings move over a career (training toward a
-  new position, familiarity loss from disuse), and if so whether that belongs to Player Development
-  at Season conclusion or to the Training Schedule. Depends on the representation and on what CM
-  03/04 actually did.
-- **Generation.** How a generated player's line and side ratings are distributed, and what replaces
-  `ADJACENT_POSITIONS` and `SQUAD_COMPOSITION`. Depends on the representation and the line set.
-- **A mismatch mechanic, revisited once the model is specified.** Nothing today penalises an
-  out-of-position player beyond their Attributes rating poorly against the slot's weights, and the
-  spec does not add one (see **Out of scope**). Once the model is settled, whether to open a
-  separate game-design decision on a suitability multiplier for Position Rating or Phase Strength
-  is worth revisiting. It would touch the match-engine boundary that [Role Rating outside the match engine](../../.agents/notes/implemented/architecture/2026-08-27-role-rating-outside-match-engine.md)
-  guards.
-- **The screens.** Pitch layout for any new slots (SW, WB, wide DM and AM), the squad position
-  column and its filters. Settled once the slot vocabulary and label rules are.
+<!-- Development, generation and the screens graduated to tickets 09, 10 and 11 on 2026-09-29. -->
 
 ## Out of scope
 
@@ -115,7 +108,6 @@ side, a derived suitability, a display label, or a broad category).
   with versioned upgrade steps and before/after fixtures. Ruled out by
   [ticket 02](issues/02-does-this-effort-migrate-saves.md) under the disposable-saves policy;
   returns only with the general upgrade path, at the first player-facing release.
-- **A match-engine mismatch penalty as compatibility work.** None exists today, and the new model
-  must not add one silently. Ticket 07 covers suitability, the Familiarity Tier mapping, Overall
-  Rating and the Tactics overview only. A penalty is a separate game-design decision, taken after
-  the positional model is specified.
+- **A match-engine mismatch penalty.** Ruled in by ticket 07, and owned by the sibling effort's
+  [engine-mapping ticket](../formations-and-instructions/issues/08-mapping-tactics-onto-the-three-phase-engine.md),
+  which decides every engine effect.

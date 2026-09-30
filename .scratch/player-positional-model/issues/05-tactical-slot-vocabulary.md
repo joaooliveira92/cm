@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 01, 03
+Status: resolved
 
 ## Question
 
@@ -29,3 +30,10 @@ tactic files in
 This ticket still owns the names and codes of those rows and columns and what each cell carries in
 the game-design tables. It no longer needs to decide whether SW, wide DM, wide AM and wide F cells
 are placeable: CM's presets use all of them.
+
+## Answer
+
+**A slot is its own (row, column) type: rows GK, SW, D, DM, M, AM, F and columns L, LC, C, RC, R;
+Position Weights keyed by row and width (twelve tables, four new); phase by row.** Roles no longer
+exist, so no slot carries one, and the v1 templates are replaced by the 29 CM presets
+(formations-and-instructions ticket 05). See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-slots-are-row-column-cells-weighted-by-row-and-width.md).

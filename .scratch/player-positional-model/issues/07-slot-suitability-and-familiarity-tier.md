@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 01, 03
+Status: resolved
 
 ## Question
 
@@ -21,3 +22,10 @@ one tactical slot, and decide what becomes of **Familiarity Tier**.
 - **Overall Rating.** Confirm or restate its definition over the new model.
 
 Glossary impact: **Familiarity Tier**, **Overall Rating**, and whatever names suitability.
+
+## Answer
+
+**suitability = min(line for the row, side for the column), with LC/RC reading C, wide D and DM
+reading max(line, WB), M reading max(M, AM − 5); Familiarity Tier derived (natural 18-20, competent
+15-17, unfamiliar ≤14); Overall Rating unchanged; a match cost for poor suitability moves to
+formations-and-instructions ticket 08.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-slot-suitability-min-of-line-and-side.md).

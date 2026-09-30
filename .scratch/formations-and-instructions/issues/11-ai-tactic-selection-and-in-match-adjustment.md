@@ -1,7 +1,7 @@
 # 11: AI tactic selection and in-match adjustment
 
 Type: grilling
-Blocked by: 02, 03, 08
+Blocked by: 02, 03, 08, 15, 16
 
 ## Question
 
