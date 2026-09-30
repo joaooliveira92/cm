@@ -2,7 +2,7 @@ import { POSITION_WEIGHTS, type Attribute, type FamiliarityTier, type PlayerAttr
 import { ROLE_WEIGHTS, type Role } from "./tactics.js";
 
 /** Weighted average of Attributes against a weights table, scaled from the 1-20 attribute range to 1-100. */
-const weightedRating = (
+export const weightedRating = (
   attributes: PlayerAttributes,
   weights: Partial<Record<Attribute, number>>,
 ): number => {
