@@ -76,6 +76,8 @@ side, a derived suitability, a display label, or a broad category).
 
 ## Decisions so far
 
+> Map complete 2026-09-29; the spec is [spec.md](spec.md).
+
 <!-- one line per closed ticket: gist, then link to the ticket file -->
 
 - [Does this effort migrate existing saves?](issues/02-does-this-effort-migrate-saves.md): no;
