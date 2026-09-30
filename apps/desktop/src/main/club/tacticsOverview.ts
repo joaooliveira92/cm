@@ -17,6 +17,7 @@ import {
 import {
   assessContinueReadiness,
   assessMatchReadiness,
+  familiarityOf,
   familiarityTierCounts,
   partitionSelection,
   positionRating,
@@ -87,6 +88,7 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
               player === undefined
                 ? null
                 : roleRating(player.attributes as PlayerAttributes, slot.role),
+            familiarity: player === undefined ? null : familiarityOf(player.suitability[slot.position] ?? 1),
           });
         });
 
@@ -95,10 +97,7 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
           for (const slot of tactic.slots) {
             const player = squadById.get(slot.playerId);
             if (player === undefined) continue;
-            starterTiers.push(
-              player.positions.find((position) => position.position === slot.position)?.familiarity ??
-                "unfamiliar",
-            );
+            starterTiers.push(familiarityOf(player.suitability[slot.position] ?? 1));
           }
         }
 

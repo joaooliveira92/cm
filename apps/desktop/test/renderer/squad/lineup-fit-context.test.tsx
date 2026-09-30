@@ -60,6 +60,7 @@ const player = (
   positions: [{ position, familiarity }],
   overallRating: 80,
   positionRatings: { [position]: 74 },
+  suitability: {},
   condition: 100,
   trainingFocus: null,
   nationality: "Brazil",

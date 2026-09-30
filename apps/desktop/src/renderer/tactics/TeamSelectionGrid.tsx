@@ -12,7 +12,7 @@ import {
   type Tactic,
   type TacticSlot,
 } from "@cm-clone/contracts";
-import { POSITIONS, roleRating, type PlayerAttributes } from "@cm-clone/shared";
+import { POSITIONS, familiarityOf, roleRating, type PlayerAttributes } from "@cm-clone/shared";
 import { dispatchAction } from "../actions/dispatch.js";
 import {
   DataGrid,
@@ -30,6 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../components/ui/select.js";
+import { FitIndicator } from "./FitIndicator.js";
 import { NumberChip } from "./NumberChip.js";
 
 interface SelectionRow {
@@ -185,6 +186,15 @@ export const TeamSelectionGrid = ({
           );
         },
         size: 96,
+      },
+      {
+        id: "fit",
+        header: ({ column }) => <DataGridColumnHeader title="Fit" column={column} />,
+        cell: ({ row }) => {
+          const { player, slot } = row.original;
+          return <FitIndicator tier={player ? familiarityOf(player.suitability[slot.position] ?? 1) : null} />;
+        },
+        size: 104,
       },
       {
         id: "role",

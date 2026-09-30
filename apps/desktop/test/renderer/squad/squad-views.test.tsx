@@ -76,6 +76,7 @@ const player = (id: string, firstName: string, lastName: string) => ({
   ],
   overallRating: 80,
   positionRatings: { DC: 74, DL: 61 },
+  suitability: {},
   condition: 100,
   trainingFocus: null,
   nationality: "Brazil",

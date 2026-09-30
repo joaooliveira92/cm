@@ -76,6 +76,13 @@ export const fitRatingsByPosition = (
     POSITIONS.map((position) => [position, fitRatingAt(attributes, ratings, POSITION_SLOT[position])]),
   ) as Record<Position, number>;
 
+/** Transitional: Suitability at each of the ten Positions' cells, for screens that still work in
+ *  Positions. Replaced by cells with the Tactic. */
+export const suitabilityByPositionOf = (ratings: PositionalRatings): Record<Position, number> =>
+  Object.fromEntries(
+    POSITIONS.map((position) => [position, suitability(ratings, POSITION_SLOT[position])]),
+  ) as Record<Position, number>;
+
 /**
  * Overall Rating over the grid: the best Position Rating among cells where the player is Natural. A
  * player natural nowhere falls back to his most suitable cells, as the Position-based rule fell back

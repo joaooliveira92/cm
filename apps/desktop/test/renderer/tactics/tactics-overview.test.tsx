@@ -101,6 +101,7 @@ const assignments = FORMATION_SLOTS["4-4-2"].map((position, index) => ({
   role: POSITION_ROLES[position],
   positionRating: 60 + index,
   roleRating: 55 + index,
+  familiarity: "natural",
 }));
 
 const overviewView = (

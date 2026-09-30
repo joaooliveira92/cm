@@ -59,6 +59,7 @@ const player = {
   positions: [{ position: "ST", familiarity: "natural" }],
   overallRating: 78,
   positionRatings: { ST: 80 },
+  suitability: {},
   condition: 95,
   trainingFocus: null,
   nationality: "nation_eng_england",
@@ -313,6 +314,7 @@ describe("tactics overview snapshot (Screen 80)", () => {
         role: "Poacher",
         positionRating: 81,
         roleRating: 85,
+        familiarity: "natural",
       },
     ],
     familiarity: { natural: 7, competent: 3, unfamiliar: 1 },
@@ -362,6 +364,7 @@ describe("tactics overview snapshot (Screen 80)", () => {
           role: "Poacher",
           positionRating: null,
           roleRating: null,
+          familiarity: null,
         },
       ],
     });

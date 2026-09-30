@@ -10,7 +10,7 @@ import {
 
 import { ClubSummary } from "./clubs.js";
 import { PlayerId, SaveId, WriteRequestId } from "./ids.js";
-import { PositionSchema, SquadPlayerView } from "./squad.js";
+import { FamiliarityTierSchema, PositionSchema, SquadPlayerView } from "./squad.js";
 
 export const FormationSchema = Schema.Literals(FORMATIONS);
 export const RoleSchema = Schema.Literals(ROLES);
@@ -131,6 +131,9 @@ export class PlayerAssignmentView extends Schema.Class<PlayerAssignmentView>("Pl
   positionRating: Schema.NullOr(Schema.Finite),
   /** The assigned player's 1-100 Role Rating at `role`, computed on this read. */
   roleRating: Schema.NullOr(Schema.Finite),
+  /** How well the assigned player suits the slot: his Familiarity Tier, derived from Suitability on
+   *  this read. */
+  familiarity: Schema.NullOr(FamiliarityTierSchema),
 }) {}
 
 /**

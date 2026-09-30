@@ -7,6 +7,7 @@ import { it } from "@effect/vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Tactic, WriteRequestId, type PlayerId, type SaveId } from "@cm-clone/contracts";
 import {
+  familiarityOf,
   FORMATION_SLOTS,
   POSITION_ROLES,
   positionRating,
@@ -120,6 +121,8 @@ it.effect("every section binds to the revision the tactic was saved at, and rati
         assignment.roleRating,
         roleRating(player.attributes as PlayerAttributes, slot.role),
       );
+      // The fit shown is the tier of the player's Suitability for the slot's cell.
+      strictEqual(assignment.familiarity, familiarityOf(player.suitability[slot.position]!));
     }
 
     // Familiarity sums to the eleven starters; selection is the match-day eighteen.

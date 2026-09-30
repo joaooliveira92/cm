@@ -46,6 +46,7 @@ const player = (id: string, lastName: string, position: string, familiarity: Fam
   positions: [{ position, familiarity }],
   overallRating: 80,
   positionRatings: { [position]: 74 },
+  suitability: {},
   condition: 100,
   trainingFocus: null,
   nationality: "Brazil",

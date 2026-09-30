@@ -49,6 +49,7 @@ const player = (id: string, lastName: string): unknown => ({
   positions: [{ position: "DC", familiarity: FAMILIARITY_TIERS[0] }],
   overallRating: 80,
   positionRatings: { DC: 74 },
+  suitability: {},
   condition: 100,
   trainingFocus: null,
   nationality: "Brazil",

@@ -65,6 +65,7 @@ const squadViewPayload = (saveId: string, clubName: string) => ({
       positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
       overallRating: 90,
       positionRatings: { WB: 12 },
+      suitability: {},
       condition: 100,
       trainingFocus: null,
       nationality: "England",

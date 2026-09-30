@@ -26,6 +26,7 @@ import type {
 } from "../navigation/destinations.js";
 import { OverviewPitch } from "./OverviewPitch.js";
 import { capitalize, ratingFill, ratingText, roleLabel } from "./overviewFormat.js";
+import { FitIndicator } from "./FitIndicator.js";
 
 type View = { readonly view: TacticsOverviewView };
 
@@ -95,6 +96,7 @@ export const SelectionCard = ({ view }: View) => {
               <TableRow className={formationHeadRowClass}>
                 <TableHead className={`${formationHeadClass} w-10`}>Pos</TableHead>
                 <TableHead className={formationHeadClass}>Player</TableHead>
+                <TableHead className={formationHeadClass}>Fit</TableHead>
                 <TableHead className={formationHeadClass}>Role</TableHead>
                 <TableHead className={`${formationHeadClass} text-right`}>Position rating</TableHead>
                 <TableHead className={`${formationHeadClass} text-right`}>Role rating</TableHead>
@@ -110,6 +112,9 @@ export const SelectionCard = ({ view }: View) => {
                     ) : (
                       `${assignment.firstName} ${assignment.lastName}`
                     )}
+                  </TableCell>
+                  <TableCell className={formationCellClass}>
+                    <FitIndicator tier={assignment.familiarity} />
                   </TableCell>
                   <TableCell className={`${formationCellClass} text-text-secondary`}>{roleLabel(assignment.role)}</TableCell>
                   <TableCell className={formationCellClass}>

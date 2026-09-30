@@ -142,6 +142,7 @@ export interface SquadPlayerWire {
   readonly positions: ReadonlyArray<{ readonly position: string; readonly familiarity: string }>;
   readonly overallRating: number;
   readonly positionRatings: Record<string, number>;
+  readonly suitability: Record<string, number>;
   readonly condition: number;
   readonly trainingFocus: Category | null;
   readonly nationality: string;
@@ -178,6 +179,7 @@ export const squadPlayer = (
   positions: [{ position: goalkeeper ? "GK" : "DC", familiarity: FAMILIARITY_TIERS[0] }],
   overallRating: 70,
   positionRatings: goalkeeper ? { GK: 70 } : { DC: 70 },
+  suitability: {},
   condition: 100,
   trainingFocus,
   nationality: "Portugal",

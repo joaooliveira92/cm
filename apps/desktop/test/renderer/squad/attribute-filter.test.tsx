@@ -38,6 +38,7 @@ const squadPlayer = (id: string, name: string, position: string, condition: numb
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
   overallRating: 80,
   positionRatings: { ST: 12 },
+  suitability: {},
   condition,
   trainingFocus: null,
   nationality: "England",
