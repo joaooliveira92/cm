@@ -17,7 +17,7 @@ and suitability are derived on read from data the read already holds.
 
 **Blocked by:** 13
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Every listed screen shows the label from one shared function.
 - [ ] Sorting the position column orders GK first and F/S last, then by side R, L, C.
