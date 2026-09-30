@@ -16,7 +16,7 @@ existing boundary helpers.
 
 **Blocked by:** 13
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Setting a target for a player outside the manager's club fails with a typed error the screen shows.
 - [ ] Over several weeks of advancing, a targeted rating rises and no other positional rating changes.
