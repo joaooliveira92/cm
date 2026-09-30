@@ -24,14 +24,14 @@ Testing Decisions, seam 1.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Suitability returns min(line, side) with each special case covered by a test: LC and RC read C, D L/R and DM L/R read max(line, WB), M reads max(M, AM − 5), GK reads GK only.
-- [ ] Tiers derive at the stated thresholds (18-20 natural, 15-17 competent, ≤14 unfamiliar), with boundary tests.
-- [ ] A table-driven label test covers every rule, including the research's worked examples (`AM/F RC`, `D/DM RC`, `D RC`, `AM RLC`, `GK`, an M-suppressed DM, an `S` striker).
-- [ ] Every one of the 31 cells resolves to exactly one weights table and one phase; the four new tables exist with a comment marking them as design values.
-- [ ] Phase by row agrees with today's phase table for all ten mapped Positions.
-- [ ] `pnpm check:all` is green.
+- [x] Suitability returns min(line, side) with each special case covered by a test: LC and RC read C, D L/R and DM L/R read max(line, WB), M reads max(M, AM − 5), GK reads GK only.
+- [x] Tiers derive at the stated thresholds (18-20 natural, 15-17 competent, ≤14 unfamiliar), with boundary tests.
+- [x] A table-driven label test covers every rule, including the research's worked examples (`AM/F RC`, `D/DM RC`, `D RC`, `AM RLC`, `GK`, an M-suppressed DM, an `S` striker).
+- [x] Every one of the 31 cells resolves to exactly one weights table and one phase; the four new tables exist with a comment marking them as design values.
+- [x] Phase by row agrees with today's phase table for all ten mapped Positions.
+- [x] `pnpm check:all` is green.
 
 ## Comments
 
