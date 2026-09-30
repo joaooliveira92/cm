@@ -24,7 +24,7 @@ Testing Decisions, seam 1.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Suitability returns min(line, side) with each special case covered by a test: LC and RC read C, D L/R and DM L/R read max(line, WB), M reads max(M, AM − 5), GK reads GK only.
 - [ ] Tiers derive at the stated thresholds (18-20 natural, 15-17 competent, ≤14 unfamiliar), with boundary tests.
