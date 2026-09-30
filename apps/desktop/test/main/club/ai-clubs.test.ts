@@ -5,7 +5,19 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { BENCH_SIZE, FORMATIONS, selectBench, selectBestFormationXI, transferValue, type BestXiSlot } from "@cm-clone/shared";
+import {
+  ALL_ATTRIBUTES,
+  BENCH_SIZE,
+  FORMATIONS,
+  HIDDEN_ATTRIBUTES,
+  fitRatingsByPosition,
+  selectBench,
+  selectBestFormationXI,
+  transferValue,
+  type BestXiSlot,
+  type PlayerAttributes,
+  type PositionalRatings,
+} from "@cm-clone/shared";
 import { BidId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -126,6 +138,9 @@ it.effect("an AI club's Season-start Tactic never changes across a later advance
 // League-average gap detection (pure)
 // ---------------------------------------------------------------------------
 
+const evenAttributes = (level: number): PlayerAttributes =>
+  Object.fromEntries([...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, level])) as PlayerAttributes;
+
 it.effect("identifyWeakPositions flags a Position whose club-best rating falls below 90% of the league average", () =>
   Effect.sync(() => {
     const leagueAverages = computeLeagueAveragePositionRatings([
@@ -139,6 +154,27 @@ it.effect("identifyWeakPositions flags a Position whose club-best rating falls b
 
     ok(weakPositions.includes("ST"), "ST is far below the league average and should be flagged");
     ok(!weakPositions.includes("GK"), "GK matches the league average exactly and shouldn't be flagged");
+  }),
+);
+
+it.effect("identifyWeakPositions over fit-adjusted ratings flags a missing left-sided defender, not a fourth centre-back", () =>
+  Effect.sync(() => {
+    const ratingsOf = (sides: { R?: number; L?: number; C?: number }): PositionalRatings => ({
+      lines: { GK: 1, SW: 1, D: 19, DM: 1, M: 1, AM: 1, F: 1, WB: 1 },
+      sides: { R: 1, L: 1, C: 1, ...sides },
+      freeRole: 1,
+    });
+    const defender = (sides: { R?: number; L?: number; C?: number }) => ({
+      positionRatings: fitRatingsByPosition(evenAttributes(14), ratingsOf(sides)),
+    });
+    const balanced = [defender({ C: 19 }), defender({ C: 19 }), defender({ L: 19 }), defender({ R: 19 })];
+    const noLeftBack = [defender({ C: 19 }), defender({ C: 19 }), defender({ C: 19 }), defender({ R: 19 })];
+
+    const leagueAverages = computeLeagueAveragePositionRatings([balanced, balanced, noLeftBack]);
+    const weak = identifyWeakPositions(noLeftBack, leagueAverages);
+
+    ok(weak.includes("DL"), "no player suits the left of defence, so DL is a gap");
+    ok(!weak.includes("DC"), "three centre-backs are no gap at DC");
   }),
 );
 

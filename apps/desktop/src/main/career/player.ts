@@ -13,7 +13,7 @@ import {
   HIDDEN_ATTRIBUTES,
   ageOn,
   figureByProgress,
-  overallRating as computeOverallRating,
+  overallRatingOverCells,
   progressForReading,
   projectLegacyPositions,
   transferValueFigureByProgress,
@@ -139,7 +139,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
     );
 
     const playerAge = ageOn(player.dateOfBirth, yield* loadGameDate);
-    const ovr = computeOverallRating(trueAttributes, positions);
+    const ovr = overallRatingOverCells(trueAttributes, positionalRatingsOf(player));
 
     const clubSummary = yield* Schema.decodeUnknownEffect(ClubSummary)(
       { id: player.clubId, name: nameOf(player.clubId), statureTier: player.statureTier ?? "mid" },

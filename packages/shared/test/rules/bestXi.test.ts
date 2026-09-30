@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 import { selectBench, selectBestFormationXI, bestXiForFormation } from "../../src/rules/bestXi.js";
 import { squadQualityBand, computeSquadQuality, SQUAD_QUALITY_THRESHOLDS, SQUAD_QUALITY_BANDS } from "../../src/rules/squadQuality.js";
 import { BENCH_SIZE, FORMATIONS, FORMATION_SLOTS } from "../../src/rules/tactics.js";
-import { POSITIONS, type Position } from "../../src/rules/positions.js";
+import {
+  GOALKEEPING_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
+  OUTFIELD_ATTRIBUTES,
+  POSITIONS,
+  type PlayerAttributes,
+  type Position,
+} from "../../src/rules/positions.js";
+import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
+import { fitRatingsByPosition } from "../../src/rules/suitability.js";
 
 // ---------------------------------------------------------------------------
 // selectBestFormationXI
@@ -324,5 +333,44 @@ describe("selectBench", () => {
     const bench = selectBench(squad, chosen);
     expect(bench.filter((id) => id !== null)).toHaveLength(BENCH_SIZE);
     expect(bench.some((id) => id !== null && chosen.includes(id))).toBe(false);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Fit-adjusted ratings: selection prefers a player who can play the cell
+// ---------------------------------------------------------------------------
+
+describe("Best XI over fit-adjusted ratings", () => {
+  const ratingsOf = (lines: Partial<Record<Line, number>>, sides: Partial<Record<Side, number>>): PositionalRatings => ({
+    lines: { GK: 1, SW: 1, D: 1, DM: 1, M: 1, AM: 1, F: 1, WB: 1, ...lines },
+    sides: { R: 1, L: 1, C: 1, ...sides },
+    freeRole: 1,
+  });
+  const attributesAt = (level: number): PlayerAttributes =>
+    Object.fromEntries(
+      [...OUTFIELD_ATTRIBUTES, ...HIDDEN_ATTRIBUTES, ...GOALKEEPING_ATTRIBUTES].map((attribute) => [attribute, level]),
+    ) as PlayerAttributes;
+  const player = (id: string, level: number, lines: Partial<Record<Line, number>>, sides: Partial<Record<Side, number>>) => ({
+    id,
+    positionRatings: fitRatingsByPosition(attributesAt(level), ratingsOf(lines, sides)),
+  });
+
+  it("puts a modest natural right-back at DR ahead of a stronger player who only plays centrally", () => {
+    const squad = [
+      player("gk", 14, { GK: 19 }, { C: 19 }),
+      player("cb1", 17, { D: 19 }, { C: 19 }),
+      player("cb2", 16, { D: 19 }, { C: 19 }),
+      player("strong-centre-only", 18, { D: 19 }, { C: 19 }),
+      player("lb", 12, { D: 19 }, { L: 19 }),
+      player("rb", 12, { D: 19 }, { R: 19 }),
+      ...["mr", "ml"].map((id) => player(id, 12, { M: 19 }, id === "mr" ? { R: 19 } : { L: 19 })),
+      player("mc1", 12, { M: 19 }, { C: 19 }),
+      player("mc2", 12, { M: 19 }, { C: 19 }),
+      player("st1", 12, { F: 19 }, { C: 19 }),
+      player("st2", 12, { F: 19 }, { C: 19 }),
+    ];
+    const result = bestXiForFormation("4-4-2", squad);
+    const dr = result?.filled.find((slot) => slot.position === "DR");
+    expect(dr?.playerId).toBe("rb");
   });
 });

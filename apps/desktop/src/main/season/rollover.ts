@@ -1,7 +1,6 @@
 import { PlayerId, type ClubId, type FixtureId } from "@cm-clone/contracts";
 import {
   NATION_PROFILES,
-  POSITIONS,
   collapseSquadStrength,
   createSeededRng,
   deriveId,
@@ -9,7 +8,7 @@ import {
   generateSquadAtStrength,
   computeSquadQuality,
   nationCodeFromId,
-  positionRating,
+  fitRatingsByPosition,
   resultsStrength,
   seasonStartDate,
   seasonStartYear,
@@ -242,7 +241,7 @@ const reconcileSquadsWithDepth = (
             computeSquadQuality(
               generated.map((player, index) => ({
                 id: String(index),
-                positionRatings: positionRatingsFor(player.attributes as PlayerAttributes),
+                positionRatings: fitRatingsByPosition(player.attributes as PlayerAttributes, player.positionalRatings),
               })),
             )?.meanPositionRating ?? 0,
           ),
@@ -282,6 +281,3 @@ export const promotedPlayerId =
   (slotIndex: number): PlayerId =>
     PlayerId.make(deriveId(clubGenerationSeed, "promoted", seasonNumber, "player", slotIndex));
 
-/** Every position's rating for one player, which is what a squad collapses over. */
-const positionRatingsFor = (attributes: PlayerAttributes): Record<string, number> =>
-  Object.fromEntries(POSITIONS.map((position) => [position, positionRating(attributes, position)]));

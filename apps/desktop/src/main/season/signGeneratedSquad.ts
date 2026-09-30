@@ -1,5 +1,5 @@
 import { type PlayerId } from "@cm-clone/contracts";
-import { ageOn, overallRating, projectLegacyPositions, weeklyWage, type GeneratedPlayer } from "@cm-clone/shared";
+import { ageOn, overallRatingOverCells, weeklyWage, type GeneratedPlayer } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 
@@ -27,7 +27,7 @@ export const signGeneratedSquad = (
     const sql = yield* SqlClient;
     for (const generated of squad) {
       const wage = weeklyWage(
-        overallRating(generated.attributes, projectLegacyPositions(generated.positionalRatings)),
+        overallRatingOverCells(generated.attributes, generated.positionalRatings),
         ageOn(generated.dateOfBirth, terms.signedOn),
         generated.potentialAbility,
       );

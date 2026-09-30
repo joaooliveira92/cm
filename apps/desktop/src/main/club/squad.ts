@@ -5,11 +5,10 @@ import { ClubSummary, SaveNotFoundError, SquadPlayerView, SquadView, type SaveId
 import {
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
-  POSITIONS,
   ageOn,
   nationName,
-  overallRating,
-  positionRating,
+  fitRatingsByPosition,
+  overallRatingOverCells,
   projectLegacyPositions,
   seasonEndDate,
   transferValue,
@@ -99,18 +98,19 @@ export const loadSquadPlayers = (clubId: ClubId) =>
     );
 
     return playerRows.map((row) => {
+      const ratings = positionalRatingsOf(row);
       // Transitional: the ten-Position list readers still expect, derived from the stored ratings.
-      const positions = projectLegacyPositions(positionalRatingsOf(row));
+      const positions = projectLegacyPositions(ratings);
 
       const attributes = Object.fromEntries(
         [...ALL_ATTRIBUTES, ...HIDDEN_ATTRIBUTES].map((attribute) => [attribute, row[attribute] ?? undefined]),
       ) as PlayerAttributes;
 
-      const overall = overallRating(attributes, positions);
+      const overall = overallRatingOverCells(attributes, ratings);
       const age = ageOn(row.dateOfBirth, gameDate);
-      const positionRatings = Object.fromEntries(
-        POSITIONS.map((position) => [position, positionRating(attributes, position)]),
-      );
+      // Fit-adjusted: Best XI, squad quality and the AI's squad-gap check all read this map, and
+      // each should prefer the player who can actually play there.
+      const positionRatings = fitRatingsByPosition(attributes, ratings);
 
       return new SquadPlayerView({
         id: row.id,

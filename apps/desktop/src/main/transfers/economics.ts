@@ -3,11 +3,12 @@ import {
   ALL_ATTRIBUTES,
   ageOn,
   figureByProgress,
-  overallRating,
+  overallRatingOverCells,
   projectLegacyPositions,
   transferValueFigureByProgress,
   type PlayerAttributes,
   type PlayerPosition,
+  type PositionalRatings,
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -48,6 +49,9 @@ export interface PlayerEcon {
    *  player; CONTEXT.md). Not itself a published figure: reads gate it through the Scouting
    *  Progress rule (Agent Note 2026-09-19). */
   readonly attributes: PlayerAttributes;
+  /** The player's twelve positional ratings. Main-process only: no view built from a `PlayerEcon`
+   *  may carry them, since no screen shows raw positional ratings. */
+  readonly positionalRatings: PositionalRatings;
   /** The canonical nation id (`nation_*`), as every wire name of a player's nation is — the
    *  renderer resolves it through `nationName`. */
   readonly nationality: string;
@@ -72,8 +76,9 @@ export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
     [],
   );
   return playerRows.map((row): PlayerEcon => {
+    const positionalRatings = positionalRatingsOf(row);
     // Transitional: the ten-Position list readers still expect, derived from the stored ratings.
-    const positions: ReadonlyArray<PlayerPosition> = projectLegacyPositions(positionalRatingsOf(row));
+    const positions: ReadonlyArray<PlayerPosition> = projectLegacyPositions(positionalRatings);
     const attributes = Object.fromEntries(
       ALL_ATTRIBUTES.map((attribute) => [attribute, row[attribute] ?? undefined]),
     ) as PlayerAttributes;
@@ -85,9 +90,10 @@ export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
       firstName: row.firstName,
       lastName: row.lastName,
       age: ageOn(row.dateOfBirth, on),
-      overallRating: overallRating(attributes, positions),
+      overallRating: overallRatingOverCells(attributes, positionalRatings),
       potentialAbility: row.potentialAbility,
       attributes,
+      positionalRatings,
       nationality: row.nationality,
       positions,
     };

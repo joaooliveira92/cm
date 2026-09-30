@@ -1,11 +1,14 @@
 import { Tactic, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
+  COMPETENT_SUITABILITY,
   FORMATIONS,
   FORMATION_SLOTS,
   POSITIONS,
   POSITION_ROLES,
+  POSITION_SLOT,
   selectBench,
   selectBestFormationXI,
+  suitability,
   transferValue,
   weeklyWage,
   type Formation,
@@ -214,9 +217,7 @@ export const runAiTransferWindow = (seasonNumber: number, gameDate: string) =>
           (player) =>
             player.clubId !== club.id &&
             !targetedThisWindow.has(player.id) &&
-            player.positions.some(
-              (p) => p.position === position && (p.familiarity === "natural" || p.familiarity === "competent"),
-            ),
+            suitability(player.positionalRatings, POSITION_SLOT[position]) >= COMPETENT_SUITABILITY,
         );
 
         const affordable = candidates

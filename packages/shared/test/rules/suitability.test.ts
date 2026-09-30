@@ -4,6 +4,8 @@ import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRa
 import type { Slot } from "../../src/rules/slots.js";
 import {
   familiarityOf,
+  fitRatingAt,
+  suitabilityFactor,
   overallRatingOverCells,
   positionRatingAt,
   suitability,
@@ -106,5 +108,30 @@ describe("overallRatingOverCells", () => {
     const player = attributes();
     const utility = ratings({ M: 16 }, { R: 16 });
     expect(overallRatingOverCells(player, utility)).toBe(positionRatingAt(player, cell("M", "R")));
+  });
+});
+
+describe("suitabilityFactor", () => {
+  it("is 1.0 at 20, 0.9 at 15 and 0.5 at 1, and never rises as suitability falls", () => {
+    expect(suitabilityFactor(20)).toBeCloseTo(1);
+    expect(suitabilityFactor(15)).toBeCloseTo(0.9);
+    expect(suitabilityFactor(1)).toBeCloseTo(0.5);
+    for (let value = 2; value <= 20; value += 1) {
+      expect(suitabilityFactor(value)).toBeGreaterThan(suitabilityFactor(value - 1));
+    }
+  });
+
+  it("falls faster below 15 than above it", () => {
+    expect(suitabilityFactor(15) - suitabilityFactor(10)).toBeGreaterThan(suitabilityFactor(20) - suitabilityFactor(15));
+  });
+});
+
+describe("fitRatingAt", () => {
+  it("rates a natural full-back above a better-attributed player who cannot play the flank", () => {
+    const rightBack = ratings({ D: 19 }, { R: 19 });
+    const centreBack = ratings({ D: 19 }, { C: 19 });
+    const modest = attributes({ tackling: 12, pace: 12, crossing: 12, positioning: 12, stamina: 12 });
+    const strong = attributes({ tackling: 16, pace: 16, crossing: 16, positioning: 16, stamina: 16 });
+    expect(fitRatingAt(modest, rightBack, cell("D", "R"))).toBeGreaterThan(fitRatingAt(strong, centreBack, cell("D", "R")));
   });
 });

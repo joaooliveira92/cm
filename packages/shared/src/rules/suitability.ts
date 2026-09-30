@@ -1,7 +1,7 @@
 import { POSITIONS, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
 import type { Line, PositionalRatings } from "./positionalRatings.js";
 import { weightedRating } from "./ratings.js";
-import { SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, weightTableOf, widthOf, type Slot } from "./slots.js";
+import { POSITION_SLOT, SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, weightTableOf, widthOf, type Slot } from "./slots.js";
 
 /**
  * The line a slot's row is rated against. D and DM on the flanks read the better of the row's line
@@ -47,6 +47,34 @@ export const familiarityAt = (ratings: PositionalRatings, slot: Slot): Familiari
 /** A player's 1-100 Position Rating in a cell: his Attributes weighted by the cell's row-and-width table. */
 export const positionRatingAt = (attributes: PlayerAttributes, slot: Slot): number =>
   weightedRating(attributes, SLOT_WEIGHTS[weightTableOf(slot)]);
+
+/**
+ * How much of a player's Position Rating in a cell survives his Suitability for it: 1.0 at 20,
+ * falling gently to 0.9 at 15, then steeply to 0.5 at 1. The shape is fixed; its points are tuning
+ * constants. The match engine's out-of-position cost reads the same curve. See the Agent Note
+ * `.agents/notes/proposed/architecture/2026-09-29-phase-strength-scales-with-coverage.md`.
+ */
+export const suitabilityFactor = (value: number): number =>
+  value >= COMPETENT_SUITABILITY
+    ? 0.9 + (0.1 * (value - COMPETENT_SUITABILITY)) / (20 - COMPETENT_SUITABILITY)
+    : 0.5 + (0.4 * (Math.max(1, value) - 1)) / (COMPETENT_SUITABILITY - 1);
+
+/** A player's Position Rating in a cell, scaled by how well he suits it: what selection reads. */
+export const fitRatingAt = (attributes: PlayerAttributes, ratings: PositionalRatings, slot: Slot): number =>
+  Math.round(positionRatingAt(attributes, slot) * suitabilityFactor(suitability(ratings, slot)));
+
+/**
+ * Transitional: the fit rating at each of the ten Positions' cells, the map Best XI and the AI's
+ * squad-gap check read while the Tactic is still built from Positions. Replaced by cells with the
+ * Tactic.
+ */
+export const fitRatingsByPosition = (
+  attributes: PlayerAttributes,
+  ratings: PositionalRatings,
+): Record<Position, number> =>
+  Object.fromEntries(
+    POSITIONS.map((position) => [position, fitRatingAt(attributes, ratings, POSITION_SLOT[position])]),
+  ) as Record<Position, number>;
 
 /**
  * Overall Rating over the grid: the best Position Rating among cells where the player is Natural. A
