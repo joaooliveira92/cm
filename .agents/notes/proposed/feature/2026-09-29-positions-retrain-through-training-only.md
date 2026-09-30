@@ -14,7 +14,7 @@ disuse, is not documented for CM 03/04 (see the
 ## Proposal
 
 The manager may set one retraining target per player: a line or a side. That rating rises gradually
-through the weekly training tick, faster for younger and more determined players; the rate is a
+once per Microcycle (at the human club's Matchday commit; the calendar has no weeks), faster for younger and more determined players; the rate is a
 tuning constant. Nothing decays from disuse, and ratings do not grow from match minutes. Retraining
 belongs to training, not to the end-of-season Player Development pass.
 
@@ -30,7 +30,7 @@ Either rejected mechanism may be added if later research shows CM 03/04 had it.
 
 ## Acceptance criteria
 
-- A player with a retraining target gains in that rating over weeks of training and in no other.
+- A player with a retraining target gains in that rating over Microcycles of training and in no other.
 - A player without one keeps identical positional ratings through a season.
 
 ## Risks

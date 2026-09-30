@@ -157,10 +157,10 @@ decided and built by the sibling effort.
 - **Squad demand.** About 25 per club: GK 3, centre-back 4, full-back 2+2 (a pair per side),
   defensive mid 2, central mid 3, wide mid 2, attacking mid 1, wide forward 2, striker 3. It replaces
   `SQUAD_COMPOSITION` and `ADJACENT_POSITIONS`; renumbered squad slots are a ruleset change.
-- **Retraining.** One line-or-side target per player, set by the manager, rising through the weekly
-  training tick at a rate that grows with youth and determination; nothing decays and nothing grows
-  from match minutes. **Retraining only: one line-or-side target per player, rising through the
-  weekly training tick, no decay, no growth from playing.** See
+- **Retraining.** One line-or-side target per player, set by the manager, rising once per Microcycle
+  at a rate that grows with youth and determination; nothing decays and nothing grows
+  from match minutes. **Retraining only: one line-or-side target per player, rising once per
+  Microcycle, no decay, no growth from playing.** See
   [Agent Note](../../.agents/notes/proposed/feature/2026-09-29-positions-retrain-through-training-only.md).
 - **Squad screens.** The position column shows the compact label, sorts by pitch order of the best
   line then side (R, L, C), groups by best natural line, and filters by "can play" (suitability 15 or
@@ -198,7 +198,7 @@ decided and built by the sibling effort.
   labels and suitability-based filters; no view or contract carries a raw positional rating; an
   older-schema save is refused with the schema-mismatch error. Prior art: the seeded-save world and
   club tests (import `createSave` from the seeded-save helper).
-- **Seam 3, retraining over the weekly training tick.** Advanced with the existing boundary helpers,
+- **Seam 3, retraining over played Microcycles.** Advanced with the existing boundary helpers,
   a player with a target gains only in that rating; one without keeps identical ratings through a
   season.
 - **Screens, lightly.** The squad table's position column, sort and filter behaviour, in the existing

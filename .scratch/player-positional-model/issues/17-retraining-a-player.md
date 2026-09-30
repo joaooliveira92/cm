@@ -30,5 +30,5 @@ existing boundary helpers.
 weeks), so progress advances once per Microcycle, at the human's Matchday commit, the unit the
 Training Schedule plans in. Verified: typecheck, lint and effect-lint (apart from a parallel
 session's staged file) pass; shared (619), contracts (233), the new main retraining test, and the
-renderer plus main club, season and rpc suites (2078) pass. The note's "weekly training tick"
-wording should read "each Microcycle" when the note is promoted in ticket 19.
+renderer plus main club, season and rpc suites (2078) pass. The retraining Agent Note and the
+spec were corrected to "once per Microcycle" in the same change.
