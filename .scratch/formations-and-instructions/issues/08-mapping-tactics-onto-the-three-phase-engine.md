@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 05, 06, 07
+Also waits on: [player-positional-model ticket 04](../../player-positional-model/issues/04-free-role.md) (the Free Role rating)
 
 ## Question
 

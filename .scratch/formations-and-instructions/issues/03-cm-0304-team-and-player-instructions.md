@@ -2,9 +2,11 @@
 
 Type: research
 Blocked by: None (can start immediately)
-Status: claimed
+Status: resolved
 
 ## Question
+
+Findings: [CM 03/04 team and player instructions](../../../docs/research/formations-and-instructions-cm0304-team-and-player-instructions.md)
 
 Establish, from primary or near-primary evidence, the full CM 03/04 instruction set: every team
 instruction and every per-player instruction, each with its exact value set and its in-game name.
@@ -37,3 +39,19 @@ Settle:
 Deliverable: one findings file under `docs/research/` via the `research` skill, and a context
 pointer appended to this ticket. Feeds tickets 06, 07, 08, 09 and 11. Decides nothing about this
 codebase.
+
+## Answer
+
+**No sliders anywhere: nine team instructions and fifteen player instructions, where a player
+inherits the team value for the five shared settings until he ticks an override.** Team:
+Passing (mixed/short/direct/long), Focus Passing (mixed/both flanks/left/right/through the middle),
+Tackling (normal/easy/hard), Closing Down (default/own half only/always), Mentality (normal/ultra
+defensive/defensive/attacking/gung ho), and Offside Trap, Zonal Marking, Counter Attack and Men
+Behind The Ball as on/off. Player overrides: Passing, Closing Down (adds stand off), Tackling,
+Marking (zonal/man/specific opponent), Mentality, plus goalkeeper Distribution, Cross From and
+Cross Aim. Player frequency flags (normal/often): Cross Ball, Long Shots, Forward Runs, Run With
+Ball, Try Through Balls, Free Role, Hold Up Ball. Seven shipped instruction templates (Goalkeeper,
+Central Defender, Full Back, Defensive Midfielder, Attacking Midfielder, Winger, Striker) fill the
+player screen as a convenience. Tempo, width, time wasting, a playmaker and a target man are not
+CM 03/04. Engine effects are community claims only; the manual was not found. Live-change timing
+and AI in-match behaviour are in the findings file. No Agent Note: fact-finding only.

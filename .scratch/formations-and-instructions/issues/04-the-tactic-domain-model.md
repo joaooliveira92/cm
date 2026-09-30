@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 02, 03
+Status: resolved
 
 ## Question
 
@@ -26,3 +27,11 @@ mutable tactical state:
 Glossary impact: rewrites **Formation**, **Tactic**, **Team Instructions**; adds **Formation
 Preset**, **Player Instruction**, **Saved Tactic** (names to be settled); removes **Role**, **Role
 Weights**, **Role Rating**.
+
+## Answer
+
+**A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot;
+built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is
+a template's contents plus assignments and bench, named by its source template, with "modified" and
+the row-count label derived; `ChangeTactics` carries the complete Tactic.** See
+[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).

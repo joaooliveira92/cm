@@ -17,7 +17,7 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 
 - **Sibling of [player-positional-model](../player-positional-model/map.md).** That effort owns
   which slots and positional lines exist. This one consumes its slot vocabulary (its ticket 05) and
-  must not re-decide it. Presets that use only today's slots are not blocked by it.
+  must not re-decide it. Since slots are grid cells, every preset waits on that ticket.
 - **CM 03/04 is the source of truth.** The pasted requirements list that opened the effort is a
   hypothesis for tickets 02 and 03, not a source. Keep the verified / inherited / later-FM labelling
   the positional effort uses.
@@ -48,16 +48,36 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 - [What formations CM 03/04 shipped, and what a tactic file held](issues/02-cm-0304-default-formations-and-tactic-files.md):
   29 presets (27 at retail) on a GK + 6-row by 5-column grid with no wing-back row; each player has a
   base cell and one run target; tactic files hold no player identities.
+- [What team and player instructions CM 03/04 had](issues/03-cm-0304-team-and-player-instructions.md):
+  no sliders; nine team instructions, player overrides of five of them plus crossing and
+  distribution, seven normal/often flags, seven UI-only instruction templates; no tempo or width.
+- [Inventory of Role consumers](issues/13-inventory-of-role-consumers.md): tactics domain and
+  `tactic_slots.role`, the engine's ±0.05 fit bump, the tactics screens, and contract offers plus the
+  `PlayerSigned` event, where the Role gives way to the Position it was derived from.
+- [The Tactic domain model](issues/04-the-tactic-domain-model.md): slots are CM grid cells with an
+  optional run; instructions per slot; presets and saved tactics are one Tactic Template type with no
+  players; the Tactic is a template plus players, and `ChangeTactics` carries all of it.
+- [The built-in formation preset set](issues/05-the-built-in-formation-preset-set.md): patch 4.1.3's
+  29 presets with exact cells and runs; all wait on the grid; preferred formation references one.
+- [The team instruction set](issues/06-the-team-instruction-set.md): CM's nine team instructions
+  replace the three sliders; Tactical Styles removed.
+- [The saved tactic library](issues/10-the-saved-tactic-library.md): in the save, manager-owned;
+  quick load keeps players by slot number; read-only built-ins.
+- [Player instructions, and what replaces Role Rating](issues/07-player-instructions-and-what-replaces-role-rating.md):
+  CM's per-player screen stored per slot; specific marking match-time only; CM's instruction templates
+  seed only the non-override instructions; no fit rating, effects read attributes.
+- [Transcribe CM's seven player-instruction templates](issues/14-transcribe-cm-instruction-templates.md):
+  values decoded from `tactical_templates.xml` (4.1.4 byte-identical); every template sets Passing,
+  Tackling and Mentality explicitly, so ticket 07 seeds only the non-override instructions.
 
 ## Not yet specified
 
 - **Set pieces.** Whether takers and set-piece routines belong to the Tactic.
   [group-f's decision request](../group-f-tactics-and-match-preparation/decision-request-01-are-set-pieces-in-scope.md)
   is still open; this effort should either consume its answer or rule set pieces out.
-- **Captain and other per-match designations** (penalty taker, playmaker, target man), if ticket 03
-  finds CM 03/04 stored them on the tactic.
-- **Opposition instructions** (tight marking of a named opponent, tackling a named opponent), if
-  CM 03/04 had them.
+- **Captain and set-piece takers.** CM 03/04's tactics screen had Set Priorities panels (captain,
+  penalty, free kick, corner and throw-in takers), but its tactic files did not store them. Decide
+  with set pieces whether they belong to the Tactic, the squad, or neither.
 - **Tactic familiarity**, meaning whether a squad plays a new shape worse until it has trained on it.
   Only if research shows CM 03/04 modelled it; otherwise out of scope.
 - **Scouting and reports.** The Team Scout Report predicts an opponent's shape from the old

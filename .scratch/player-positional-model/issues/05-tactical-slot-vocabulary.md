@@ -18,3 +18,14 @@ ten-value `Position` type. Decide the slot vocabulary a Tactic uses:
 
 Glossary impact: the **Formation**, **Role** and **Phase Strength** entries name the current slot
 set.
+
+## Input from formations-and-instructions (2026-09-29)
+
+That effort's [Tactic domain model](../../formations-and-instructions/issues/04-the-tactic-domain-model.md)
+decided that a Tactic's slot is a cell on CM 03/04's tactics grid: GK plus six outfield rows (SW, D,
+DM, M, AM, F) by five columns (L, LC, C, RC, R), with no wing-back row, verified from the shipped
+tactic files in
+[the formations research](../../../docs/research/formations-and-instructions-cm0304-formations-and-tactic-files.md).
+This ticket still owns the names and codes of those rows and columns and what each cell carries in
+the game-design tables. It no longer needs to decide whether SW, wide DM, wide AM and wide F cells
+are placeable: CM's presets use all of them.

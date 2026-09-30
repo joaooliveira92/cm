@@ -85,6 +85,10 @@ side, a derived suitability, a display label, or a broad category).
 - [What the CM 03/04 editor stores about a player's positions](issues/01-cm-0304-editor-positional-fields.md):
   independent 0-20 ratings for nine lines and three sides, no per-cell value; slot fit from line and
   side is unverified for CM 03/04 (CM 01/02 has per-slot special cases).
+- [The canonical positional representation](issues/03-canonical-positional-representation.md):
+  eight Line Ratings and three Side Ratings, 1-20, persisted in one row per player.
+- [Free Role](issues/04-free-role.md): a hidden twelfth 1-20 rating; the instruction lives in
+  formations-and-instructions.
 
 ## Not yet specified
 

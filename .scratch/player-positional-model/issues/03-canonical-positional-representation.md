@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 01
+Status: resolved
 
 ## Question
 
@@ -23,3 +24,9 @@ Also settle, as part of the same choice:
 - the table shape that replaces `player_positions`.
 
 Record the answer as the successor to the Position entry in `CONTEXT.md`, via `domain-modeling`.
+
+## Answer
+
+**Line × side, as CM stored it: eight 1-20 Line Ratings (GK, SW, D, DM, M, AM, F, WB) and three 1-20
+Side Ratings (R, L, C), persisted like Attributes but not Attributes, in one row per player replacing
+`player_positions`.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-players-store-cm-line-and-side-ratings.md). `CONTEXT.md` is updated when the code ships.
