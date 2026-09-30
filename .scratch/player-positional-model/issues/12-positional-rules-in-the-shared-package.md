@@ -32,3 +32,10 @@ Testing Decisions, seam 1.
 - [ ] Every one of the 31 cells resolves to exactly one weights table and one phase; the four new tables exist with a comment marking them as design values.
 - [ ] Phase by row agrees with today's phase table for all ten mapped Positions.
 - [ ] `pnpm check:all` is green.
+
+## Comments
+
+2026-09-29: shipped in 8b2692a8 and review fixes ca2b214f. Verified: `pnpm -r typecheck` and oxlint
+exit 0; shared (601 + new), game-engine and contracts suites pass. The desktop suite was not waited
+on, at the user's instruction: this ticket adds pure code with no caller yet. effect-lint's one
+violation (`actionsRowClasses.ts`) is in a parallel session's staged file, not this change.
