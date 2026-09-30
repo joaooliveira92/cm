@@ -39,6 +39,8 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 
 ## Decisions so far
 
+> Map complete 2026-09-30; the spec is next.
+
 <!-- one line per closed ticket: gist, then link to the ticket file -->
 
 - [Effort scope and binding decisions](issues/01-effort-scope-and-binding-decisions.md): sibling
@@ -87,6 +89,8 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 - [Transcribe CM's set-piece screens](issues/19-transcribe-cm-set-piece-screens.md): every setting has a
   "(default)" state; player roles are attack/defend for free kicks and corners plus per-side
   attacking throw-ins; eight uncapped priority lists; five mismatches with ticket 18 raised.
+- [The Tactics screen](issues/12-the-tactics-screen.md): CM 03/04's own layout, approved from
+  prototype variant A (branch `prototype/tactics-screen`).
 
 ## Not yet specified
 

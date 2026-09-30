@@ -2,7 +2,7 @@
 
 Type: prototype
 Blocked by: 05, 06, 07, 18, 19
-Status: claimed
+Status: resolved
 
 ## Question
 
@@ -18,4 +18,12 @@ Four variants on branch `prototype/tactics-screen` (8212726f), also present unco
 worktree while under review: A CM classic, B tabbed workspace, C slot spreadsheet, D live match. On
 stub data (CM 03/04's 29 presets, a fake squad), mounted on the Tactics editor route behind
 `?variant=` in development builds only; a "Tactics prototype →" button on the live editor opens it.
-Awaiting the human's verdict.
+Variant A was rebuilt on CM 03/04 screenshots the human supplied (fb5a1e1b) and approved on
+2026-09-30; the prototype was removed from dev and stays on the branch.
+
+## Answer
+
+**The Tactics screen follows CM 03/04's own layout (prototype variant A): File and View menus, Set
+Positions / Set Instructions / Set Priorities modes, a Team Selection list always on the left, CM's
+tick-box-plus-dropdown instruction rows, and the same screen in match with Confirm, Undo Last and
+Cancel.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-30-tactics-screen-follows-cm-0304-layout.md).
