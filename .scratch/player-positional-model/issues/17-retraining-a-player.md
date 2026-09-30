@@ -16,10 +16,19 @@ existing boundary helpers.
 
 **Blocked by:** 13
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Setting a target for a player outside the manager's club fails with a typed error the screen shows.
-- [ ] Over several weeks of advancing, a targeted rating rises and no other positional rating changes.
-- [ ] A player without a target keeps identical positional ratings through a season.
-- [ ] A younger, more determined player gains faster than an older one with the same target.
-- [ ] `pnpm check:all` is green, and the player-screen e2e spec passes.
+- [x] Setting a target for a player outside the manager's club fails with a typed error the screen shows.
+- [x] Over several weeks of advancing, a targeted rating rises and no other positional rating changes.
+- [x] A player without a target keeps identical positional ratings through a season.
+- [x] A younger, more determined player gains faster than an older one with the same target.
+- [x] `pnpm check:all` is green, and the player-screen e2e spec passes.
+
+## Comments
+
+2026-09-29: shipped in d87f20f1. The ticket's "weekly training tick" does not exist (the calendar has no
+weeks), so progress advances once per Microcycle, at the human's Matchday commit, the unit the
+Training Schedule plans in. Verified: typecheck, lint and effect-lint (apart from a parallel
+session's staged file) pass; shared (619), contracts (233), the new main retraining test, and the
+renderer plus main club, season and rpc suites (2078) pass. The note's "weekly training tick"
+wording should read "each Microcycle" when the note is promoted in ticket 19.
