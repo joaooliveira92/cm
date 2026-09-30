@@ -62,7 +62,7 @@ const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
  * seed's property on every run and fail with that instruction, rather than silently asserting
  * against a match that no longer has the shape the test needs.
  */
-const INJURY_SEED = 1;
+const INJURY_SEED = 12;
 const INJURY_FREE_SEED = 3;
 const CLEAN_LINEUP_SEED = 3;
 /** For the tests that hold whatever the match happens to produce — they assert on replay equality

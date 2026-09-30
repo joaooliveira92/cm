@@ -23,16 +23,17 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * A match seed on the first Fixture of `WORLD_SEED` where the opening chunk (lines 0-8, up to half
- * time) holds a Goal at line 1, and the second chunk (lines 9-18, to full time) opens with a red
- * card for the human club at line 9 and holds two Injuries. A score or head-count read from the end
+ * A match seed on the first Fixture of `WORLD_SEED` where the opening chunk (up to half time at
+ * `HALF_TIME_LINE`) holds the match's only Goal at `GOAL_LINE`, and the chunk read from
+ * `RED_CARD_LINE` opens with the human club's red card to an outfielder and holds the match's two
+ * Injuries. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. A score or head-count read from the end
  * of the chunk would show each before its line. The tests re-check the property from the Commentary
  * Lines and name this constant when it no longer holds.
  */
-const SEED = 550;
-const GOAL_LINE = 1;
-const HALF_TIME_LINE = 8;
-const RED_CARD_LINE = 9;
+const SEED = 85876;
+const GOAL_LINE = 3;
+const HALF_TIME_LINE = 9;
+const RED_CARD_LINE = 12;
 
 const repin = `repin SEED (${SEED})`;
 

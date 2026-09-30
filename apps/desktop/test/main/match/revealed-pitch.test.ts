@@ -30,16 +30,16 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * A match seed on the first Fixture of `WORLD_SEED` where the human club has a player sent off
- * (the match's 10th Match Event, minute 53) and later a severe Injury (17th, minute 84) forces a
- * substitution from outside the starting XI (18th). Found by enumerating seeds over
- * `simulateMatch` with the kickoff setups. The test re-checks each part of the property from the
- * Commentary Lines and names this constant when one no longer holds.
+ * A match seed on the first Fixture of `WORLD_SEED` where the human club has a starter sent off
+ * (line `RED_CARD_LINE`) and later a severe Injury to another starter (`INJURY_LINE`) forces a
+ * substitution from outside the starting XI (`FORCED_SUB_LINE`). Found by enumerating seeds over
+ * `deriveMatchEvents` with the kickoff setups. The test re-checks each part of the property from the
+ * Commentary Lines and names this constant when one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
  */
-const RED_CARD_THEN_FORCED_SUB_SEED = 550;
-const RED_CARD_LINE = 9;
-const INJURY_LINE = 16;
-const FORCED_SUB_LINE = 17;
+const RED_CARD_THEN_FORCED_SUB_SEED = 583;
+const RED_CARD_LINE = 4;
+const INJURY_LINE = 14;
+const FORCED_SUB_LINE = 15;
 
 const repin = `repin RED_CARD_THEN_FORCED_SUB_SEED (${RED_CARD_THEN_FORCED_SUB_SEED})`;
 

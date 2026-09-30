@@ -85,15 +85,19 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
 };
 
 /**
- * Seed 455: after the manager's substitutions at minutes 1-3 (every window used) and a minute-3
- * bring-off of the only goalkeeper, which drags an outfield player into goal, that stand-in suffers
- * a severe Injury at minute 89 (the 21st Match Event). No substitution is left, so a second outfield
- * player is dragged into goal. Found by enumerating seeds 1-20000 over `deriveMatchEvents`.
+ * Seed 194: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
+ * bench in `STAND_IN_BENCH_ORDER`) and a minute-3 bring-off of the only goalkeeper, which drags an
+ * outfield player into goal, that stand-in suffers a severe Injury (`STAND_IN_INJURY_LINE`). No
+ * substitution is left, so a second outfield player is dragged into goal. Found by enumerating seeds
+ * and bench orders over `deriveMatchEvents`: with the bench in its own order no seed up to 100000
+ * injures the stand-in the drag picks. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
  * Re-pinned for group-g-match-day ticket 35: seed 26 held this while the three substitutions brought
  * on the first squad players outside the XI; they now come off the named bench, which moves the rolls.
  */
-const GOALKEEPER_STAND_IN_SEED = 455;
-const STAND_IN_INJURY_LINE = 20;
+const GOALKEEPER_STAND_IN_SEED = 194;
+const STAND_IN_INJURY_LINE = 18;
+/** Which bench entries come on at minutes 1, 2 and 3; the first is the one later dragged into goal. */
+const STAND_IN_BENCH_ORDER = [1, 0, 2] as const;
 
 it.effect(
   "goalkeeper stand-ins spend no substitution, and a severe goalkeeper Injury at the cap reads unreplaced",
@@ -102,7 +106,7 @@ it.effect(
       const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
       const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
       for (const minute of [1, 2, 3]) {
-        const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[minute - 1]!));
+        const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[STAND_IN_BENCH_ORDER[minute - 1]!]!));
         strictEqual(response.substitutionApplied, true, repin);
       }
       const keeperOff = yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper });
@@ -139,7 +143,7 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
     const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
     const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
     for (const minute of [1, 2, 3]) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[minute - 1]!));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[STAND_IN_BENCH_ORDER[minute - 1]!]!));
       strictEqual(response.substitutionApplied, true, repin);
     }
     strictEqual((yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper })).forceOffApplied, true, repin);
@@ -181,11 +185,13 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
 );
 
 /**
- * Seed 550: the human club's only substitution is forced by an Injury at minute 84: the 17th Match
- * Event, right after the Injury. Pinned for ticket 18 and 19 specs.
+ * Seed 302: the human club's only substitution is forced by a severe Injury (`FORCED_SUB_INJURY_LINE`),
+ * right after it, and the club also takes a knock in the second half; with the manager's three
+ * early substitutions, nothing happens in minute 45 or first-half stoppage. Pinned for ticket 18 and
+ * 19 specs. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
  */
-const FORCED_SUB_SEED = 550;
-const FORCED_SUB_INJURY_LINE = 16;
+const FORCED_SUB_SEED = 302;
+const FORCED_SUB_INJURY_LINE = 11;
 
 it.effect("a severe Injury a substitute came on for reads replaced", () =>
   Effect.gen(function* () {
