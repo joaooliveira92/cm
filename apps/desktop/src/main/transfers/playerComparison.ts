@@ -22,7 +22,8 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { ALL_ATTRIBUTES, figureByProgress, progressForReading, transferValueFigureByProgress } from "@cm-clone/shared";
+import {
+  positionSummaryOf, ALL_ATTRIBUTES, figureByProgress, progressForReading, transferValueFigureByProgress } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -140,6 +141,7 @@ const toComparisonRow = (
     clubId: player.clubId,
     clubName: player.clubName,
     positions: player.positions.map((position) => ({ position: position.position, familiarity: position.familiarity })),
+    ...positionSummaryOf(player.positionalRatings),
     attributes,
     overallRating: figureByProgress(player.overallRating, progress),
     transferValue: transferValueFigureByProgress(

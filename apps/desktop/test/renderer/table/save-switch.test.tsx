@@ -18,6 +18,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { readTableSession, resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseOptionByLabel, comboboxByLabel, selectValueOf } from "../../setup/baseUiSelect.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -43,6 +44,7 @@ const marketPlayer = (
   overallRating: { _tag: "exact", value: 78 },
   transferValue: { _tag: "exact", value: transferValue },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
 });
 
 const transfersView = () => ({
@@ -120,7 +122,7 @@ describe("AC-27 (review F-8) — table session state never leaks across a save s
     fireEvent.click(within(marketGroup).getByRole("button", { name: "OVR" }));
     expect(marketGroup.querySelector("th[aria-sort]")).toBeTruthy();
 
-    await chooseOptionByLabel(/Filter Market by position/, "DC");
+    await chooseOptionByLabel(/Filter Market by position/, "Defender (centre)");
     const row = document.querySelector(
       '[data-focus-id="transfers.marketTable.mp2"]',
     ) as HTMLElement;
@@ -137,7 +139,7 @@ describe("AC-27 (review F-8) — table session state never leaks across a save s
       direction: "asc",
     });
     expect(readTableSession("transfer-market")?.filters).toEqual([
-      { _tag: "position", position: "DC" },
+      { _tag: "position", position: "D C" },
     ]);
     expect(readTableSession("transfer-market")?.focusBookmark).not.toBeNull();
 

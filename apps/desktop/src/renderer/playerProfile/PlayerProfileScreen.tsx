@@ -21,9 +21,7 @@ import {
   CATEGORY_ATTRIBUTES,
   type Attribute,
   type Category,
-  type FamiliarityTier,
 } from "@cm-clone/shared";
-import { KeyValueKey, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { formatFigure, formatFigureCredits } from "../format.js";
 import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
 import { injuryLabel } from "../player/injury.js";
@@ -37,16 +35,6 @@ const CATEGORY_LABELS: Record<Category, string> = {
   physical: "Physical",
   technical: "Technical",
 };
-
-/** The tone a Familiarity Tier reads in, the same colours as the Squad screen's position list. The
- *  list adds a pill to Natural because it shows no tier label; here the label sits beside the code. */
-const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
-  natural: "text-text-highlight",
-  competent: "text-text-secondary",
-  unfamiliar: "text-text-muted",
-};
-
-const tierLabel = (tier: string): string => tier.charAt(0).toUpperCase() + tier.slice(1);
 
 /**
  * One Category's column. Goalkeeping Attributes are absent — not zero — for an outfield player
@@ -79,20 +67,12 @@ const AttributeColumn = ({
   );
 };
 
-/** The positions strip: every Position the player can fill, toned by Familiarity Tier, with the
- *  tier spelled out in text beside it — never colour alone. */
+/** The positions panel: CM's compact label, and every position filter the player can play
+ *  (Suitability 15 or more). Never the ratings behind them, which no screen shows. */
 const PositionsPanel = ({ profile }: { readonly profile: PlayerProfileView }) => (
   <PlayerPanel title="Positions">
-    {profile.positions.length === 0 ? (
-      <PlayerRow label="Positions" value="None recorded" />
-    ) : (
-      profile.positions.map((entry) => (
-        <KeyValueRow key={entry.position} className="py-0.5">
-          <KeyValueKey className={FAMILIARITY_TONE[entry.familiarity]}>{entry.position}</KeyValueKey>
-          <KeyValueValue className="text-text-highlight">{tierLabel(entry.familiarity)}</KeyValueValue>
-        </KeyValueRow>
-      ))
-    )}
+    <PlayerRow label="Position" value={profile.positionLabel === "" ? "None recorded" : profile.positionLabel} />
+    <PlayerRow label="Can play" value={profile.canPlay.length === 0 ? "None" : profile.canPlay.join(", ")} />
   </PlayerPanel>
 );
 

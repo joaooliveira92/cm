@@ -22,6 +22,7 @@ import {
 } from "../../../src/renderer/actions/allActions.js";
 import { hasActionHandler, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { MATCH_COLOURS } from "../match/matchColours.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (id: string) => SaveId.make(id);
 
@@ -46,6 +47,9 @@ const marketPlayer = (id: string, club: boolean) => ({
   overallRating: { _tag: "exact", value: 78 },
   transferValue: { _tag: "exact", value: 1200000 },
   positions: [],
+  positionLabel: "",
+  canPlay: [],
+  positionOrder: 0,
 });
 
 const transfersView = () => ({
@@ -95,6 +99,7 @@ const contractOffer = () => ({
   lastName: "FA",
   age: 24,
   positions: [{ position: "ST" as const, familiarity: "natural" as const }],
+  ...positionSummaryFor("ST" as const),
   overallRating: { _tag: "exact" as const, value: 78 },
   transferValue: { _tag: "exact" as const, value: 1200000 },
   wage: { _tag: "exact" as const, value: 5000 },

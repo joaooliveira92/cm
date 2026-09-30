@@ -6,7 +6,7 @@ import {
 import { Schema } from "effect";
 import { ClubSummary } from "./clubs.js";
 import { PlayerId, ClubId } from "./ids.js";
-import { PlayerPositionView } from "./squad.js";
+import { PositionSummaryFields, PlayerPositionView } from "./squad.js";
 import { PlayerFigureSchema } from "./transfers.js";
 
 export class PlayerContractView extends Schema.Class<PlayerContractView>("PlayerContractView")({
@@ -53,6 +53,7 @@ export class PlayerProfileView extends Schema.Class<PlayerProfileView>("PlayerPr
   nationality: Schema.String,
   birthplace: Schema.NullOr(Schema.String),
   positions: Schema.Array(PlayerPositionView),
+  ...PositionSummaryFields,
   attributes: AttributeFiguresSchema,
   overallRating: PlayerFigureSchema,
   transferValue: PlayerFigureSchema,

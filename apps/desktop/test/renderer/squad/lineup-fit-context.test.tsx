@@ -33,6 +33,7 @@ import {
   SQUAD_PROTECTED_COLUMN_IDS,
 } from "../../../src/renderer/table/features/visibility.js";
 import { SQUAD_FIT_COLUMN_ID } from "../../../src/renderer/table/squad/squadColumns.js";
+import { positionSummaryFor, suitabilityFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -58,9 +59,10 @@ const player = (
   age: 25,
   attributes: attributes(12),
   positions: [{ position, familiarity }],
+  ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { [position]: 74 },
-  suitability: {},
+  suitability: suitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
@@ -152,8 +154,9 @@ const drawnNames = (): string[] =>
   drawnOrder().map((id) => [...BY_NAME.entries()].find(([, v]) => v === id)?.[0] ?? id);
 
 const UNSORTED = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot"];
-/** Natural before Competent before Unfamiliar, then everyone who cannot play DC. */
-const FITTING_FIRST = ["Alpha", "Echo", "Charlie", "Bravo", "Delta", "Foxtrot"];
+/** Natural before Competent, then everyone who cannot play DC (Charlie is Unfamiliar there) in the
+ *  order they already had. */
+const FITTING_FIRST = ["Alpha", "Echo", "Bravo", "Charlie", "Delta", "Foxtrot"];
 
 /** 4-4-2 names DC twice, so the slot under test is found by position, not by index. */
 const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "DC slot" })[0]!;
@@ -218,7 +221,7 @@ describe("selecting an empty starter slot", () => {
 
     expect(markFor("Alpha")).toBe("Fits DC, Natural");
     expect(markFor("Echo")).toBe("Fits DC, Competent");
-    expect(markFor("Charlie")).toBe("Fits DC, Unfamiliar");
+    expect(markFor("Charlie")).toBeNull();
     expect(markFor("Bravo")).toBeNull();
     expect(markFor("Foxtrot")).toBeNull();
   });
@@ -370,11 +373,10 @@ describe("the fit mark", () => {
     selectDc();
 
     const marks = screen.getAllByTestId("squad-fit-mark");
-    expect(marks).toHaveLength(3);
+    expect(marks).toHaveLength(2);
     expect(marks.map((mark) => mark.querySelector(".sr-only")!.textContent)).toEqual([
       "Fits DC, Natural",
       "Fits DC, Competent",
-      "Fits DC, Unfamiliar",
     ]);
     // The star itself is decoration: announcing "black star" would be the wrong answer.
     expect(marks[0]!.querySelector("[aria-hidden]")!.textContent).toBe("★");

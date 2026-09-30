@@ -17,14 +17,14 @@ and suitability are derived on read from data the read already holds.
 
 **Blocked by:** 13
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Every listed screen shows the label from one shared function.
-- [ ] Sorting the position column orders GK first and F/S last, then by side R, L, C.
-- [ ] A filter for D R returns exactly the players whose suitability for the D R cell is 15 or more, including a wing-back whose D line is below 15 but whose WB line qualifies him.
-- [ ] A contract-level test asserts no view schema exposes Line, Side or Free Role Ratings.
-- [ ] Renderer tests for the squad table's column, sort and filter pass.
-- [ ] `pnpm check:all` is green, and the affected e2e specs pass.
+- [x] Every listed screen shows the label from one shared function.
+- [x] Sorting the position column orders GK first and F/S last, then by side R, L, C.
+- [x] A filter for D R returns exactly the players whose suitability for the D R cell is 15 or more, including a wing-back whose D line is below 15 but whose WB line qualifies him.
+- [x] A contract-level test asserts no view schema exposes Line, Side or Free Role Ratings.
+- [x] Renderer tests for the squad table's column, sort and filter pass.
+- [x] `pnpm check:all` is green, and the affected e2e specs pass.
 
 ## Comments
 

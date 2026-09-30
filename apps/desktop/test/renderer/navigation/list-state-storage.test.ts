@@ -62,11 +62,11 @@ describe("list-state-storage", () => {
 
     it("round-trips a status clause beside a position clause", () => {
       const filters = [
-        { _tag: "position", position: "DC" },
+        { _tag: "position", position: "D C" },
         { _tag: "status", status: "Tir" },
       ] as const;
       const encoded = toEncodedListState({ filters });
-      expect(encoded.filters).toBe("pos:DC,status:Tir");
+      expect(encoded.filters).toBe("pos:D C,status:Tir");
       expect(decodeListState(encodeListState(encoded)).filters).toEqual(filters);
     });
 
@@ -79,12 +79,12 @@ describe("list-state-storage", () => {
 
     it("round-trips an attribute clause beside position and status", () => {
       const filters = [
-        { _tag: "position", position: "DC" },
+        { _tag: "position", position: "D C" },
         { _tag: "status", status: "Tir" },
         { _tag: "attribute", attribute: "pace", min: 15 },
       ] as const;
       const encoded = toEncodedListState({ filters });
-      expect(encoded.filters).toBe("pos:DC,status:Tir,attr:pace:15");
+      expect(encoded.filters).toBe("pos:D C,status:Tir,attr:pace:15");
       expect(decodeListState(encodeListState(encoded)).filters).toEqual(filters);
     });
 
@@ -98,10 +98,10 @@ describe("list-state-storage", () => {
 
     it("keeps one clause per Attribute, the last part winning for a repeated key", () => {
       const decoded = decodeListState(
-        new URLSearchParams({ filters: "attr:pace:15,pos:DC,attr:strength:12,attr:pace:17" }),
+        new URLSearchParams({ filters: "attr:pace:15,pos:D C,attr:strength:12,attr:pace:17" }),
       );
       expect(decoded.filters).toEqual([
-        { _tag: "position", position: "DC" },
+        { _tag: "position", position: "D C" },
         { _tag: "attribute", attribute: "strength", min: 12 },
         { _tag: "attribute", attribute: "pace", min: 17 },
       ]);

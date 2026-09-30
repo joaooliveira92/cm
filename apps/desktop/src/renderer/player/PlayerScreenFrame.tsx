@@ -75,11 +75,9 @@ const PlayerTabStrip = ({
   </nav>
 );
 
-/** "DC, DR" — every Position the player can fill, in the order the read carries them. */
+/** CM's compact position label ("D/DM RC"), the banner's position fact. */
 export const positionsLine = (profile: PlayerProfileView): string =>
-  profile.positions.length === 0
-    ? "No recorded position"
-    : profile.positions.map((entry) => entry.position).join(", ");
+  profile.positionLabel === "" ? "No recorded position" : profile.positionLabel;
 
 /** CM's banner — name and club, the facts line beneath — drawn in the career navbar's identity
  *  slot, with the player's standing facts in the band below it, for as long as the player screen

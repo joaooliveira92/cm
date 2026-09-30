@@ -131,7 +131,7 @@ describe("sorting the position list", () => {
       squadPlayer("p8", "Lou", "DL"),
     ]);
 
-    await chooseOptionByLabel("Sort squad", "Positions");
+    await chooseOptionByLabel("Sort squad", "Position");
 
     expect(rowNames()).toEqual([
       "Player, Gus",

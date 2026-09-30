@@ -12,6 +12,7 @@ import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { getScreenIdentity } from "../../../src/renderer/screenIdentity.js";
 import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (id: string): SaveId => SaveId.make(id);
 const cid = (id: string): ClubId => ClubId.make(id);
@@ -49,6 +50,7 @@ const rangedPlayer = (id: string) => ({
   age: 27,
   attributes: outfieldFigures({ _tag: "range", low: 8, high: 20 }),
   positions: [{ position: "MC", familiarity: "natural" }],
+  ...positionSummaryFor("MC"),
   overallRating: { _tag: "range", low: 50, high: 98 },
   nationality: "Portugal",
   birthplace: "Porto",
@@ -62,6 +64,7 @@ const exactPlayer = (id: string) => ({
   age: 27,
   attributes: outfieldFigures({ _tag: "exact", value: 12 }),
   positions: [{ position: "MC", familiarity: "natural" }],
+  ...positionSummaryFor("MC"),
   overallRating: { _tag: "exact", value: 74 },
   nationality: "Portugal",
   birthplace: "Porto",

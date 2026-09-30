@@ -11,6 +11,7 @@ import {
   swapLineupSlots,
   unselectedPlayerIds,
 } from "../../../src/renderer/squad/lineupEdits.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const pid = (s: string) => PlayerId.make(s);
 
@@ -155,6 +156,7 @@ describe("assistantLineupOf", () => {
   const player = (id: string, position: Position, rating: number, keeper = false): BenchCandidate<PlayerId> => ({
     id: pid(id),
     positions: [{ position, familiarity: "natural" }],
+    ...positionSummaryFor(position),
     positionRatings: keeper ? { GK: rating } : { [position]: rating, GK: 1 },
   });
   const squad = [

@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, screen, within } from "@testing-library/react";
+import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
@@ -31,6 +31,7 @@ import {
   toggleColumn,
 } from "../../../src/renderer/table/features/visibility.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -54,6 +55,7 @@ const squadPlayer = (id: string, name: string, condition: number) => ({
   age: 25,
   attributes: attributes(12),
   positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(POSITIONS[2]),
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
@@ -197,30 +199,30 @@ describe("the Status column in the Squad table", () => {
 });
 
 describe("the abbreviation legend (Term Disclosure)", () => {
-  it("expands from the Status header without a mouse and lists every reserved slot", async () => {
+  it("opens from the Status header as a modal and lists every reserved slot", async () => {
     await mountSquad(squadView([squadPlayer("p1", "Alan", FRESH)]));
     await screen.findByText(/Alan Player/);
 
     const header = screen.getByRole("button", { name: /abbreviation legend/i });
-    expect(header.getAttribute("aria-expanded")).toBe("false");
-    const legendId = header.getAttribute("aria-controls")!;
-    expect(document.getElementById(legendId)).toBeNull();
+    expect(header.getAttribute("aria-haspopup")).toBe("dialog");
+    expect(screen.queryByRole("dialog")).toBeNull();
 
     // A button, so Enter/Space activate it in the ordinary keyboard way.
     fireEvent.click(header);
-    expect(screen.getByRole("button", { name: /abbreviation legend/i }).getAttribute("aria-expanded")).toBe("true");
-
-    const legend = document.getElementById(legendId)!;
+    const dialog = await screen.findByRole("dialog", { name: "Status abbreviations" });
     for (const status of RESERVED_STATUSES) {
-      expect(within(legend).getByText(status.abbreviation)).toBeTruthy();
-      expect(legend.textContent).toContain(status.term);
+      expect(within(dialog).getByText(status.abbreviation)).toBeTruthy();
+      expect(dialog.textContent).toContain(status.term);
     }
     // The reservation reads as a contract, not a promise.
-    expect(legend.textContent).toContain("Reserved — unlikely");
-    expect(legend.textContent).toContain("Shown today");
+    expect(dialog.textContent).toContain("Reserved — unlikely");
+    expect(dialog.textContent).toContain("Shown today");
 
-    fireEvent.click(screen.getByRole("button", { name: /abbreviation legend/i }));
-    expect(document.getElementById(legendId)).toBeNull();
+    // A modal closes through its own control, not by a second press of the header.
+    fireEvent.click(within(dialog).getByRole("button", { name: "Close" }));
+    await waitFor(() => {
+      expect(screen.queryByRole("dialog")).toBeNull();
+    });
   });
 });
 

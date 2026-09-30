@@ -29,6 +29,9 @@ const freeAgent = (id: string) => ({
   overallRating: { _tag: "exact", value: 78 },
   transferValue: { _tag: "exact", value: 1_200_000 },
   positions: [],
+  positionLabel: "",
+  canPlay: [],
+  positionOrder: 0,
 });
 
 const transfersView = () => ({

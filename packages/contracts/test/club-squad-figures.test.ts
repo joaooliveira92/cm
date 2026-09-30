@@ -21,6 +21,9 @@ const playerBase = {
   lastName: "Costa",
   age: 27,
   positions: [{ position: "MC", familiarity: "natural" }],
+  positionLabel: "M C",
+  canPlay: ["M C"],
+  positionOrder: 14,
   nationality: "Portugal",
   birthplace: "Porto",
 };

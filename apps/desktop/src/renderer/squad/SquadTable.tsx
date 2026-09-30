@@ -1,5 +1,5 @@
 import { useEffect, useMemo } from "react";
-import { POSITIONS } from "@cm-clone/shared";
+import { POSITION_FILTERS, positionFilterName } from "@cm-clone/shared";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
 import { Button, buttonVariants } from "../components/ui/button.js";
@@ -17,7 +17,6 @@ import { useSquadBottomBar } from "./squadBottomBar.js";
 import { SquadRoster } from "./SquadRoster.js";
 import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
 import { SQUAD_VIEWS, squadViewById } from "./squadViews.js";
-import { POSITION_NAMES } from "../positionNames.js";
 import { SquadPositionList } from "./SquadPositionList.js";
 import { SquadSortSelect } from "./SquadSortSelect.js";
 import { MatchDayBar } from "./MatchDayBar.js";
@@ -27,7 +26,7 @@ import { AttributeFilterDialog } from "./AttributeFilterDialog.js";
 import { writeLineupDrag } from "./lineupDrag.js";
 import type { LineupFitReadout } from "./lineupFit.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
-import { MODELED_STATUSES, StatusLegend } from "../table/squad/playerStatus.js";
+import { MODELED_STATUSES, StatusLegendDialog } from "../table/squad/playerStatus.js";
 import { activeFilterCount } from "../table/viewState.js";
 import type { TableStateCopy } from "../table/viewState.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
@@ -41,7 +40,7 @@ const REGION = "squadTable";
 
 const POSITION_CHOICES: readonly ToolbarChoice[] = [
   { value: "", label: "All positions" },
-  ...POSITIONS.map((position) => ({ value: position, label: position, detail: POSITION_NAMES[position] })),
+  ...POSITION_FILTERS.map((position) => ({ value: position, label: position, detail: positionFilterName(position) })),
 ];
 
 const STATUS_CHOICES: readonly ToolbarChoice[] = [
@@ -279,7 +278,7 @@ const FitContextLine = ({
  *  two-column position list or the DataTable, whichever the chosen view draws.
  *  Owns no state — everything flows from the SquadProvider context. */
 export const SquadTable = () => {
-  const { state, actions, meta, lineup } = useSquad();
+  const { state, actions, lineup } = useSquad();
   const {
     allPlayers,
     filters,
@@ -311,13 +310,13 @@ export const SquadTable = () => {
     setPositionFilter,
     setStatusFilter,
     setAttributeFilters,
+    setLegendExpanded,
     countWithAttributeFilters,
     setView,
     toggleOneColumn,
     clearFilterCommand,
     clearFitContext,
   } = actions;
-  const { STATUS_LEGEND_ID } = meta;
 
   if (viewState._tag === "LoadError") {
     return (
@@ -471,7 +470,7 @@ export const SquadTable = () => {
             />
           )}
           <FitContextLine fit={fit} onClear={clearFitContext} />
-          {legendExpanded && <StatusLegend id={STATUS_LEGEND_ID} />}
+          <StatusLegendDialog open={legendExpanded} onOpenChange={setLegendExpanded} />
 
           {view.layout === "list" ? (
             <SquadPositionList />

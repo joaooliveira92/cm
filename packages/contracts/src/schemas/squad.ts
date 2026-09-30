@@ -6,6 +6,7 @@ import {
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
   POSITIONS,
+  POSITION_FILTERS,
   RETRAINING_TARGETS,
 } from "@cm-clone/shared";
 
@@ -14,6 +15,17 @@ import { PlayerId } from "./ids.js";
 
 export const PositionSchema = Schema.Literals(POSITIONS);
 export const FamiliarityTierSchema = Schema.Literals(FAMILIARITY_TIERS);
+
+/** A position filter: a row, and for outfield rows but the sweeper a side (`D R`, `GK`). */
+export const PositionFilterSchema = Schema.Literals(POSITION_FILTERS);
+
+/** What a player view carries about positions in place of the ratings no screen shows: CM's compact
+ *  label, the filters he can play (Suitability 15 or more), and his pitch-order sort key. */
+export const PositionSummaryFields = {
+  positionLabel: Schema.String,
+  canPlay: Schema.Array(PositionFilterSchema),
+  positionOrder: Schema.Finite,
+};
 
 
 /** The four Attribute Categories a Training Focus may name (Player Development / Training Focus). */
@@ -53,6 +65,7 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   age: Schema.Finite,
   attributes: AttributesSchema,
   positions: Schema.Array(PlayerPositionView),
+  ...PositionSummaryFields,
   overallRating: Schema.Finite,
   /** The player's 1-100 fit rating at each Position: Position Rating scaled by Suitability, the map
    *  selection reads. */

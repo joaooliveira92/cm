@@ -38,6 +38,7 @@ import {
   REVEAL_INTERVAL_MS,
 } from "../../../src/renderer/rpc/pacing.js";
 import { MATCH_COLOURS } from "../match/matchColours.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const relaxedSaveId = (id: string): SaveId => SaveIdSchema.make(id);
 
@@ -63,6 +64,7 @@ const squadViewPayload = (saveId: string, clubName: string) => ({
       age: 30,
       attributes: attributes(12),
       positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
+      ...positionSummaryFor(POSITIONS[2]),
       overallRating: 90,
       positionRatings: { WB: 12 },
       suitability: {},

@@ -19,6 +19,7 @@ import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
 import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -47,6 +48,7 @@ const player = (id: string, lastName: string): unknown => ({
   age: 25,
   attributes: attributes(12),
   positions: [{ position: "DC", familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor("DC"),
   overallRating: 80,
   positionRatings: { DC: 74 },
   suitability: {},

@@ -18,7 +18,7 @@ describe("PlayerSearchQuerySchema (ticket 11 — the search wire)", () => {
       name: "Ridler",
       minAge: 21,
       maxAge: 30,
-      position: "ST",
+      position: "F C",
       nationality: "nation_eng",
       clubName: "Castlemere United",
     });
@@ -63,6 +63,9 @@ describe("PlayerSearchResultsView (ticket 11 — one result pool, whole save)", 
           overallRating: { _tag: "exact", value: 78 },
           transferValue: { _tag: "exact", value: 420000 },
           positions: [{ position: "ST", familiarity: "natural" }],
+          positionLabel: "S C",
+          canPlay: ["F C"],
+          positionOrder: 20,
         },
         {
           id: "p2",
@@ -75,6 +78,9 @@ describe("PlayerSearchResultsView (ticket 11 — one result pool, whole save)", 
           overallRating: { _tag: "range", low: 58, high: 98 },
           transferValue: { _tag: "range", low: 120000, high: 750000 },
           positions: [{ position: "MC", familiarity: "natural" }],
+          positionLabel: "M C",
+          canPlay: ["M C"],
+          positionOrder: 14,
         },
       ],
     });
@@ -105,6 +111,9 @@ describe("PlayerSearchResultsView (ticket 11 — one result pool, whole save)", 
               overallRating: bad,
               transferValue: { _tag: "range", low: 58, high: 98 },
               positions: [{ position: "MC", familiarity: "natural" }],
+              positionLabel: "M C",
+              canPlay: ["M C"],
+              positionOrder: 14,
             },
           ],
         }),
@@ -130,6 +139,9 @@ describe("getPlayerSearch over the AppRpcs union (ticket 11 — the read in the 
           overallRating: { _tag: "range", low: 58, high: 98 },
           transferValue: { _tag: "range", low: 120000, high: 750000 },
           positions: [{ position: "MC", familiarity: "natural" }],
+          positionLabel: "M C",
+          canPlay: ["M C"],
+          positionOrder: 14,
         },
       ],
     });
@@ -138,7 +150,7 @@ describe("getPlayerSearch over the AppRpcs union (ticket 11 — the read in the 
   it("carries the save id and a full query together", () => {
     roundTrip(AppRpcs.getPlayerSearch.payload, {
       saveId: "s1",
-      query: { name: "son", position: "ST" },
+      query: { name: "son", position: "F C" },
     });
   });
 

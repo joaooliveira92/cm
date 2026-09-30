@@ -9,6 +9,7 @@ import {
   STATURE_TIERS,
   type Category,
 } from "@cm-clone/shared";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 /**
  * Training / Coaching Assignments fixtures.
@@ -140,6 +141,9 @@ export interface SquadPlayerWire {
   readonly age: number;
   readonly attributes: Record<string, number>;
   readonly positions: ReadonlyArray<{ readonly position: string; readonly familiarity: string }>;
+  readonly positionLabel: string;
+  readonly canPlay: ReadonlyArray<string>;
+  readonly positionOrder: number;
   readonly overallRating: number;
   readonly positionRatings: Record<string, number>;
   readonly suitability: Record<string, number>;
@@ -178,6 +182,7 @@ export const squadPlayer = (
     ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((attribute) => [attribute, 10])),
   },
   positions: [{ position: goalkeeper ? "GK" : "DC", familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(goalkeeper ? "GK" : "DC"),
   overallRating: 70,
   positionRatings: goalkeeper ? { GK: 70 } : { DC: 70 },
   suitability: {},

@@ -10,7 +10,13 @@
  * free-form and lives in the visible control). Empty clauses are inert, so
  * clearing is just removing the clause.
  */
-import { POSITIONS, type Attribute, type KnownFigure } from "@cm-clone/shared";
+import {
+  POSITION_FILTERS,
+  positionFilterName,
+  type Attribute,
+  type KnownFigure,
+  type PositionFilter,
+} from "@cm-clone/shared";
 import type { Action, ActionScope, ScopeState } from "../../actions/types.js";
 import type { FilterClause, TableId, TableRowShape } from "../types.js";
 import {
@@ -69,8 +75,7 @@ export const ATTRIBUTE_MINIMUMS: readonly number[] = Array.from({ length: 20 }, 
 export const matchesNameSearch = (row: TableRowShape, query: string): boolean =>
   `${row.firstName} ${row.lastName}`.toLowerCase().includes(query.trim().toLowerCase());
 
-export const matchesPosition = (row: TableRowShape, position: string): boolean =>
-  row.positions.some((p) => p.position === position);
+export const matchesPosition = (row: TableRowShape, position: string): boolean => row.canPlay.includes(position);
 
 /** A row that carries a Condition field. `TableRowShape` deliberately has none —
  *  the market and rival rosters disclose no fitness — so a status clause narrows
@@ -167,7 +172,7 @@ export const replaceAttributeFilters = (
 export const clauseId = (filter: FilterClause): string => {
   switch (filter._tag) {
     case "position":
-      return filter.position.toLowerCase();
+      return filter.position.toLowerCase().replace(" ", "-");
     case "status":
       return filter.status.toLowerCase();
     case "attribute":
@@ -182,7 +187,9 @@ export const clauseId = (filter: FilterClause): string => {
 export const clauseLabel = (filter: FilterClause): string => {
   switch (filter._tag) {
     case "position":
-      return filter.position;
+      return (POSITION_FILTERS as ReadonlyArray<string>).includes(filter.position)
+        ? positionFilterName(filter.position as PositionFilter)
+        : filter.position;
     case "status": {
       const status = RESERVED_STATUSES.find((s) => s.abbreviation === filter.status);
       return status === undefined ? filter.status : status.term;
@@ -281,19 +288,19 @@ const positionFilterAction = (
   tableId: TableId,
   position: string,
 ): Action => ({
-  id: `filter-${tableId}-${position.toLowerCase()}`,
-  label: `Filter ${tableLabel(tableId)}: ${position}`,
+  id: `filter-${tableId}-${position.toLowerCase().replace(" ", "-")}`,
+  label: `Filter ${tableLabel(tableId)}: ${positionFilterName(position as PositionFilter)}`,
   scope,
   available: ready,
   handler: () => undefined,
   metadata: { params: { tableId, filter: positionClause(position) } satisfies FilterTableActionInput },
 });
 
-/** Enumerated position filters for one table: one palette row per Position. */
+/** Enumerated position filters for one table: one palette row per position filter. */
 export const positionFilterActions = (
   scope: ActionScope,
   tableId: TableId,
-): ReadonlyArray<Action> => POSITIONS.map((position) => positionFilterAction(scope, tableId, position));
+): ReadonlyArray<Action> => POSITION_FILTERS.map((position) => positionFilterAction(scope, tableId, position));
 
 /** Enumerated status filters for one table: one palette row per status the
  *  engine models (Tired today), so the palette cannot offer an invented state.

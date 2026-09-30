@@ -63,7 +63,7 @@ test("the position list's Sort control reorders the list, flips on a re-pick, an
   const unsorted = await positionListNames(window);
   expect(unsorted.length).toBeGreaterThan(1);
   expect(await optionLabels(window, "Sort squad")).toEqual([
-    "Positions",
+    "Position",
     "Name",
     "Age",
     "OVR",
@@ -103,10 +103,12 @@ test("the position list's Sort control reorders the list, flips on a re-pick, an
   expect(await positionListNames(window)).toEqual([...ascending].reverse());
 });
 
-/** The Positions cell renders `GK (natural, 74)`, so a player's own row says whether they can
- *  play a position. Read from the roster rather than from the fit mark, so the mark is checked
- *  against the data instead of against itself. */
-const canPlay = (rowText: string, position: string): boolean => rowText.includes(`${position} (`);
+/** The Position cell renders the compact label (`GK`, `D/DM RC`), so a player's own row says
+ *  whether the position is one of his labelled lines. Read from the roster rather than from the fit
+ *  mark, so the mark is checked against the data instead of against itself. The keeper is the one
+ *  position the label always names on its own, which is why the test uses it. */
+const canPlay = (rowText: string, position: string): boolean =>
+  new RegExp(`(^|\\s)${position}(\\s|$)`).test(rowText);
 
 /**
  * The empty-slot fit context, through the path a manager can actually walk. Reaching an empty

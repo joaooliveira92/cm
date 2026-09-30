@@ -15,11 +15,12 @@ import {
   tierLabel,
   type FittableRow,
 } from "../../../src/renderer/squad/lineupFit.js";
+import { suitabilityFor } from "../../setup/positionFixtures.js";
 
-/** The shape the fit rules read. A row holds one Position here unless a test says otherwise. */
+/** The shape the fit rules read: Suitability at one Position, unfamiliar everywhere else. */
 const row = (id: string, position: string, familiarity: string): FittableRow => ({
   id,
-  positions: [{ position, familiarity }],
+  suitability: suitabilityFor(position, familiarity),
 });
 
 /** A player who cannot play DC at all. */
@@ -29,26 +30,19 @@ const outfield = (id: string): FittableRow => row(id, "ST", FAMILIARITY_TIERS[0]
 const idsOf = (rows: readonly FittableRow[]): string[] => rows.map((r) => r.id);
 
 describe("fitRankOf", () => {
-  it("reports the tier a player fills the slot at, and null when he cannot fill it", () => {
+  it("reports the tier a player fills the slot at, and null when he is Unfamiliar there", () => {
     expect(fitRankOf(row("a", "DC", "natural"), "DC")).toBe(0);
     expect(fitRankOf(row("a", "DC", "competent"), "DC")).toBe(1);
-    expect(fitRankOf(row("a", "DC", "unfamiliar"), "DC")).toBe(2);
+    expect(fitRankOf(row("a", "DC", "unfamiliar"), "DC")).toBeNull();
     expect(fitRankOf(outfield("a"), "DC")).toBeNull();
   });
 
-  it("counts an Unfamiliar player as fitting — the slot asks for the Position, not the tier", () => {
-    expect(fitRankOf(row("a", "DC", "unfamiliar"), "DC")).not.toBeNull();
+  it("reads nothing for a row without a Suitability map, as a rival's squad has none", () => {
+    expect(fitRankOf({ id: "rival" }, "DC")).toBeNull();
   });
 
   it("does not match a Position that merely starts the same letters", () => {
     expect(fitRankOf(row("a", "DC", "natural"), "D")).toBeNull();
-  });
-
-  it("sorts a tier the shared set does not name after the three it does, and still calls it a fit", () => {
-    // A wire value from a future rename: it can fill the slot, but it cannot claim precedence
-    // over a tier the rest of the app can label.
-    const rank = fitRankOf(row("a", "DC", "raw"), "DC");
-    expect(rank).toBe(FAMILIARITY_TIERS.length);
   });
 });
 
@@ -64,8 +58,8 @@ describe("prioritiseForPosition", () => {
     expect(idsOf(prioritiseForPosition(rows, "DC").ordered)).toEqual([
       "homegrown",
       "solid",
-      "loose",
       "keeper",
+      "loose",
       "winger",
     ]);
   });
@@ -116,21 +110,11 @@ describe("prioritiseForPosition", () => {
     expect(prioritiseForPosition([], "DC").ordered).toEqual([]);
   });
 
-  it("puts a tier the shared set does not name after the three it does, still inside the fitting group", () => {
-    const rows = [row("raw", "DC", "raw"), outfield("x"), row("nat", "DC", "natural")];
-    expect(idsOf(prioritiseForPosition(rows, "DC").ordered)).toEqual(["nat", "raw", "x"]);
-  });
-
   it("ranks a multi-Position player on the tier for THIS slot, not their best one", () => {
-    const multi: FittableRow = {
-      id: "multi",
-      positions: [
-        { position: "ST", familiarity: "natural" },
-        { position: "DC", familiarity: "unfamiliar" },
-      ],
-    };
-    expect(fitRankOf(multi, "DC")).toBe(2);
+    const multi: FittableRow = { id: "multi", suitability: { ST: 19, DC: 16, DL: 8 } };
+    expect(fitRankOf(multi, "DC")).toBe(1);
     expect(fitRankOf(multi, "ST")).toBe(0);
+    expect(fitRankOf(multi, "DL")).toBeNull();
   });
 });
 

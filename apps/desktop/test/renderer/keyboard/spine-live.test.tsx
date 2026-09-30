@@ -41,6 +41,9 @@ const marketPlayer = (id: string) => ({
   overallRating: { _tag: "exact", value: 78 },
   transferValue: { _tag: "exact", value: 1200000 },
   positions: [],
+  positionLabel: "",
+  canPlay: [],
+  positionOrder: 0,
 });
 
 const transfersView = () => ({

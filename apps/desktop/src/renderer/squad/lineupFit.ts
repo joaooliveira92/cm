@@ -1,6 +1,6 @@
 /**
  * The soft Position context: what the roster is told to put first when the manager selects an
- * empty starter slot in the match-day bar. Pure rules over a row's `positions`, so the two
+ * empty starter slot in the match-day bar. Pure rules over a row's `suitability`, so the two
  * layouts' ordering and marks cannot disagree about who fits a slot.
  *
  * It is deliberately NOT a `FilterClause`. Nothing here removes a row: `prioritiseForPosition`
@@ -10,7 +10,7 @@
  * never a destructive filter. It also never touches the filter state, so it cannot reach the URL
  * or the persisted session the way a Position filter would.
  */
-import { FAMILIARITY_TIERS } from "@cm-clone/shared";
+import { FAMILIARITY_TIERS, familiarityOf } from "@cm-clone/shared";
 
 /** The lineup slot a context names: its left-to-right order, and the Position it asks for. */
 export interface LineupFit {
@@ -20,29 +20,28 @@ export interface LineupFit {
 
 /** The context plus what the roster worked out from it: the rows that fit, and how well. */
 export interface LineupFitReadout extends LineupFit {
-  /** Row id → the index of the Familiarity Tier with which that row fills `position`. A row
-   *  absent from the map cannot fill the slot at all. */
+  /** Row id → the index of the Familiarity Tier with which that row fills `position`: Natural or
+   *  Competent. A row absent from the map is Unfamiliar there. */
   readonly rankById: ReadonlyMap<string, number>;
 }
 
 /** The row shape the fit rules read. `SquadRow` satisfies it, and nothing else has to. */
 export interface FittableRow {
   readonly id: string;
-  readonly positions: ReadonlyArray<{ readonly position: string; readonly familiarity: string }>;
+  /** Suitability (1-20) for each Position's cell; own squad only. */
+  readonly suitability?: Readonly<Record<string, number>>;
 }
 
 /**
- * The Familiarity Tier with which a row fills `position`, or `null` when it cannot fill it at
- * all. Fit is at ANY tier: an Unfamiliar DC can still go in the DC slot, and the tier only says
- * how well.
+ * The Familiarity Tier with which a row fills `position`, derived from its Suitability for the
+ * Position's cell, or `null` when he is Unfamiliar there: he can still be picked, he just is not
+ * one of the players the slot asks for.
  */
 export const fitRankOf = (row: FittableRow, position: string): number | null => {
-  const held = row.positions.find((entry) => entry.position === position);
-  if (held === undefined) return null;
-  const rank = FAMILIARITY_TIERS.findIndex((tier) => tier === held.familiarity);
-  // A tier the shared set does not name still fits the slot; it just cannot claim precedence
-  // over the three it does, so it sorts with them rather than before them.
-  return rank === -1 ? FAMILIARITY_TIERS.length : rank;
+  const value = row.suitability?.[position];
+  if (value === undefined) return null;
+  const tier = familiarityOf(value);
+  return tier === "unfamiliar" ? null : FAMILIARITY_TIERS.indexOf(tier);
 };
 
 /**

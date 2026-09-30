@@ -274,7 +274,7 @@ const RankingsPanel = ({
                     {player.lastName}, {player.firstName.charAt(0)}
                   </button>
                 </TableCell>
-                <TableCell>{player.positions.join(", ")}</TableCell>
+                <TableCell>{player.positionLabel}</TableCell>
                 <TableCell className="text-right tabular-nums">{player.age}</TableCell>
                 <TableCell className="text-right tabular-nums">{player.condition}%</TableCell>
               </TableRow>

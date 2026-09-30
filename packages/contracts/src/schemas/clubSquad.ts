@@ -2,7 +2,7 @@ import { Schema } from "effect";
 import { AttributeFiguresSchema } from "./players.js";
 import { ClubColoursView, ClubSummary } from "./clubs.js";
 import { PlayerId } from "./ids.js";
-import { PlayerPositionView } from "./squad.js";
+import { PositionSummaryFields, PlayerPositionView } from "./squad.js";
 import { PlayerFigureSchema } from "./transfers.js";
 
 /**
@@ -25,6 +25,7 @@ export class ClubSquadPlayerView extends Schema.Class<ClubSquadPlayerView>("Club
   age: Schema.Finite,
   attributes: AttributeFiguresSchema,
   positions: Schema.Array(PlayerPositionView),
+  ...PositionSummaryFields,
   overallRating: PlayerFigureSchema,
   nationality: Schema.String,
   birthplace: Schema.NullOr(Schema.String),

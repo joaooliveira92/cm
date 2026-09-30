@@ -10,7 +10,7 @@
  * are stored in sessionStorage keyed by a per‑navigation token carried in the
  * URL instead.
  */
-import { ALL_ATTRIBUTES } from "@cm-clone/shared";
+import { ALL_ATTRIBUTES, POSITION_FILTERS } from "@cm-clone/shared";
 import type { FilterClause, SortDirection, SortState } from "../table/types.js";
 import { modeledStatus } from "../table/squad/playerStatus.js";
 import { ATTRIBUTE_MINIMUMS } from "../table/features/filtering.js";
@@ -127,9 +127,13 @@ const decodeFilters = (raw: string | null): readonly FilterClause[] => {
       if (query.length > 0) result.push({ _tag: "nameSearch", query });
       continue;
     }
+    // A position must be one of the position filters; a stale key (a URL saved when filters were
+    // the ten Positions, `pos:DC`) would hide every row, so it is dropped like a stale status.
     const posMatch = /^pos:(.+)$/.exec(part);
     if (posMatch !== null) {
-      result.push({ _tag: "position", position: posMatch[1]! });
+      if ((POSITION_FILTERS as ReadonlyArray<string>).includes(posMatch[1]!)) {
+        result.push({ _tag: "position", position: posMatch[1]! });
+      }
       continue;
     }
     // A status must name one the engine models; a stale or hand-edited code

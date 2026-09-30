@@ -11,6 +11,7 @@ import {
   POSITION_ROLES,
   STATURE_TIERS,
 } from "@cm-clone/shared";
+import { positionSummaryFor } from "./positionFixtures.js";
 
 /** Every attribute at one value — enough for a row to render; never what a test asserts on. */
 export const attributes = (value: number): Record<string, number> => ({
@@ -28,6 +29,7 @@ export const squadPlayer = (id: string, name: string, position: string) => ({
   age: 25,
   attributes: attributes(12),
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},

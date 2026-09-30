@@ -9,6 +9,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { RegisteredScreenBar } from "../registered-screen-bar.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 // Transfers' sort and filter commands report in the shell's bottom bar, as the Squad's do.
 
@@ -33,6 +34,7 @@ const marketPlayer = (
   overallRating: { _tag: "exact", value: overallRating },
   transferValue: { _tag: "exact", value: transferValue },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
 });
 
 const transfersView = (overrides: {
@@ -86,13 +88,13 @@ describe("the Transfers bottom-bar notice", () => {
     await mountTransfers(transfersView());
     await screen.findByRole("button", { name: /Alan Player/ });
     act(() => {
-      dispatchAction("filter-transfer-market-dc", {
+      dispatchAction("filter-transfer-market-d-c", {
         tableId: "transfer-market",
-        filter: { _tag: "position", position: "DC" },
+        filter: { _tag: "position", position: "D C" },
       });
     });
     expect(screen.getByRole("contentinfo").textContent).toContain(
-      "Filtered by Position: DC. 1 player matches the current filters.",
+      "Filtered by Position: Defender (centre). 1 player matches the current filters.",
     );
   });
 
@@ -100,14 +102,14 @@ describe("the Transfers bottom-bar notice", () => {
     await mountTransfers(transfersView());
     await screen.findByRole("button", { name: /Alan Player/ });
     act(() => {
-      dispatchAction("filter-transfer-market-dc", {
+      dispatchAction("filter-transfer-market-d-c", {
         tableId: "transfer-market",
-        filter: { _tag: "position", position: "DC" },
+        filter: { _tag: "position", position: "D C" },
       });
     });
-    expect(screen.getByRole("contentinfo").textContent).toContain("Filtered by Position: DC.");
+    expect(screen.getByRole("contentinfo").textContent).toContain("Filtered by Position: Defender (centre).");
 
     fireEvent.click(screen.getByRole("tab", { name: /Free Agents/ }));
-    expect(screen.getByRole("contentinfo").textContent).not.toContain("Filtered by Position: DC.");
+    expect(screen.getByRole("contentinfo").textContent).not.toContain("Filtered by Position: Defender (centre).");
   });
 });

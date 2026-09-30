@@ -34,7 +34,8 @@ export interface SortState {
 }
 
 /** A domain filter clause. Name search is a substring over the display name;
- *  position matches any position in the player's `positions` array. Status
+ *  position matches when the filter is among the player's `canPlay` filters
+ *  (Suitability 15 or more for its cell). Status
  *  carries a reserved-status ABBREVIATION (`"Tir"`), matched through the status
  *  vocabulary's `statusesOf` — never compared as display text, and never
  *  against raw Condition. Attribute keeps rows whose EXACT figure for one
@@ -51,7 +52,12 @@ export interface TableRowShape {
   readonly id: string;
   readonly firstName: string;
   readonly lastName: string;
-  readonly positions: ReadonlyArray<{ readonly position: string }>;
+  /** CM's compact position label (`D/DM RC`). */
+  readonly positionLabel: string;
+  /** The position filters the player can play. */
+  readonly canPlay: ReadonlyArray<string>;
+  /** Pitch-order sort key for the position column. */
+  readonly positionOrder: number;
 }
 
 /** The five explicit result states (note: Empty and result states). */

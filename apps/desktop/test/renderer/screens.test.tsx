@@ -14,6 +14,7 @@ import {
 import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
 import { renderInRouter } from "../setup/renderInRouter.js";
+import { positionSummaryFor } from "../setup/positionFixtures.js";
 
 const relaxedSaveId = (id: string) => SaveId.make(id);
 
@@ -34,6 +35,7 @@ const squadView = (saveId: string, clubName: string) => ({
       age: 30,
       attributes: attributes(12),
       positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
+      ...positionSummaryFor(POSITIONS[2]),
       overallRating: 90,
       positionRatings: { WB: 12 },
       suitability: {},

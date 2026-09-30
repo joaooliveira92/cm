@@ -20,6 +20,9 @@ describe("MarketPlayerView figures (ticket 09 — the market reads by Scouting P
       overallRating: { _tag: "exact", value: 78 },
       transferValue: { _tag: "range", low: 400000, high: 620000 },
       positions: [{ position: "ST", familiarity: "natural" }],
+      positionLabel: "S C",
+      canPlay: ["F C"],
+      positionOrder: 20,
     });
   });
 
@@ -34,6 +37,9 @@ describe("MarketPlayerView figures (ticket 09 — the market reads by Scouting P
       overallRating: { _tag: "range", low: 58, high: 98 },
       transferValue: { _tag: "range", low: 120000, high: 750000 },
       positions: [{ position: "MC", familiarity: "natural" }],
+      positionLabel: "M C",
+      canPlay: ["M C"],
+      positionOrder: 14,
     });
   });
 
@@ -58,6 +64,9 @@ describe("MarketPlayerView figures (ticket 09 — the market reads by Scouting P
           overallRating: bad,
           transferValue: { _tag: "range", low: 58, high: 98 },
           positions: [{ position: "MC", familiarity: "natural" }],
+          positionLabel: "M C",
+          canPlay: ["M C"],
+          positionOrder: 14,
         }),
       ).toThrow();
     }

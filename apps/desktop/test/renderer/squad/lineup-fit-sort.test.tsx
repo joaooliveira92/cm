@@ -9,7 +9,7 @@
  * So the squad here is built so that a re-order-then-sort is *visibly* wrong:
  *
  *   wire order   Bravo 30 DC natural · Alpha 24 DC natural · Zulu 22 DM · Yankee 26 DC competent
- *                · Xray 19 ST · Whiskey 35 DC unfamiliar
+ *                · Xray 19 ST · Whiskey 35 DC unfamiliar (not a fitter)
  *
  * The Competent DC (26) sorts BETWEEN the two Natural DCs (24, 30). Sort first and bucket, the
  * tiers stay contiguous; bucket first and sort, they shatter — which is what makes this fixture
@@ -33,6 +33,7 @@ import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
 import { attributes, squadView, tacticsView } from "../../setup/squadFixtures.js";
 import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
 import type { SquadViewId } from "../../../src/renderer/squad/squadViews.js";
+import { positionSummaryFor, suitabilityFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -50,9 +51,10 @@ const player = (
   age,
   attributes: attributes(12),
   positions: [{ position, familiarity }],
+  ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { [position]: 74 },
-  suitability: {},
+  suitability: suitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
@@ -75,14 +77,14 @@ const SQUAD = [
   player("p6", "Whiskey", 35, "DC", "unfamiliar"),
 ];
 
-/** The rank each player would be given for a DC slot: 0 natural, 1 competent, 2 unfamiliar,
- *  3 no DC at all. Written out rather than derived, so the expectation does not run through the
- *  ranking code it is meant to check. */
+/** The rank each player would be given for a DC slot: 0 natural, 1 competent, 3 cannot play it
+ *  (Whiskey is Unfamiliar there, which is not a fitter). Rank 2 is unused. Written out rather
+ *  than derived, so the expectation does not run through the ranking code it is meant to check. */
 const FIT_RANK: Readonly<Record<string, number>> = {
   Bravo: 0,
   Alpha: 0,
   Yankee: 1,
-  Whiskey: 2,
+  Whiskey: 3,
   Zulu: 3,
   Xray: 3,
 };
@@ -104,7 +106,7 @@ const BY_ID: ReadonlyMap<string, string> = new Map(
 const BY_AGE_ASC: readonly string[] = ["Xray", "Zulu", "Alpha", "Yankee", "Bravo", "Whiskey"];
 
 /** Age ascending, then DC fitters by tier, each tier internally still in age order. */
-const FIT_OVER_AGE_ASC: readonly string[] = ["Alpha", "Bravo", "Yankee", "Whiskey", "Xray", "Zulu"];
+const FIT_OVER_AGE_ASC: readonly string[] = ["Alpha", "Bravo", "Yankee", "Xray", "Zulu", "Whiskey"];
 
 const mount = async (): Promise<void> => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {

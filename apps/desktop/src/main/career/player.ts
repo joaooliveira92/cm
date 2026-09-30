@@ -9,6 +9,7 @@ import {
   type SaveId,
 } from "@cm-clone/contracts";
 import {
+  positionSummaryOf,
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   ageOn,
@@ -150,6 +151,7 @@ const readPlayerProfile = (playerId: PlayerId) =>
       firstName: player.firstName,
       lastName: player.lastName,
       age: playerAge,
+      ...positionSummaryOf(positionalRatingsOf(player)),
       nationality: player.nationality,
       birthplace: player.birthCityName,
       positions,

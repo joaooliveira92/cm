@@ -24,7 +24,6 @@ import type { ClubSquadPlayerView, SquadPlayerView } from "@cm-clone/contracts";
 import { format, parseISO } from "date-fns";
 import { figureMid, formatCredits, formatFigure } from "../../format.js";
 import type { TableRowShape } from "../types.js";
-import { positionSortRank } from "./positionOrder.js";
 import {
   statusesOf,
   StatusCell,
@@ -43,12 +42,12 @@ export interface SquadRow extends TableRowShape {
   readonly firstName: string;
   readonly lastName: string;
   readonly age: number;
-  readonly positions: ReadonlyArray<{ readonly position: string; readonly familiarity: string }>;
   readonly overallRating: KnownFigure;
   readonly attributes: Readonly<Record<string, KnownFigure | undefined>>;
-  /** Own squad only: the Position Rating of every Position, shown beside the Familiarity in the
-   *  Positions cell. A rival's squad omits them — the Player read withholds Position Ratings. */
+  /** Own squad only: the fit rating of every Position. A rival's squad omits them. */
   readonly positionRatings?: Readonly<Record<string, KnownFigure>>;
+  /** Own squad only: Suitability (1-20) for every Position's cell, read by the match-day fit. */
+  readonly suitability?: Readonly<Record<string, number>>;
   /** Own squad only: live Condition (%), an input to the Status column. */
   readonly condition?: number;
   /** Own squad only: nationality differs from the club's nation, the Status column's `Fgn`. */
@@ -83,7 +82,10 @@ export const squadRowOf = (player: SquadPlayerView): SquadRow => ({
   firstName: player.firstName,
   lastName: player.lastName,
   age: player.age,
-  positions: player.positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
+  positionLabel: player.positionLabel,
+  canPlay: player.canPlay,
+  positionOrder: player.positionOrder,
+  suitability: player.suitability,
   overallRating: exact(player.overallRating),
   attributes: figureRecord(player.attributes),
   positionRatings: Object.fromEntries(
@@ -106,7 +108,9 @@ export const clubSquadRowOf = (player: ClubSquadPlayerView): SquadRow => ({
   firstName: player.firstName,
   lastName: player.lastName,
   age: player.age,
-  positions: player.positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
+  positionLabel: player.positionLabel,
+  canPlay: player.canPlay,
+  positionOrder: player.positionOrder,
   overallRating: player.overallRating,
   attributes: player.attributes,
   nationality: player.nationality,
@@ -123,7 +127,7 @@ export const SQUAD_COLUMN_LABELS: Readonly<Record<string, string>> = {
   name: "Name",
   status: "Status",
   age: "Age",
-  positions: "Positions",
+  positions: "Position",
   overall: "OVR",
   nationality: "Nationality",
   birthplace: "Birthplace",
@@ -135,14 +139,7 @@ export const SQUAD_COLUMN_LABELS: Readonly<Record<string, string>> = {
   ...Object.fromEntries(ALL_ATTRIBUTES.map((attribute) => [attribute, attributeLabel(attribute)])),
 };
 
-const positionsCell = (row: SquadRow): string =>
-  row.positions
-    .map((p) => {
-      const rating = row.positionRatings?.[p.position];
-      const shown = rating === undefined ? "" : `, ${formatFigure(rating)}`;
-      return `${p.position} (${p.familiarity}${shown})`;
-    })
-    .join(", ");
+
 
 /** A missing Contract field reads as an em dash, never `0`: a player between the
  *  expiry sweep and his next club is not one paid nothing. */
@@ -174,12 +171,10 @@ export const NAME_COLUMN_WIDTH = 176;
  */
 export const SQUAD_FIT_COLUMN_ID = "fit";
 
-/** The legend disclosure state the Status header renders against. Owned by the
- *  own-club screen, because the legend itself renders outside the scroll container. */
+/** The Status column header's action: open the abbreviation legend dialog. Owned by
+ *  the own-club screen, because the dialog itself renders outside the scroll container. */
 export interface StatusLegendControl {
-  readonly expanded: boolean;
-  readonly legendId: string;
-  readonly onToggle: () => void;
+  readonly onOpen: () => void;
 }
 
 export interface SquadColumnsOptions {
@@ -190,7 +185,7 @@ export interface SquadColumnsOptions {
   /** Whether the header renders sort controls. The any-club roster is a bare read — its columns
    *  sort on nothing. */
   readonly sortable: boolean;
-  /** The disclosure control the Status header renders against; required for the own club. */
+  /** The Status column header's dialog-launching action; required for the own club. */
   readonly legend?: StatusLegendControl;
   /** The own club's match-day indicator cell, which reads the live lineup draft itself. Passed in
    *  rather than imported: the lineup is the Squad screen's state, not the table layer's. */
@@ -225,13 +220,7 @@ export const squadColumns = ({
             // squad, whose rows always carry Condition; the `undefined` guard satisfies
             // the type, not a real state.
             accessorFn: (row) => statusesOf(row).map((status) => status.abbreviation).join(" "),
-            header: () => (
-              <StatusColumnHeader
-                expanded={legend.expanded}
-                legendId={legend.legendId}
-                onToggle={legend.onToggle}
-              />
-            ),
+            header: () => <StatusColumnHeader onOpen={legend.onOpen} />,
             cell: (info) => <StatusCell statuses={statusesOf(info.row.original)} />,
             enableSorting: false,
             enablePinning: true,
@@ -319,11 +308,11 @@ export const squadColumns = ({
     { id: "age", accessorKey: "age", header: "Age", enableSorting: sortable },
     {
       id: "positions",
-      accessorFn: (row) => positionsCell(row),
-      header: "Positions",
+      accessorFn: (row) => row.positionLabel,
+      header: "Position",
       enableSorting: sortable,
-      sortFn: (rowA, rowB) =>
-        positionSortRank(rowA.original.positions) - positionSortRank(rowB.original.positions),
+      // CM's pitch order of the player's best cell, then R, L, C, not the label's alphabet.
+      sortFn: (rowA, rowB) => rowA.original.positionOrder - rowB.original.positionOrder,
       cell: (info) => info.getValue<unknown>() as string,
     },
     {

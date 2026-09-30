@@ -42,7 +42,8 @@ export class StaffRankedPlayerView extends Schema.Class<StaffRankedPlayerView>("
   id: PlayerId,
   firstName: Schema.String,
   lastName: Schema.String,
-  positions: Schema.Array(PositionSchema),
+  /** CM's compact position label. */
+  positionLabel: Schema.String,
   age: Schema.Finite,
   condition: Schema.Finite,
 }) {}

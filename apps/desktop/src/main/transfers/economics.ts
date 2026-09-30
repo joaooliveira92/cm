@@ -1,5 +1,6 @@
 import { MarketPlayerView, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
+  positionSummaryOf,
   ALL_ATTRIBUTES,
   ageOn,
   figureByProgress,
@@ -119,6 +120,7 @@ export const toMarketPlayerView = (player: PlayerEcon, scoutingProgress: number)
     age: player.age,
     clubId: player.clubId,
     clubName: player.clubName,
+    ...positionSummaryOf(player.positionalRatings),
     overallRating: figureByProgress(player.overallRating, scoutingProgress),
     transferValue: transferValueFigureByProgress(
       player.overallRating,

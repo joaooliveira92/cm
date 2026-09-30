@@ -10,6 +10,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -36,6 +37,7 @@ const marketPlayer = (
   overallRating: { _tag: "exact", value: overallRating },
   transferValue: { _tag: "exact", value: transferValue },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
 });
 
 const transfersView = (overrides: {
@@ -112,7 +114,7 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
 
     // Filter out mp1 (ST): only DC rows remain. The roving universe loses the
     // focused row; the restore effect must land focus on mp2 (old next).
-    await chooseOptionByLabel(/Filter Market by position/, "DC");
+    await chooseOptionByLabel(/Filter Market by position/, "Defender (centre)");
     await waitFor(() => {
       expect(document.activeElement?.getAttribute("data-focus-id")).toBe(
         "transfers.marketTable.mp2",
@@ -135,7 +137,7 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
 
     // A position with no Market row → empty result state; the restore effect's
     // empty-target hands focus to the screen primary (RouteView), never body.
-    await chooseOptionByLabel(/Filter Market by position/, "AMC");
+    await chooseOptionByLabel(/Filter Market by position/, "Attacking Midfielder (centre)");
     await waitFor(() => screen.findByText("No players match the current filters."));
     expect(document.activeElement?.getAttribute("data-focus-id")).toBe("transfers");
     expect(document.activeElement).not.toBe(document.body);
@@ -163,7 +165,7 @@ describe("AC-31 (review F-1) — Transfers restores focus when a sort/filter/ref
       focused.focus();
     });
 
-    await chooseOptionByLabel(/Filter Free Agents by position/, "DC");
+    await chooseOptionByLabel(/Filter Free Agents by position/, "Defender (centre)");
     await waitFor(() => {
       expect(document.activeElement?.getAttribute("data-focus-id")).toBe(
         "transfers.freeAgentTable.fa2",

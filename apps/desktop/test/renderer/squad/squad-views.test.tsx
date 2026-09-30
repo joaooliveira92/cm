@@ -74,6 +74,9 @@ const player = (id: string, firstName: string, lastName: string) => ({
     { position: "DC", familiarity: FAMILIARITY_TIERS[0] },
     { position: "DL", familiarity: FAMILIARITY_TIERS[1] },
   ],
+  positionLabel: "D LC",
+  canPlay: ["D C", "D L"],
+  positionOrder: 8,
   overallRating: 80,
   positionRatings: { DC: 74, DL: 61 },
   suitability: {},
@@ -231,7 +234,7 @@ describe("choosing a view", () => {
       within(row).getByText("Not selected"),
       badge,
       name,
-      within(row).getByText("DC"),
+      within(row).getByText("D LC"),
     ];
     for (let i = 1; i < order.length; i++) {
       expect(
@@ -305,7 +308,7 @@ describe("choosing a view", () => {
     await mountSquad([player("p1", "Alan", "Shearer"), player("p2", "Bob", "Moore")]);
     const bar = screen.getAllByRole("contentinfo").at(-1)!;
 
-    await chooseToolbarOption(/Filter squad by position/, "DC");
+    await chooseToolbarOption(/Filter squad by position/, "D C");
     expect(bar.textContent).toContain("2 players match the current filters.");
 
     await chooseToolbarOption(/Filter squad by status/, "Tired");

@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 
 import { ClubId, PlayerId } from "./ids.js";
-import { PlayerPositionView, PositionSchema } from "./squad.js";
+import { PositionFilterSchema, PositionSummaryFields, PlayerPositionView } from "./squad.js";
 import { PlayerFigureSchema } from "./transfers.js";
 
 /**
@@ -18,7 +18,8 @@ export const PlayerSearchQuerySchema = Schema.Struct({
   name: Schema.optional(Schema.String),
   minAge: Schema.optional(Schema.Finite),
   maxAge: Schema.optional(Schema.Finite),
-  position: Schema.optional(PositionSchema),
+  /** Players who can play there: Suitability 15 or more for the filter's cell. */
+  position: Schema.optional(PositionFilterSchema),
   nationality: Schema.optional(Schema.String),
   clubName: Schema.optional(Schema.String),
 });
@@ -40,6 +41,7 @@ export class PlayerSearchResultView extends Schema.Class<PlayerSearchResultView>
   clubName: Schema.NullOr(Schema.String),
   nationality: Schema.String,
   positions: Schema.Array(PlayerPositionView),
+  ...PositionSummaryFields,
   overallRating: PlayerFigureSchema,
   transferValue: PlayerFigureSchema,
 }) {}

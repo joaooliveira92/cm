@@ -26,6 +26,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { positionSummaryFor, suitabilityFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
@@ -44,9 +45,10 @@ const player = (id: string, lastName: string, position: string, familiarity: Fam
   age: 25,
   attributes: attributes(12),
   positions: [{ position, familiarity }],
+  ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { [position]: 74 },
-  suitability: {},
+  suitability: suitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
   trainingFocus: null,

@@ -25,7 +25,6 @@
  * selection, Enter runs the row's primary action — opening that player's
  * player screen, which is what clicking the name does too.
  */
-import type { FamiliarityTier } from "@cm-clone/shared";
 import { Table, TableBody, TableCell, TableRow } from "../components/ui/table.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import {
@@ -35,7 +34,6 @@ import {
 } from "../table/squad/playerStatus.js";
 import type { SquadRow } from "../table/squad/squadColumns.js";
 import { writeLineupDrag } from "./lineupDrag.js";
-import { tierLabel } from "./lineupFit.js";
 import { FIT_COLUMN_WIDTH, FitIndicator } from "./FitIndicator.js";
 import { useSquad } from "./SquadProvider.js";
 import { SelectionIndicator, useSlotByPlayer } from "./SelectionIndicator.js";
@@ -79,34 +77,9 @@ export const nextPositionIndex = (
   }
 };
 
-/** The tone a Familiarity Tier reads in: a Natural position is the one the eye
- *  should land on, an Unfamiliar one is present but recessive. Natural carries
- *  a pill and a heavier weight as well as its colour, because under the Neutral
- *  theme the highlight is a grey hardly apart from the body text. Keyed by the
- *  shared tier values, so a renamed tier fails to compile rather than falling
- *  silently back to the neutral tone. */
-const FAMILIARITY_TONE: Readonly<Record<FamiliarityTier, string>> = {
-  natural: "rounded-sm bg-text-highlight/10 px-1 leading-4 font-bold text-text-highlight",
-  competent: "font-medium text-text-secondary",
-  unfamiliar: "font-medium text-text-muted",
-};
-
+/** The player's CM position label (`D/DM RC`), read off the row. */
 const PositionRunner = ({ row }: { readonly row: SquadRow }) => (
-  <span className="flex justify-end gap-1 text-data">
-    {row.positions.length === 0 ? (
-      <span className="font-medium text-text-muted">—</span>
-    ) : (
-      row.positions.map((p) => (
-        <span
-          key={p.position}
-          className={FAMILIARITY_TONE[p.familiarity as FamiliarityTier] ?? "font-medium text-text-secondary"}
-          title={`${p.position}: ${tierLabel(p.familiarity)}`}
-        >
-          {p.position}
-        </span>
-      ))
-    )}
-  </span>
+  <span className="flex justify-end text-data font-medium text-text-secondary">{row.positionLabel === "" ? "—" : row.positionLabel}</span>
 );
 
 export const SquadPositionList = () => {

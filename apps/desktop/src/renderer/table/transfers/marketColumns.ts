@@ -26,7 +26,6 @@ export interface MarketPlayerRow extends TableRowShape {
   readonly clubName: string | null;
   readonly overallRating: KnownFigure;
   readonly transferValue: KnownFigure;
-  readonly positions: ReadonlyArray<{ readonly position: string }>;
 }
 
 export const marketPlayerRowOf = (player: MarketPlayerView): MarketPlayerRow => ({
@@ -38,7 +37,9 @@ export const marketPlayerRowOf = (player: MarketPlayerView): MarketPlayerRow => 
   clubName: player.clubName,
   overallRating: player.overallRating,
   transferValue: player.transferValue,
-  positions: player.positions.map((p) => ({ position: p.position })),
+  positionLabel: player.positionLabel,
+  canPlay: player.canPlay,
+  positionOrder: player.positionOrder,
 });
 
 /** Numeric sort over the accessed value — the default string sort would order 9 before 10. */

@@ -1,4 +1,4 @@
-import { POSITIONS } from "@cm-clone/shared";
+import { POSITION_FILTERS, positionFilterName } from "@cm-clone/shared";
 import { Input } from "../components/ui/input.js";
 import {
   Select,
@@ -73,9 +73,9 @@ export const TransferFilterBar = ({
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="">All positions</SelectItem>
-            {POSITIONS.map((position) => (
+            {POSITION_FILTERS.map((position) => (
               <SelectItem key={position} value={position}>
-                {position}
+                {positionFilterName(position)}
               </SelectItem>
             ))}
           </SelectContent>

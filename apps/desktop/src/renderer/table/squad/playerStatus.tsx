@@ -20,6 +20,12 @@
  * The raw code never reaches a screen reader.
  */
 import { NON_CONTACT_CONDITION_THRESHOLD } from "@cm-clone/game-engine";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "../../components/ui/dialog.js";
 import { FOCUS_RING } from "../../focus.js";
 
 /**
@@ -288,59 +294,54 @@ const LIKELIHOOD_LABEL: Readonly<Record<StatusLikelihood, string>> = {
 };
 
 /**
- * The abbreviation legend (Term Disclosure: visible, focusable, keyboard-
- * operable, never hover-only, never a modal). It renders above the table rather
- * than inside the header cell because the header lives in a horizontally
- * scrolling, overflow-clipped container that a pinned 72px cell cannot escape.
+ * The abbreviation legend, as a modal dialog. The Status column header opens it;
+ * Escape, the backdrop and the close control dismiss it. A dialog rather than an
+ * inline panel: the header lives in a horizontally scrolling, overflow-clipped
+ * container that a pinned 72px cell cannot escape, and the full catalogue is
+ * wider than that container could hold.
  */
-export const StatusLegend = ({ id }: { readonly id: string }) => (
-  <div
-    id={id}
-    className="mt-2 max-h-64 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-3 text-data"
-  >
-    <p className="text-text-soft">
-      The Status column shows only what the game models. Reserved codes are the
-      Championship Manager 03/04 vocabulary, held as slots so the column does not
-      need re-designing when a system ships — a reservation is not a promise.
-    </p>
-    <ul className="mt-2 grid grid-cols-1 gap-x-6 gap-y-1 sm:grid-cols-2 lg:grid-cols-3">
-      {RESERVED_STATUSES.map((status) => (
-        <li key={status.abbreviation} className="flex gap-2">
-          <span className="w-10 shrink-0">
-            <span className={`${BADGE_BASE} ${BADGE_CLASS[status.tone]}`}>{status.abbreviation}</span>
-          </span>
-          <span className="text-text-soft">
-            <span className="text-text-primary">{status.term}</span>
-            {" — "}
-            {LIKELIHOOD_LABEL[status.likelihood]}. {status.note}
-          </span>
-        </li>
-      ))}
-    </ul>
-  </div>
+export const StatusLegendDialog = ({
+  open,
+  onOpenChange,
+}: {
+  readonly open: boolean;
+  readonly onOpenChange: (open: boolean) => void;
+}) => (
+  <Dialog open={open} onOpenChange={onOpenChange}>
+    <DialogContent className="max-w-3xl p-6">
+      <DialogTitle className="text-text-primary">Status abbreviations</DialogTitle>
+      <DialogDescription className="text-text-secondary">
+        The Status column shows only what the game models. Reserved codes are the
+        Championship Manager 03/04 vocabulary, held as slots so the column does not
+        need re-designing when a system ships — a reservation is not a promise.
+      </DialogDescription>
+      <ul className="grid max-h-[70vh] grid-cols-1 gap-x-6 gap-y-1 overflow-y-auto sm:grid-cols-2 lg:grid-cols-3">
+        {RESERVED_STATUSES.map((status) => (
+          <li key={status.abbreviation} className="flex gap-2">
+            <span className="w-10 shrink-0">
+              <span className={`${BADGE_BASE} ${BADGE_CLASS[status.tone]}`}>{status.abbreviation}</span>
+            </span>
+            <span className="text-text-soft">
+              <span className="text-text-primary">{status.term}</span>
+              {" — "}
+              {LIKELIHOOD_LABEL[status.likelihood]}. {status.note}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </DialogContent>
+  </Dialog>
 );
 
-/** The Status column header: the label doubles as the legend's disclosure. */
-export const StatusColumnHeader = ({
-  expanded,
-  legendId,
-  onToggle,
-}: {
-  readonly expanded: boolean;
-  readonly legendId: string;
-  readonly onToggle: () => void;
-}) => (
+/** The Status column header: the label is the button that opens the legend dialog. */
+export const StatusColumnHeader = ({ onOpen }: { readonly onOpen: () => void }) => (
   <button
     type="button"
-    aria-expanded={expanded}
-    aria-controls={legendId}
-    onClick={onToggle}
+    aria-haspopup="dialog"
+    onClick={onOpen}
     className={`flex items-center gap-1 uppercase ${FOCUS_RING.join(" ")}`}
   >
     <span>Status</span>
-    <span aria-hidden="true" className="text-text-secondary">
-      {expanded ? "▴" : "▾"}
-    </span>
-    <span className="sr-only">{expanded ? "Hide" : "Show"} the status abbreviation legend</span>
+    <span className="sr-only">Open the status abbreviation legend</span>
   </button>
 );

@@ -99,7 +99,6 @@ export interface SquadScreenMeta {
   readonly saveId: SaveId;
   readonly speak: (eventId: string, message: string) => void;
   readonly TABLE_ID: string;
-  readonly STATUS_LEGEND_ID: string;
   readonly allPlayers: ReadonlyArray<SquadRow>;
 }
 

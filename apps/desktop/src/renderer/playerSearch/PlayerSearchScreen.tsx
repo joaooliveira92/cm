@@ -13,7 +13,7 @@
  * `PLAYER_SEARCH_MAX_RESULTS` rows, its `total` still the true count).
  */
 import { useMemo, useState } from "react";
-import { NATION_CODES, POSITIONS, canonicalNationId, nationName } from "@cm-clone/shared";
+import { NATION_CODES, POSITION_FILTERS, canonicalNationId, nationName, positionFilterName } from "@cm-clone/shared";
 import type { PlayerSearchQuery, SaveId } from "@cm-clone/contracts";
 import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import type { ScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
@@ -287,9 +287,9 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="">All positions</SelectItem>
-              {POSITIONS.map((option) => (
+              {POSITION_FILTERS.map((option) => (
                 <SelectItem key={option} value={option}>
-                  {option}
+                  {positionFilterName(option)}
                 </SelectItem>
               ))}
             </SelectContent>

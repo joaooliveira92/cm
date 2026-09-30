@@ -19,7 +19,9 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { compareCodeUnits, figureByProgress, progressForReading, transferValueFigureByProgress } from "@cm-clone/shared";
+import {
+  canPlayOf,
+  positionSummaryOf, compareCodeUnits, figureByProgress, progressForReading, transferValueFigureByProgress } from "@cm-clone/shared";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { withExistingSave } from "../season/decider.js";
@@ -73,7 +75,7 @@ const matchesSearchQuery = (player: PlayerEcon, query: PlayerSearchQuery): boole
   if (query.maxAge !== undefined && player.age > query.maxAge) return false;
   if (
     query.position !== undefined &&
-    !player.positions.some((p) => p.position === query.position)
+    !canPlayOf(player.positionalRatings).includes(query.position)
   ) {
     return false;
   }
@@ -119,6 +121,7 @@ const toPlayerSearchResultView = (
     clubName: player.clubName,
     nationality: player.nationality,
     positions: player.positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
+    ...positionSummaryOf(player.positionalRatings),
     overallRating: figureByProgress(player.overallRating, progress),
     transferValue: transferValueFigureByProgress(
       player.overallRating,

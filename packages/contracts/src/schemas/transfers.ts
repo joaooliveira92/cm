@@ -4,7 +4,7 @@ import { Schema } from "effect";
 import { ClubColoursView, ClubSummary } from "./clubs.js";
 import { BidId, ClubId, PlayerId, SaveId } from "./ids.js";
 import { SeasonView } from "./season.js";
-import { PlayerPositionView } from "./squad.js";
+import { PositionSummaryFields, PlayerPositionView } from "./squad.js";
 
 /** `expired` is a Bid the selling club never answered — distinct from `rejected`, which is an
  *  answer. Only reachable for a Bid whose seller is the human club, since every other seller
@@ -147,6 +147,7 @@ export class MarketPlayerView extends Schema.Class<MarketPlayerView>("MarketPlay
   overallRating: PlayerFigureSchema,
   transferValue: PlayerFigureSchema,
   positions: Schema.Array(PlayerPositionView),
+  ...PositionSummaryFields,
 }) {}
 
 /**

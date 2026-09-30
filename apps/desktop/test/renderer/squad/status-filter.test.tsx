@@ -19,6 +19,7 @@ import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -36,6 +37,7 @@ const squadPlayer = (id: string, name: string, position: string, condition: numb
   age: 25,
   attributes: attributes(12),
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
@@ -108,24 +110,24 @@ describe("Squad status filter (Screen 71, group-e 02)", () => {
     await expectVisible(["Tom", "Tia"]);
     expect(screen.getByRole("button", { name: "Filter squad by status" }).textContent).toContain("Status: Tired");
 
-    await chooseToolbarOption("Filter squad by position", "DC");
+    await chooseToolbarOption("Filter squad by position", "D C");
     await expectVisible(["Tom"]);
 
     // The regression: "All positions" used to clear every clause, Status included.
     await chooseToolbarOption("Filter squad by position", "All positions");
     await expectVisible(["Tom", "Tia"]);
 
-    await chooseToolbarOption("Filter squad by position", "ST");
+    await chooseToolbarOption("Filter squad by position", "F C");
     await chooseToolbarOption("Filter squad by status", "Any status");
     await expectVisible(["Tia"]);
-    expect(screen.getByRole("button", { name: "Filter squad by position" }).textContent).toContain("Position: ST");
+    expect(screen.getByRole("button", { name: "Filter squad by position" }).textContent).toContain("Position: F C");
   });
 
   it("restores a status clause from the URL, through the real decode path", async () => {
     // Lower-cased on purpose: a hand-edited code still means Tired once canonicalised.
-    mountSquad("/?filters=pos:DC,status:tir");
+    mountSquad("/?filters=pos:D%20C,status:tir");
     await expectVisible(["Tom"]);
     expect(screen.getByRole("button", { name: "Filter squad by status" }).textContent).toContain("Status: Tired");
-    expect(screen.getByRole("button", { name: "Filter squad by position" }).textContent).toContain("Position: DC");
+    expect(screen.getByRole("button", { name: "Filter squad by position" }).textContent).toContain("Position: D C");
   });
 });

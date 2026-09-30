@@ -29,7 +29,6 @@ export interface SearchRow extends TableRowShape {
   readonly nationality: string;
   readonly overallRating: KnownFigure;
   readonly transferValue: KnownFigure;
-  readonly positions: ReadonlyArray<{ readonly position: string }>;
 }
 
 export const searchRowOf = (result: PlayerSearchResultView): SearchRow => ({
@@ -42,7 +41,9 @@ export const searchRowOf = (result: PlayerSearchResultView): SearchRow => ({
   nationality: result.nationality,
   overallRating: result.overallRating,
   transferValue: result.transferValue,
-  positions: result.positions.map((p) => ({ position: p.position })),
+  positionLabel: result.positionLabel,
+  canPlay: result.canPlay,
+  positionOrder: result.positionOrder,
 });
 
 /** Numeric sort over the accessed value — the default string sort would order 9 before 10. */

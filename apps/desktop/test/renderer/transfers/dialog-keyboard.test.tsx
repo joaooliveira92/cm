@@ -8,6 +8,7 @@ import { dispatchAction, resetActionHandlers } from "../../../src/renderer/actio
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -34,6 +35,7 @@ const marketPlayer = (
   overallRating: { _tag: "exact", value: overallRating },
   transferValue: { _tag: "exact", value: transferValue },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
 });
 
 const transfersView = () => ({

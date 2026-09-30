@@ -2,7 +2,7 @@ import { GOALKEEPING_ATTRIBUTES, OUTFIELD_ATTRIBUTES } from "@cm-clone/shared";
 import { Schema } from "effect";
 
 import { ClubId, PlayerId } from "./ids.js";
-import { PlayerPositionView } from "./squad.js";
+import { PositionSummaryFields, PlayerPositionView } from "./squad.js";
 import { PlayerFigureSchema } from "./transfers.js";
 
 /**
@@ -43,6 +43,7 @@ export class PlayerComparisonRowView extends Schema.Class<PlayerComparisonRowVie
   clubId: Schema.NullOr(ClubId),
   clubName: Schema.NullOr(Schema.String),
   positions: Schema.Array(PlayerPositionView),
+  ...PositionSummaryFields,
   attributes: ComparisonAttributeFiguresSchema,
   overallRating: PlayerFigureSchema,
   transferValue: PlayerFigureSchema,

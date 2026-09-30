@@ -28,6 +28,7 @@ import { saveSquadViewId } from "../../src/renderer/squad/squadViews.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
 import { renderInRouter } from "../setup/renderInRouter.js";
 import { MATCH_COLOURS } from "./match/matchColours.js";
+import { positionSummaryFor } from "../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -51,6 +52,7 @@ const playerRow = (id: string, name: string) => ({
   age: 25,
   attributes: attributes(12),
   positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(POSITIONS[2]),
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
@@ -135,6 +137,9 @@ const transfersView = () => ({
       overallRating: { _tag: "exact", value: 78 },
       transferValue: { _tag: "exact", value: 1200000 },
       positions: [],
+      positionLabel: "",
+      canPlay: [],
+      positionOrder: 0,
     },
   ],
   marketPlayers: [
@@ -148,6 +153,9 @@ const transfersView = () => ({
       overallRating: { _tag: "exact", value: 78 },
       transferValue: { _tag: "exact", value: 1200000 },
       positions: [],
+      positionLabel: "",
+      canPlay: [],
+      positionOrder: 0,
     },
   ],
 });

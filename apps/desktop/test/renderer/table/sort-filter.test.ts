@@ -30,20 +30,25 @@ interface Row {
   readonly id: string;
   readonly firstName: string;
   readonly lastName: string;
-  readonly positions: ReadonlyArray<{ readonly position: string }>;
+  readonly positionLabel: string;
+  readonly canPlay: ReadonlyArray<string>;
+  readonly positionOrder: number;
 }
 
-const row = (id: string, firstName: string, lastName: string, positions: string[]): Row => ({
+/** A row that can play the given position filters. */
+const row = (id: string, firstName: string, lastName: string, canPlay: string[]): Row => ({
   id,
   firstName,
   lastName,
-  positions: positions.map((position) => ({ position })),
+  positionLabel: canPlay.join("/"),
+  canPlay,
+  positionOrder: 0,
 });
 
 const dataset: readonly Row[] = [
   row("p1", "Alan", "Keeper", ["GK"]),
-  row("p2", "Bob", "Defender", ["DC", "DM"]),
-  row("p3", "Ari", "Striker", ["ST"]),
+  row("p2", "Bob", "Defender", ["D C", "DM C"]),
+  row("p3", "Ari", "Striker", ["F C"]),
 ];
 
 describe("AC-30 — filter semantics (OURS, never TanStack's)", () => {
@@ -53,14 +58,14 @@ describe("AC-30 — filter semantics (OURS, never TanStack's)", () => {
     expect(matchesNameSearch(dataset[1]!, "bob def")).toBe(true);
   });
 
-  it("position filter matches any position in the row's positions array", () => {
-    expect(applyFilters(dataset, [positionClause("DC")]).map((r) => r.id)).toEqual(["p2"]);
-    expect(matchesPosition(dataset[1]!, "DM")).toBe(true);
+  it("position filter matches when the row can play the filter", () => {
+    expect(applyFilters(dataset, [positionClause("D C")]).map((r) => r.id)).toEqual(["p2"]);
+    expect(matchesPosition(dataset[1]!, "DM C")).toBe(true);
     expect(applyFilters(dataset, [positionClause("GK")]).map((r) => r.id)).toEqual(["p1"]);
   });
 
   it("clauses fold together (name AND position)", () => {
-    const both = applyFilters(dataset, [nameSearchClause("a"), positionClause("ST")]);
+    const both = applyFilters(dataset, [nameSearchClause("a"), positionClause("F C")]);
     expect(both.map((r) => r.id)).toEqual(["p3"]);
   });
 
@@ -82,8 +87,8 @@ describe("AC-30 — visible-filter edit helpers (clause by identity, never index
   it("upsertFilter replaces the existing clause of the same kind", () => {
     const one = upsertFilter([], positionClause("GK"));
     expect(one).toEqual([{ _tag: "position", position: "GK" }]);
-    const retargeted = upsertFilter(one, positionClause("ST"));
-    expect(retargeted).toEqual([{ _tag: "position", position: "ST" }]);
+    const retargeted = upsertFilter(one, positionClause("F C"));
+    expect(retargeted).toEqual([{ _tag: "position", position: "F C" }]);
   });
 
   it("upsertFilter keeps different clause kinds side by side", () => {
@@ -119,12 +124,12 @@ describe("AC-30 — the palette and header back the SAME command (param classifi
   });
 
   it("filter-<table>-<position> classifies to set-filter carrying a position clause", () => {
-    const filter = marketActions.find((a) => a.id === "filter-transfer-market-mc")!;
+    const filter = marketActions.find((a) => a.id === "filter-transfer-market-m-c")!;
     const params = (filter.metadata! as { params: unknown }).params;
     expect(classifyTableParamAction(filter.id, params)).toEqual({
       kind: "set-filter",
       tableId: "transfer-market",
-      filter: { _tag: "position", position: "MC" },
+      filter: { _tag: "position", position: "M C" },
     });
   });
 
@@ -153,8 +158,8 @@ describe("AC-30 — the palette and header back the SAME command (param classifi
   });
 
   it("name search has no palette row (visible control only), but every enumerated row carries typed params", () => {
-    // 4 sortable columns × 2 directions + clear-sort + 10 positions + clear-filters
-    expect(marketActions).toHaveLength(4 * 2 + 1 + 10 + 1);
+    // 4 sortable columns × 2 directions + clear-sort + 17 position filters + clear-filters
+    expect(marketActions).toHaveLength(4 * 2 + 1 + 17 + 1);
     for (const action of marketActions) {
       expect((action.metadata as { params: unknown }).params).toBeDefined();
     }
@@ -170,11 +175,11 @@ describe("Screen 71 — the status filter (group-e 02)", () => {
 
   const TIRED = NON_CONTACT_CONDITION_THRESHOLD - 1;
   const squad: readonly ConditionRow[] = [
-    withCondition(row("t1", "Tom", "Tired", ["DC"]), TIRED),
-    withCondition(row("f1", "Fay", "Fresh", ["DC"]), 100),
-    withCondition(row("t2", "Tia", "Striker", ["ST"]), TIRED),
+    withCondition(row("t1", "Tom", "Tired", ["D C"]), TIRED),
+    withCondition(row("f1", "Fay", "Fresh", ["D C"]), 100),
+    withCondition(row("t2", "Tia", "Striker", ["F C"]), TIRED),
     // A rival's row: no Condition disclosed, so it can never carry a status.
-    withCondition(row("r1", "Ron", "Rival", ["DC"]), undefined),
+    withCondition(row("r1", "Ron", "Rival", ["D C"]), undefined),
   ];
 
   it("matches through the status vocabulary, with the engine's threshold as the boundary", () => {
@@ -188,14 +193,14 @@ describe("Screen 71 — the status filter (group-e 02)", () => {
 
   it("folds a status clause together with a position clause", () => {
     expect(applyFilters(squad, [statusClause("Tir")]).map((r) => r.id)).toEqual(["t1", "t2"]);
-    expect(applyFilters(squad, [positionClause("DC"), statusClause("Tir")]).map((r) => r.id)).toEqual(["t1"]);
+    expect(applyFilters(squad, [positionClause("D C"), statusClause("Tir")]).map((r) => r.id)).toEqual(["t1"]);
   });
 
   it("keeps the status and position clauses side by side, and removes one without the other", () => {
-    const both = upsertFilter([positionClause("DC")], statusClause("Tir"));
-    expect(both).toEqual([positionClause("DC"), statusClause("Tir")]);
-    expect(removeFilter(both, positionClause("DC"))).toEqual([statusClause("Tir")]);
-    expect(removeFilter(both, statusClause("Tir"))).toEqual([positionClause("DC")]);
+    const both = upsertFilter([positionClause("D C")], statusClause("Tir"));
+    expect(both).toEqual([positionClause("D C"), statusClause("Tir")]);
+    expect(removeFilter(both, positionClause("D C"))).toEqual([statusClause("Tir")]);
+    expect(removeFilter(both, statusClause("Tir"))).toEqual([positionClause("D C")]);
   });
 
   it("labels a status clause by its full term, never the abbreviation", () => {
@@ -237,41 +242,41 @@ describe("Screen 71 — the attribute thresholds (group-e 04, 05)", () => {
   const TIRED = NON_CONTACT_CONDITION_THRESHOLD - 1;
 
   it("meets the threshold only with an exact figure at or above it", () => {
-    expect(matchesAttribute(squadRow("a", "DC", 100, exact(15)), "pace", 15)).toBe(true);
-    expect(matchesAttribute(squadRow("b", "DC", 100, exact(14)), "pace", 15)).toBe(false);
+    expect(matchesAttribute(squadRow("a", "D C", 100, exact(15)), "pace", 15)).toBe(true);
+    expect(matchesAttribute(squadRow("b", "D C", 100, exact(14)), "pace", 15)).toBe(false);
     // A band is never resolved to its midpoint, even one wholly above the threshold.
-    expect(matchesAttribute(squadRow("c", "DC", 100, { _tag: "range", low: 16, high: 18 }), "pace", 15)).toBe(false);
-    expect(matchesAttribute(squadRow("d", "DC", 100, undefined), "pace", 15)).toBe(false);
+    expect(matchesAttribute(squadRow("c", "D C", 100, { _tag: "range", low: 16, high: 18 }), "pace", 15)).toBe(false);
+    expect(matchesAttribute(squadRow("d", "D C", 100, undefined), "pace", 15)).toBe(false);
     // A row with no attributes at all — a market row's shape — never matches.
-    expect(matchesAttribute(row("e", "E", "Market", ["DC"]), "pace", 1)).toBe(false);
+    expect(matchesAttribute(row("e", "E", "Market", ["D C"]), "pace", 1)).toBe(false);
   });
 
   it("folds with position and status, keeping only rows that match all three", () => {
     const rows = [
-      squadRow("keep", "DC", TIRED, exact(16)),
-      squadRow("slow", "DC", TIRED, exact(10)),
-      squadRow("fresh", "DC", 100, exact(18)),
-      squadRow("striker", "ST", TIRED, exact(18)),
+      squadRow("keep", "D C", TIRED, exact(16)),
+      squadRow("slow", "D C", TIRED, exact(10)),
+      squadRow("fresh", "D C", 100, exact(18)),
+      squadRow("striker", "F C", TIRED, exact(18)),
     ];
-    const filters = [positionClause("DC"), statusClause("Tir"), attributeClause("pace", 15)];
+    const filters = [positionClause("D C"), statusClause("Tir"), attributeClause("pace", 15)];
     expect(applyFilters(rows, filters).map((r) => r.id)).toEqual(["keep"]);
   });
 
   it("holds one clause per Attribute, replacing and removing it without touching the others", () => {
-    const first = upsertFilter([positionClause("DC")], attributeClause("pace", 15));
+    const first = upsertFilter([positionClause("D C")], attributeClause("pace", 15));
     const both = upsertFilter(first, attributeClause("strength", 12));
-    expect(both).toEqual([positionClause("DC"), attributeClause("pace", 15), attributeClause("strength", 12)]);
+    expect(both).toEqual([positionClause("D C"), attributeClause("pace", 15), attributeClause("strength", 12)]);
     const raised = upsertFilter(both, attributeClause("pace", 17));
-    expect(raised).toEqual([positionClause("DC"), attributeClause("strength", 12), attributeClause("pace", 17)]);
+    expect(raised).toEqual([positionClause("D C"), attributeClause("strength", 12), attributeClause("pace", 17)]);
     expect(removeFilter(raised, attributeClause("strength", 12))).toEqual([
-      positionClause("DC"),
+      positionClause("D C"),
       attributeClause("pace", 17),
     ]);
   });
 
   it("keeps only rows meeting every threshold", () => {
     const paceAndStrength = (id: string, pace: number, strength: number) => ({
-      ...squadRow(id, "DC", TIRED, exact(pace)),
+      ...squadRow(id, "D C", TIRED, exact(pace)),
       attributes: { pace: exact(pace), strength: exact(strength) },
     });
     const rows = [paceAndStrength("both", 16, 14), paceAndStrength("fast", 16, 8), paceAndStrength("strong", 9, 14)];
@@ -280,14 +285,14 @@ describe("Screen 71 — the attribute thresholds (group-e 04, 05)", () => {
   });
 
   it("replaces the whole attribute set in one step, leaving the other kinds alone", () => {
-    const before = [positionClause("DC"), attributeClause("pace", 15), statusClause("Tir")];
+    const before = [positionClause("D C"), attributeClause("pace", 15), statusClause("Tir")];
     expect(
       replaceAttributeFilters(before, [
         { attribute: "strength", min: 12 },
         { attribute: "finishing", min: 14 },
       ]),
-    ).toEqual([positionClause("DC"), statusClause("Tir"), attributeClause("strength", 12), attributeClause("finishing", 14)]);
-    expect(replaceAttributeFilters(before, [])).toEqual([positionClause("DC"), statusClause("Tir")]);
+    ).toEqual([positionClause("D C"), statusClause("Tir"), attributeClause("strength", 12), attributeClause("finishing", 14)]);
+    expect(replaceAttributeFilters(before, [])).toEqual([positionClause("D C"), statusClause("Tir")]);
   });
 
   it("labels the clause by the column header's name and the threshold", () => {
@@ -297,10 +302,10 @@ describe("Screen 71 — the attribute thresholds (group-e 04, 05)", () => {
 
 describe("filterChangeNotice — the bottom-bar line for a filter change", () => {
   it("names the clause that was set, then the count", () => {
-    expect(filterChangeNotice([], [positionClause("DC")], 2)).toBe(
-      "Filtered by Position: DC. 2 players match the current filters.",
+    expect(filterChangeNotice([], [positionClause("D C")], 2)).toBe(
+      "Filtered by Position: Defender (centre). 2 players match the current filters.",
     );
-    expect(filterChangeNotice([positionClause("DC")], [positionClause("DC"), statusClause("Tir")], 1)).toBe(
+    expect(filterChangeNotice([positionClause("D C")], [positionClause("D C"), statusClause("Tir")], 1)).toBe(
       "Filtered by Status: Tired. 1 player matches the current filters.",
     );
   });
@@ -317,35 +322,35 @@ describe("filterChangeNotice — the bottom-bar line for a filter change", () =>
     expect(filterChangeNotice([pace], [pace, strength], 2)).toBe(
       "Filtered by Attributes: Pace 15+, Strength 12+. 2 players match the current filters.",
     );
-    expect(filterChangeNotice([positionClause("DC"), pace, strength], [positionClause("DC")], 5)).toBe(
+    expect(filterChangeNotice([positionClause("D C"), pace, strength], [positionClause("D C")], 5)).toBe(
       "Cleared the Attribute filter. 5 players match the current filters.",
     );
     // An unchanged set with a changed Position names the Position, not the attributes.
-    expect(filterChangeNotice([pace, strength], [pace, strength, positionClause("ST")], 1)).toBe(
-      "Filtered by Position: ST. 1 player matches the current filters.",
+    expect(filterChangeNotice([pace, strength], [pace, strength, positionClause("F C")], 1)).toBe(
+      "Filtered by Position: Forward (centre). 1 player matches the current filters.",
     );
   });
 
   it("names the kind that was removed, and says so when nothing is left", () => {
-    const both = [positionClause("DC"), statusClause("Tir")];
-    expect(filterChangeNotice(both, [positionClause("DC")], 4)).toBe(
+    const both = [positionClause("D C"), statusClause("Tir")];
+    expect(filterChangeNotice(both, [positionClause("D C")], 4)).toBe(
       "Cleared the Status filter. 4 players match the current filters.",
     );
-    expect(filterChangeNotice([positionClause("DC")], [], 1)).toBe("Cleared the filters. 1 player is shown.");
+    expect(filterChangeNotice([positionClause("D C")], [], 1)).toBe("Cleared the filters. 1 player is shown.");
   });
 
   it("says nothing while only the name search moves, which it does once per keystroke", () => {
     expect(filterChangeNotice([], [nameSearchClause("a")], 3)).toBeNull();
     expect(filterChangeNotice([nameSearchClause("a")], [nameSearchClause("al")], 1)).toBeNull();
     expect(filterChangeNotice([nameSearchClause("al")], [nameSearchClause("")], 9)).toBeNull();
-    expect(filterChangeNotice([positionClause("DC")], [positionClause("DC"), nameSearchClause("al")], 1)).toBeNull();
+    expect(filterChangeNotice([positionClause("D C")], [positionClause("D C"), nameSearchClause("al")], 1)).toBeNull();
     // Whitespace filters nothing, so it is not a change at all.
     expect(filterChangeNotice([], [nameSearchClause("  ")], 9)).toBe("9 players match the current filters.");
   });
 
   it("still names another clause set while a name search is in place", () => {
-    expect(filterChangeNotice([nameSearchClause("al")], [nameSearchClause("al"), positionClause("DC")], 1)).toBe(
-      "Filtered by Position: DC. 1 player matches the current filters.",
+    expect(filterChangeNotice([nameSearchClause("al")], [nameSearchClause("al"), positionClause("D C")], 1)).toBe(
+      "Filtered by Position: Defender (centre). 1 player matches the current filters.",
     );
   });
 });

@@ -19,6 +19,7 @@ import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { chooseToolbarOption } from "../../setup/toolbarPopover.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -36,6 +37,7 @@ const squadPlayer = (id: string, name: string, position: string, condition: numb
   age: 25,
   attributes: { ...attributes(12), pace },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { ST: 12 },
   suitability: {},
@@ -187,7 +189,7 @@ describe("Squad attribute filter (Screen 71, group-e 04, 05)", () => {
   });
 
   it("restores an attribute clause from the URL, through the real decode path", async () => {
-    mountSquad("/?filters=pos:DC,attr:pace:16");
+    mountSquad("/?filters=pos:D%20C,attr:pace:16");
     await expectVisible(["Tom"]);
     expect(screen.getByRole("button", { name: TRIGGER }).textContent).toContain("Attribute: Pace 16+");
   });

@@ -19,11 +19,6 @@ import { SQUAD_ALL_COLUMN_IDS } from "../table/features/visibility.js";
 import type { SortState } from "../table/types.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
 
-/** The legend id the squad columns share with the legend disclosure. Defined
- *  here once so both the column definition and the assembly hook can refer to
- *  it without a constant-repetition hazard. */
-export const STATUS_LEGEND_ID = "squad-status-legend";
-
 /** Module-level so its identity never invalidates the memoised columns. */
 const MATCH_DAY_OPTION = { Cell: MatchDayCell, width: MATCH_DAY_COLUMN_WIDTH } as const;
 const FIT_OPTION = { Cell: FitIndicator, width: FIT_COLUMN_WIDTH } as const;
@@ -52,8 +47,7 @@ export const useSquadTable = ({
   sort,
   onSortChange,
   preferences,
-  legendExpanded,
-  onToggleLegend,
+  onOpenLegend,
   fitActive,
 }: {
   /** The data rows, already filtered by the session's filter state. */
@@ -61,31 +55,25 @@ export const useSquadTable = ({
   readonly sort: SortState | null;
   readonly onSortChange: (next: SortState | null) => void;
   readonly preferences: SquadColumnPreferences;
-  /** Whether the status-legend disclosure is open (drives one column cell). */
-  readonly legendExpanded: boolean;
-  /** Toggle the status-legend disclosure (the Status column header's action). */
-  readonly onToggleLegend: () => void;
+  /** Open the status-legend dialog (the Status column header's action). */
+  readonly onOpenLegend: () => void;
   /** Whether a starter slot is selected — the fit column exists only while one is. */
   readonly fitActive: boolean;
 }) => {
   // TanStack keys its internal memos on the identity of `columns` and
   // `columnVisibility`. Rebuilt inline on every render, they invalidated every
   // column, row, and cell object each pass — the allocation churn behind the
-  // renderer's GC load. `legendExpanded` and `fitActive` are the only real inputs.
+  // renderer's GC load. `onOpenLegend` and `fitActive` are the only real inputs.
   const columns = useMemo(
     () =>
       squadColumns({
         ownClub: true,
         sortable: true,
-        legend: {
-          expanded: legendExpanded,
-          legendId: STATUS_LEGEND_ID,
-          onToggle: onToggleLegend,
-        },
+        legend: { onOpen: onOpenLegend },
         matchDay: MATCH_DAY_OPTION,
         ...(fitActive ? { fit: FIT_OPTION } : {}),
       }),
-    [legendExpanded, onToggleLegend, fitActive],
+    [onOpenLegend, fitActive],
   );
   // ABSENCE IS VISIBILITY, and that is load-bearing for the fit column. This map is built by
   // walking `SQUAD_ALL_COLUMN_IDS`, so a column outside that list is simply not in it — and

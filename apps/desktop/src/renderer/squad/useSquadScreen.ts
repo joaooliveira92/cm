@@ -87,7 +87,7 @@ import type { FilterClause } from "../table/types.js";
 import { useSquadSession } from "./useSquadSession.js";
 import { useSquadColumns } from "./useSquadColumns.js";
 import { useSquadAnnouncements } from "./useSquadAnnouncements.js";
-import { useSquadTable, STATUS_LEGEND_ID } from "./useSquadTable.js";
+import { useSquadTable } from "./useSquadTable.js";
 import type { SquadScreenValue } from "./squadScreenTypes.js";
 import { useListState } from "../navigation/use-list-state.js";
 
@@ -216,7 +216,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
 
   const copy: TableStateCopy = STATE_COPY.squad;
 
-  const toggleLegend = useCallback(() => setLegendExpanded((open) => !open), [setLegendExpanded]);
+  const openLegend = useCallback(() => setLegendExpanded(true), [setLegendExpanded]);
   const { context: fitContext, toggle: toggleFitContext, clear: clearFitContext } = useLineupFit(
     lineup.tactic,
   );
@@ -225,8 +225,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     sort,
     onSortChange: setSort,
     preferences,
-    legendExpanded,
-    onToggleLegend: toggleLegend,
+    onOpenLegend: openLegend,
     fitActive: fitContext !== null,
   });
   const fit = readoutOf(fitContext, filtered);
@@ -559,7 +558,6 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       saveId,
       speak,
       TABLE_ID,
-      STATUS_LEGEND_ID,
       allPlayers,
     },
     lineup,

@@ -12,6 +12,7 @@ import {
   marketPlayerRowOf,
   type MarketPlayerRow,
 } from "../../../../src/renderer/table/transfers/marketColumns.js";
+import { positionSummaryFor } from "../../../setup/positionFixtures.js";
 
 /** The value a column sorts by — the accessor function TanStack gives its rows (the midpoint, for
  *  ranged figures). Narrowed out of the `ColumnDef` union, which only carries `accessorFn` on the
@@ -36,7 +37,9 @@ const scouted = (overallRating: number, transferValue: number) => ({
   clubName: "Castlemere United",
   overallRating: { _tag: "exact", value: overallRating },
   transferValue: { _tag: "exact", value: transferValue },
-  positions: [{ position: "ST" }],
+  positionLabel: "S C",
+  canPlay: ["F C"],
+  positionOrder: 18,
 } satisfies MarketPlayerRow);
 
 const ranged = (low: number, high: number, from: number, to: number) => ({
@@ -48,7 +51,9 @@ const ranged = (low: number, high: number, from: number, to: number) => ({
   clubName: "Castlemere United",
   overallRating: { _tag: "range", low, high },
   transferValue: { _tag: "range", low: from, high: to },
-  positions: [{ position: "MC" }],
+  positionLabel: "M C",
+  canPlay: ["M C"],
+  positionOrder: 14,
 } satisfies MarketPlayerRow);
 
 describe("market row figures (ticket 09)", () => {
@@ -63,6 +68,7 @@ describe("market row figures (ticket 09)", () => {
       overallRating: { _tag: "range", low: 58, high: 98 },
       transferValue: { _tag: "range", low: 120000, high: 750000 },
       positions: [{ position: "MC", familiarity: "natural" }],
+      ...positionSummaryFor("MC"),
     };
     const row = marketPlayerRowOf(view as never);
     expect(row.overallRating).toEqual({ _tag: "range", low: 58, high: 98 });

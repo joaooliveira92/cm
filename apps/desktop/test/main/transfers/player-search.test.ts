@@ -224,14 +224,14 @@ it.effect("filters by name, age range, position, nationality and club name", () 
       "minAge above the player's age excludes them",
     );
 
-    // Position: the sample player's own position from their row filters to players who play it.
-    const position = sample.positions[0]?.position;
+    // Position: a filter the sample player can play returns him, and only players who can play it.
+    const position = sample.canPlay[0];
     ok(position);
     const byPosition = yield* search(save.id, { position });
     ok(byPosition.results.some((row) => row.id === sample.id));
     ok(
-      byPosition.results.every((row) => row.positions.some((p) => p.position === position)),
-      "every positional hit plays the position",
+      byPosition.results.every((row) => row.canPlay.includes(position)),
+      "every positional hit can play the position",
     );
 
     // Nationality: filter by a nation the save actually holds, and only that nation comes back.

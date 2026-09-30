@@ -26,6 +26,7 @@ import {
   squadView as squad,
   tacticsView,
 } from "../../setup/squadFixtures.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -57,6 +58,7 @@ const marketPlayer = (
   overallRating: { _tag: "exact", value: overallRating },
   transferValue: { _tag: "exact", value: transferValue },
   positions: [{ position, familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(position),
 });
 
 const transfersView = (overrides: {
@@ -293,11 +295,11 @@ describe("AC-30 — visible filter controls show active state and drive the same
     expect(within(group).getByRole("button", { name: /Bob Player/ })).toBeTruthy();
 
     // Position filter is an independent visible control.
-    await chooseOptionByLabel(/Filter Market by position/, "DC");
+    await chooseOptionByLabel(/Filter Market by position/, "Defender (centre)");
     expect(within(group).getByRole("button", { name: /Bob Player/ })).toBeTruthy();
 
     // Filters that hide every Market row surface the explicit no-filter-results state.
-    await chooseOptionByLabel(/Filter Market by position/, "ST");
+    await chooseOptionByLabel(/Filter Market by position/, "Forward (centre)");
     fireEvent.change(screen.getByLabelText("Search Market by name"), {
       target: { value: "" },
     });
@@ -313,18 +315,18 @@ describe("AC-30 — visible filter controls show active state and drive the same
     await mountTransfers(transfersView());
     await screen.findByRole("button", { name: /Alan Player/ });
 
-    // The enumerated `filter-transfer-market-st` palette row dispatches with
-    // typed params; no ST player exists in the Market fixture → NoFilterResults.
+    // The enumerated `filter-transfer-market-f-c` palette row dispatches with
+    // typed params; no F C player exists in the Market fixture → NoFilterResults.
     act(() => {
-      dispatchAction("filter-transfer-market-st", {
+      dispatchAction("filter-transfer-market-f-c", {
         tableId: "transfer-market",
-        filter: { _tag: "position", position: "ST" },
+        filter: { _tag: "position", position: "F C" },
       });
     });
     expect(await screen.findByText("No players match the current filters.")).toBeTruthy();
     expect(screen.queryByRole("button", { name: /Alan Player/ })).toBeNull();
     // The visible control reflects the same active state as the palette command.
-    expect(selectValueOf(screen.getByLabelText("Filter Market by position"))).toBe("ST");
+    expect(selectValueOf(screen.getByLabelText("Filter Market by position"))).toBe("F C");
   });
 });
 
@@ -339,7 +341,7 @@ describe("AC-31 — selection cleared when the selected row is filtered out (exp
     fireEvent.keyDown(document.querySelector("tbody")!, { key: " " });
     expect(document.querySelector('tr[aria-selected="true"]')).toBeTruthy();
 
-    await chooseToolbarOption(/Filter squad by position/, "DC");
+    await chooseToolbarOption(/Filter squad by position/, "D C");
     await screen.findByText(/Dorso Player/);
     expect(document.querySelector('tr[aria-selected="true"]')).toBeNull();
     expect(screen.queryByRole("button", { name: /Garek Player/ })).toBeNull();
@@ -353,7 +355,7 @@ describe("AC-31 — selection cleared when the selected row is filtered out (exp
     fireEvent.click(screen.getByRole("button", { name: /Alan Player/ }));
     expect(screen.getByRole("region", { name: "Place bid" })).toBeTruthy();
 
-    await chooseOptionByLabel(/Filter Market by position/, "DC");
+    await chooseOptionByLabel(/Filter Market by position/, "Defender (centre)");
     await screen.findByRole("button", { name: /Bob Player/ });
     // Alan is filtered out → selection cleared → the Actions region unmounts.
     expect(screen.queryByRole("region", { name: "Place bid" })).toBeNull();
@@ -557,7 +559,7 @@ describe("review repairs (stage-5 review) — F1 refresh keeps rows, F2 retry, F
     // A filter with no matching rows flips the screen to NoFilterResults in the
     // same render the old announcer would unmount; the one status region must
     // persist and keep the latest line.
-    await chooseToolbarOption(/Filter squad by position/, "ST");
+    await chooseToolbarOption(/Filter squad by position/, "F C");
     expect(screen.getByText("No players match the current filters.")).toBeTruthy();
     const status = screen.getByRole("status");
     expect(status.textContent).toContain("hidden by the current filters");

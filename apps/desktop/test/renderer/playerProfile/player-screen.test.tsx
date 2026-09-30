@@ -29,6 +29,9 @@ const profile = (goalkeeper = false) => {
     nationality: player.nationality,
     birthplace: "Porto",
     positions: player.positions,
+    positionLabel: player.positionLabel,
+    canPlay: player.canPlay,
+    positionOrder: player.positionOrder,
     attributes: profileFigures(player.attributes),
     overallRating: { _tag: "exact", value: player.overallRating },
     transferValue: { _tag: "exact", value: 1_000_000 },
@@ -86,7 +89,7 @@ describe("the player screen every player tab shares", () => {
     const { unmount } = renderProfile();
 
     const strip = await screen.findByRole("navigation", { name: "Player sections" });
-    expect(getScreenIdentity()).toMatchObject({ name: "Rui Costa", qualifier: "Test FC", facts: "DC, Portugal, Age 25" });
+    expect(getScreenIdentity()).toMatchObject({ name: "Rui Costa", qualifier: "Test FC", facts: "D C, Portugal, Age 25" });
     // The band's player facts, with the wage filled in from the contract read.
     await vi.waitFor(() => expect(playerIdentity()?.wage).toBe(7000));
     expect(playerIdentity()).toMatchObject({
@@ -143,7 +146,8 @@ describe("the Profile tab", () => {
     expect(within(physical).getByText("Overall Rating")).toBeTruthy();
     expect(within(physical).getByText("1,000,000 Cr")).toBeTruthy();
 
-    expect(within(screen.getByRole("region", { name: "Positions" })).getByText("Natural")).toBeTruthy();
+    // The compact label and the filters he can play; never the ratings behind them.
+    expect(within(screen.getByRole("region", { name: "Positions" })).getAllByText("D C")).toHaveLength(2);
     expect(within(screen.getByRole("region", { name: "Selection Details" })).getByText("None")).toBeTruthy();
   });
 

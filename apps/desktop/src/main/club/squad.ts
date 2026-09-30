@@ -3,6 +3,7 @@ import path from "node:path";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { ClubSummary, SaveNotFoundError, SquadPlayerView, SquadView, type SaveId, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
+  positionSummaryOf,
   ALL_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   ageOn,
@@ -128,6 +129,7 @@ export const loadSquadPlayers = (clubId: ClubId) =>
         overallRating: overall,
         positionRatings,
         suitability: suitabilityByPosition,
+        ...positionSummaryOf(ratings),
         condition: row.condition,
         trainingFocus: (row.trainingFocus as Category | null) ?? null,
         retrainingTarget: (row.retrainingTarget as RetrainingTarget | null) ?? null,

@@ -2,7 +2,7 @@
  * The squad screen's three presentation preferences and their single-source
  * setters: the chosen view (which layout and column set — see `squadViews.ts`),
  * the reconciled column preferences that survive a restart
- * (`columnPreferences.ts`), and whether the status-legend disclosure is open.
+ * (`columnPreferences.ts`), and whether the status-legend dialog is open.
  *
  * All three persist independently of the session store, and all three are
  * "standing" choices — what a manager reads their squad in — so they live

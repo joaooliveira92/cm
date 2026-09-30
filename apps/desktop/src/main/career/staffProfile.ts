@@ -188,7 +188,7 @@ const rankSquad = (clubId: ClubId, key: string, judgingPlayerAbility: number, wo
             id: player.id,
             firstName: player.firstName,
             lastName: player.lastName,
-            positions: player.positions.map((entry) => entry.position),
+            positionLabel: player.positionLabel,
             age: player.age,
             condition: player.condition,
           }),

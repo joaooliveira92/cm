@@ -82,8 +82,8 @@ const TWO_VISIBLE: Readonly<Record<string, boolean>> = {
 };
 
 const ROWS: ReadonlyArray<EdgeRow> = [
-  { id: "p1", firstName: "Alan", lastName: "Player", positions: [{ position: "ST" }], age: 25 },
-  { id: "p2", firstName: "Bob", lastName: "Player", positions: [{ position: "DC" }], age: 27 },
+  { id: "p1", firstName: "Alan", lastName: "Player", positionLabel: "S C", canPlay: ["F C"], positionOrder: 18, age: 25 },
+  { id: "p2", firstName: "Bob", lastName: "Player", positionLabel: "D C", canPlay: ["D C"], positionOrder: 8, age: 27 },
 ];
 
 const noop = (): void => {};

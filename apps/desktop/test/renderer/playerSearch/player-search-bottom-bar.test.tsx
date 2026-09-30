@@ -6,6 +6,7 @@ import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { PlayerSearchScreen } from "../../../src/renderer/playerSearch/PlayerSearchScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { RegisteredScreenBar } from "../registered-screen-bar.js";
+import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 /**
  * Player Search's verbs live in the shell's bottom bar: View Profile opens the row under the
@@ -24,6 +25,7 @@ const result = (id: string, firstName: string, lastName: string) => ({
   clubName: "Northport Rovers",
   nationality: "nation_eng",
   positions: [{ position: "ST", familiarity: "natural" }],
+  ...positionSummaryFor("ST"),
   overallRating: { _tag: "range", low: 60, high: 70 },
   transferValue: { _tag: "range", low: 1_000_000, high: 2_000_000 },
 });
