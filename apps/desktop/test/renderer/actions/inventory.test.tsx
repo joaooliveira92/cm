@@ -2,11 +2,10 @@ import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
-  FORMATIONS,
-  POSITION_ROLES,
+  BUILT_IN_TEMPLATES,
   STATURE_TIERS,
   emptyBench,
+  tacticFromTemplate,
 } from "@cm-clone/shared";
 import { LeagueTableScreen } from "../../../src/renderer/leagueTable/LeagueTableScreen.js";
 import { TransfersScreen } from "../../../src/renderer/transfers/TransfersScreen.js";
@@ -111,19 +110,9 @@ const tacticsView = (tactic?: unknown) => ({
 
 /** A minimal valid tactic so the live Match Day control panel has something to edit. */
 const fullTactic = () => {
-  const formation = FORMATIONS[0];
-  return {
-    formation,
-    slots: (FORMATION_SLOTS[formation] ?? []).map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: rid(`slot-${index}`),
-    })),
-    bench: emptyBench(),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
-  };
+const template = BUILT_IN_TEMPLATES[0]!;
+    const assignments = template.slots.map((_, index) => rid(`slot-${index}`));
+    return tacticFromTemplate(template, assignments, emptyBench());
 };
 
 const noSubs = () => ({
@@ -274,14 +263,8 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     await screen.findByRole("button", { name: /Save Tactic/ });
     const ids = renderedActionIds();
     const expected = [
-      "assign-slot-player",
       "clear-tactic-selection",
       "save-tactic",
-      "set-formation",
-      "set-mentality",
-      "set-pressing",
-      "set-slot-position",
-      "set-tempo",
       "swap-slot-players",
     ];
     expect(new Set(ids)).toEqual(new Set(expected));

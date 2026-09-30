@@ -1,11 +1,13 @@
 import { existsSync, statSync } from "node:fs";
 import path from "node:path";
 import type { BadgeAdapter } from "./adapter.js";
+import { brazilLogosAdapter } from "./brazil-logos.js";
 import { footballLogosAdapter } from "./football-logos.js";
 import { describeFailure, importClubBadges } from "./import.js";
 
 const ADAPTERS: Readonly<Record<string, () => BadgeAdapter>> = {
   "football-logos": () => footballLogosAdapter(),
+  "brazil-logos": () => brazilLogosAdapter(),
 };
 
 const USAGE = `usage: import-club-badges <source-dir> --adapter <${Object.keys(ADAPTERS).join(" | ")}>`;

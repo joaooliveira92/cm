@@ -10,18 +10,21 @@ import {
   SelectionSummaryView,
   SetPieceStatusView,
   TacticsOverviewView,
-  TeamInstructionSummaryView,
   type PlayerId,
   type SaveId,
+  type Tactic,
 } from "@cm-clone/contracts";
 import {
   assessContinueReadiness,
   assessMatchReadiness,
+  builtInTemplate,
   familiarityOf,
   familiarityTierCounts,
+  isModified,
   partitionSelection,
-  positionRating,
-  roleRating,
+  positionRatingAt,
+  rowCountLabel,
+  slotLabel,
   type FamiliarityTier,
   type MatchReadinessFacts,
   type PlayerAttributes,
@@ -68,36 +71,33 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
         );
 
         const squadById = new Map(squad.map((player) => [player.id, player]));
-        const slotIds = tactic === null ? [] : tactic.slots.map((slot) => slot.playerId);
+        const slotIds = tactic === null ? [] : [...tactic.assignments];
         const benchIds =
           tactic === null ? [] : tactic.bench.filter((id): id is PlayerId => id !== null);
 
-        const assignments = (tactic?.slots ?? []).map((slot) => {
-          const player = squadById.get(slot.playerId);
+        const assignments = (tactic?.slots ?? []).map((slot, index) => {
+          const playerId = tactic!.assignments[index]!;
+          const player = squadById.get(playerId);
           return new PlayerAssignmentView({
-            playerId: slot.playerId,
+            playerId,
             firstName: player?.firstName ?? null,
             lastName: player?.lastName ?? null,
-            position: slot.position,
-            role: slot.role,
+            cell: slot.cell,
             positionRating:
               player === undefined
                 ? null
-                : positionRating(player.attributes as PlayerAttributes, slot.position),
-            roleRating:
-              player === undefined
-                ? null
-                : roleRating(player.attributes as PlayerAttributes, slot.role),
-            familiarity: player === undefined ? null : familiarityOf(player.suitability[slot.position] ?? 1),
+                : positionRatingAt(player.attributes as PlayerAttributes, slot.cell),
+            familiarity:
+              player === undefined ? null : familiarityOf(player.suitability[slotLabel(slot.cell)] ?? 1),
           });
         });
 
         const starterTiers: Array<FamiliarityTier> = [];
         if (tactic !== null) {
-          for (const slot of tactic.slots) {
-            const player = squadById.get(slot.playerId);
+          for (const [index, slot] of tactic.slots.entries()) {
+            const player = squadById.get(tactic.assignments[index]!);
             if (player === undefined) continue;
-            starterTiers.push(familiarityOf(player.suitability[slot.position] ?? 1));
+            starterTiers.push(familiarityOf(player.suitability[slotLabel(slot.cell)] ?? 1));
           }
         }
 
@@ -122,19 +122,14 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
             tactic === null
               ? null
               : new FormationSummaryView({
-                  formation: tactic.formation,
-                  slots: tactic.slots.map(
-                    (slot) => new FormationSlotView({ position: slot.position }),
-                  ),
+                  template: tactic.sourceTemplate,
+                  // A template the game has no record of (a saved tactic) reads as unmodified until
+                  // the library ships; a built-in one is compared with the template it names.
+                  modified: isModifiedFromBuiltIn(tactic),
+                  shape: rowCountLabel(tactic.slots),
+                  slots: tactic.slots.map((slot) => new FormationSlotView({ cell: slot.cell, run: slot.run })),
                 }),
-          instructions:
-            tactic === null
-              ? null
-              : new TeamInstructionSummaryView({
-                  mentality: tactic.mentality,
-                  tempo: tactic.tempo,
-                  pressing: tactic.pressing,
-                }),
+          instructions: tactic === null ? null : tactic.team,
           assignments,
           familiarity:
             tactic === null ? null : new FamiliaritySummaryView(familiarityTierCounts(starterTiers)),
@@ -148,6 +143,12 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
       }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
     ),
   );
+
+/** Whether a Tactic has moved off the built-in template it names; `false` for a name that is not one. */
+const isModifiedFromBuiltIn = (tactic: Tactic): boolean => {
+  const source = builtInTemplate(tactic.sourceTemplate);
+  return source === undefined ? false : isModified(tactic, source);
+};
 
 /**
  * The snapshot's issues: every readiness finding relevant to tactical preparation, blockers and

@@ -5,12 +5,13 @@ import path from "node:path";
 import { deepStrictEqual, strictEqual } from "node:assert";
 import { it } from "@effect/vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { Tactic, type PlayerId, type SaveId } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
+import { type PlayerId, type SaveId } from "@cm-clone/contracts";
+import { emptyBench } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../seeded-save.js";
+import { tacticOf } from "../../setup/tacticFixtures.js";
 import { loadMatchReadiness } from "../../../src/main/club/matchReadiness.js";
 import { loadSquadPlayers, loadUserClub } from "../../../src/main/club/squad.js";
 import { persistTactic } from "../../../src/main/club/tactics.js";
@@ -35,18 +36,7 @@ const inSave = <A, E>(saveId: SaveId, effect: Effect.Effect<A, E, SqlClient>) =>
   );
 
 const tacticWithBench = (squadIds: ReadonlyArray<PlayerId>, bench: ReadonlyArray<PlayerId | null>) =>
-  new Tactic({
-    formation: "4-4-2",
-    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: squadIds[index]!,
-    })),
-    bench,
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
-  });
+  tacticOf(squadIds, { bench });
 
 /** Persists a Tactic for the human club whose bench is `benchFor(squad)`, then reads readiness. */
 const readinessWithBench = (

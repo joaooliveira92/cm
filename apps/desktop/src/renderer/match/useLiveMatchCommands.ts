@@ -20,7 +20,6 @@ import {
   type RpcSuccess,
   type SaveId,
   type SquadPlayerView,
-  type TacticSlot,
 } from "@cm-clone/contracts";
 import {
   resumeSimulation,
@@ -173,8 +172,8 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
             : command._tag === "MakeSubstitution" && outcome._tag === "applied"
               ? new Tactic({
                   ...view.tactic,
-                  slots: view.tactic.slots.map((slot: TacticSlot) =>
-                    slot.playerId === command.outPlayerId ? { ...slot, playerId: command.inPlayerId } : slot,
+                  assignments: view.tactic.assignments.map((playerId) =>
+                    playerId === command.outPlayerId ? command.inPlayerId : playerId,
                   ),
                 })
               : null;

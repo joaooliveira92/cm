@@ -3,21 +3,18 @@ import {
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  emptyBench,
 } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
 import { AppRpcs } from "../src/rpc.js";
+import { club, completeTactic } from "./tacticFixtures.js";
 import {
   AdvancedOptionsPayload,
   AdvanceCalendarResult,
   AdvanceInProgressError,
   AttributesSchema,
   BidView,
-  ChangeTacticsPayload,
   ClubSummary,
-  InvalidTacticError,
   InsufficientTransferBudgetError,
-  PlayerId,
   MatchCommandPayload,
   NotYourPlayerError,
   NullableTrainingFocusSchema,
@@ -27,8 +24,6 @@ import {
   SaveSummary,
   SquadPlayerView,
   SquadView,
-  Tactic,
-  TacticsOverviewView,
   TacticsScreenView,
   TrainingFocusSetEvent,
   TrainingFocusView,
@@ -40,8 +35,6 @@ const roundTrip = <A, I>(schema: Schema.ConstraintCodec<A, I>, wire: unknown): v
   const encoded = Schema.encodeSync(schema)(decoded);
   expect(encoded).toEqual(wire);
 };
-
-const club = { id: "c1", name: "Castlemere United", statureTier: "big" };
 
 const attributes = {
   ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, 12])),
@@ -62,7 +55,8 @@ const player = {
   positionOrder: 20,
   overallRating: 78,
   positionRatings: { ST: 80 },
-  suitability: {},
+  cellRatings: { "F C": 80 },
+  suitability: { "F C": 19 },
   retrainingTarget: null,
   condition: 95,
   trainingFocus: null,
@@ -127,29 +121,8 @@ describe("nested composition", () => {
   });
 });
 
-describe("literals and enums", () => {
-  it("Tactic rejects an invalid formation", () => {
-    expect(() =>
-      Schema.decodeUnknownSync(Tactic)({
-        formation: "4-2-3-1",
-        slots: [],
-        mentality: "balanced",
-        tempo: "normal",
-        pressing: "medium",
-      }),
-    ).toThrow();
-  });
-});
-
 describe("discriminated union command payload", () => {
-  const tactic = {
-    formation: "4-4-2",
-    slots: [{ position: "ST", role: "Poacher", playerId: PlayerId.make("p1") }],
-    bench: emptyBench(),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
-  } satisfies Tactic;
+  const tactic = completeTactic();
 
   it("round-trips ChangeTacticsCommandPayload and selects it by _tag", () => {
     const payload = { _tag: "ChangeTactics", clubId: "c1", tactic };
@@ -210,7 +183,7 @@ describe("tagged errors", () => {
     const identity = {
       id: "s1", name: "My Career", selectedClubId: "club_eng_01",
       firstName: "Ada", lastName: "Lovelace", nationalityId: "nation_eng", dateOfBirth: "1980-01-01",
-      preferredFormation: "4-3-3", preferredStyleId: "gegenpress",
+      preferredFormation: "4-3-3",
       avatarPortraitKey: "avatar_01", avatarPrimaryColor: "#1f2937", avatarSecondaryColor: "#f8fafc",
       archetypeOrigin: "professor", pillars,
     } as const;
@@ -234,31 +207,11 @@ describe("tagged errors", () => {
     }
   });
 
-  it("InvalidTacticError round-trips its reason", () => {
-    roundTrip(InvalidTacticError, { _tag: "InvalidTacticError", reason: "bad slot" });
-  });
-
   it("TacticRevisionConflictError round-trips through the changeTactics error union", () => {
     roundTrip(AppRpcs.changeTactics.error, {
       _tag: "TacticRevisionConflictError",
       saveId: "s1",
       currentRevision: 4,
-    });
-  });
-
-  it("changeTactics payload round-trips expectedRevision and requestId", () => {
-    roundTrip(ChangeTacticsPayload, {
-      saveId: "s1",
-      tactic: {
-        formation: "4-4-2",
-        slots: [{ position: "ST", role: "Poacher", playerId: "p1" }],
-        bench: emptyBench(),
-        mentality: "balanced",
-        tempo: "normal",
-        pressing: "medium",
-      },
-      expectedRevision: 2,
-      requestId: "req-1234",
     });
   });
 
@@ -296,92 +249,6 @@ describe("optional and nullable fields", () => {
       tactic: null,
       revision: 3,
     });
-  });
-});
-
-describe("tactics overview snapshot (Screen 80)", () => {
-  const fourFourTwoSlots = [
-    "GK", "DC", "DC", "DL", "DR", "MC", "MC", "ML", "MR", "ST", "ST",
-  ].map((position) => ({ position }));
-
-  const snapshot = {
-    club,
-    revision: 4,
-    formation: { formation: "4-4-2", slots: fourFourTwoSlots },
-    instructions: { mentality: "balanced", tempo: "normal", pressing: "high" },
-    assignments: [
-      {
-        playerId: "p1",
-        firstName: "Alex",
-        lastName: "Brown",
-        position: "ST",
-        role: "Poacher",
-        positionRating: 81,
-        roleRating: 85,
-        familiarity: "natural",
-      },
-    ],
-    familiarity: { natural: 7, competent: 3, unfamiliar: 1 },
-    selection: {
-      starters: [{ id: "p1", firstName: "Alex", lastName: "Brown" }],
-      substitutes: [{ id: "p2", firstName: "Sam", lastName: "Smith" }],
-    },
-    setPieces: { status: "none" },
-    issues: [
-      {
-        id: "bids-awaiting-response",
-        severity: "advisory",
-        title: "Bids awaiting your response",
-        detail: "A club has bid for your players. Advancing lets it lapse.",
-        destination: "transfers",
-      },
-    ],
-  } as const;
-
-  it("round-trips a fully populated snapshot", () => {
-    roundTrip(TacticsOverviewView, snapshot);
-  });
-
-  it("round-trips the no-tactic state — null formation, instructions, familiarity, empty assignments", () => {
-    roundTrip(TacticsOverviewView, {
-      club,
-      revision: 0,
-      formation: null,
-      instructions: null,
-      assignments: [],
-      familiarity: null,
-      selection: { starters: [], substitutes: [] },
-      setPieces: { status: "none" },
-      issues: [],
-    });
-  });
-
-  it("round-trips a departed-player assignment — nulls where the player has left", () => {
-    roundTrip(TacticsOverviewView, {
-      ...snapshot,
-      assignments: [
-        {
-          playerId: "gone",
-          firstName: null,
-          lastName: null,
-          position: "ST",
-          role: "Poacher",
-          positionRating: null,
-          roleRating: null,
-          familiarity: null,
-        },
-      ],
-    });
-  });
-
-  it("rejects a setPiece status other than none", () => {
-    expect(() =>
-      Schema.decodeUnknownSync(TacticsOverviewView)({ ...snapshot, setPieces: { status: "few" } }),
-    ).toThrow();
-  });
-
-  it("getTacticsOverview's success schema is the snapshot", () => {
-    expect(TacticsOverviewView).toBe(AppRpcs.getTacticsOverview.success);
   });
 });
 

@@ -2,7 +2,7 @@ import type { InjurySeverity, InjuryTrigger, MatchEvent } from "./events.js";
 
 /**
  * Match Commentary Templates (ADR-0008 / ticket 08): fixed game-design data, parallel to
- * `POSITION_WEIGHTS`/`ROLE_WEIGHTS` — never event-sourced state, never assembled by the match
+ * `POSITION_WEIGHTS` — never event-sourced state, never assembled by the match
  * engine itself. The table is keyed off the real Match Event vocabulary in `./events.js`, which is
  * why it lives beside the engine rather than in `@cm-clone/shared`.
  */
@@ -48,11 +48,70 @@ export const COMMENTARY_TEMPLATES: Record<CommentaryTemplateKey, ReadonlyArray<s
     "A speculative effort from {player} drifts well off target for {team}.",
     "{player} drags it wide for {team} — he'll want that one back.",
   ],
-  BigChance: [
-    "Huge chance for {player}! {team} really should be scoring here.",
-    "{player} is clean through for {team} — this is a big opportunity!",
-    "{team} carve the defense open and {player} has a glorious chance!",
-    "That's a golden opportunity for {player} and {team}.",
+  ThroughBall: [
+    "{player} plays a brilliant through ball for {team}, splitting the defence!",
+    "A clever threaded pass from {player} puts {team} in behind!",
+    "{player} slides the ball through the gap — {team} are in!",
+  ],
+  Cross: [
+    "{player} swings in a cross for {team} from the flank.",
+    "A dangerous ball in from {player} — {team} looking for a header.",
+    "{player} whips it into the box for {team}.",
+  ],
+  LongShot: [
+    "{player} lets fly from distance for {team}!",
+    "{player} tries his luck from long range for {team}.",
+    "A speculative effort from {player} — he's decided to shoot from way out!",
+  ],
+  RunWithBall: [
+    "{player} drives forward with the ball for {team}!",
+    "{player} surges into the opposition half with purpose.",
+    "A powerful run from {player} takes {team} up the pitch.",
+  ],
+  HoldUpLayOff: [
+    "{player} holds off the defender and lays it off for {team}.",
+    "Strong play from {player} — he shields the ball and releases a teammate.",
+    "{player} backs into his marker and sets up the chance for {team}.",
+  ],
+  Counter: [
+    "{player} leads the counter-attack for {team}!",
+    "{team} break at speed — {player} bursts forward on the counter!",
+    "A rapid counter from {team} as {player} charges into space!",
+  ],
+  Foul: [
+    "{player} (Home) fouls {team} player — free kick to the other side.",
+    "{player} is penalised for a foul.",
+    "The referee calls a foul — {player} the guilty party.",
+  ],
+  Offside: [
+    "{player} is caught offside for {team}.",
+    "The flag goes up — {player} was in an offside position.",
+    "{player} strayed offside — {team} will be frustrated by the linesman's flag.",
+  ],
+  BeatenTrap: [
+    "The defense steps up but {player} beats the trap — one-on-one!",
+    "{player} times his run perfectly and the offside trap is sprung!",
+    "A well-timed run from {player} catches the defense square — he's through!",
+  ],
+  Corner: [
+    "{player} lines up a corner kick for {team}!",
+    "{player} prepares the corner for {team}.",
+    "{team} win a corner — {player} to take it.",
+  ],
+  FreeKick: [
+    "{player} places the ball for a free kick — {team}'s chance from the set piece.",
+    "Free kick to {team} — {player} stands over it, eyeing the target.",
+    "A free kick opportunity for {team}, {player} to deliver.",
+  ],
+  Penalty: [
+    "Penalty! {player} takes the kick for {team}!",
+    "{team} have a penalty — {player} steps up.",
+    "The referee points to the spot — {player} to strike for {team} from the penalty.",
+  ],
+  KeyPass: [
+    "{player} plays a key pass to set up the attack for {team}.",
+    "Clever vision from {player} — the ball is threaded through for {team}.",
+    "{player} creates the opening for {team}.",
   ],
   YellowCard: [
     "{player} goes into the book for {team}.",
@@ -155,9 +214,22 @@ const tokensFor = (event: MatchEvent, names: CommentaryNameResolver): Record<str
       };
     case "ShotOnTarget":
     case "ShotMissed":
-    case "BigChance":
+    case "ThroughBall":
+    case "Cross":
+    case "LongShot":
+    case "RunWithBall":
+    case "HoldUpLayOff":
+    case "Counter":
     case "YellowCard":
     case "RedCard":
+    case "Corner":
+    case "FreeKick":
+    case "Penalty":
+      return { player: names.playerName(event.playerId), team: names.clubName(event.teamClubId) };
+    case "Foul":
+    case "Offside":
+    case "BeatenTrap":
+    case "KeyPass":
       return { player: names.playerName(event.playerId), team: names.clubName(event.teamClubId) };
     case "Injury":
       return {

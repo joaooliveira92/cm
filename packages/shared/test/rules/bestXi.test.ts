@@ -1,7 +1,17 @@
 import { describe, expect, it } from "vitest";
-import { selectBench, selectBestFormationXI, bestXiForFormation } from "../../src/rules/bestXi.js";
+import {
+  QUALITY_FORMATIONS,
+  QUALITY_FORMATION_SLOTS,
+  bestXiForCells,
+  bestXiForFormation,
+  selectBench,
+  selectBestFormationXI,
+  selectBestTemplateXI,
+} from "../../src/rules/bestXi.js";
+import { SLOTS, slotLabel } from "../../src/rules/slots.js";
+import { builtInTemplate } from "../../src/rules/tacticTemplates.js";
 import { squadQualityBand, computeSquadQuality, SQUAD_QUALITY_THRESHOLDS, SQUAD_QUALITY_BANDS } from "../../src/rules/squadQuality.js";
-import { BENCH_SIZE, FORMATIONS, FORMATION_SLOTS } from "../../src/rules/tactics.js";
+import { BENCH_SIZE } from "../../src/rules/tactics.js";
 import {
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
@@ -51,7 +61,7 @@ describe("selectBestFormationXI", () => {
     const result = selectBestFormationXI(squad);
     expect(result._tag).toBe("success");
     if (result._tag === "success") {
-      expect(FORMATIONS).toContain(result.formation);
+      expect(QUALITY_FORMATIONS).toContain(result.formation);
       expect(result.slots).toHaveLength(11);
       expect(result.meanPositionRating).toBeGreaterThan(0);
     }
@@ -87,7 +97,7 @@ describe("selectBestFormationXI", () => {
     }
   });
 
-  it("breaks formation ties by FORMATIONS canonical order", () => {
+  it("breaks formation ties by QUALITY_FORMATIONS canonical order", () => {
     // All players rated identically across all positions, so every formation gets the same mean
     const squad = Array.from({ length: 25 }, (_, i) =>
       makePlayer(`p${i}`, allPositionsRated(50)),
@@ -95,8 +105,8 @@ describe("selectBestFormationXI", () => {
     const result = selectBestFormationXI(squad);
     expect(result._tag).toBe("success");
     if (result._tag === "success") {
-      // First formation in FORMATIONS order should win on tie
-      expect(result.formation).toBe(FORMATIONS[0]);
+      // First formation in QUALITY_FORMATIONS order should win on tie
+      expect(result.formation).toBe(QUALITY_FORMATIONS[0]);
     }
   });
 
@@ -153,7 +163,7 @@ describe("selectBestFormationXI", () => {
       // With strong DCs and STs, 4-4-2 or 5-3-2 should be strong contenders.
       // The exact choice depends on the greedy fill — the important thing is
       // that every slot is filled by a distinct player and the formation is valid.
-      expect(FORMATIONS).toContain(result.formation);
+      expect(QUALITY_FORMATIONS).toContain(result.formation);
       expect(result.slots).toHaveLength(11);
       // Verify no player is used twice
       const playerIds = new Set(result.slots.map((s) => s.playerId));
@@ -175,7 +185,7 @@ describe("bestXiForFormation", () => {
     const result = bestXiForFormation("4-4-2", squad);
     expect(result).not.toBeNull();
     if (result) {
-      expect(result.filled).toHaveLength(FORMATION_SLOTS["4-4-2"].length);
+      expect(result.filled).toHaveLength(QUALITY_FORMATION_SLOTS["4-4-2"].length);
       expect(result.outfieldSum).toBeGreaterThan(0);
     }
   });
@@ -372,5 +382,62 @@ describe("Best XI over fit-adjusted ratings", () => {
     const result = bestXiForFormation("4-4-2", squad);
     const dr = result?.filled.find((slot) => slot.position === "DR");
     expect(dr?.playerId).toBe("rb");
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Best XI over grid cells (the AI's Tactic)
+// ---------------------------------------------------------------------------
+
+/** A squad of specialists: player `i` rates `high` at the i-th cell and `low` at every other. */
+const specialists = (cells: ReadonlyArray<{ readonly row: string; readonly column: string }>, extra = 3) =>
+  Array.from({ length: cells.length + extra }, (_, index) => ({
+    id: `p${String(index).padStart(2, "0")}`,
+    cellRatings: Object.fromEntries(
+      SLOTS.map((slot) => [slotLabel(slot), cells[index] !== undefined && slotLabel(slot) === slotLabel(cells[index] as never) ? 80 : 10]),
+    ),
+  }));
+
+describe("bestXiForCells", () => {
+  it("fills each cell in order with its best available player, no player twice", () => {
+    const cells = builtInTemplate("4-4-2")!.slots.map((slot) => slot.cell);
+    const squad = specialists(cells);
+    const xi = bestXiForCells(cells, squad)!;
+    expect(xi.filled.map((entry) => entry.playerId)).toEqual(squad.slice(0, 11).map((player) => player.id));
+    expect(xi.meanRating).toBe(80);
+  });
+
+  it("is null for a squad too small, and breaks ties by player id", () => {
+    const cells = builtInTemplate("4-4-2")!.slots.map((slot) => slot.cell);
+    expect(bestXiForCells(cells, specialists(cells).slice(0, 10))).toBeNull();
+    const flat = ["b", "a", "c", ...Array.from({ length: 10 }, (_, i) => `z${i}`)].map((id) => ({
+      id,
+      cellRatings: Object.fromEntries(SLOTS.map((slot) => [slotLabel(slot), 50])),
+    }));
+    expect(bestXiForCells(cells, flat)!.filled[0]!.playerId).toBe("a");
+  });
+});
+
+describe("selectBestTemplateXI", () => {
+  it("picks the built-in template whose cells the squad is best at", () => {
+    const wanted = builtInTemplate("4-2-3-1")!;
+    const squad = specialists(wanted.slots.map((slot) => slot.cell));
+    const best = selectBestTemplateXI(squad)!;
+    expect(best.template.name).toBe("4-2-3-1");
+    expect(best.filled).toHaveLength(11);
+    expect(new Set(best.filled.map((entry) => entry.playerId)).size).toBe(11);
+  });
+
+  it("is deterministic and goes to the earlier template on a tie", () => {
+    const flat = Array.from({ length: 14 }, (_, i) => ({
+      id: `p${i}`,
+      cellRatings: Object.fromEntries(SLOTS.map((slot) => [slotLabel(slot), 50])),
+    }));
+    expect(selectBestTemplateXI(flat)!.template.name).toBe("4-4-2");
+    expect(selectBestTemplateXI(flat)).toEqual(selectBestTemplateXI(flat));
+  });
+
+  it("is null when the squad cannot field eleven", () => {
+    expect(selectBestTemplateXI([])).toBeNull();
   });
 });

@@ -30,7 +30,7 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * of the chunk would show each before its line. The tests re-check the property from the Commentary
  * Lines and name this constant when it no longer holds.
  */
-const SEED = 550;
+const SEED = 1050;
 const GOAL_LINE = 1;
 const HALF_TIME_LINE = 10;
 const RED_CARD_LINE = 13;

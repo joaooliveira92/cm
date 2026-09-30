@@ -1,3 +1,4 @@
+import { brazilLogosAdapter } from "../../../scripts/club-badges/brazil-logos.js";
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
@@ -246,5 +247,27 @@ describe("importing the football-logos layout", () => {
 
     expect(failureMessage(run(source, library))).toContain("logos");
     expect(snapshot(library)).toEqual({});
+  });
+});
+
+describe("importing the brazil-logos layout", () => {
+  it("files a flat folder of PNGs under bra, with the state suffix dropped from Mirassol", () => {
+    const source = fixtureDump({ "São Paulo.png": "sao-paulo", "Mirassol-SP.png": "mirassol" });
+    const library = tempDir();
+
+    expect(
+      importClubBadges({ sourceDir: source, libraryDir: library, adapter: brazilLogosAdapter(), referencedKeys: new Set() }),
+    ).toEqual({ _tag: "Imported", report: { added: ["bra/mirassol", "bra/sao-paulo"], replaced: [], removed: [] } });
+    expect(badges(library)).toEqual({ "bra/mirassol.png": "mirassol", "bra/sao-paulo.png": "sao-paulo" });
+  });
+
+  it("stops on anything that is not a PNG", () => {
+    const source = fixtureDump({ "Flamengo.png": "flamengo", "notes/readme.txt": "hi" });
+
+    expect(
+      failureMessage(
+        importClubBadges({ sourceDir: source, libraryDir: tempDir(), adapter: brazilLogosAdapter(), referencedKeys: new Set() }),
+      ),
+    ).toContain("notes");
   });
 });

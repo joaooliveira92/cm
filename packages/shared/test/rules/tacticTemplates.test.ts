@@ -13,8 +13,9 @@ import {
   isModified,
   rowCountLabel,
   seededInstructions,
+  tacticFromTemplate,
 } from "../../src/rules/tacticTemplates.js";
-import { validateTactic, validateTemplate } from "../../src/rules/tacticValidation.js";
+import { describeTacticProblem, validateTactic, validateTemplate, type TacticProblem } from "../../src/rules/tacticValidation.js";
 
 const research = readFileSync(
   path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../../docs/research/formations-and-instructions-cm0304-formations-and-tactic-files.md"),
@@ -154,5 +155,59 @@ describe("validation", () => {
     );
     const tags = validateTemplate({ ...template, slots }).map((problem) => problem._tag);
     expect(tags).toEqual(expect.arrayContaining(["GoalkeeperOutsideSlotZero", "InvalidValue"]));
+  });
+});
+
+describe("validation of a live Tactic against the club", () => {
+  const template = builtInTemplate("4-4-2")!;
+  const ids = Array.from({ length: 18 }, (_, i) => `p${i}`);
+  const full = (): Tactic => tacticFromTemplate(template, ids.slice(0, 11), ids.slice(11, 18));
+  const squad = new Set(ids);
+
+  it("loads a template as a valid Tactic named by it, with no takers", () => {
+    const tactic = full();
+    expect(tactic.sourceTemplate).toBe("4-4-2");
+    expect(tactic.takers).toEqual(EMPTY_TAKERS);
+    expect(validateTactic(tactic, squad)).toEqual([]);
+  });
+
+  it("names a wrong bench size, a stranger, a doubled taker and a blank source template", () => {
+    const tactic: Tactic = {
+      ...full(),
+      sourceTemplate: "  ",
+      bench: ["p11", "p12"],
+      takers: { ...EMPTY_TAKERS, penalties: ["p1", "p1"], captain: ["outsider"] },
+    };
+    const problems = validateTactic(tactic, squad);
+    expect(problems.map((problem) => problem._tag).sort()).toEqual(
+      ["BlankTemplateName", "DuplicateTaker", "PlayerNotInSquad", "WrongBenchSize"].sort(),
+    );
+    expect(problems).toContainEqual({ _tag: "PlayerNotInSquad", playerId: "outsider" });
+    expect(problems).toContainEqual({ _tag: "DuplicateTaker", list: "penalties", playerId: "p1" });
+  });
+
+  it("checks squad membership only when given a squad", () => {
+    expect(validateTactic({ ...full(), assignments: ids.slice(20).concat(Array.from({ length: 11 }, (_, i) => `q${i}`)).slice(0, 11) })).toEqual([]);
+  });
+
+  it("describes every problem in words", () => {
+    const every: ReadonlyArray<TacticProblem> = [
+      { _tag: "WrongSlotCount", count: 3 },
+      { _tag: "GoalkeeperNotFirst" },
+      { _tag: "GoalkeeperOutsideSlotZero", slot: 2 },
+      { _tag: "UnknownCell", slot: 2 },
+      { _tag: "DuplicateCell", slot: 2, cell: "D C" },
+      { _tag: "RunToGoalkeeper", slot: 2 },
+      { _tag: "DistributionOffGoalkeeper", slot: 2 },
+      { _tag: "InvalidValue", where: "team", field: "passing", value: "wild" },
+      { _tag: "BlankTemplateName" },
+      { _tag: "WrongAssignmentCount", count: 3 },
+      { _tag: "WrongBenchSize", count: 3 },
+      { _tag: "PlayerTwice", playerId: "p1" },
+      { _tag: "PlayerNotInSquad", playerId: "p1" },
+      { _tag: "DuplicateTaker", list: "penalties", playerId: "p1" },
+      { _tag: "UnknownTakerList", list: "x" },
+    ];
+    for (const problem of every) expect(describeTacticProblem(problem).length, problem._tag).toBeGreaterThan(8);
   });
 });

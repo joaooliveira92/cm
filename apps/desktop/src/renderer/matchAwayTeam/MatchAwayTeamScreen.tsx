@@ -9,13 +9,12 @@ const SlotRow = ({
   player,
   index,
 }: {
-  readonly player: { readonly position: string; readonly role: string; readonly firstName: string; readonly lastName: string };
+  readonly player: { readonly position: string; readonly firstName: string; readonly lastName: string };
   readonly index: number;
 }) => (
   <tr className={index % 2 === 0 ? "bg-panel-bg" : "bg-panel-bg-alt"}>
     <td className="px-3 py-1 text-data font-medium text-text-secondary">{player.position}</td>
     <td className="px-3 py-1 text-data">{player.firstName} {player.lastName}</td>
-    <td className="px-3 py-1 text-data text-text-secondary">{player.role}</td>
   </tr>
 );
 
@@ -26,9 +25,8 @@ const TeamClubPanel = ({ club }: { readonly club: TeamSheetClubView }) => (
     <table className="w-full text-left">
       <thead>
         <tr className="border-b border-panel-border-dark text-overline uppercase text-text-tertiary">
-          <th className="px-3 py-1">Position</th>
+          <th className="px-3 py-1">Cell</th>
           <th className="px-3 py-1">Player</th>
-          <th className="px-3 py-1">Role</th>
         </tr>
       </thead>
       <tbody>

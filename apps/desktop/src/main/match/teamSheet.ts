@@ -7,6 +7,7 @@ import {
   type MatchId,
   type SaveId,
 } from "@cm-clone/contracts";
+import { rowCountLabel, slotLabel } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
@@ -63,8 +64,7 @@ export const getTeamSheet = (savesDir: string, saveId: SaveId, matchId: MatchId)
             playerId: slot.playerId,
             firstName: pn?.firstName ?? "Unknown",
             lastName: pn?.lastName ?? "Player",
-            position: slot.position,
-            role: slot.role,
+            position: slotLabel(slot.cell),
           });
         });
 
@@ -77,7 +77,7 @@ export const getTeamSheet = (savesDir: string, saveId: SaveId, matchId: MatchId)
         return new TeamSheetClubView({
           clubId,
           clubName,
-          formation: setup.tactic.formation,
+          formation: rowCountLabel(setup.tactic.slots),
           starters,
           bench,
         });

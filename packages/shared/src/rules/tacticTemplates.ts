@@ -1,12 +1,15 @@
+import { emptyBench } from "./tactics.js";
 import { GOALKEEPER_SLOT, widthOf, type Column, type OutfieldRow, type Slot } from "./slots.js";
 import {
   DEFAULT_PLAYER_INSTRUCTIONS,
   DEFAULT_SET_PIECE_ROLES,
   DEFAULT_TEAM_INSTRUCTIONS,
   DEFAULT_TEAM_SET_PIECES,
+  EMPTY_TAKERS,
   PLAYER_STANDALONE_VALUES,
   PLAYER_SWITCHES,
   type PlayerInstructions,
+  type Tactic,
   type TacticSlot,
   type TacticTemplate,
 } from "./tacticModel.js";
@@ -197,6 +200,25 @@ export const BUILT_IN_TEMPLATE_NAMES: ReadonlyArray<string> = BUILT_IN_TEMPLATES
 
 export const builtInTemplate = (name: string): TacticTemplate | undefined =>
   BUILT_IN_TEMPLATES.find((template) => template.name === name);
+
+/**
+ * A live Tactic loaded from a template: the template's contents named by it, the given players in
+ * slot order, an empty bench and no takers. What a new career's first Tactic and an AI club's Tactic
+ * start from.
+ */
+export const tacticFromTemplate = <Id extends string>(
+  template: TacticTemplate,
+  assignments: ReadonlyArray<Id>,
+  bench: ReadonlyArray<Id | null> = emptyBench(),
+): Tactic<Id> => ({
+  sourceTemplate: template.name,
+  slots: template.slots,
+  team: template.team,
+  teamSetPieces: template.teamSetPieces,
+  assignments,
+  bench,
+  takers: EMPTY_TAKERS,
+});
 
 /**
  * The shape a set of slots makes, counted by row from the back: SW and D together, then DM, M, AM and

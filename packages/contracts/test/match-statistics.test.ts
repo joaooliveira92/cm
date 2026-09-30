@@ -12,7 +12,10 @@ const wire = {
     { key: "goals", home: 2, away: 1 },
     { key: "attempts", home: 9, away: 6 },
   ],
-  unavailable: ["possession", "corners", "fouls", "offsides"],
+  unavailable: ["possession", "corners"],
+  homePossession: null,
+  awayPossession: null,
+  chancesByType: null,
 };
 
 describe("Match Statistics (Screens 95/100)", () => {

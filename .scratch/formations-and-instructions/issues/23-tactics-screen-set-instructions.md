@@ -18,10 +18,10 @@ Seam: renderer only.
 
 **Blocked by:** 22
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Ticking a row enables its dropdown and sets the first real value; unticking restores the team or default text.
-- [ ] Set To Preset fills the slot with that template's values.
-- [ ] Distribution appears only for the goalkeeper slot.
-- [ ] A ticked switch shows CM's hint; every control is keyboard reachable.
-- [ ] Renderer tests pass, and typecheck and lint pass.
+- [x] Ticking a row enables its dropdown and sets the first real value; unticking restores the team or default text.
+- [x] Set To Preset fills the slot with that template's values.
+- [x] Distribution appears only for the goalkeeper slot.
+- [x] A ticked switch shows CM's hint; every control is keyboard reachable.
+- [x] Renderer tests pass, and typecheck and lint pass.

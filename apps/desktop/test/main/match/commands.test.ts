@@ -4,7 +4,7 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, type ResumeSimulationView, type SaveId } from "@cm-clone/contracts";
+import { Tactic, type ClubId, type FixtureId, type MatchId, type MatchSummary, type PlayerId, type ResumeSimulationView, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
@@ -65,8 +65,8 @@ const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
 /** Produces an Injury, a goal and a card, with every goal before half time: the statistics test
  *  compares its first-chunk cut with that chunk's score, which reads the whole match. */
 const INJURY_SEED = 18;
-const INJURY_FREE_SEED = 3;
-const CLEAN_LINEUP_SEED = 3;
+const INJURY_FREE_SEED = 510;
+const CLEAN_LINEUP_SEED = 510;
 /** For the tests that hold whatever the match happens to produce — they assert on replay equality
  *  or on reaching full time, not on a particular event — but still want the same match each run. */
 const ANY_MATCH_SEED = 7;
@@ -117,7 +117,7 @@ it.effect("submitMatchCommand applies a mid-match substitution and reflects it i
 
     const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
 
-    const outPlayerId = tactic.slots[0]!.playerId;
+    const outPlayerId = tactic.assignments[0]!;
     const inPlayerId = tactic.bench[0]!;
 
     const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 2, false, {
@@ -167,7 +167,7 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
       last = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, step.minute, false, {
         _tag: "MakeSubstitution",
         clubId: humanClubOf(summary),
-        outPlayerId: tactic.slots[step.outIndex]!.playerId,
+        outPlayerId: tactic.assignments[step.outIndex]!,
         inPlayerId: tactic.bench[step.benchIndex]!,
       });
     }
@@ -181,7 +181,7 @@ it.effect("substitutions are capped at 5 per team across 3 windows, enforced sil
     const rejected = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 70, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(summary),
-      outPlayerId: tactic.slots[5]!.playerId,
+      outPlayerId: tactic.assignments[5]!,
       inPlayerId: tactic.bench[5]!,
     });
 
@@ -197,7 +197,8 @@ it.effect("a mid-match ChangeTactics command is accepted and the match still res
     const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
 
     const tacticsView = yield* getTactics(savesDir, save.id);
-    const tactic = new Tactic({ ...kickoffTactic(tacticsView), mentality: "attacking", pressing: "high" });
+    const kickoff = kickoffTactic(tacticsView);
+    const tactic = new Tactic({ ...kickoff, team: { ...kickoff.team, mentality: "attacking", tackling: "hard" } });
 
     yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 20, false, {
       _tag: "ChangeTactics",
@@ -223,7 +224,7 @@ it.effect(
       yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 15, false, {
         _tag: "MakeSubstitution",
         clubId: humanClubOf(summary),
-        outPlayerId: tactic.slots[0]!.playerId,
+        outPlayerId: tactic.assignments[0]!,
         inPlayerId: tactic.bench[0]!,
       });
       // The same seed + the exact same submitted command sequence must resimulate identically no
@@ -243,6 +244,37 @@ it.effect(
     }),
 );
 
+it.effect("a mid-match ChangeTactics is replayed identically on a second drain (ticket 31)", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const summary = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
+
+    const kickoff = kickoffTactic(yield* getTactics(savesDir, save.id));
+    const tactic = new Tactic({ ...kickoff, team: { ...kickoff.team, mentality: "attacking", tackling: "hard" } });
+
+    yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 20, false, {
+      _tag: "ChangeTactics",
+      clubId: humanClubOf(summary),
+      tactic,
+    });
+
+    // Drain once — the ChangeTactics is journaled, the match replays with it
+    const first = yield* drain(savesDir, save.id, summary.matchId);
+    strictEqual(first[first.length - 1]!.isComplete, true);
+
+    // Second drain from cursor 0 must reproduce the exact same timeline
+    const second = yield* drain(savesDir, save.id, summary.matchId);
+    deepStrictEqual(
+      first.flatMap((c) => c.lines),
+      second.flatMap((c) => c.lines),
+    );
+    deepStrictEqual(
+      first.map((c) => ({ homeSubs: c.homeSubs, awaySubs: c.awaySubs })),
+      second.map((c) => ({ homeSubs: c.homeSubs, awaySubs: c.awaySubs })),
+    );
+  }),
+);
+
 it.effect("ForceOff brings a player off to 10 men without consuming a substitution (ticket 11)", () =>
   Effect.gen(function* () {
     const { save, fixtureId } = yield* atFirstFixture(savesDir);
@@ -250,7 +282,7 @@ it.effect("ForceOff brings a player off to 10 men without consuming a substituti
 
     const tactic = kickoffTactic(yield* getTactics(savesDir, save.id));
 
-    const onPitchPlayerId = tactic.slots[3]!.playerId;
+    const onPitchPlayerId = tactic.assignments[3]!;
     const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
       _tag: "ForceOff",
       clubId: humanClubOf(summary),
@@ -278,7 +310,7 @@ it.effect("a ForceOff for a player not on the pitch is a silent no-op (count unc
 
     // A bench player isn't on the pitch — forcing them off changes nothing. The head-count is the
     // pitch's size, and the player is not in the kickoff XI.
-    const inXi = (id: string) => tactic.slots.some((slot) => slot.playerId === id);
+    const inXi = (id: PlayerId) => tactic.assignments.includes(id);
     const benchPlayerId = tacticsView.squad.find((player) => !inXi(player.id))!.id;
     const response = yield* submitMatchCommand(savesDir, save.id, summary.matchId, 0, null, 60, false, {
       _tag: "ForceOff",
@@ -382,7 +414,7 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
       row("yellowCards").home + row("yellowCards").away,
       lines.filter((line) => line.tag === "YellowCard").length,
     );
-    deepStrictEqual([...full.unavailable], ["possession", "corners", "fouls", "offsides"]);
+    deepStrictEqual([...full.unavailable], ["possession", "corners"]);
     strictEqual(row("redCards").home + row("redCards").away, lines.filter((line) => line.tag === "RedCard").length);
     deepStrictEqual(
       [row("substitutions").home, row("substitutions").away],
@@ -425,7 +457,7 @@ it.effect("getMatchReport records every goal, card, injury and substitution once
     yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, null, 2, false, {
       _tag: "MakeSubstitution",
       clubId: humanClubOf(match),
-      outPlayerId: tactic.slots[1]!.playerId,
+      outPlayerId: tactic.assignments[1]!,
       inPlayerId: tactic.bench[0]!,
     });
     const chunks = yield* drain(savesDir, save.id, match.matchId);

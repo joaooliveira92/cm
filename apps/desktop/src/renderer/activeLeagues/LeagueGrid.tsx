@@ -139,10 +139,10 @@ export const LeagueGrid = ({
       {rowModel.length === 0 ? (
         <p className="px-1 py-2 text-data text-text-muted">No active leagues yet.</p>
       ) : (
-        <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg">
+        <div className="overflow-hidden rounded-panel border border-panel-border">
           <div
             role="row"
-            className={`${GRID_ROW_CLASS} border-b border-panel-border bg-surface-raised text-overline uppercase text-text-secondary`}
+            className={`${GRID_ROW_CLASS} bg-panel text-overline uppercase text-text-secondary`}
           >
             {headerGroup.headers.map((header) => (
               <div key={header.id} role="columnheader" className="min-w-0 truncate">

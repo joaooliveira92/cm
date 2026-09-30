@@ -4,11 +4,12 @@ import os from "node:os";
 import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
-import { Tactic, WriteRequestId, type PlayerId } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES, emptyBench } from "@cm-clone/shared";
+import { PlayerId, Tactic, WriteRequestId, type InvalidTacticError } from "@cm-clone/contracts";
+import { BUILT_IN_TEMPLATES } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../seeded-save.js";
+import { tacticOf } from "../../setup/tacticFixtures.js";
 import { getTactics, changeTactics } from "../../../src/main/club/index.js";
 
 let savesDir: string;
@@ -19,19 +20,43 @@ beforeEach(() => {
 
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
-const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
-  new Tactic({
-    formation: "4-4-2",
-    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: squadIds[index]!,
-    })),
-    bench: emptyBench(),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
+const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic => tacticOf(squadIds);
+
+/** A complete Tactic with a non-default value in every kind of field: another template with runs,
+ *  a changed team instruction and team set piece, a slot's instructions, run and set-piece role, a
+ *  named bench and every taker list. What a save must give back untouched. */
+const buildCompleteTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic => {
+  const base = tacticOf(squadIds, { template: "4-2-3-1", bench: squadIds.slice(11, 18) });
+  const at = (index: number) => squadIds[index]!;
+  return new Tactic({
+    ...base,
+    sourceTemplate: "My Chasing Shape",
+    team: { ...base.team, passing: "long", focusPassing: "leftFlank", tackling: "hard", closingDown: "always", mentality: "gungHo", offsideTrap: true, zonalMarking: true, counterAttack: true, menBehindTheBall: true },
+    teamSetPieces: { ...base.teamSetPieces, cornersLeft: "short", cornersRight: "farPost", freeKicksLeft: "long", freeKicksRight: "crossNear", throwInsLeft: "quick", throwInsRight: "long" },
+    slots: base.slots.map((slot, index) =>
+      index === 0
+        ? { ...slot, instructions: { ...slot.instructions, distribution: "askDefendersToCollect" as const } }
+        : index === 9
+          ? {
+              ...slot,
+              run: { row: "F" as const, column: "C" as const },
+              instructions: { ...slot.instructions, passing: "short" as const, closingDown: "standOff" as const, tackling: "easy" as const, marking: "man" as const, mentality: "attacking" as const, crossFrom: "deep" as const, crossAim: "farPost" as const, longShots: "often" as const, freeRole: "often" as const },
+              setPieceRoles: { ...slot.setPieceRoles, defendFreeKick: "formWall" as const, attackCorner: "nearPostFlickOn" as const, attackingThrowInLeft: "lurkOutsideArea" as const },
+            }
+          : slot,
+    ),
+    takers: {
+      captain: [at(4), at(5)],
+      penalties: [at(9), at(8), at(7)],
+      freeKicksLeft: [at(8)],
+      freeKicksRight: [at(9), at(6)],
+      cornersLeft: [at(7)],
+      cornersRight: [at(6), at(7)],
+      throwInsLeft: [at(2)],
+      throwInsRight: [at(3), at(2)],
+    },
   });
+};
 
 const rid = (s: string) => WriteRequestId.make(s);
 
@@ -78,7 +103,7 @@ it.effect("every accepted save raises the revision by exactly one, from 0", () =
     const first = yield* changeTactics(savesDir, save.id, tactic, 0, rid("r1"));
     strictEqual(first.revision, 1);
 
-    const secondTactic = new Tactic({ ...tactic, mentality: "attacking" });
+    const secondTactic = new Tactic({ ...tactic, team: { ...tactic.team, mentality: "attacking" } });
     const second = yield* changeTactics(savesDir, save.id, secondTactic, first.revision, rid("r2"));
     strictEqual(second.revision, 2);
 
@@ -125,7 +150,7 @@ it.effect("replaying an accepted request id is a no-op that returns the current 
     deepStrictEqual(replayed.tactic, tactic);
 
     // And it still returns the current state once the club has moved on to a later revision.
-    const secondTactic = new Tactic({ ...tactic, mentality: "attacking" });
+    const secondTactic = new Tactic({ ...tactic, team: { ...tactic.team, mentality: "attacking" } });
     const second = yield* changeTactics(savesDir, save.id, secondTactic, 1, rid("second"));
     strictEqual(second.revision, 2);
 
@@ -154,11 +179,7 @@ it.effect("a replayed request id with a now-invalid payload is still a no-op, no
     // returning the current state is the pinned behaviour, before any re-validation.
     const invalidTactic = new Tactic({
       ...tactic,
-      slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
-        position,
-        role: POSITION_ROLES[position],
-        playerId: tactic.slots[0]!.playerId,
-      })),
+      assignments: tactic.assignments.map(() => tactic.assignments[0]!),
     });
     const replayed = yield* changeTactics(
       savesDir,
@@ -213,91 +234,173 @@ it.effect("changeTactics rejects a Tactic that assigns the same player twice", (
     const duplicatePlayerId = before.squad[0]!.id;
     const tactic = new Tactic({
       ...buildTactic(before.squad.map((player) => player.id)),
-      slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
-        position,
-        role: POSITION_ROLES[position],
-        playerId: duplicatePlayerId,
-      })),
+      assignments: buildTactic(before.squad.map((player) => player.id)).assignments.map(() => duplicatePlayerId),
     });
 
-    const result = yield* Effect.exit(
-      changeTactics(savesDir, save.id, tactic, before.revision, rid("dup")),
-    );
-    ok(result._tag === "Failure");
+    const error = yield* refusal(changeTactics(savesDir, save.id, tactic, before.revision, rid("dup")));
+    ok(error.problems.some((problem) => problem._tag === "PlayerTwice" && problem.playerId === duplicatePlayerId));
   }),
 );
 
-it.effect("changeTactics rejects a slot whose Role doesn't match its Position", () =>
+it.effect("changeTactics saves and re-reads a complete Tactic, every field of it", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTactics(savesDir, save.id);
-    const tactic = buildTactic(before.squad.map((player) => player.id));
-    const badTactic = new Tactic({
+    const complete = buildCompleteTactic(before.squad.map((player) => player.id));
+
+    const accepted = yield* changeTactics(savesDir, save.id, complete, before.revision, rid("complete"));
+    deepStrictEqual(accepted.tactic, complete);
+
+    const reloaded = yield* getTactics(savesDir, save.id);
+    deepStrictEqual(reloaded.tactic, complete);
+    strictEqual(reloaded.tactic!.sourceTemplate, "My Chasing Shape");
+    deepStrictEqual(reloaded.tactic!.takers.penalties, complete.takers.penalties);
+  }),
+);
+
+it.effect("a second save replaces the first whole, leaving no slot instruction, run or taker of it behind", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const ids = before.squad.map((player) => player.id);
+    yield* changeTactics(savesDir, save.id, buildCompleteTactic(ids), 0, rid("complete"));
+
+    const plain = buildTactic(ids);
+    const second = yield* changeTactics(savesDir, save.id, plain, 1, rid("plain"));
+    deepStrictEqual(second.tactic, plain);
+    deepStrictEqual((yield* getTactics(savesDir, save.id)).tactic, plain);
+  }),
+);
+
+/** The `InvalidTacticError` a refused save fails with. */
+const refusal = <A>(effect: Effect.Effect<A, unknown>) =>
+  Effect.gen(function* () {
+    const error = yield* Effect.flip(effect);
+    strictEqual((error as { readonly _tag: string })._tag, "InvalidTacticError");
+    return error as InvalidTacticError;
+  });
+
+it.effect("changeTactics refuses an invalid Tactic with the rules' named problems, changing nothing", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const ids = before.squad.map((player) => player.id);
+    const tactic = buildTactic(ids);
+    const broken = new Tactic({
       ...tactic,
-      slots: [{ ...tactic.slots[0]!, role: "Poacher" }, ...tactic.slots.slice(1)],
+      slots: tactic.slots.map((slot, index) => {
+        if (index === 0) return { ...slot, cell: { row: "D" as const, column: "C" as const } };
+        if (index === 2) return { ...slot, cell: tactic.slots[3]!.cell };
+        if (index === 5) return { ...slot, instructions: { ...slot.instructions, distribution: "longKick" as const } };
+        return slot;
+      }),
+      assignments: [...tactic.assignments.slice(0, 10), tactic.assignments[0]!],
+      bench: [before.squad[20]!.id],
     });
 
-    const result = yield* Effect.exit(
-      changeTactics(savesDir, save.id, badTactic, before.revision, rid("bad")),
-    );
-    ok(result._tag === "Failure");
+    const error = yield* refusal(changeTactics(savesDir, save.id, broken, before.revision, rid("broken")));
+    const tags = error.problems.map((problem) => problem._tag);
+    for (const tag of ["GoalkeeperNotFirst", "DuplicateCell", "DistributionOffGoalkeeper", "PlayerTwice", "WrongBenchSize"]) {
+      ok(tags.includes(tag as never), `expected ${tag} among ${tags.join(", ")}`);
+    }
+    ok(error.reason.length > 0);
+
+    const reloaded = yield* getTactics(savesDir, save.id);
+    strictEqual(reloaded.tactic, null);
+    strictEqual(reloaded.revision, 0);
   }),
 );
 
-it.effect("every Formation's slots are a genuinely distinct shape", () =>
-  Effect.sync(() => {
-    const shapes = new Set(
-      Object.values(FORMATION_SLOTS).map((slots) => JSON.stringify(slots)),
-    );
-    strictEqual(shapes.size, Object.keys(FORMATION_SLOTS).length);
-  }),
-);
-
-it.effect("changeTactics accepts a custom shape moved off the Formation's template", () =>
+it.effect("changeTactics refuses a player who is not in the squad and a taker who is not either", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTactics(savesDir, save.id);
     const tactic = buildTactic(before.squad.map((player) => player.id));
-    // A 4-4-2 with one centre-midfielder dropped into the back line.
+    const stranger = PlayerId.make("not-in-this-squad");
+
+    const asStarter = new Tactic({ ...tactic, assignments: [stranger, ...tactic.assignments.slice(1)] });
+    const asTaker = new Tactic({ ...tactic, takers: { ...tactic.takers, penalties: [stranger] } });
+    for (const [name, bad] of [["starter", asStarter], ["taker", asTaker]] as const) {
+      const error = yield* refusal(changeTactics(savesDir, save.id, bad, before.revision, rid(name)));
+      ok(error.problems.some((problem) => problem._tag === "PlayerNotInSquad" && problem.playerId === stranger));
+    }
+  }),
+);
+
+it.effect("a refused save leaves the revision alone and does not spend its request id", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    const broken = new Tactic({ ...tactic, assignments: tactic.assignments.map(() => tactic.assignments[0]!) });
+
+    yield* refusal(changeTactics(savesDir, save.id, broken, 0, rid("retry")));
+    // The same request id, fixed: it was never accepted, so it is a fresh write and not a replay.
+    const fixed = yield* changeTactics(savesDir, save.id, tactic, 0, rid("retry"));
+    strictEqual(fixed.revision, 1);
+    deepStrictEqual(fixed.tactic, tactic);
+  }),
+);
+
+it.effect("the template table gives 29 distinct shapes that all save and re-read", () =>
+  Effect.gen(function* () {
+    strictEqual(new Set(BUILT_IN_TEMPLATES.map((template) => JSON.stringify(template.slots.map((slot) => [slot.cell, slot.run])))).size, 29);
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const ids = before.squad.map((player) => player.id);
+    let revision = before.revision;
+    for (const template of BUILT_IN_TEMPLATES) {
+      const tactic = tacticOf(ids, { template: template.name });
+      const saved = yield* changeTactics(savesDir, save.id, tactic, revision, rid(`t-${template.name}`));
+      revision = saved.revision;
+      deepStrictEqual(saved.tactic, tactic, template.name);
+    }
+  }),
+);
+
+it.effect("changeTactics accepts a shape moved off its template, and the source template keeps its name", () =>
+  Effect.gen(function* () {
+    const save = yield* createSave(savesDir, "Test Career");
+    const before = yield* getTactics(savesDir, save.id);
+    const tactic = buildTactic(before.squad.map((player) => player.id));
+    // A 4-4-2 with one central midfielder dropped into the back line, next to the centre-backs.
     const custom = new Tactic({
       ...tactic,
-      slots: [
-        ...tactic.slots.slice(0, 5),
-        { ...tactic.slots[5]!, position: "DC", role: POSITION_ROLES.DC },
-        ...tactic.slots.slice(6),
-      ],
+      slots: tactic.slots.map((slot, index) => (index === 6 ? { ...slot, cell: { row: "D" as const, column: "C" as const } } : slot)),
     });
 
     const accepted = yield* changeTactics(savesDir, save.id, custom, before.revision, rid("custom"));
     deepStrictEqual(accepted.tactic, custom);
+    strictEqual(accepted.tactic!.sourceTemplate, "4-4-2");
     const reloaded = yield* getTactics(savesDir, save.id);
     deepStrictEqual(reloaded.tactic, custom);
   }),
 );
 
-it.effect("changeTactics rejects a shape without the GK alone in slot 0", () =>
+it.effect("changeTactics refuses a shape without the goalkeeper cell alone in slot 0", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const before = yield* getTactics(savesDir, save.id);
     const tactic = buildTactic(before.squad.map((player) => player.id));
     const noKeeper = new Tactic({
       ...tactic,
-      slots: [{ ...tactic.slots[0]!, position: "ST", role: "Poacher" }, ...tactic.slots.slice(1)],
+      slots: [{ ...tactic.slots[0]!, cell: { row: "F" as const, column: "C" as const } }, ...tactic.slots.slice(1)],
     });
     const twoKeepers = new Tactic({
       ...tactic,
       slots: [
         ...tactic.slots.slice(0, 1),
-        { ...tactic.slots[1]!, position: "GK", role: POSITION_ROLES.GK },
+        { ...tactic.slots[1]!, cell: { row: "GK" as const, column: "C" as const } },
         ...tactic.slots.slice(2),
       ],
     });
 
-    for (const [name, bad] of [["no-gk", noKeeper], ["two-gk", twoKeepers]] as const) {
-      const result = yield* Effect.exit(
-        changeTactics(savesDir, save.id, bad, before.revision, rid(name)),
-      );
-      ok(result._tag === "Failure");
+    for (const [name, bad, tag] of [
+      ["no-gk", noKeeper, "GoalkeeperNotFirst"],
+      ["two-gk", twoKeepers, "GoalkeeperOutsideSlotZero"],
+    ] as const) {
+      const error = yield* refusal(changeTactics(savesDir, save.id, bad, before.revision, rid(name)));
+      ok(error.problems.some((problem) => problem._tag === tag), `${name}: ${error.reason}`);
     }
   }),
 );
@@ -351,13 +454,11 @@ it.effect("changeTactics rejects a bench that names a starter", () =>
     const tactic = buildTactic(before.squad.map((player) => player.id));
     const overlap = new Tactic({
       ...tactic,
-      bench: [tactic.slots[0]!.playerId, null, null, null, null, null, null],
+      bench: [tactic.assignments[0]!, null, null, null, null, null, null],
     });
 
-    const result = yield* Effect.exit(
-      changeTactics(savesDir, save.id, overlap, before.revision, rid("overlap")),
-    );
-    ok(result._tag === "Failure");
+    const error = yield* refusal(changeTactics(savesDir, save.id, overlap, before.revision, rid("overlap")));
+    ok(error.problems.some((problem) => problem._tag === "PlayerTwice"));
   }),
 );
 
@@ -371,9 +472,7 @@ it.effect("changeTactics rejects a bench that names the same player twice", () =
       bench: [before.squad[11]!.id, before.squad[11]!.id, null, null, null, null, null],
     });
 
-    const result = yield* Effect.exit(
-      changeTactics(savesDir, save.id, doubled, before.revision, rid("double")),
-    );
-    ok(result._tag === "Failure");
+    const error = yield* refusal(changeTactics(savesDir, save.id, doubled, before.revision, rid("double")));
+    ok(error.problems.some((problem) => problem._tag === "PlayerTwice"));
   }),
 );

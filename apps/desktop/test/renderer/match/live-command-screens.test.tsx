@@ -2,11 +2,11 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { MatchId, SaveId, type SubstitutionStatusView } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
-  FORMATIONS,
+  BUILT_IN_TEMPLATES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
+  legacyPositionOf,
+  tacticFromTemplate,
 } from "@cm-clone/shared";
 import { MatchSubstitutionsScreen } from "../../../src/renderer/matchSubstitutions/MatchSubstitutionsScreen.js";
 import { MatchMatchTacticsScreen } from "../../../src/renderer/matchMatchTactics/MatchMatchTacticsScreen.js";
@@ -34,19 +34,9 @@ const subs = (overrides: Partial<SubstitutionStatusView> = {}): SubstitutionStat
 });
 
 const tactic = () => {
-  const formation = FORMATIONS[0];
-  return {
-    formation,
-    slots: (FORMATION_SLOTS[formation] ?? []).map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: rid(`on-${index}`),
-    })),
-    bench: [rid("bench-1")],
-    mentality: "balanced" as const,
-    tempo: "normal" as const,
-    pressing: "medium" as const,
-  };
+  const template = BUILT_IN_TEMPLATES[0]!;
+  const ids = Array.from({ length: template.slots.length }, (_, i) => rid(`on-${i}`));
+  return tacticFromTemplate(template, ids, [rid("bench-1")]);
 };
 
 const player = (id: string, firstName: string) => ({
@@ -63,6 +53,7 @@ const player = (id: string, firstName: string) => ({
   overallRating: 80,
   positionRatings: {},
   suitability: {},
+  cellRatings: {},
   retrainingTarget: null,
   condition: 90,
   trainingFocus: null,
@@ -76,16 +67,25 @@ const player = (id: string, firstName: string) => ({
 
 const tacticsView = () => ({
   club: { id: rid("away"), name: "Away FC", statureTier: STATURE_TIERS[0] },
-  squad: [...tactic().slots.map((slot, i) => player(String(slot.playerId), `On${i}`)), player("bench-1", "Bench")],
+  squad: (() => {
+    const t = tactic();
+    return [...t.slots.map((slot, i) => player(String(t.assignments[i]), `On${i}`)), player("bench-1", "Bench")];
+  })(),
   tactic: tactic(),
   revision: 0,
 });
 
 /** A club's pitch as the match reports it: the kickoff XI, with `swaps` applied slot for slot. */
-const pitch = (swaps: Record<string, string> = {}, substitutes: ReadonlyArray<string> = ["bench-1"]) => ({
-  onPitch: tactic().slots.map((slot) => ({ playerId: swaps[slot.playerId] ?? slot.playerId, position: slot.position })),
-  substitutes,
-});
+const pitch = (swaps: Record<string, string> = {}, substitutes: ReadonlyArray<string> = ["bench-1"]) => {
+  const t = tactic();
+  return {
+    onPitch: t.slots.map((slot, i) => ({
+      playerId: swaps[String(t.assignments[i]!)] ?? String(t.assignments[i]!),
+      position: legacyPositionOf(slot.cell),
+    })),
+    substitutes,
+  };
+};
 
 const resumeView = (overrides: Record<string, unknown> = {}) => ({
   matchId: rid("m1"),
@@ -214,7 +214,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     expect(values(off)).toContain("bench-1");
     expect(values(off)).not.toContain("on-0");
     expect(values(off)).not.toContain("on-3");
-    expect([...off.options].find((o) => o.value === "bench-1")?.textContent).toBe(`Bench Player (${tactic().slots[0]!.position})`);
+    expect([...off.options].find((o) => o.value === "bench-1")?.textContent).toBe(`Bench Player (${legacyPositionOf(tactic().slots[0]!.cell)})`);
     expect(values(on)).toEqual(["bench-2"]);
     expect(screen.queryByText("No substitutes named or left on the bench.")).toBeNull();
 
@@ -229,7 +229,7 @@ describe("Match Substitutions — the live substitution screen", () => {
     // Ticket 35: the last named substitute is on, so the picker says the bench is empty.
     expect(screen.getByText("No substitutes named or left on the bench.")).toBeTruthy();
     // The applied substitution is still recorded for a later tactics change to carry.
-    expect(getLiveTactic(rid("s1"))?.slots[1]?.playerId).toBe("bench-2");
+    expect(getLiveTactic(rid("s1"))?.assignments[1]).toBe("bench-2");
   });
 
   it("surfaces a failed load with Retry, and Retry reads again", async () => {
@@ -341,7 +341,7 @@ describe("Match Tactics — the live tactics screen", () => {
       if (method === "submitMatchCommand") return ok(commandView(null));
       return ok(resumeView());
     });
-    expect(await screen.findByText(`Formation: ${FORMATIONS[0]}`)).toBeTruthy();
+    expect(await screen.findByText(`Formation: ${BUILT_IN_TEMPLATES[0]!.name}`)).toBeTruthy();
     const apply = screen.getByRole("button", { name: "Apply tactics change" }) as HTMLButtonElement;
     expect(apply.disabled).toBe(true);
 
@@ -350,7 +350,7 @@ describe("Match Tactics — the live tactics screen", () => {
 
     await waitFor(() => expect(screen.getByRole("status").getAttribute("data-command-status")).toBe("accepted"));
     const submitted = calls.find((c) => c.method === "submitMatchCommand")!.payload;
-    expect(submitted.command).toMatchObject({ _tag: "ChangeTactics", clubId: "away", tactic: { mentality: "attacking" } });
+    expect(submitted.command).toMatchObject({ _tag: "ChangeTactics", clubId: "away", tactic: { team: { mentality: "attacking" } } });
   });
 
   /** "Formation in play"'s rows as `position name`, in the order listed. */
@@ -401,14 +401,14 @@ describe("Match Tactics — the live tactics screen", () => {
     // The Squad screen swapped bench-1 into on-5's slot after kickoff; the engine ignores that edit.
     const edited = () => {
       const view = tacticsView();
-      for (const slot of view.tactic.slots) {
-        if (slot.playerId === "on-5") slot.playerId = rid("bench-1");
-      }
-      return view;
+      const assignments = [...view.tactic.assignments];
+      const idx = assignments.indexOf(rid("on-5"));
+      if (idx !== -1) assignments[idx] = rid("bench-1");
+      return { ...view, tactic: { ...view.tactic, assignments } };
     };
     mount(MatchMatchTacticsScreen, (method) => (method === "getTactics" ? ok(edited()) : ok(resumeView())));
     const rows = await formationRows();
-    expect(rows).toEqual(tactic().slots.map((slot, i) => `${slot.position} On${i} Player`));
+    expect(rows).toEqual(tactic().slots.map((slot, i) => `${legacyPositionOf(slot.cell)} On${i} Player`));
     expect(getLiveTactic(rid("s1"))).toBeNull();
   });
 

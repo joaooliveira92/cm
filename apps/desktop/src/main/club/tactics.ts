@@ -9,7 +9,18 @@ import {
   type PlayerId,
   type WriteRequestId,
 } from "@cm-clone/contracts";
-import { BENCH_SIZE, POSITION_ROLES, STARTER_COUNT, isValidShape } from "@cm-clone/shared";
+import {
+  PLAYER_OVERRIDE_VALUES,
+  PLAYER_STANDALONE_VALUES,
+  PLAYER_SWITCHES,
+  SET_PIECE_ROLE_VALUES,
+  TAKER_LISTS,
+  TEAM_INSTRUCTION_VALUES,
+  TEAM_SET_PIECE_VALUES,
+  TEAM_SWITCHES,
+  describeTacticProblem,
+  validateTactic as validateTacticRules,
+} from "@cm-clone/shared";
 import { Effect, Schema, Semaphore } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
@@ -45,34 +56,78 @@ const changeTacticsPermit = (saveId: SaveId) => {
 export const withTacticSavePermit = <A, E, R>(saveId: SaveId, effect: Effect.Effect<A, E, R>) =>
   changeTacticsPermit(saveId)(effect);
 
+const snakeCase = (name: string): string => name.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+/** `column AS "field"` for each field, so a row reads back under the domain's own names. */
+const selectList = (fields: ReadonlyArray<string>): string =>
+  fields.map((field) => `${snakeCase(field)} AS "${field}"`).join(", ");
+
+const TEAM_CHOICES = Object.keys(TEAM_INSTRUCTION_VALUES);
+const TEAM_SET_PIECE_FIELDS = Object.keys(TEAM_SET_PIECE_VALUES);
+const INSTRUCTION_FIELDS = [
+  ...Object.keys(PLAYER_OVERRIDE_VALUES),
+  ...Object.keys(PLAYER_STANDALONE_VALUES),
+  ...PLAYER_SWITCHES,
+];
+const SET_PIECE_ROLE_FIELDS = Object.keys(SET_PIECE_ROLE_VALUES);
+
+type Row = Readonly<Record<string, unknown>>;
+const pick = (row: Row, fields: ReadonlyArray<string>): Record<string, unknown> =>
+  Object.fromEntries(fields.map((field) => [field, row[field]]));
+
+/** A run is stored as two nullable columns; both null is no run. */
+const cellOrNull = (row: string | null, column: string | null) =>
+  row === null || column === null ? null : { row, column };
+
 /** The club's persisted Tactic, if `ChangeTactics` has ever been issued — assumes a `SqlClient` in
- * context. Exported for season.ts (ticket 15, synthesizes a default for AI clubs without one) and
- * match.ts (ticket 13, needs the opponent club's Tactic too). */
+ * context. Read whole: the tactic row, its eleven slots, the bench and every taker list, decoded
+ * through the `Tactic` schema so a row the schema cannot decode fails loudly rather than reaching a
+ * screen or the engine. Exported for season.ts (ticket 15, synthesizes a default for AI clubs
+ * without one) and match.ts (ticket 13, needs the opponent club's Tactic too). */
 export const loadPersistedTactic = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
-    const tacticRows = yield* sql<{
-      formation: string;
-      mentality: string;
-      tempo: string;
-      pressing: string;
-    }>`SELECT formation, mentality, tempo, pressing FROM tactics WHERE club_id = ${clubId}`;
-    if (tacticRows.length === 0) return null;
+    const tacticRows = yield* sql.unsafe<Row>(
+      `SELECT source_template AS "sourceTemplate", ${selectList([...TEAM_CHOICES, ...TEAM_SWITCHES, ...TEAM_SET_PIECE_FIELDS])}
+       FROM tactics WHERE club_id = ?`,
+      [clubId],
+    );
+    const tacticRow = tacticRows[0];
+    if (tacticRow === undefined) return null;
 
-    const slotRows = yield* sql<{
-      position: string;
-      role: string;
-      playerId: PlayerId;
-    }>`SELECT position, role, player_id as "playerId" FROM tactic_slots WHERE club_id = ${clubId} ORDER BY slot_index`;
+    const slotRows = yield* sql.unsafe<Row>(
+      `SELECT player_id AS "playerId", cell_row AS "cellRow", cell_column AS "cellColumn",
+              run_row AS "runRow", run_column AS "runColumn",
+              ${selectList([...INSTRUCTION_FIELDS, ...SET_PIECE_ROLE_FIELDS])}
+       FROM tactic_slots WHERE club_id = ? ORDER BY slot_index`,
+      [clubId],
+    );
 
     const benchRows = yield* sql<{ playerId: PlayerId | null }>`
       SELECT player_id as "playerId" FROM tactic_bench_slots WHERE club_id = ${clubId} ORDER BY slot_index`;
 
+    const takerRows = yield* sql<{ list: string; playerId: PlayerId }>`
+      SELECT list, player_id as "playerId" FROM tactic_takers WHERE club_id = ${clubId} ORDER BY list, place`;
+
     return yield* Schema.decodeUnknownEffect(Tactic)({
-      ...tacticRows[0],
-      slots: slotRows,
+      sourceTemplate: tacticRow["sourceTemplate"],
+      team: {
+        ...pick(tacticRow, TEAM_CHOICES),
+        ...Object.fromEntries(TEAM_SWITCHES.map((name) => [name, tacticRow[name] === 1])),
+      },
+      teamSetPieces: pick(tacticRow, TEAM_SET_PIECE_FIELDS),
+      slots: slotRows.map((row) => ({
+        cell: { row: row["cellRow"], column: row["cellColumn"] },
+        run: cellOrNull(row["runRow"] as string | null, row["runColumn"] as string | null),
+        instructions: pick(row, INSTRUCTION_FIELDS),
+        setPieceRoles: pick(row, SET_PIECE_ROLE_FIELDS),
+      })),
+      assignments: slotRows.map((row) => row["playerId"]),
       bench: benchRows.map((row) => row.playerId),
+      takers: Object.fromEntries(
+        TAKER_LISTS.map((list) => [list, takerRows.filter((row) => row.list === list).map((row) => row.playerId)]),
+      ),
     });
   });
 
@@ -106,89 +161,70 @@ export const getTactics = (savesDir: string, saveId: SaveId) =>
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
-/** Writes a Tactic's `tactics`/`tactic_slots` rows for one club, at `revision` — shared by
- * `changeTactics` (the user's own club, after `validateTactic` below) and `aiClubs.ts`'s
- * Season-start AI Tactic assignment (ticket 17), which calls this directly in-process rather than
- * through the RpcGroup and passes revision 0 — AI-written tactics are never revisioned. The caller
- * owns the revision: writing it explicitly alongside the rows keeps the row from depending on the
- * column default, which a `persistTactic` caller bypassing `changeTactics` would otherwise have to
- * know about. Assumes a `SqlClient` in context. */
+/** `?, ?, ?` for `count` bound values. */
+const placeholders = (count: number): string => Array<string>(count).fill("?").join(", ");
+
+/** Writes a Tactic's rows for one club, at `revision` — shared by `changeTactics` (the user's own
+ * club, after `validateTactic` below) and `aiClubs.ts`'s Season-start AI Tactic assignment
+ * (ticket 17), which calls this directly in-process rather than through the RpcGroup and passes
+ * revision 0 — AI-written tactics are never revisioned. The caller owns the revision: writing it
+ * explicitly alongside the rows keeps the row from depending on the column default, which a
+ * `persistTactic` caller bypassing `changeTactics` would otherwise have to know about. The write is
+ * a full replacement: every row of the old Tactic goes first. Assumes a `SqlClient` in context. */
 export const persistTactic = (clubId: ClubId, tactic: Tactic, revision: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+    yield* sql`DELETE FROM tactic_takers WHERE club_id = ${clubId}`;
     yield* sql`DELETE FROM tactic_bench_slots WHERE club_id = ${clubId}`;
     yield* sql`DELETE FROM tactic_slots WHERE club_id = ${clubId}`;
     yield* sql`DELETE FROM tactics WHERE club_id = ${clubId}`;
-    yield* sql`INSERT INTO tactics (club_id, formation, mentality, tempo, pressing, revision) VALUES (${clubId}, ${tactic.formation}, ${tactic.mentality}, ${tactic.tempo}, ${tactic.pressing}, ${revision})`;
+
+    const teamColumns = [...TEAM_CHOICES, ...TEAM_SWITCHES, ...TEAM_SET_PIECE_FIELDS];
+    const teamValues = [
+      ...TEAM_CHOICES.map((name) => tactic.team[name as keyof typeof tactic.team]),
+      ...TEAM_SWITCHES.map((name) => (tactic.team[name] ? 1 : 0)),
+      ...TEAM_SET_PIECE_FIELDS.map((name) => tactic.teamSetPieces[name as keyof typeof tactic.teamSetPieces]),
+    ];
+    yield* sql.unsafe(
+      `INSERT INTO tactics (club_id, source_template, ${teamColumns.map(snakeCase).join(", ")}, revision)
+       VALUES (${placeholders(3 + teamColumns.length)})`,
+      [clubId, tactic.sourceTemplate, ...teamValues, revision],
+    );
+
+    const slotColumns = [...INSTRUCTION_FIELDS, ...SET_PIECE_ROLE_FIELDS];
     for (const [index, slot] of tactic.slots.entries()) {
-      yield* sql`INSERT INTO tactic_slots (club_id, slot_index, position, role, player_id) VALUES (${clubId}, ${index}, ${slot.position}, ${slot.role}, ${slot.playerId})`;
+      const values = [
+        ...INSTRUCTION_FIELDS.map((name) => slot.instructions[name as keyof typeof slot.instructions]),
+        ...SET_PIECE_ROLE_FIELDS.map((name) => slot.setPieceRoles[name as keyof typeof slot.setPieceRoles]),
+      ];
+      yield* sql.unsafe(
+        `INSERT INTO tactic_slots (club_id, slot_index, cell_row, cell_column, run_row, run_column, player_id, ${slotColumns.map(snakeCase).join(", ")})
+         VALUES (${placeholders(7 + slotColumns.length)})`,
+        [clubId, index, slot.cell.row, slot.cell.column, slot.run?.row ?? null, slot.run?.column ?? null, tactic.assignments[index]!, ...values],
+      );
     }
     for (const [index, playerId] of tactic.bench.entries()) {
       yield* sql`INSERT INTO tactic_bench_slots (club_id, slot_index, player_id) VALUES (${clubId}, ${index}, ${playerId})`;
     }
+    for (const list of TAKER_LISTS) {
+      for (const [place, playerId] of tactic.takers[list].entries()) {
+        yield* sql`INSERT INTO tactic_takers (club_id, list, place, player_id) VALUES (${clubId}, ${list}, ${place}, ${playerId})`;
+      }
+    }
   });
 
 /** Exported for `aiClubs.ts`'s Season-start AI Tactic assignment (ticket 17), which validates the
- * synthesized Tactic against the same rules the human Tactics screen enforces before persisting. */
+ * synthesized Tactic against the same rules the human Tactics screen enforces before persisting.
+ * Refuses with every problem the shared rules name (`InvalidTacticError.problems`), against the
+ * club's squad. */
 export const validateTactic = (tactic: Tactic, squadPlayerIds: ReadonlySet<string>) =>
   Effect.gen(function* () {
-    // The Formation is the shape's starting template, not a rule on it: any outfield slot may hold
-    // any outfield Position, so long as the GK stays alone in slot 0.
-    if (tactic.slots.length !== STARTER_COUNT) {
+    const problems = validateTacticRules(tactic, squadPlayerIds);
+    if (problems.length > 0) {
       return yield* new InvalidTacticError({
-        reason: `a Tactic needs ${STARTER_COUNT} slots, got ${tactic.slots.length}`,
+        reason: problems.map(describeTacticProblem).join("; "),
+        problems,
       });
-    }
-    if (!isValidShape(tactic.slots.map((slot) => slot.position))) {
-      return yield* new InvalidTacticError({
-        reason: "slot 0 must be the only GK",
-      });
-    }
-
-    const seenPlayers = new Set<string>();
-    for (const [index, slot] of tactic.slots.entries()) {
-      if (slot.role !== POSITION_ROLES[slot.position]) {
-        return yield* new InvalidTacticError({
-          reason: `slot ${index} (${slot.position}) must use Role ${POSITION_ROLES[slot.position]}, got ${slot.role}`,
-        });
-      }
-      if (!squadPlayerIds.has(slot.playerId)) {
-        return yield* new InvalidTacticError({
-          reason: `player ${slot.playerId} is not in the squad`,
-        });
-      }
-      if (seenPlayers.has(slot.playerId)) {
-        return yield* new InvalidTacticError({
-          reason: `player ${slot.playerId} is assigned to more than one slot`,
-        });
-      }
-      seenPlayers.add(slot.playerId);
-    }
-
-    if (tactic.bench.length !== BENCH_SIZE) {
-      return yield* new InvalidTacticError({
-        reason: `${tactic.formation} needs a ${BENCH_SIZE}-strong bench, got ${tactic.bench.length} entries`,
-      });
-    }
-    const benchPlayers = new Set<string>();
-    for (const playerId of tactic.bench) {
-      if (playerId === null) continue;
-      if (!squadPlayerIds.has(playerId)) {
-        return yield* new InvalidTacticError({
-          reason: `bench player ${playerId} is not in the squad`,
-        });
-      }
-      if (seenPlayers.has(playerId)) {
-        return yield* new InvalidTacticError({
-          reason: `player ${playerId} is assigned to both a slot and the bench`,
-        });
-      }
-      if (benchPlayers.has(playerId)) {
-        return yield* new InvalidTacticError({
-          reason: `player ${playerId} is named on the bench more than once`,
-        });
-      }
-      benchPlayers.add(playerId);
     }
   });
 

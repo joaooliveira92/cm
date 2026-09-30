@@ -14,7 +14,9 @@ import {
   resolveCards,
   resolveContactDuels,
   resolveNonContactInjuries,
+  resolveOffside,
 } from "./resolvers.js";
+import { resolveSetPieces } from "./setPieceResolvers.js";
 import {
   applyCommand,
   applyForcedOff,
@@ -23,6 +25,7 @@ import {
   decayConditions,
   effectiveStrengths,
   initTeamState,
+  pickPlayerId,
   type TeamRuntimeState,
 } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
@@ -37,6 +40,26 @@ export interface SimulateMatchInput {
   readonly halftimeCommands?: ReadonlyArray<MatchCommand>;
 }
 
+/** Match statistics accumulated during simulation. */
+export interface MatchStats {
+  readonly half: MatchHalf;
+  readonly minute: number;
+  readonly home: TeamStats;
+  readonly away: TeamStats;
+}
+
+export interface TeamStats {
+  readonly shots: number;
+  readonly shotsOnTarget: number;
+  readonly goals: number;
+  readonly fouls: number;
+  readonly offsides: number;
+  readonly yellowCards: number;
+  readonly redCards: number;
+  readonly possession: number;
+  readonly chancesByType: Record<string, number>;
+}
+
 const resolveSlice = (
   home: TeamRuntimeState,
   away: TeamRuntimeState,
@@ -49,40 +72,112 @@ const resolveSlice = (
   decayConditions(home);
   decayConditions(away);
 
-  const homeStrengths = computeTeamStrengths(home);
-  const awayStrengths = computeTeamStrengths(away);
+  // Compute base phase strengths (no possession adjustment) for possession probability
+  const homeStrengths = computeTeamStrengths(home, false);
+  const awayStrengths = computeTeamStrengths(away, false);
   const homeCondition = conditionStaminaEquivalent(home);
   const awayCondition = conditionStaminaEquivalent(away);
 
   const homeEff = effectiveStrengths(homeStrengths, minute, homeCondition, true);
   const awayEff = effectiveStrengths(awayStrengths, minute, awayCondition, false);
 
-  const totalMidfield = homeEff.midfield + awayEff.midfield;
-  const homePossessionProbability = totalMidfield > 0 ? homeEff.midfield / totalMidfield : 0.5;
+  // Possession based on midfield & passing behaviour, plus counter-attack & focus passing adjustments
+  const homePossessionModifier = home.resolved.teamModifiers.possessionBias
+    * home.resolved.teamModifiers.counterPossessionPenalty
+    * home.resolved.teamModifiers.focusPossessionBias;
+  const awayPossessionModifier = away.resolved.teamModifiers.possessionBias
+    * away.resolved.teamModifiers.counterPossessionPenalty
+    * away.resolved.teamModifiers.focusPossessionBias;
+
+  // GK distribution effect on possession retention (ticket 28)
+  const gkRetention = (team: TeamRuntimeState): number => {
+    const gkSlot = team.resolved.slots.find((s) => s.isGoalkeeper);
+    return gkSlot?.behaviour.possessionRetention ?? 1.0;
+  };
+  const homeGKRet = gkRetention(home);
+  const awayGKRet = gkRetention(away);
+
+  const homeEffMid = homeEff.midfield * homePossessionModifier * homeGKRet;
+  const awayEffMid = awayEff.midfield * awayPossessionModifier * awayGKRet;
+  const totalMidfield = homeEffMid + awayEffMid;
+  const homePossessionProbability = totalMidfield > 0 ? homeEffMid / totalMidfield : 0.5;
   const homeHasPossession = random.next() < homePossessionProbability;
 
+  // Re-compute phase strengths WITH run adjustments based on who has possession
+  // Runners count in their run target's phase when their team has the ball
+  const homePossessionStrengths = computeTeamStrengths(home, homeHasPossession);
+  const awayPossessionStrengths = computeTeamStrengths(away, !homeHasPossession);
   const attacker = homeHasPossession ? home : away;
   const defender = homeHasPossession ? away : home;
-  const attackerModifiers = homeHasPossession ? homeStrengths.modifiers : awayStrengths.modifiers;
-  const attackerEff = homeHasPossession ? homeEff : awayEff;
-  const defenderEff = homeHasPossession ? awayEff : homeEff;
+  const attackerEff = effectiveStrengths(
+    homeHasPossession ? homePossessionStrengths : awayPossessionStrengths,
+    minute,
+    homeHasPossession ? homeCondition : awayCondition,
+    homeHasPossession,
+  );
+  const defenderEff = effectiveStrengths(
+    homeHasPossession ? awayPossessionStrengths : homePossessionStrengths,
+    minute,
+    homeHasPossession ? awayCondition : homeCondition,
+    !homeHasPossession,
+  );
 
-  const attackDefenseTotal = attackerEff.attack + defenderEff.defense;
-  const attackDefenseRatio = attackDefenseTotal > 0 ? attackerEff.attack / attackDefenseTotal : 0.5;
+  // Mentality effect from ResolvedInstructions (attack factor boosts attack attempts)
+  const mentalityAttackBias = attacker.resolved.instructions.attack;
+
+  const attackDefenseTotal = attackerEff.attack * mentalityAttackBias + defenderEff.defense;
+  const attackDefenseRatio = attackDefenseTotal > 0 ? (attackerEff.attack * mentalityAttackBias) / attackDefenseTotal : 0.5;
   const eventProbability = clamp(
-    BASE_ATTACK_EVENT_CHANCE * attackerModifiers.tempo * attackDefenseRatio * 2,
+    BASE_ATTACK_EVENT_CHANCE * attackDefenseRatio * 2,
     0,
     0.6,
   );
 
+  // Snapshot event count before this slice's events so we can detect set-piece triggers
+  const eventCountBeforeSlice = events.length;
+
   if (random.next() < eventProbability) {
-    resolveAttackingEvent(attacker, minute, half, score, attacker === home, random, events);
+    resolveAttackingEvent(attacker, defender, minute, half, score, attacker === home, random, events);
   }
 
+  // Offside check for the attacking team
+  resolveOffside(attacker, defender, minute, half, random, events);
+
+  // Beaten trap check: when defending team uses offside trap and the attacker beats it
+  if (defender.resolved.teamModifiers.offsideTrapActive > 0 && random.next() < 0.25) {
+    const beatenPlayerId = pickPlayerId(attacker, random, true);
+    if (beatenPlayerId) {
+      events.push({
+        _tag: "BeatenTrap",
+        minute,
+        half,
+        teamClubId: attacker.clubId,
+        playerId: beatenPlayerId,
+      });
+    }
+  }
+
+  // Cards now come through resolveCards (which calls resolveFoul internally)
   resolveCards(defender, minute, half, random, events);
   resolveContactDuels(attacker, defender, minute, half, random, events);
   resolveNonContactInjuries(home, minute, half, random, events);
   resolveNonContactInjuries(away, minute, half, random, events);
+
+  // Resolve set pieces from events emitted in this slice (corners from saved/blocked shots
+  // and cleared crosses; free kicks and penalties from fouls).
+  resolveSetPieces(
+    attacker,
+    defender,
+    minute,
+    half,
+    score,
+    attacker === home,
+    home,
+    away,
+    eventCountBeforeSlice,
+    random,
+    events,
+  );
 };
 
 const applyScheduledCommands = (
@@ -99,8 +194,6 @@ const applyScheduledCommands = (
     const team = command.clubId === home.clubId ? home : command.clubId === away.clubId ? away : undefined;
     if (!team) continue;
     if (command._tag === "ForceOff") {
-      // No `Substitution` event here: the player leaves to 10 men (a GK stand-in drag still emits
-      // one from `emptySlot`), and the on-pitch count the read-model surfaces reflects the loss.
       applyForcedOff(team, command.playerId, minute, half, events);
       continue;
     }
@@ -173,9 +266,6 @@ const runSimulation = (
     snapshotCounts(stoppageMinute, half);
 
     if (half === 1) {
-      // The break comes first, then what the managers did at it: a halftime command's events land after
-      // `HalfTimeReached`, where the manager gave it, so they never move a line already shown
-      // (group-g-match-day ticket 20). They keep minute 45 of the first half.
       events.push({ _tag: "HalfTimeReached", minute: HALF_LENGTH_MINUTES, homeScore: score.home, awayScore: score.away });
       applyScheduledCommands(home, away, HALF_LENGTH_MINUTES, 1, input.halftimeCommands, true, events);
       snapshotCounts(HALF_LENGTH_MINUTES, 1);

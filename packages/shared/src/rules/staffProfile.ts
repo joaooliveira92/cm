@@ -6,16 +6,8 @@ import { deriveSeed } from "../seed.js";
 import type { IsoDate } from "../season/calendar.js";
 import { CATEGORIES, type Category } from "./positions.js";
 import { QUALITY_BAND, type ClubPersonRole } from "./staff.js";
-import {
-  FORMATIONS,
-  MENTALITY_OPTIONS,
-  PRESSING_OPTIONS,
-  TEMPO_OPTIONS,
-  type Formation,
-  type Mentality,
-  type Pressing,
-  type Tempo,
-} from "./tactics.js";
+import { TEAM_INSTRUCTION_VALUES, type TeamInstructions } from "./tacticModel.js";
+import { BUILT_IN_TEMPLATE_NAMES } from "./tacticTemplates.js";
 
 /**
  * A Staff Profile: the ratings, preferences, and biography a staff member is *seen* with.
@@ -55,15 +47,14 @@ export const STAFF_MENTAL_RATINGS = [
 export type StaffMentalRating = (typeof STAFF_MENTAL_RATINGS)[number];
 
 /**
- * A coach's tactical leanings, in the Tactics screen's own vocabulary — the Formations and Team
- * Instructions the manager actually sets, plus the Training Category they would put first — so a
- * preference reads as something the manager could adopt rather than a word the game has no rule for.
+ * A coach's tactical leanings, in the Tactics screen's own vocabulary — a built-in Tactic Template
+ * and the team Mentality the manager actually sets, plus the Training Category they would put first
+ * — so a preference reads as something the manager could adopt rather than a word the game has no
+ * rule for. CM's fuller staff preferences arrive with the AI's seeded preferences.
  */
 export interface StaffTacticalPreferences {
-  readonly formation: Formation;
-  readonly mentality: Mentality;
-  readonly tempo: Tempo;
-  readonly pressing: Pressing;
+  readonly formation: string;
+  readonly mentality: TeamInstructions["mentality"];
   readonly coachingEmphasis: Category;
 }
 
@@ -242,10 +233,8 @@ export const deriveStaffProfile = ({
   const tactics: StaffTacticalPreferences | null =
     role === "coach" || role === "assistant"
       ? {
-          formation: pickRandom(FORMATIONS, random),
-          mentality: pickRandom(MENTALITY_OPTIONS, random),
-          tempo: pickRandom(TEMPO_OPTIONS, random),
-          pressing: pickRandom(PRESSING_OPTIONS, random),
+          formation: pickRandom(BUILT_IN_TEMPLATE_NAMES, random),
+          mentality: pickRandom(TEAM_INSTRUCTION_VALUES.mentality, random),
           coachingEmphasis: pickRandom(CATEGORIES, random),
         }
       : null;

@@ -3,12 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
-  FORMATION_SLOTS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
+  BUILT_IN_TEMPLATES,
+  slotLabel,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
 import {
@@ -42,19 +42,70 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
 
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
 
-/** An all-empty 4-4-2 Tactic: no starters, no named subs. The bar renders this as 18 empty slots
- *  with the whole squad as the draggable pool. */
+const fourFourTwoCells = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((s) => s.cell);
+
 const emptyTactic = () => ({
-  formation: "4-4-2" as const,
-  slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
-    position,
-    role: POSITION_ROLES[position],
-    playerId: "",
+  sourceTemplate: "4-4-2",
+  slots: fourFourTwoCells.map((cell) => ({
+    cell,
+    run: null,
+    instructions: {
+      passing: "team" as const,
+      closingDown: "team" as const,
+      tackling: "team" as const,
+      marking: "team" as const,
+      mentality: "team" as const,
+      distribution: "default" as const,
+      crossFrom: "default" as const,
+      crossAim: "default" as const,
+      crossBall: "normal" as const,
+      longShots: "normal" as const,
+      forwardRuns: "normal" as const,
+      runWithBall: "normal" as const,
+      tryThroughBalls: "normal" as const,
+      freeRole: "normal" as const,
+      holdUpBall: "normal" as const,
+    },
+    setPieceRoles: {
+      defendFreeKick: "default" as const,
+      attackFreeKick: "default" as const,
+      defendCorner: "default" as const,
+      attackCorner: "default" as const,
+      attackingThrowInLeft: "default" as const,
+      attackingThrowInRight: "default" as const,
+    },
   })),
-  bench: [null, null, null, null, null, null, null],
-  mentality: "balanced" as const,
-  tempo: "normal" as const,
-  pressing: "medium" as const,
+  team: {
+    passing: "mixed" as const,
+    focusPassing: "mixed" as const,
+    tackling: "normal" as const,
+    closingDown: "default" as const,
+    mentality: "normal" as const,
+    offsideTrap: false,
+    zonalMarking: true,
+    counterAttack: false,
+    menBehindTheBall: false,
+  },
+  teamSetPieces: {
+    cornersLeft: "default" as const,
+    cornersRight: "default" as const,
+    freeKicksLeft: "default" as const,
+    freeKicksRight: "default" as const,
+    throwInsLeft: "default" as const,
+    throwInsRight: "default" as const,
+  },
+  assignments: Array.from({ length: 11 }, () => ""),
+  bench: Array.from({ length: 7 }, () => null),
+  takers: {
+    captain: [],
+    penalties: [],
+    freeKicksLeft: [],
+    freeKicksRight: [],
+    cornersLeft: [],
+    cornersRight: [],
+    throwInsLeft: [],
+    throwInsRight: [],
+  },
 });
 
 const attributes = (value: number): Record<string, number> => ({
@@ -152,8 +203,6 @@ describe("the Squad view catalogue", () => {
     expect(SQUAD_VIEWS.filter((view) => view.layout === "table").length).toBe(
       SQUAD_VIEWS.length - 1,
     );
-    // Every table view names the preset that supplies its columns, so a view
-    // can never draw a table with no column set behind it.
     for (const view of SQUAD_VIEWS.slice(1)) expect(view.presetId).toBe(view.id);
   });
 
@@ -187,7 +236,6 @@ describe("the position list's two-column geometry", () => {
   });
 
   it("roves down a column, crosses at the same offset, and stays put at the right edge", () => {
-    // Eight players: indexes 0-3 left, 4-7 right.
     expect(nextPositionIndex("ArrowDown", 0, 8)).toBe(1);
     expect(nextPositionIndex("ArrowUp", 0, 8)).toBe(7);
     expect(nextPositionIndex("ArrowRight", 1, 8)).toBe(5);
@@ -200,8 +248,6 @@ describe("the position list's two-column geometry", () => {
     expect(nextPositionIndex("ArrowDown", 0, 0)).toBeNull();
   });
 
-  // An odd count has a longer left column, so the last left row has no partner
-  // to cross to; it lands on the last row instead of past the end.
   it("clamps a right-arrow that would leave the list", () => {
     expect(nextPositionIndex("ArrowRight", 2, 5)).toBe(4);
   });
@@ -211,12 +257,10 @@ describe("choosing a view", () => {
   it("draws the squad as two headerless tables of names and positions", async () => {
     await mountSquad([player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore")]);
 
-
     expect(document.querySelectorAll("table[data-squad-layout='positions']")).toHaveLength(2);
     expect(document.querySelector("thead")).toBeNull();
     expect(screen.getByText(/Shearer, Alan/)).toBeTruthy();
     expect(screen.getByText(/Moore, Bobby/)).toBeTruthy();
-    // One tab stop into the sequence, as on the table (AC-28).
     const nameButtons = [...document.querySelectorAll("button[data-focus-id]")];
     expect(nameButtons.length).toBe(2);
     expect(nameButtons.filter((b) => b.getAttribute("tabindex") === "0").length).toBe(1);
@@ -262,7 +306,6 @@ describe("choosing a view", () => {
     expect(screen.getByRole("columnheader", { name: "Birthplace" })).toBeTruthy();
     expect(screen.getByText("Brazil")).toBeTruthy();
     expect(screen.getByText("Santos")).toBeTruthy();
-    // None is a first-class Training Focus value, spelled out rather than blank.
     expect(screen.getByText("None")).toBeTruthy();
     expect(loadSquadViewId()).toBe("general");
   });
@@ -283,7 +326,6 @@ describe("choosing a view", () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
     await chooseToolbarOption("Squad view", "General Info");
 
-    // jsdom lays nothing out, so the table reads as unscrolled.
     const pinned = [...document.querySelectorAll<HTMLElement>("th, td")].filter(
       (cell) => cell.style.position === "sticky",
     );
@@ -295,7 +337,6 @@ describe("choosing a view", () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
 
     await chooseToolbarOption("Squad view", "General Info");
-    // The match-day lineup bar is a footer too; the shell's bar is the last one.
     const bar = screen.getAllByRole("contentinfo").at(-1)!;
     expect(bar.textContent).toContain("Showing the General Info columns.");
 
@@ -327,21 +368,15 @@ describe("the squad screen mounts the match-day bar", () => {
   it("renders the eighteen empty slots and says the lineup is not saved on a fresh squad", async () => {
     await mountSquad([player("p1", "Alan", "Shearer")]);
 
-    // The eleven formation slots, labelled by the position they fill — a position repeats when
-    // the formation calls for more than one of it (4-4-2 has two DCs and two MCs).
-    for (const position of new Set(FORMATION_SLOTS["4-4-2"])) {
-      const expected = FORMATION_SLOTS["4-4-2"].filter((p) => p === position).length;
-      expect(screen.getAllByRole("button", { name: `${position} slot` })).toHaveLength(
-        expected,
-      );
+    const uniqueLabels = new Set(fourFourTwoCells.map((cell) => slotLabel(cell)));
+    for (const label of uniqueLabels) {
+      const expected = fourFourTwoCells.filter((c) => slotLabel(c) === label).length;
+      expect(screen.getAllByRole("button", { name: `${label} slot` })).toHaveLength(expected);
     }
-    // The bench is SB1..SB7.
     for (const label of ["SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7"]) {
       expect(screen.getByRole("button", { name: `${label} slot` })).toBeTruthy();
     }
-    // An empty lineup leaves the whole squad in the roster, ready to be dragged in.
     expect(screen.getByRole("button", { name: "Shearer, Alan" })).toBeTruthy();
-    // Lineups autosave, so there is no Save button; an empty lineup says what saving waits on.
     expect(screen.queryByRole("button", { name: "Save Lineup" })).toBeNull();
     expect(screen.getByText("Not saved yet: pick 11 more starters.")).toBeTruthy();
   });
@@ -349,40 +384,26 @@ describe("the squad screen mounts the match-day bar", () => {
 
 describe("the leading match-day indicator", () => {
   it("reports the lineup slot each row is selected into: playing, on the bench, or not selected", async () => {
-    // Shearer is handed a starter slot (GK), Moore a bench slot, Doe nothing.
     const lineupTactic = () => ({
-      formation: "4-4-2" as const,
-      slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-        position,
-        role: POSITION_ROLES[position],
-        playerId: index === 0 ? rid("p1") : "",
-      })),
+      ...emptyTactic(),
+      assignments: fourFourTwoCells.map((_, index) => index === 0 ? rid("p1") : ""),
       bench: [rid("p2"), null, null, null, null, null, null],
-      mentality: "balanced" as const,
-      tempo: "normal" as const,
-      pressing: "medium" as const,
     });
     await mountSquad(
       [player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore"), player("p3", "John", "Doe")],
       lineupTactic(),
     );
 
-    // Playing reads the slot code the bar shows for the same slot; the bench
-    // reads the slot it sits in (SB1..); an unselected player gets a hollow box.
-    // The code is decoration (aria-hidden); the state is the text a screen reader reads.
     const codeOf = (state: string) =>
       screen.getByText(state).parentElement!.querySelector('[aria-hidden="true"]')!.textContent;
     expect(codeOf("Playing (GK)")).toBe("GK");
     expect(codeOf("On the bench")).toBe("SB1");
     expect(codeOf("Not selected")).toBe("");
-    // Read-only, so not a control: the row's one tab stop stays the name button.
     expect(screen.queryByRole("button", { name: /Playing|On the bench|Not selected/ })).toBeNull();
   });
 });
 
 describe("the position list's player names are the way into the player screen", () => {
-  /** The list is the layout the Squad screen opens on, so this is the click the game is most
-   *  often asked for: CM 03/04 put the player screen behind the name, and so does this. */
   it("clicking a name opens that player's Profile", async () => {
     await mountSquad([player("p1", "Alan", "Shearer"), player("p2", "Bobby", "Moore")]);
 
@@ -424,11 +445,9 @@ describe("the Contract view", () => {
     await chooseToolbarOption("Squad view", "Contract");
     const group = screen.getByRole("group", { name: "Squad" });
 
-    // "10,000 Cr" precedes "9,000 Cr" as text; as an amount it follows.
     fireEvent.click(within(group).getByRole("button", { name: "Wage" }));
     expect(namesInOrder()).toEqual(["Bobby Moore", "Alan Shearer"]);
 
-    // "15 Jan 2029" precedes "31 Dec 2028" as text; as a date it follows.
     fireEvent.click(within(group).getByRole("button", { name: "Contract ends" }));
     expect(namesInOrder()).toEqual(["Bobby Moore", "Alan Shearer"]);
   });

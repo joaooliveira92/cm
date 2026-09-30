@@ -18,10 +18,10 @@ Seam: the renderer against the contracts ticket 21 ships; no new main-side capab
 
 **Blocked by:** 21
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The screen renders the menu bar, the Team Selection list and the pitch for a seeded Tactic.
-- [ ] Moving a player, setting a run, and swapping a substitute each change the draft and save through `ChangeTactics`.
-- [ ] Every one of those actions is reachable and completable by keyboard.
-- [ ] Fit shows as a tier word in the list and a non-colour marker on the pitch; no raw positional rating appears.
-- [ ] Renderer tests for the screen pass, and typecheck and lint pass.
+- [x] The screen renders the menu bar, the Team Selection list and the pitch for a seeded Tactic.
+- [x] Moving a player, setting a run, and swapping a substitute each change the draft and save through `ChangeTactics`.
+- [x] Every one of those actions is reachable and completable by keyboard.
+- [x] Fit shows as a tier word in the list and a non-colour marker on the pitch; no raw positional rating appears.
+- [x] Renderer tests for the screen pass, and typecheck and lint pass.

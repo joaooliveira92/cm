@@ -42,7 +42,7 @@ describe("ticket 12 — the panel commands the controlled club, and records only
     await waitFor(() => expect(submissions.calls).toHaveLength(2));
     expect(submissions.calls.map((call) => (call.payload.command as { clubId: string }).clubId)).toEqual(["away", "away"]);
     // The away side's count is the one that confirms the substitution.
-    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
+    await waitFor(() => expect(getLiveTactic(rid("s1"))?.assignments[2]).toBe("bench-2"));
   });
 
   it("a substitution the match did not take leaves the shared line-up alone", async () => {
@@ -77,8 +77,8 @@ describe("ticket 12 — the panel commands the controlled club, and records only
     act(() => void dispatchAction("set-live-substitute-in", { playerId: rid("bench-2") }));
     act(() => void dispatchAction("make-substitution"));
 
-    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
-    expect(getLiveTactic(rid("s1"))?.mentality).toBe("balanced");
+    await waitFor(() => expect(getLiveTactic(rid("s1"))?.assignments[2]).toBe("bench-2"));
+    expect(getLiveTactic(rid("s1"))?.team.mentality).toBe("balanced");
   });
 
   it("a refused substitution after earlier ones is not read as applied", async () => {
@@ -110,7 +110,7 @@ describe("ticket 12 — the panel commands the controlled club, and records only
 
     await waitFor(() => expect(submissions.calls).toHaveLength(1));
     expect(submissions.calls[0]!.payload).toMatchObject({ revealedEvents: 0 });
-    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
+    await waitFor(() => expect(getLiveTactic(rid("s1"))?.assignments[2]).toBe("bench-2"));
   });
 
   it("the substitution draft lists the pitch the match reports, not the tactic", async () => {

@@ -2,16 +2,14 @@ import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
 import {
+  BUILT_IN_TEMPLATES,
   FAMILIARITY_TIERS,
-  FORMATION_SLOTS,
-  FORMATIONS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   POSITIONS,
   STATURE_TIERS,
-  emptyBench,
+  tacticFromTemplate,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
 import { FixturesScreen } from "../../src/renderer/fixtures/FixturesScreen.js";
@@ -321,7 +319,6 @@ describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space 
         dateOfBirth: "",
         favoriteTeam: null,
         preferredFormation: "4-4-2",
-        preferredStyleId: "balanced",
         avatarPortraitKey: null,
         avatarPrimaryColor: "#1f2937",
         avatarSecondaryColor: "#f8fafc",
@@ -445,7 +442,7 @@ render(
 
   it("MatchDay live-control buttons carry the level-1 ring", async () => {
     setActiveMatch(resumedMatch());
-    const formation = FORMATIONS[0];
+    const template0 = BUILT_IN_TEMPLATES[0]!;
     mockPreload(async (method) => {
       if (method === "getTactics") {
         return {
@@ -453,18 +450,7 @@ render(
           value: {
             club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
             squad: [],
-            tactic: {
-              formation,
-              slots: (FORMATION_SLOTS[formation] ?? []).map((position, index) => ({
-                position,
-                role: POSITION_ROLES[position],
-                playerId: rid(`p-${index}`),
-              })),
-              bench: emptyBench(),
-              mentality: "balanced",
-              tempo: "normal",
-              pressing: "medium",
-            },
+            tactic: tacticFromTemplate(template0, Array.from({ length: 11 }, (_, i) => rid(`p-${i}`))),
             revision: 0,
           },
         } as never;

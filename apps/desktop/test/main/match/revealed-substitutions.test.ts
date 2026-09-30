@@ -30,7 +30,7 @@ const COMMAND_MINUTE = 3;
  * enumerating seeds over `deriveMatchEvents`; 314 and 341 share the property. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. The
  * test re-checks both halves of the property and names this constant when one no longer holds.
  */
-const FORCED_SUB_AFTER_COMMAND_SEED = 169;
+const FORCED_SUB_AFTER_COMMAND_SEED = 669;
 
 const drainWholeMatch = (saveId: SaveId, matchId: MatchId) =>
   Effect.gen(function* () {
@@ -59,8 +59,8 @@ it.effect(
       const substitution = {
         _tag: "MakeSubstitution" as const,
         clubId: humanClubOf(match),
-        outPlayerId: tactic.slots[0]!.playerId,
-        inPlayerId: squad.find((player) => !tactic.slots.some((slot) => slot.playerId === player.id))!.id,
+        outPlayerId: tactic.assignments[0]!,
+        inPlayerId: squad.find((player) => !tactic.assignments.includes(player.id))!.id,
       };
 
       // One Commentary Line per Match Event, so a line's index is its event's timeline position.
@@ -107,7 +107,7 @@ it.effect("a substitution the engine refuses reports not applied; a non-substitu
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, FORCED_SUB_AFTER_COMMAND_SEED);
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
-    const bench = squad.filter((player) => !tactic.slots.some((slot) => slot.playerId === player.id));
+    const bench = squad.filter((player) => !tactic.assignments.includes(player.id));
 
     const refused = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 0, COMMAND_MINUTE, false, {
       _tag: "MakeSubstitution",

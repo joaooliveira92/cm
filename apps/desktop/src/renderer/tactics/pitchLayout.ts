@@ -1,4 +1,4 @@
-import type { Position } from "@cm-clone/shared";
+import { COLUMNS, ROWS, type Column, type Row, type Slot } from "@cm-clone/shared";
 
 /** Where one Tactic slot sits on the pitch diagram, in percent of the pitch box: `x` from the left
  *  touchline, `y` from the opposition goal line (the club attacks up the screen). */
@@ -8,87 +8,64 @@ export interface PitchSpot {
   readonly y: number;
 }
 
-/** Each Position's line up the pitch and its side within that line: -1 left flank, 0 centre, 1 right
- *  flank. A line is laid out left flank, centre, right flank, so slot order never moves a marker. */
-const PLACEMENT: Record<Position, { readonly y: number; readonly side: -1 | 0 | 1 }> = {
-  ST: { y: 13, side: 0 },
-  AMC: { y: 28, side: 0 },
-  ML: { y: 42, side: -1 },
-  MC: { y: 42, side: 0 },
-  MR: { y: 42, side: 1 },
-  DM: { y: 58, side: 0 },
-  DL: { y: 74, side: -1 },
-  DC: { y: 74, side: 0 },
-  DR: { y: 74, side: 1 },
-  GK: { y: 87, side: 0 },
-};
+/** Each row's line up the pitch, forward first. The goalkeeper row is drawn but never a drop target. */
+const ROW_Y: Record<Row, number> = { F: 13, AM: 27, M: 41, DM: 55, D: 69, SW: 79, GK: 88 };
 
-/** Spread every slot across its line, evenly spaced between the touchlines. Slots on the same side
- *  of a line keep their slot order, so the layout is stable for a given formation. */
-export const pitchLayout = (positions: ReadonlyArray<Position>): ReadonlyArray<PitchSpot> => {
-  const lines = new Map<number, Array<{ slotIndex: number; side: number }>>();
-  for (const [slotIndex, position] of positions.entries()) {
-    const { y, side } = PLACEMENT[position];
-    const line = lines.get(y) ?? [];
-    line.push({ slotIndex, side });
-    lines.set(y, line);
-  }
-  const spots: Array<PitchSpot> = [];
-  for (const [y, line] of lines) {
-    line.sort((a, b) => a.side - b.side || a.slotIndex - b.slotIndex);
-    for (const [index, { slotIndex }] of line.entries()) {
-      spots.push({ slotIndex, x: ((index + 1) / (line.length + 1)) * 100, y });
-    }
-  }
-  return spots.sort((a, b) => a.slotIndex - b.slotIndex);
-};
+/** Each column's place across the pitch, left flank to right flank. */
+const COLUMN_X: Record<Column, number> = { L: 11, LC: 30, C: 50, RC: 70, R: 89 };
 
-/** The outfield lines, attack first, each with the Positions its left flank, centre and right flank
- *  take. A line with one Position is centre-only across its whole width. */
-const LINES: ReadonlyArray<{ readonly y: number; readonly positions: readonly [Position, Position, Position] }> = [
-  { y: PLACEMENT.ST.y, positions: ["ST", "ST", "ST"] },
-  { y: PLACEMENT.AMC.y, positions: ["AMC", "AMC", "AMC"] },
-  { y: PLACEMENT.MC.y, positions: ["ML", "MC", "MR"] },
-  { y: PLACEMENT.DM.y, positions: ["DM", "DM", "DM"] },
-  { y: PLACEMENT.DC.y, positions: ["DL", "DC", "DR"] },
-];
+/** The outfield rows, forward first, as the drop zones tile them. */
+const OUTFIELD_ROWS: ReadonlyArray<Exclude<Row, "GK">> = ROWS.filter(
+  (row): row is Exclude<Row, "GK"> => row !== "GK",
+).reverse();
+
+/** A cell's spot: its row's line and its column's place, so slot order never moves a marker. */
+export const spotOf = (cell: Slot): { readonly x: number; readonly y: number } => ({
+  x: COLUMN_X[cell.column],
+  y: ROW_Y[cell.row],
+});
+
+/** Every slot on its own cell's spot. Cells are distinct in a valid Tactic, so no two markers overlap. */
+export const pitchLayout = (cells: ReadonlyArray<Slot>): ReadonlyArray<PitchSpot> =>
+  cells.map((cell, slotIndex) => ({ slotIndex, ...spotOf(cell) }));
 
 /** Past this depth is the keeper's end, which no outfield slot may move into. */
-const KEEPER_END = (PLACEMENT.DC.y + PLACEMENT.GK.y) / 2;
+const KEEPER_END = (ROW_Y.SW + ROW_Y.GK) / 2;
 
-/** The patch of grass that stands for one outfield Position, in the same percent box as
- *  `PitchSpot`: the band between the midpoints to the neighbouring lines, cut into flank thirds
- *  where the line has flanks. */
+/** The patch of grass that stands for one outfield cell, in the same percent box as `PitchSpot`: the
+ *  band between the midpoints to the neighbouring rows, crossed with the band between the
+ *  midpoints to the neighbouring columns. */
 export interface DropZone {
-  readonly position: Position;
+  readonly cell: Slot;
   readonly left: number;
   readonly right: number;
   readonly top: number;
   readonly bottom: number;
 }
 
-/** The zone a point on the pitch falls in: the nearest line, then the flank third across it.
+const nearest = <T>(items: ReadonlyArray<T>, at: (item: T) => number, target: number): number =>
+  items.reduce((best, item, index) => (Math.abs(at(item) - target) < Math.abs(at(items[best]!) - target) ? index : best), 0);
+
+/** The zone a point on the pitch falls in: the nearest row, then the nearest column across it.
  *  `null` in the keeper's end. */
 export const dropZoneAt = (x: number, y: number): DropZone | null => {
   if (y > KEEPER_END) return null;
-  const index = LINES.reduce(
-    (nearest, each, at) => (Math.abs(each.y - y) < Math.abs(LINES[nearest]!.y - y) ? at : nearest),
-    0,
-  );
-  const line = LINES[index]!;
-  const top = index === 0 ? 0 : (LINES[index - 1]!.y + line.y) / 2;
-  const bottom = index === LINES.length - 1 ? KEEPER_END : (line.y + LINES[index + 1]!.y) / 2;
-  const third = x < 100 / 3 ? 0 : x > 200 / 3 ? 2 : 1;
-  const position = line.positions[third];
-  const flanked = line.positions[0] !== line.positions[1];
+  const rowIndex = nearest(OUTFIELD_ROWS, (row) => ROW_Y[row], y);
+  const row = OUTFIELD_ROWS[rowIndex]!;
+  const columnIndex = nearest(COLUMNS, (column) => COLUMN_X[column], x);
+  const column = COLUMNS[columnIndex]!;
+  const above = OUTFIELD_ROWS[rowIndex - 1];
+  const below = OUTFIELD_ROWS[rowIndex + 1];
+  const before = COLUMNS[columnIndex - 1];
+  const after = COLUMNS[columnIndex + 1];
   return {
-    position,
-    left: flanked ? (third * 100) / 3 : 0,
-    right: flanked ? ((third + 1) * 100) / 3 : 100,
-    top,
-    bottom,
+    cell: { row, column },
+    left: before === undefined ? 0 : (COLUMN_X[before] + COLUMN_X[column]) / 2,
+    right: after === undefined ? 100 : (COLUMN_X[column] + COLUMN_X[after]) / 2,
+    top: above === undefined ? 0 : (ROW_Y[above] + ROW_Y[row]) / 2,
+    bottom: below === undefined ? KEEPER_END : (ROW_Y[row] + ROW_Y[below]) / 2,
   };
 };
 
-/** The outfield Position a point on the pitch stands for, or `null` in the keeper's end. */
-export const positionAt = (x: number, y: number): Position | null => dropZoneAt(x, y)?.position ?? null;
+/** The outfield cell a point on the pitch stands for, or `null` in the keeper's end. */
+export const cellAt = (x: number, y: number): Slot | null => dropZoneAt(x, y)?.cell ?? null;

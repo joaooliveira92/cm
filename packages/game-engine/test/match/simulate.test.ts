@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
+import { builtInTemplate, DEFAULT_TEAM_INSTRUCTIONS, DEFAULT_PLAYER_INSTRUCTIONS, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, type PlayerAttributes } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
 import type { InjuryEvent } from "../../src/match/events.js";
 import {
@@ -32,22 +32,27 @@ const craftAttributes = (overrides: Partial<Record<keyof PlayerAttributes, numbe
   return { ...(base as PlayerAttributes), ...overrides };
 };
 
-const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): MatchTeamSetup => {
-  const squad: Array<MatchPlayerInput> = FORMATION_SLOTS[formation].map((position, index) => ({
+const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, template = "4-4-2"): MatchTeamSetup => {
+  const cells = builtInTemplate(template)!.slots.map((slot) => slot.cell);
+  const squad: Array<MatchPlayerInput> = cells.map((_, index) => ({
     id: makePlayerId(`${clubId}-${index}`),
     attributes: { ...attributes },
+    positionalRatings: {
+      lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 },
+      sides: { R: 10, L: 10, C: 10 },
+      freeRole: 10,
+    },
   }));
   const tactic = {
-    formation,
-    slots: FORMATION_SLOTS[formation].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: makePlayerId(`${clubId}-${index}`),
-    })),
+    slots: cells.map((cell, index) => ({ cell, playerId: makePlayerId(`${clubId}-${index}`), run: null })),
     bench: [null, null, null, null, null, null, null],
-    mentality: "balanced" as const,
-    tempo: "normal" as const,
-    pressing: "high" as const,
+    team: { ...DEFAULT_TEAM_INSTRUCTIONS },
+    slotInstructions: cells.map((cell) => ({
+      cell,
+      instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
+    })),
+    teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+    takers: EMPTY_TAKERS,
   };
   return { clubId, squad, tactic };
 };
@@ -102,9 +107,17 @@ describe("simulateMatch", () => {
       "Goal",
       "ShotOnTarget",
       "ShotMissed",
-      "BigChance",
       "HalfTimeReached",
       "FullTimeWhistle",
+      "ThroughBall",
+      "Cross",
+      "LongShot",
+      "RunWithBall",
+      "HoldUpLayOff",
+      "Counter",
+      "Foul",
+      "Offside",
+      "KeyPass",
     ]) {
       expect(seenTags.has(tag)).toBe(true);
     }
@@ -137,7 +150,7 @@ describe("simulateMatch", () => {
       }
       // Fatigue happened on the pitch: at least one on-pitch player finished below full Condition.
       const onPitch = input.home.tactic.slots.map((slot) => slot.playerId);
-expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
+      expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       // Deterministic from the seed.
     });
 
@@ -200,7 +213,7 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       const home = buildTeam(makeClubId("home-club"), 20);
       const away = buildTeam(makeClubId("away-club"), 21);
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [50, [{ _tag: "ChangeTactics", clubId: makeClubId("home-club"), tactic: { ...home.setup.tactic, mentality: "attacking" } }]],
+        [50, [{ _tag: "ChangeTactics", clubId: makeClubId("home-club"), tactic: { ...home.setup.tactic, team: { ...home.setup.tactic.team, mentality: "attacking" } } }]],
       ]);
       const events = simulateMatch({ seed: 20, home: home.setup, away: away.setup, commandsByMinute });
       expect(events.some((e) => e._tag === "FullTimeWhistle")).toBe(true);
@@ -344,7 +357,12 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
         const orange = events.find(
           (e): e is InjuryEvent => e._tag === "Injury" && e.tier === "orange" && e.teamClubId === "home" && e.minute < 89,
         );
-        if (orange) {
+        // The knock must be the first thing to change the home count: an earlier red card or
+        // forced-off would already have the side at 10 when the knock lands.
+        const homeCountAtKnock = orange
+          ? simulateMatchWithCounts({ seed: s, home, away }).counts.find((c) => c.minute >= orange.minute)?.homeCount
+          : undefined;
+        if (orange && homeCountAtKnock === 11) {
           seed = s;
           orangeMinute = orange.minute;
           orangePlayerId = orange.playerId;

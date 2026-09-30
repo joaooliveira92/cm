@@ -45,7 +45,7 @@ export const ManagerPillarsPane = ({
         pillars={pillars}
         onPillarsChange={onPillarsChange}
       >
-        <div className="overflow-hidden rounded-panel border border-panel-border bg-panel-bg shadow-panel">
+        <div className="overflow-hidden rounded-panel border border-panel-border bg-panel shadow-panel">
           <div className="flex flex-col gap-4 border-b border-panel-border p-5 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h3 className="text-text-primary text-heading">
@@ -59,7 +59,7 @@ export const ManagerPillarsPane = ({
             <PillarDistribution.Summary />
           </div>
 
-          <div className="grid gap-px bg-panel-border md:grid-cols-2">
+          <div className="grid gap-px bg-panel md:grid-cols-2">
             {MANAGER_PILLARS.map((pillar) => (
               <PillarDistribution.Slider key={pillar} pillar={pillar} />
             ))}

@@ -16,9 +16,8 @@ import {
   type MatchPitchView,
   type SquadPlayerView,
   type SubstitutionStatusView,
-  type TacticSlot,
+  type Mentality,
 } from "@cm-clone/contracts";
-import type { Mentality, Pressing, Tempo } from "@cm-clone/shared";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
 import { clearScopeState, getScopeState, setScopeState } from "../actions/scopeState.js";
 import { useSeamHotkeys } from "../hotkeys.js";
@@ -190,9 +189,7 @@ export const useMatchControl = ({
     const swap = (from: Tactic): Tactic =>
       new Tactic({
         ...from,
-        slots: from.slots.map((slot: TacticSlot) =>
-          slot.playerId === outPlayerId ? { ...slot, playerId: inPlayerId } : slot,
-        ),
+        assignments: from.assignments.map((playerId) => (playerId === outPlayerId ? inPlayerId : playerId)),
       });
     setTactic((current) => (current === null ? current : swap(current)));
     recordApplied(swap(appliedTacticRef.current ?? tactic));
@@ -224,15 +221,7 @@ export const useMatchControl = ({
       }),
       registerActionHandler("set-live-mentality", (params) => {
         if (!tactic) return;
-        setTactic(new Tactic({ ...tactic, mentality: (params as { value: Mentality }).value }));
-      }),
-      registerActionHandler("set-live-tempo", (params) => {
-        if (!tactic) return;
-        setTactic(new Tactic({ ...tactic, tempo: (params as { value: Tempo }).value }));
-      }),
-      registerActionHandler("set-live-pressing", (params) => {
-        if (!tactic) return;
-        setTactic(new Tactic({ ...tactic, pressing: (params as { value: Pressing }).value }));
+        setTactic(new Tactic({ ...tactic, team: { ...tactic.team, mentality: (params as { value: Mentality }).value } }));
       }),
       registerActionHandler("set-live-substitute-off", (params) =>
         setOutPlayerId((params as { playerId: PlayerId }).playerId),

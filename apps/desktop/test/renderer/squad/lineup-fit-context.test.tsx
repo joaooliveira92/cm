@@ -11,11 +11,10 @@ import { cleanup, fireEvent, screen, waitFor, within } from "@testing-library/re
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
+  BUILT_IN_TEMPLATES,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
   type FamiliarityTier,
 } from "@cm-clone/shared";
@@ -94,19 +93,40 @@ const BY_NAME: ReadonlyMap<string, string> = new Map([
   ["Foxtrot", "p6"],
 ]);
 
+const fourFourTwoTemplate = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!;
+
 /** Nobody is on the lineup, so every starter slot — the two DCs included — is empty and
  *  selectable. The bar says the lineup is not saved yet, which is true and irrelevant here. */
 const EMPTY_TACTIC = {
-  formation: "4-4-2" as const,
-  slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
-    position,
-    role: POSITION_ROLES[position],
-    playerId: "",
+  sourceTemplate: "4-4-2",
+  slots: fourFourTwoTemplate.slots.map((slot) => ({
+    cell: slot.cell,
+    run: null,
+    instructions: {
+      passing: "team", closingDown: "team", tackling: "team", marking: "team", mentality: "team",
+      distribution: "default", crossFrom: "default", crossAim: "default",
+      crossBall: "normal", longShots: "normal", forwardRuns: "normal", runWithBall: "normal",
+      tryThroughBalls: "normal", freeRole: "normal", holdUpBall: "normal",
+    },
+    setPieceRoles: {
+      defendFreeKick: "default", attackFreeKick: "default", defendCorner: "default",
+      attackCorner: "default", attackingThrowInLeft: "default", attackingThrowInRight: "default",
+    },
   })),
-  bench: [null, null, null, null, null, null, null],
-  mentality: "balanced" as const,
-  tempo: "normal" as const,
-  pressing: "medium" as const,
+  team: {
+    passing: "mixed", focusPassing: "mixed", tackling: "normal", closingDown: "default",
+    mentality: "normal", offsideTrap: false, zonalMarking: true, counterAttack: false, menBehindTheBall: false,
+  },
+  teamSetPieces: {
+    cornersLeft: "default", cornersRight: "default", freeKicksLeft: "default", freeKicksRight: "default",
+    throwInsLeft: "default", throwInsRight: "default",
+  },
+  assignments: Array.from({ length: 11 }, () => ""),
+  bench: Array.from({ length: 7 }, () => null),
+  takers: {
+    captain: [], penalties: [], freeKicksLeft: [], freeKicksRight: [],
+    cornersLeft: [], cornersRight: [], throwInsLeft: [], throwInsRight: [],
+  },
 };
 
 const mountSquadScreen = async (): Promise<void> => {
@@ -158,8 +178,9 @@ const UNSORTED = ["Alpha", "Bravo", "Charlie", "Delta", "Echo", "Foxtrot"];
  *  order they already had. */
 const FITTING_FIRST = ["Alpha", "Echo", "Bravo", "Charlie", "Delta", "Foxtrot"];
 
-/** 4-4-2 names DC twice, so the slot under test is found by position, not by index. */
-const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "DC slot" })[0]!;
+/** The 4-4-2 template slots in order: slot 3 is D RC, slot 4 is D LC — the two centre-back
+ *  cells. Use the first one for testing. */
+const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "D C slot" })[0]!;
 
 /** The mark's accessible text for a player, or null when that player is not marked. Scoped to the
  *  mark itself: the leading match-day indicator in the same row is also an `.sr-only` span, and
@@ -219,8 +240,8 @@ describe("selecting an empty starter slot", () => {
     await mountSquadScreen();
     selectDc();
 
-    expect(markFor("Alpha")).toBe("Fits DC, Natural");
-    expect(markFor("Echo")).toBe("Fits DC, Competent");
+    expect(markFor("Alpha")).toBe("Fits D C, Natural");
+    expect(markFor("Echo")).toBe("Fits D C, Competent");
     expect(markFor("Charlie")).toBeNull();
     expect(markFor("Bravo")).toBeNull();
     expect(markFor("Foxtrot")).toBeNull();
@@ -232,7 +253,7 @@ describe("selecting an empty starter slot", () => {
 
     selectDc();
 
-    expect(contextLine().textContent).toContain("Showing players for DC");
+    expect(contextLine().textContent).toContain("Showing players for D C");
     expect(within(contextLine()).getByRole("button", { name: "Clear" })).toBeTruthy();
   });
 
@@ -304,12 +325,12 @@ describe("clearing the context", () => {
   eachLayout("moves the selection to another slot rather than refusing to change", async () => {
     await mountSquadScreen();
     selectDc();
-    expect(contextLine().textContent).toContain("Showing players for DC");
+    expect(contextLine().textContent).toContain("Showing players for D C");
 
     // 4-4-2 names ST twice, like DC.
-    fireEvent.click(screen.getAllByRole("button", { name: "ST slot" })[0]!);
+    fireEvent.click(screen.getAllByRole("button", { name: "F C slot" })[0]!);
 
-    expect(contextLine().textContent).toContain("Showing players for ST");
+    expect(contextLine().textContent).toContain("Showing players for F C");
   });
 
   it("does not come back after the screen unmounts — it is session state, not a preference", async () => {
@@ -375,8 +396,8 @@ describe("the fit mark", () => {
     const marks = screen.getAllByTestId("squad-fit-mark");
     expect(marks).toHaveLength(2);
     expect(marks.map((mark) => mark.querySelector(".sr-only")!.textContent)).toEqual([
-      "Fits DC, Natural",
-      "Fits DC, Competent",
+      "Fits D C, Natural",
+      "Fits D C, Competent",
     ]);
     // The star itself is decoration: announcing "black star" would be the wrong answer.
     expect(marks[0]!.querySelector("[aria-hidden]")!.textContent).toBe("★");

@@ -1,5 +1,4 @@
 import { POSITION_WEIGHTS, type Attribute, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
-import { ROLE_WEIGHTS, type Role } from "./tactics.js";
 
 /** Weighted average of Attributes against a weights table, scaled from the 1-20 attribute range to 1-100. */
 export const weightedRating = (
@@ -20,14 +19,6 @@ export const weightedRating = (
 /** Weighted average of Attributes against a Position's weights, scaled from the 1-20 attribute range to 1-100. */
 export const positionRating = (attributes: PlayerAttributes, position: Position): number =>
   weightedRating(attributes, POSITION_WEIGHTS[position]);
-
-/**
- * Weighted average of Attributes against a Role's weights (ADR-0003) — a player's fit for a Role
- * assigned in a Tactic. Computed for display/tactic-resolution only, never substitutes for
- * `positionRating` in Phase Strength.
- */
-export const roleRating = (attributes: PlayerAttributes, role: Role): number =>
-  weightedRating(attributes, ROLE_WEIGHTS[role]);
 
 export interface PlayerPosition {
   readonly position: Position;

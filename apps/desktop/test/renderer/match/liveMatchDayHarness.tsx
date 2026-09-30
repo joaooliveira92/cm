@@ -11,13 +11,13 @@ import {
 } from "@tanstack/react-router";
 import { SaveId, type SubstitutionStatusView } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
-  FORMATIONS,
+  BUILT_IN_TEMPLATES,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
+  slotLabel,
+  tacticFromTemplate,
 } from "@cm-clone/shared";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
 import { KeyboardSpine } from "../../../src/renderer/keyboard/KeyboardSpine.js";
@@ -44,21 +44,15 @@ export const noSubs = (overrides: Partial<SubstitutionStatusView> = {}): Substit
   ...overrides,
 });
 
-/** A full valid tactic so the live panel has on-pitch players to edit. */
+/** A full valid tactic so the live panel has on-pitch players to edit. Uses the first built-in
+ *  template (4-4-2) and fills its slots with on-pitch IDs, the bench with subs. */
 export const fullTactic = () => {
-  const formation = FORMATIONS[0]; // 4-4-2
-  return {
-    formation,
-    slots: (FORMATION_SLOTS[formation] ?? []).map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: rid(`on-${index}`),
-    })),
-    bench: [rid("bench-1"), rid("bench-2")],
-    mentality: "balanced" as const,
-    tempo: "normal" as const,
-    pressing: "medium" as const,
-  };
+  const template = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!;
+  return tacticFromTemplate(
+    template,
+    Array.from({ length: template.slots.length }, (_, i) => rid(`on-${i}`)),
+    [rid("bench-1"), rid("bench-2")],
+  );
 };
 
 export const tacticView = (tactic = fullTactic()) => {
@@ -93,8 +87,8 @@ export const tacticView = (tactic = fullTactic()) => {
     contractExpiryDate: "2028-06-30",
     transferValue: 1200000,
   });
-  const onPitch = (tactic.slots ?? []).map((slot: { playerId: string }, index: number) =>
-    player(String(slot.playerId), `On${index}`),
+  const onPitch = (tactic.assignments ?? []).map((id: string, index: number) =>
+    player(String(id), `On${index}`),
   );
   const bench = [
     player(String(rid("bench-1")), "Bench1"),
@@ -119,12 +113,18 @@ export const orangeInjury = () => ({
   replaced: false,
 });
 
-/** A club's pitch as the match reports it: the kickoff XI of `fullTactic`, with `swaps` applied slot
- *  for slot, and the squad players who have not played. */
-export const pitchView = (swaps: Record<string, string> = {}, substitutes: ReadonlyArray<string> = ["bench-1", "bench-2"]) => ({
-  onPitch: fullTactic().slots.map((slot) => ({ playerId: swaps[slot.playerId] ?? slot.playerId, position: slot.position })),
-  substitutes,
-});
+/** A club's pitch as the match reports it: the kickoff XI of `fullTactic`, with `swaps` applied
+ *  assignment by assignment, and the bench. */
+export const pitchView = (swaps: Record<string, string> = {}, substitutes: ReadonlyArray<string> = ["bench-1", "bench-2"]) => {
+  const tactic = fullTactic();
+  return {
+    onPitch: tactic.assignments.map((playerId, index) => ({
+      playerId: swaps[String(playerId)] ?? playerId,
+      position: slotLabel(tactic.slots[index]!.cell),
+    })),
+    substitutes,
+  };
+};
 
 export const resumeView = (overrides: Record<string, unknown> = {}) => ({
   matchId: rid("m1"),

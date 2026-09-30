@@ -3,13 +3,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
-  FORMATION_SLOTS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   POSITIONS,
   STATURE_TIERS,
+  BUILT_IN_TEMPLATES,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../../src/renderer/rpc.js";
@@ -102,16 +101,44 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
             club: { id: relaxedSaveId("s1"), name: "Test FC", statureTier: STATURE_TIERS[0] },
             squad: squadView("s1", "Test FC").players,
             tactic: {
-              formation: "4-4-2",
-              slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
-                position,
-                role: POSITION_ROLES[position],
-                playerId: "",
+              sourceTemplate: "4-4-2",
+              slots: BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => ({
+                cell: slot.cell,
+                run: null,
+                instructions: slot.instructions,
+                setPieceRoles: slot.setPieceRoles,
               })),
+              team: {
+                passing: "mixed",
+                focusPassing: "mixed",
+                tackling: "normal",
+                closingDown: "default",
+                mentality: "normal",
+                offsideTrap: false,
+                zonalMarking: true,
+                counterAttack: false,
+                menBehindTheBall: false,
+              },
+              teamSetPieces: {
+                cornersLeft: "default",
+                cornersRight: "default",
+                freeKicksLeft: "default",
+                freeKicksRight: "default",
+                throwInsLeft: "default",
+                throwInsRight: "default",
+              },
+              assignments: Array.from({ length: 11 }, () => ""),
               bench: [null, null, null, null, null, null, null],
-              mentality: "balanced",
-              tempo: "normal",
-              pressing: "medium",
+              takers: {
+                captain: [],
+                penalties: [],
+                freeKicksLeft: [],
+                freeKicksRight: [],
+                cornersLeft: [],
+                cornersRight: [],
+                throwInsLeft: [],
+                throwInsRight: [],
+              },
             },
             revision: 0,
           },

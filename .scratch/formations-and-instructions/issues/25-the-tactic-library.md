@@ -17,10 +17,10 @@ built-in template targeted by a write, a stale revision, an unknown template.
 
 **Blocked by:** 21
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Every operation round-trips and a replayed Request Id is a no-op.
-- [ ] A duplicate name (case-insensitive), a write to a built-in, and a stale revision are refused with typed errors.
-- [ ] Quick loading onto a full Tactic keeps every player's slot number and the bench.
-- [ ] The library survives save and load and follows the manager to a new club.
-- [ ] Main, contracts and renderer tests pass.
+- [x] Every operation round-trips and a replayed Request Id is a no-op.
+- [x] A duplicate name (case-insensitive), a write to a built-in, and a stale revision are refused with typed errors.
+- [x] Quick loading onto a full Tactic keeps every player's slot number and the bench.
+- [x] The library survives save and load and follows the manager to a new club.
+- [x] Main, contracts and renderer tests pass.

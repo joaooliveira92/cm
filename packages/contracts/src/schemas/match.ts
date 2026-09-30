@@ -178,8 +178,8 @@ export class TeamSheetPlayerView extends Schema.Class<TeamSheetPlayerView>("Team
   playerId: PlayerId,
   firstName: Schema.String,
   lastName: Schema.String,
+  /** The slot's cell, as the grid labels it (`D RC`, `GK`). */
   position: Schema.String,
-  role: Schema.String,
 }) {}
 
 export class TeamSheetClubView extends Schema.Class<TeamSheetClubView>("TeamSheetClubView")({
@@ -243,6 +243,8 @@ export const MatchStatisticKey = Schema.Literals([
   "shotsOnTarget",
   "shotsOffTarget",
   "bigChances",
+  "fouls",
+  "offsides",
   "yellowCards",
   "redCards",
   "injuries",
@@ -252,7 +254,7 @@ export type MatchStatisticKey = Schema.Schema.Type<typeof MatchStatisticKey>;
 
 /** Statistics a football reader expects that the match model does not simulate. Listed so the
  *  screen says they are unavailable rather than showing a zero (Screen 95 §17). */
-export const UnavailableMatchStatistic = Schema.Literals(["possession", "corners", "fouls", "offsides"]);
+export const UnavailableMatchStatistic = Schema.Literals(["possession", "corners"]);
 export type UnavailableMatchStatistic = Schema.Schema.Type<typeof UnavailableMatchStatistic>;
 
 export class MatchStatisticRow extends Schema.Class<MatchStatisticRow>("MatchStatisticRow")({
@@ -270,6 +272,20 @@ export class MatchStatisticsView extends Schema.Class<MatchStatisticsView>("Matc
   throughMinute: Schema.NullOr(Schema.Finite),
   rows: Schema.Array(MatchStatisticRow),
   unavailable: Schema.Array(UnavailableMatchStatistic),
+  /** Possession percentage for each team (0-100), null when unavailable. */
+  homePossession: Schema.NullOr(Schema.Finite),
+  awayPossession: Schema.NullOr(Schema.Finite),
+  /** Shots broken down by chance type (throughBall, cross, longShot, runWithBall, holdUpLayOff, counter). */
+  chancesByType: Schema.NullOr(
+    Schema.Struct({
+      throughBall: Schema.Struct({ home: Schema.Finite, away: Schema.Finite }),
+      cross: Schema.Struct({ home: Schema.Finite, away: Schema.Finite }),
+      longShot: Schema.Struct({ home: Schema.Finite, away: Schema.Finite }),
+      runWithBall: Schema.Struct({ home: Schema.Finite, away: Schema.Finite }),
+      holdUpLayOff: Schema.Struct({ home: Schema.Finite, away: Schema.Finite }),
+      counter: Schema.Struct({ home: Schema.Finite, away: Schema.Finite }),
+    }),
+  ),
 }) {}
 
 // ---------------------------------------------------------------------------

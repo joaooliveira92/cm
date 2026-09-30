@@ -4,6 +4,7 @@
  * revealed Match Events leaves every one of those events exactly as it was.
  */
 import { describe, expect, it } from "vitest";
+import { DEFAULT_TEAM_INSTRUCTIONS } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
 import { nextCommandMinute } from "../../src/match/commandTiming.js";
 import type { MatchEvent } from "../../src/match/events.js";
@@ -16,7 +17,7 @@ const AWAY = makeClubId("away");
 const home = buildTeam(HOME, 11).setup;
 const away = buildTeam(AWAY, 12).setup;
 const SEED = 424242;
-const attacking: MatchTactic = { ...home.tactic, mentality: "attacking", tempo: "fast", pressing: "high" };
+const attacking: MatchTactic = { ...home.tactic, team: { ...home.tactic.team, mentality: "attacking" } };
 
 const played = simulateMatch({ seed: SEED, home, away });
 

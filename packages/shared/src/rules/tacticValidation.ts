@@ -1,4 +1,5 @@
 import { SLOTS, slotLabel, type Slot } from "./slots.js";
+import { BENCH_SIZE } from "./tactics.js";
 import {
   PLAYER_OVERRIDE_VALUES,
   PLAYER_STANDALONE_VALUES,
@@ -28,8 +29,12 @@ export type TacticProblem =
   | { readonly _tag: "RunToGoalkeeper"; readonly slot: number }
   | { readonly _tag: "DistributionOffGoalkeeper"; readonly slot: number }
   | { readonly _tag: "InvalidValue"; readonly where: string; readonly field: string; readonly value: unknown }
+  | { readonly _tag: "BlankTemplateName" }
   | { readonly _tag: "WrongAssignmentCount"; readonly count: number }
+  | { readonly _tag: "WrongBenchSize"; readonly count: number }
   | { readonly _tag: "PlayerTwice"; readonly playerId: string }
+  | { readonly _tag: "PlayerNotInSquad"; readonly playerId: string }
+  | { readonly _tag: "DuplicateTaker"; readonly list: string; readonly playerId: string }
   | { readonly _tag: "UnknownTakerList"; readonly list: string };
 
 export const STARTERS = 11;
@@ -99,22 +104,77 @@ export const validateTemplate = (template: Pick<TacticTemplate, "slots" | "team"
 };
 
 /**
- * Every problem with a live Tactic: its template's, plus one player per slot with no player twice
- * among the starters and the bench, and only known taker lists. Whether a player belongs to the club
- * and whether takers are in the eleven are the caller's checks; CM only warned about takers outside
- * the eleven.
+ * Every problem with a live Tactic: its template's, plus a source template name, one player per slot
+ * with no player twice among the starters and the bench, a bench of exactly `BENCH_SIZE` places, and
+ * only known taker lists with no player twice in one. When `squad` is given, every named player (starter,
+ * bench and taker) must be in it. Whether takers are in the eleven is not checked: CM only warned.
  */
-export const validateTactic = <Id extends string>(tactic: Tactic<Id>): ReadonlyArray<TacticProblem> => {
+export const validateTactic = <Id extends string>(
+  tactic: Tactic<Id>,
+  squad?: ReadonlySet<string>,
+): ReadonlyArray<TacticProblem> => {
   const problems: Array<TacticProblem> = [...validateTemplate(tactic)];
+  if (tactic.sourceTemplate.trim() === "") problems.push({ _tag: "BlankTemplateName" });
   if (tactic.assignments.length !== STARTERS) problems.push({ _tag: "WrongAssignmentCount", count: tactic.assignments.length });
+  if (tactic.bench.length !== BENCH_SIZE) problems.push({ _tag: "WrongBenchSize", count: tactic.bench.length });
   const named = [...tactic.assignments, ...tactic.bench.filter((id): id is Id => id !== null)];
   const seen = new Set<string>();
   for (const playerId of named) {
     if (seen.has(playerId)) problems.push({ _tag: "PlayerTwice", playerId });
     seen.add(playerId);
   }
-  for (const list of Object.keys(tactic.takers)) {
-    if (!(TAKER_LISTS as ReadonlyArray<string>).includes(list)) problems.push({ _tag: "UnknownTakerList", list });
+  for (const [list, ids] of Object.entries(tactic.takers)) {
+    if (!(TAKER_LISTS as ReadonlyArray<string>).includes(list)) {
+      problems.push({ _tag: "UnknownTakerList", list });
+      continue;
+    }
+    const inList = new Set<string>();
+    for (const playerId of ids) {
+      if (inList.has(playerId)) problems.push({ _tag: "DuplicateTaker", list, playerId });
+      inList.add(playerId);
+    }
+  }
+  if (squad !== undefined) {
+    const everyone = new Set<string>([...named, ...Object.values(tactic.takers).flat()]);
+    for (const playerId of everyone) {
+      if (!squad.has(playerId)) problems.push({ _tag: "PlayerNotInSquad", playerId });
+    }
   }
   return problems;
+};
+
+/** One line naming a problem, for a refusal a person reads. */
+export const describeTacticProblem = (problem: TacticProblem): string => {
+  switch (problem._tag) {
+    case "WrongSlotCount":
+      return `a Tactic needs ${STARTERS} slots, got ${problem.count}`;
+    case "GoalkeeperNotFirst":
+      return "slot 0 must be the goalkeeper cell";
+    case "GoalkeeperOutsideSlotZero":
+      return `slot ${problem.slot} is the goalkeeper cell, which only slot 0 may hold`;
+    case "UnknownCell":
+      return `slot ${problem.slot} names a cell that is not on the grid`;
+    case "DuplicateCell":
+      return `slot ${problem.slot} repeats cell ${problem.cell}`;
+    case "RunToGoalkeeper":
+      return `slot ${problem.slot} runs to the goalkeeper cell`;
+    case "DistributionOffGoalkeeper":
+      return `slot ${problem.slot} sets Distribution, which only the goalkeeper slot may`;
+    case "InvalidValue":
+      return `${problem.where}: ${JSON.stringify(problem.value)} is not a value of ${problem.field}`;
+    case "BlankTemplateName":
+      return "the Tactic names no source template";
+    case "WrongAssignmentCount":
+      return `a Tactic needs ${STARTERS} players, got ${problem.count}`;
+    case "WrongBenchSize":
+      return `a Tactic needs a ${BENCH_SIZE}-place bench, got ${problem.count}`;
+    case "PlayerTwice":
+      return `player ${problem.playerId} is named more than once`;
+    case "PlayerNotInSquad":
+      return `player ${problem.playerId} is not in the squad`;
+    case "DuplicateTaker":
+      return `player ${problem.playerId} is on the ${problem.list} list twice`;
+    case "UnknownTakerList":
+      return `${problem.list} is not a taker list`;
+  }
 };

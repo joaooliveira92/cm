@@ -1,4 +1,5 @@
 import { pickRandom, type RandomSource } from "@cm-clone/shared";
+import type { PlayerInstructions, TeamInstructions, TeamSetPieces, TakerList } from "@cm-clone/shared";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM, type MatchCommand } from "../commands.js";
 import { START_CONDITION, conditionDecayPerMinute, newConditionLedger } from "../condition.js";
 import type { MatchEvent, MatchHalf } from "../events.js";
@@ -6,7 +7,8 @@ import { fatigueMultiplier } from "../fatigue.js";
 import { PENALTY_SLASH_FACTOR } from "../injury.js";
 import {
   aggregatePhaseSlots,
-  applyRoleBumps,
+  computePhaseStrengths,
+  modifiersOf,
   resolveTeamInstructions,
   resolveTeamTactics,
   type ResolvedTeamTactics,
@@ -15,18 +17,22 @@ import {
 import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "../types.js";
 import { HOME_ADVANTAGE_MULTIPLIER, clamp } from "./constants.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
+import { resolveTeamModifiers } from "../resolveBehaviourVectors.js";
+import type { TeamBehaviourModifiers } from "../resolveBehaviourVectors.js";
 
 /**
  * Engine-owned per-team runtime state. Tactic-blind (ADR-0002/0003): the Tactic is resolved once at
- * the boundary into `resolved` (phase-slots + flat instruction multipliers), which is all the engine
- * touches — slot membership in `resolved.slots` is on-pitch (subs swap, red cards/forced-off injuries
- * remove), mirrors the old `tactic` + `onPitchPlayerIds` pair without naming a formation, position,
- * or role beyond the `isGoalkeeper` flag the GK fallback needs.
+ * the boundary into `resolved` (phase-slots + flat instruction multipliers + behaviour vectors),
+ * which is all the engine touches — slot membership in `resolved.slots` is on-pitch (subs swap,
+ * red cards/forced-off injuries remove), mirrors the old `tactic` + `onPitchPlayerIds` pair without
+ * naming a formation, cell, or instruction beyond the `isGoalkeeper` flag the GK fallback needs.
  */
 export interface TeamRuntimeState {
   readonly clubId: ClubId;
   readonly playersById: Map<PlayerId, MatchPlayerInput>;
   resolved: ResolvedTeamTactics;
+  /** The raw team instructions for re-resolution on live tactic changes. */
+  teamInstructions: TeamInstructions;
   substitutionsUsed: number;
   windowsUsed: number;
   /** Where the last substitution window opened. Keyed by half as well as minute: first-half stoppage
@@ -43,10 +49,20 @@ export interface TeamRuntimeState {
    *  and a forced one alike (decision request 04). Fixed at kickoff: a live `ChangeTactics` carries
    *  Team Instructions (decision request 01) and never changes who may come on. */
   readonly bench: ReadonlyArray<PlayerId | null>;
+  /** Team set-piece instructions per side — live (may change with a live ChangeTactics). */
+  teamSetPieces: TeamSetPieces;
+  /** Ordered taker lists for each set-piece type — from the kickoff Tactic, unchanged by ChangeTactics. */
+  readonly takers: { readonly [K in TakerList]: ReadonlyArray<PlayerId> };
   /** Everyone who has been on the pitch this match: the starters, anyone a substitution puts in a
    *  slot, and goalkeeper stand-ins. No substitution, forced or the manager's,
    *  brings one of them back on (group-g-match-day tickets 26 and 35). */
   readonly beenOn: Set<PlayerId>;
+  /**
+   * Match-time specific marking (ticket 28): maps a marker on THIS team (playerId) to a marked
+   * opponent (playerId). The marked opponent has reduced finishing/composure share when picked
+   * as finisher. Set via a live ChangeTactics command, dropped at full time.
+   */
+  activeSpecificMarkings: Map<PlayerId, PlayerId>;
 }
 
 /** The point a substitution window opens at: a half and a minute within it. */
@@ -58,7 +74,10 @@ export interface SubstitutionWindowKey {
 export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   clubId: setup.clubId,
   playersById: new Map(setup.squad.map((player) => [player.id, player])),
-  resolved: resolveTeamTactics(setup.tactic),
+  resolved: resolveTeamTactics(setup.tactic, new Map(setup.squad.map((player) => [player.id, player]))),
+  teamInstructions: setup.tactic.team,
+  teamSetPieces: setup.tactic.teamSetPieces,
+  takers: setup.tactic.takers,
   substitutionsUsed: 0,
   windowsUsed: 0,
   lastWindow: null,
@@ -67,16 +86,17 @@ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   gkStandIns: new Set(),
   bench: setup.tactic.bench,
   beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
+  activeSpecificMarkings: new Map(setup.tactic.specificMarkings ?? []),
 });
 
 /** Applies one `MatchCommand` to team state. A `ChangeTactics` is always live (the kickoff Tactic
- *  comes from `MatchTeamSetup.tactic`), so it changes only the three Team Instructions: no slot,
- *  formation, role or bench. Who is on the pitch is owned by substitutions, red cards, injuries and
- *  bring-offs (decision request 01). A `MakeSubstitution` is rejected (no-op on runtime state) on
- *  roster/cap/window violations. A substitute must be in the match squad, named on the kickoff bench (`bench`, which no
- *  `ChangeTactics` changes), and never yet on the pitch (`beenOn`): no re-entry after a
- *  substitution, a red card or an injury (decision request 04, ticket 35). Every refusal returns
- *  before a window or a substitution is spent. */
+ *  comes from `MatchTeamSetup.tactic`), so it changes only the team instructions and re-resolves
+ *  the tactic: no slot, cell or bench changes. Who is on the pitch is owned by substitutions, red
+ *  cards, injuries and bring-offs (decision request 01). A `MakeSubstitution` is rejected (no-op on
+ *  runtime state) on roster/cap/window violations. A substitute must be in the match squad, named
+ *  on the kickoff bench (`bench`, which no `ChangeTactics` changes), and never yet on the pitch
+ *  (`beenOn`): no re-entry after a substitution, a red card or an injury (decision request 04,
+ *  ticket 35). Every refusal returns before a window or a substitution is spent. */
 export const applyCommand = (
   team: TeamRuntimeState,
   command: Extract<MatchCommand, { readonly _tag: "ChangeTactics" | "MakeSubstitution" }>,
@@ -85,7 +105,56 @@ export const applyCommand = (
   isHalftime: boolean,
 ): { readonly accepted: boolean; readonly reason?: string } => {
   if (command._tag === "ChangeTactics") {
-    team.resolved = { slots: team.resolved.slots, instructions: resolveTeamInstructions(command.tactic) };
+    // A live ChangeTactics changes only team instructions and team modifiers, never who is on the
+    // pitch (decision request 01). Preserve the current slot array (player IDs, phases, fit closures)
+    // and re-resolve only the behaviour vectors (from the new tactic's slot instructions) and
+    // team-level modifiers (from the new team instructions).
+    const tactic = command.tactic;
+    team.teamInstructions = tactic.team;
+    team.teamSetPieces = tactic.teamSetPieces;
+
+    // Re-resolve the tactic to get fresh team modifiers and behaviour vectors
+    const newResolved = resolveTeamTactics(tactic, team.playersById);
+
+    // Build a map of new behaviour vectors keyed by the slot index in the tactic
+    // (which matches the kickoff slot order). For each currently-on-pitch player, find their
+    // behaviour from the appropriate position in the new tactic's slot instructions.
+    const currentSlots = team.resolved.slots;
+    const currentById = new Map(currentSlots.map((s, i) => [s.playerId, { slot: s, index: i }]));
+
+    // Map each current on-pitch slot to a new behaviour vector.
+    // Use the slot's playerId to find the matching position in the new tactic's slot instructions.
+    // The kickoff tactic's slot order determines which slot instructions apply to which position.
+    // For players who came on as substitutes, we look up by their original kickoff position.
+    const newSlots: Array<ResolvedSlot> = [];
+
+    for (const currentSlot of currentSlots) {
+      // Find the player's index in the kickoff slot order (from the tactic's slots array)
+      const tacticSlotIndex = tactic.slots.findIndex((s) => s.playerId === currentSlot.playerId);
+      // If found in the tactic, use the new behaviour vector from that position
+      const newBehaviour = tacticSlotIndex >= 0 && tacticSlotIndex < newResolved.slots.length
+        ? newResolved.slots[tacticSlotIndex]!.behaviour
+        : currentSlot.behaviour;
+
+      newSlots.push({
+        ...currentSlot,
+        behaviour: newBehaviour,
+      });
+    }
+
+    team.resolved = {
+      slots: newSlots,
+      instructions: newResolved.instructions,
+      teamModifiers: newResolved.teamModifiers,
+    };
+
+    // Update specific markings from the tactic (ticket 28)
+    team.activeSpecificMarkings.clear();
+    if (tactic.specificMarkings) {
+      for (const [marker, marked] of tactic.specificMarkings) {
+        team.activeSpecificMarkings.set(marker, marked);
+      }
+    }
     return { accepted: true };
   }
 
@@ -147,11 +216,13 @@ const penalizedPlayer = (team: TeamRuntimeState, player: MatchPlayerInput): Matc
   return next === attributes ? player : { ...player, attributes: next };
 };
 
-export const computeTeamStrengths = (team: TeamRuntimeState): TeamStrengths => {
+export const computeTeamStrengths = (team: TeamRuntimeState, hasPossession?: boolean): TeamStrengths => {
   const effectiveById = new Map<PlayerId, MatchPlayerInput>();
   for (const [id, player] of team.playersById) effectiveById.set(id, penalizedPlayer(team, player));
-  const { base, bumps } = aggregatePhaseSlots(team.resolved.slots, effectiveById);
-  return { base, modifiers: applyRoleBumps(team.resolved.instructions, bumps) };
+  return {
+    base: aggregatePhaseSlots(team.resolved.slots, effectiveById, hasPossession),
+    modifiers: modifiersOf(team.resolved.instructions),
+  };
 };
 
 /** Average on-pitch Condition %, mapped onto the 1-20 Stamina scale the fatigue model reads. */
@@ -163,14 +234,19 @@ export const conditionStaminaEquivalent = (team: TeamRuntimeState): number => {
   return clamp(average / 5, 1, 20);
 };
 
-/** Decays each on-pitch player's Condition for one minute, driven by Stamina and the team's Tempo. */
+/** Condition points lost per minute by a player with a run active. Runners tire slightly faster. */
+const RUNNER_EXTRA_DECAY = 0.06;
+
+/** Decays each on-pitch player's Condition for one minute, driven by Stamina. Runners (slots with a
+ *  run target) tire slightly faster. */
 export const decayConditions = (team: TeamRuntimeState): void => {
-  const tempo = team.resolved.instructions.tempo;
   for (const slot of team.resolved.slots) {
     const player = team.playersById.get(slot.playerId);
     if (!player) continue;
     const current = team.conds.get(slot.playerId) ?? START_CONDITION;
-    const next = current - conditionDecayPerMinute(player.attributes.stamina, tempo);
+    const baseDecay = conditionDecayPerMinute(player.attributes.stamina);
+    const extra = slot.runPhase !== null ? RUNNER_EXTRA_DECAY : 0;
+    const next = current - baseDecay - extra;
     team.conds.set(slot.playerId, clamp(next, 0, START_CONDITION));
   }
 };
@@ -182,7 +258,7 @@ export const effectiveStrengths = (
   isHome: boolean,
 ): PhaseStrengths => {
   const homeMultiplier = isHome ? HOME_ADVANTAGE_MULTIPLIER : 1;
-  const fatigue = fatigueMultiplier(minute, conditionStamina, strengths.modifiers.fatigueDecayMultiplier);
+  const fatigue = fatigueMultiplier(minute, conditionStamina);
   return {
     attack: strengths.base.attack * homeMultiplier * strengths.modifiers.attack,
     midfield: strengths.base.midfield * homeMultiplier * strengths.modifiers.midfield * fatigue,

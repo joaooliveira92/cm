@@ -1,13 +1,5 @@
 import { PlayerId } from "@cm-clone/contracts";
-import {
-  MENTALITY_OPTIONS,
-  PRESSING_OPTIONS,
-  TEMPO_OPTIONS,
-  type Formation,
-  type Mentality,
-  type Pressing,
-  type Tempo,
-} from "@cm-clone/shared";
+import type { Mentality } from "@cm-clone/contracts";
 import { useRef } from "react";
 import { dispatchAction } from "../actions/dispatch.js";
 import { Alert } from "../components/ui/alert.js";
@@ -27,6 +19,10 @@ import { useCommentaryContext } from "./CommentaryProvider.js";
 import { MatchControlContext, useMatchControlContext } from "./matchControlContext.js";
 import { controlledClubId } from "./controlledClub.js";
 import { useMatchControl, type MatchControlInput } from "./useMatchControl.js";
+import { spaced } from "../tactics/overviewFormat.js";
+
+/** The team Mentality's choices, from the most cautious to the most reckless. */
+const MENTALITY_SCALE: ReadonlyArray<Mentality> = ["ultraDefensive", "defensive", "normal", "attacking", "gungHo"];
 
 /* ---------------------------------------------------------------------------
  * The Match day live control panel as a compound (Phase 2): the provider holds
@@ -38,10 +34,9 @@ import { useMatchControl, type MatchControlInput } from "./useMatchControl.js";
  * `matchControlContext.ts`.
  * ------------------------------------------------------------------------- */
 
-/** Live team-instruction slider (AC-33): one roving tab stop per slider, so Tab
- *  cycles between the three controls (Mentality → Tempo → Pressing) and
- *  ArrowLeft/ArrowRight toggle between the three options of the focused one —
- *  native Enter/Space on the active option still set it directly. */
+/** Live team-instruction slider (AC-33): one roving tab stop per slider, so
+ *  ArrowLeft/ArrowRight move between the options of the focused one — native
+ *  Enter/Space on the active option still set it directly. */
 const InstructionSlider = <T extends string>({
   label,
   options,
@@ -85,10 +80,9 @@ const InstructionSlider = <T extends string>({
             data-action-id={actionId}
             tabIndex={option === value ? 0 : -1}
             aria-pressed={option === value}
-            className="capitalize"
             onClick={() => onChange(option)}
           >
-            {option}
+            {spaced(option)}
           </Button>
         ))}
       </div>
@@ -96,7 +90,7 @@ const InstructionSlider = <T extends string>({
   );
 };
 
-/** Compound sub-component (Phase 2): the three live Team Instruction sliders plus the
+/** Compound sub-component (Phase 2): the live team Mentality slider plus the
  *  Apply toggle, reading its tactic from the panel context and driving change through the
  *  registered Actions (ADR-0012). */
 const TeamInstructionSliders = () => {
@@ -109,29 +103,14 @@ const TeamInstructionSliders = () => {
       <div className="flex gap-6">
         <InstructionSlider<Mentality>
           label="Mentality"
-          options={MENTALITY_OPTIONS}
-          value={tactic.mentality}
+          options={MENTALITY_SCALE}
+          value={tactic.team.mentality}
           actionId="set-live-mentality"
           onChange={(mentality) => void dispatchAction("set-live-mentality", { value: mentality })}
         />
-        <InstructionSlider<Tempo>
-          label="Tempo"
-          options={TEMPO_OPTIONS}
-          value={tactic.tempo}
-          actionId="set-live-tempo"
-          onChange={(tempo) => void dispatchAction("set-live-tempo", { value: tempo })}
-        />
-        <InstructionSlider<Pressing>
-          label="Pressing"
-          options={PRESSING_OPTIONS}
-          value={tactic.pressing}
-          actionId="set-live-pressing"
-          onChange={(pressing) => void dispatchAction("set-live-pressing", { value: pressing })}
-        />
       </div>
       <p className="mt-1 text-data text-text-muted">
-        Formation stays {tactic.formation as Formation} while the match is live; only Mentality,
-        Tempo and Pressing change.
+        The shape stays {tactic.sourceTemplate} while the match is live; only Mentality changes.
       </p>
       <Button
         type="button"

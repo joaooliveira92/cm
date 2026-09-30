@@ -1,6 +1,6 @@
 import type { SaveId, TacticsOverviewView } from "@cm-clone/contracts";
 import type { ReactNode } from "react";
-import { MENTALITY_OPTIONS, PRESSING_OPTIONS, TEMPO_OPTIONS, isCustomShape } from "@cm-clone/shared";
+import { TEAM_SWITCHES, slotLabel } from "@cm-clone/shared";
 import { Badge } from "../components/ui/badge.js";
 import { Card, CardContent } from "../components/ui/card.js";
 import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
@@ -25,7 +25,7 @@ import type {
   SaveScopedCareerDestinationType,
 } from "../navigation/destinations.js";
 import { OverviewPitch } from "./OverviewPitch.js";
-import { capitalize, ratingFill, ratingText, roleLabel } from "./overviewFormat.js";
+import { ratingFill, ratingText, spaced } from "./overviewFormat.js";
 import { FitIndicator } from "./FitIndicator.js";
 
 type View = { readonly view: TacticsOverviewView };
@@ -41,11 +41,11 @@ export const FormationCard = ({ view }: View) => (
         <CardHeading>Formation</CardHeading>
         {view.formation !== null && (
           <span className="text-figure tabular-nums">
-            {view.formation.formation}
-            {isCustomShape(
-              view.formation.formation,
-              view.formation.slots.map((slot) => slot.position),
-            ) && " (custom)"}
+            {view.formation.template}
+            {view.formation.modified && " (modified)"}
+            {view.formation.shape !== view.formation.template && (
+              <span className="ml-2 text-text-secondary">{view.formation.shape}</span>
+            )}
           </span>
         )}
       </div>
@@ -74,9 +74,9 @@ const average = (values: ReadonlyArray<number>): number | null =>
   values.length === 0 ? null : Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
 
 export const SelectionCard = ({ view }: View) => {
-  const roleAverage = average(
+  const ratingAverage = average(
     view.assignments.flatMap((assignment) =>
-      assignment.roleRating === null ? [] : [assignment.roleRating],
+      assignment.positionRating === null ? [] : [assignment.positionRating],
     ),
   );
   return (
@@ -94,18 +94,16 @@ export const SelectionCard = ({ view }: View) => {
           <Table className={formationTableClass}>
             <TableHeader>
               <TableRow className={formationHeadRowClass}>
-                <TableHead className={`${formationHeadClass} w-10`}>Pos</TableHead>
+                <TableHead className={`${formationHeadClass} w-12`}>Cell</TableHead>
                 <TableHead className={formationHeadClass}>Player</TableHead>
                 <TableHead className={formationHeadClass}>Fit</TableHead>
-                <TableHead className={formationHeadClass}>Role</TableHead>
                 <TableHead className={`${formationHeadClass} text-right`}>Position rating</TableHead>
-                <TableHead className={`${formationHeadClass} text-right`}>Role rating</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {view.assignments.map((assignment, index) => (
                 <TableRow key={`${assignment.playerId}-${index}`} className={formationRowClass}>
-                  <TableCell className={`${formationCellClass} font-semibold`}>{assignment.position}</TableCell>
+                  <TableCell className={`${formationCellClass} font-semibold`}>{slotLabel(assignment.cell)}</TableCell>
                   <TableCell className={formationCellClass}>
                     {assignment.firstName === null ? (
                       <span className="text-text-warning">Player no longer at the club</span>
@@ -116,22 +114,18 @@ export const SelectionCard = ({ view }: View) => {
                   <TableCell className={formationCellClass}>
                     <FitIndicator tier={assignment.familiarity} />
                   </TableCell>
-                  <TableCell className={`${formationCellClass} text-text-secondary`}>{roleLabel(assignment.role)}</TableCell>
                   <TableCell className={formationCellClass}>
                     <Rating value={assignment.positionRating} />
-                  </TableCell>
-                  <TableCell className={formationCellClass}>
-                    <Rating value={assignment.roleRating} />
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
         )}
-        {roleAverage !== null && (
+        {ratingAverage !== null && (
           <p className="mt-2 text-right text-body text-text-secondary">
-            Average role rating{" "}
-            <span className={`font-semibold tabular-nums ${ratingText(roleAverage)}`}>{roleAverage}</span>
+            Average position rating{" "}
+            <span className={`font-semibold tabular-nums ${ratingText(ratingAverage)}`}>{ratingAverage}</span>
           </p>
         )}
         <div className="mt-3 border-t border-dashed border-border-subtle pt-2">
@@ -156,8 +150,11 @@ export const SelectionCard = ({ view }: View) => {
   );
 };
 
-/** One instruction as a three-step scale with the chosen step lit. The steps are decoration; the
- *  word beside them is what a screen reader hears. */
+/** The team Mentality's five steps, from the most cautious to the most reckless. */
+const MENTALITY_SCALE = ["ultraDefensive", "defensive", "normal", "attacking", "gungHo"] as const;
+
+/** One instruction as a scale with the chosen step lit. The steps are decoration; the word beside
+ *  them is what a screen reader hears. */
 const InstructionScale = ({
   label,
   options,
@@ -170,7 +167,7 @@ const InstructionScale = ({
   <div>
     <KeyValueRow>
       <KeyValueKey>{label}</KeyValueKey>
-      <KeyValueValue>{capitalize(value)}</KeyValueValue>
+      <KeyValueValue>{spaced(value)}</KeyValueValue>
     </KeyValueRow>
     <div aria-hidden="true" className="mt-1 flex gap-1">
       {options.map((option) => (
@@ -183,6 +180,14 @@ const InstructionScale = ({
   </div>
 );
 
+/** The Team Instructions that choose a value, in the order CM lists them after Mentality. */
+const TEAM_CHOICE_ROWS = [
+  ["Passing", "passing"],
+  ["Focus passing", "focusPassing"],
+  ["Tackling", "tackling"],
+  ["Closing down", "closingDown"],
+] as const;
+
 export const TeamInstructionsCard = ({ view }: View) => {
   const instructions = view.instructions;
   return (
@@ -193,9 +198,19 @@ export const TeamInstructionsCard = ({ view }: View) => {
           <p className="mt-1 text-text-soft">Set a tactic to choose instructions.</p>
         ) : (
           <KeyValueList className="mt-2 space-y-3">
-            <InstructionScale label="Mentality" options={MENTALITY_OPTIONS} value={instructions.mentality} />
-            <InstructionScale label="Tempo" options={TEMPO_OPTIONS} value={instructions.tempo} />
-            <InstructionScale label="Pressing" options={PRESSING_OPTIONS} value={instructions.pressing} />
+            <InstructionScale label="Mentality" options={MENTALITY_SCALE} value={instructions.mentality} />
+            {TEAM_CHOICE_ROWS.map(([label, key]) => (
+              <KeyValueRow key={key}>
+                <KeyValueKey>{label}</KeyValueKey>
+                <KeyValueValue>{spaced(instructions[key])}</KeyValueValue>
+              </KeyValueRow>
+            ))}
+            {TEAM_SWITCHES.map((name) => (
+              <KeyValueRow key={name}>
+                <KeyValueKey>{spaced(name)}</KeyValueKey>
+                <KeyValueValue>{instructions[name] ? "On" : "Off"}</KeyValueValue>
+              </KeyValueRow>
+            ))}
           </KeyValueList>
         )}
       </CardContent>
@@ -220,7 +235,7 @@ export const FamiliarityCard = ({ view }: View) => {
       <CardContent className="pt-2">
         <CardHeading>Familiarity</CardHeading>
         {familiarity === null ? (
-          <p className="mt-1 text-text-soft">Familiarity is derived from the starters' positions.</p>
+          <p className="mt-1 text-text-soft">Familiarity is derived from the starters' cells.</p>
         ) : (
           <>
             {total > 0 && (

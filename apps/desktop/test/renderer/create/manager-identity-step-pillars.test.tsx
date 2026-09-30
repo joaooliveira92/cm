@@ -15,7 +15,6 @@ const BASE_SESSION: CreationSession = {
   dateOfBirth: "1980-01-01",
   favoriteTeam: null,
   preferredFormation: "4-4-2",
-  preferredStyleId: "balanced",
   avatarPortraitKey: null,
   avatarPrimaryColor: "#1f2937",
   avatarSecondaryColor: "#f8fafc",

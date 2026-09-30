@@ -7,12 +7,23 @@ import {
   real,
   sqliteTable,
   text,
+  uniqueIndex,
   type AnySQLiteColumn,
 } from "drizzle-orm/sqlite-core";
 import {
-  FORMATIONS,
+  BUILT_IN_TEMPLATE_NAMES,
+  COLUMNS,
+  PLAYER_OVERRIDE_VALUES,
+  PLAYER_STANDALONE_VALUES,
+  PLAYER_SWITCHES,
   RETRAINING_TARGETS,
-  TACTICAL_STYLE_PRESETS,
+  ROWS,
+  SET_PIECE_ROLE_VALUES,
+  SWITCH_VALUES,
+  TAKER_LISTS,
+  TEAM_INSTRUCTION_VALUES,
+  TEAM_SET_PIECE_VALUES,
+  TEAM_SWITCHES,
   TRAINING_INTENSITIES,
   TRAINING_SESSION_TYPES,
 } from "@cm-clone/shared";
@@ -68,8 +79,6 @@ import {
 /** SQLite has no native enum; a `CHECK ... IN` is how a column is constrained to a vocabulary. */
 const oneOf = (column: string, values: readonly string[]): ReturnType<typeof sql> =>
   sql.raw(`${column} IN (${values.map((value) => `'${value}'`).join(",")})`);
-
-const POSITIONS = ["GK", "DC", "DL", "DR", "DM", "MC", "ML", "MR", "AMC", "ST"] as const;
 
 /** An unsigned 32-bit seed, the range `deriveSeed` produces. */
 const SEED_RANGE = "BETWEEN 0 AND 4294967295";
@@ -141,10 +150,10 @@ export const generationManifest = sqliteTable(
  * `favorite_club_id` — optional, because not every manager supports a club — points at a club in
  * this save.
  *
- * The tactical identity and appearance are creation-time too. `preferred_formation` and
- * `preferred_style_id` are the manager's stated starting point for their first Tactic; they are
- * checked against `FORMATIONS` and `TACTICAL_STYLE_PRESETS` in `packages/shared`, which are imported
- * rather than restated so a formation or style added there cannot drift from this constraint.
+ * The tactical identity and appearance are creation-time too. `preferred_formation` is the
+ * manager's stated starting point for their first Tactic: the name of one of the 29 built-in Tactic
+ * Templates, checked against `BUILT_IN_TEMPLATE_NAMES` in `packages/shared`, which is imported
+ * rather than restated so a template added there cannot drift from this constraint.
  * `avatar_portrait_key` is a code-resolvable key, null until a portrait asset set exists; the two
  * colour columns are the always-present accent scheme the colour/initials fallback renders.
  *
@@ -162,7 +171,6 @@ export const managerProfile = sqliteTable(
     dateOfBirth: text("date_of_birth").notNull(),
     favoriteClubId: text("favorite_club_id").references(() => clubs.id),
     preferredFormation: text("preferred_formation").notNull(),
-    preferredStyleId: text("preferred_style_id").notNull(),
     avatarPortraitKey: text("avatar_portrait_key"),
     avatarPrimaryColor: text("avatar_primary_color").notNull(),
     avatarSecondaryColor: text("avatar_secondary_color").notNull(),
@@ -181,8 +189,7 @@ export const managerProfile = sqliteTable(
       "manager_profile_archetype_origin",
       oneOf("archetype_origin", ["professor", "motivator", "sergeant", "academy_head", "custom"]),
     ),
-    check("manager_profile_preferred_formation", oneOf("preferred_formation", FORMATIONS)),
-    check("manager_profile_preferred_style", oneOf("preferred_style_id", TACTICAL_STYLE_PRESETS)),
+    check("manager_profile_preferred_formation", oneOf("preferred_formation", BUILT_IN_TEMPLATE_NAMES)),
     check("manager_profile_tactical_acumen", sql`tactical_acumen BETWEEN 1 AND 5`),
     check("manager_profile_influence", sql`influence BETWEEN 1 AND 5`),
     check("manager_profile_regimen", sql`regimen BETWEEN 1 AND 5`),
@@ -616,27 +623,63 @@ export const players = sqliteTable(
   ],
 );
 
-/** No index: a point lookup on the club. */
+const snakeCase = (name: string): string => name.replace(/[A-Z]/g, (letter) => `_${letter.toLowerCase()}`);
+
+/** One NOT NULL text column per name, the column named in snake case. */
+const textColumns = (names: ReadonlyArray<string>) =>
+  Object.fromEntries(names.map((name) => [name, text(snakeCase(name)).notNull()]));
+
+/** One NOT NULL 0/1 column per name: an on/off Team Instruction. */
+const switchColumns = (names: ReadonlyArray<string>) =>
+  Object.fromEntries(names.map((name) => [name, integer(snakeCase(name)).notNull()]));
+
+/** A CHECK per field limiting it to the closed set the domain names it, under `prefix_field`. */
+const valueChecks = (prefix: string, sets: Readonly<Record<string, ReadonlyArray<string>>>) =>
+  Object.entries(sets).map(([field, options]) =>
+    check(`${prefix}_${snakeCase(field)}`, oneOf(snakeCase(field), options)),
+  );
+
+/**
+ * A club's Tactic: the name of the template it came from, the nine Team Instructions and the six
+ * team set-piece instructions, one column each, with the players and slots in `tactic_slots`,
+ * `tactic_bench_slots` and `tactic_takers`. Every choice is a CHECK against the value set the shared
+ * rules name, so a row this schema admits is one `validateTactic` would not refuse on values. The
+ * switches are 0/1. See the Agent Note
+ * `.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md`.
+ *
+ * No index: a point lookup on the club.
+ */
+
+/** The text and switch column names of the team instructions, re-used by the tactic library tables. */
+export const TEAM_INSTRUCTION_COLUMNS = Object.keys(TEAM_INSTRUCTION_VALUES) as ReadonlyArray<string>;
+export const TEAM_SWITCH_COLUMNS = TEAM_SWITCHES as ReadonlyArray<string>;
+export const TEAM_SET_PIECE_COLUMNS = Object.keys(TEAM_SET_PIECE_VALUES) as ReadonlyArray<string>;
+export const SLOT_INSTRUCTION_COLUMNS = [
+  ...Object.keys(PLAYER_OVERRIDE_VALUES),
+  ...Object.keys(PLAYER_STANDALONE_VALUES),
+  ...PLAYER_SWITCHES,
+] as ReadonlyArray<string>;
+export const SLOT_SET_PIECE_ROLE_COLUMNS = Object.keys(SET_PIECE_ROLE_VALUES) as ReadonlyArray<string>;
+
 export const tactics = sqliteTable(
   "tactics",
   {
     clubId: text("club_id")
       .primaryKey()
       .references(() => clubs.id),
-    formation: text("formation").notNull(),
-    mentality: text("mentality").notNull(),
-    tempo: text("tempo").notNull(),
-    pressing: text("pressing").notNull(),
+    sourceTemplate: text("source_template").notNull(),
+    ...textColumns(Object.keys(TEAM_INSTRUCTION_VALUES)),
+    ...switchColumns(TEAM_SWITCHES),
+    ...textColumns(Object.keys(TEAM_SET_PIECE_VALUES)),
     /** The club tactic's monotonic revision, raised by exactly one on every accepted save. The
      *  integer is the version a submit's `expectedRevision` compares against, and the value the
      *  Tactics Overview later binds reads to. A fresh save (no row) reads as revision 0. */
     revision: integer("revision").notNull().default(0),
   },
   () => [
-    check("tactics_formation", oneOf("formation", ["4-4-2", "4-3-3", "4-5-1", "3-5-2", "5-3-2"])),
-    check("tactics_mentality", oneOf("mentality", ["defensive", "balanced", "attacking"])),
-    check("tactics_tempo", oneOf("tempo", ["slow", "normal", "fast"])),
-    check("tactics_pressing", oneOf("pressing", ["low", "medium", "high"])),
+    check("tactics_source_template", sql`length(trim(source_template)) > 0`),
+    ...valueChecks("tactics", { ...TEAM_INSTRUCTION_VALUES, ...TEAM_SET_PIECE_VALUES }),
+    ...TEAM_SWITCHES.map((name) => check(`tactics_${snakeCase(name)}`, sql.raw(`${snakeCase(name)} IN (0,1)`))),
   ],
 );
 
@@ -660,7 +703,100 @@ export const tacticWriteRequests = sqliteTable(
   ],
 );
 
-/** No index: read by the club prefix of its own key. */
+/**
+ * The tactic library: saved Tactic Templates belonging to the manager, stored per save and following
+ * the manager between clubs. Rows are written by `saveTacticTemplate`, `renameTacticTemplate`,
+ * `overwriteTacticTemplate`, and `duplicateTacticTemplate`; deleted by `deleteTacticTemplate`.
+ * Built-in templates (name matches `BUILT_IN_TEMPLATE_NAMES`) are never written here — they are
+ * derived from the code on every read — and a write targeting a built-in name is refused.
+ *
+ * `name` is unique case-insensitively. `revision` is raised by exactly one on rename/overwrite, and
+ * the delete/rename/overwrite callers carry an `expectedRevision` guard, same pattern as `tactics`.
+ * `is_built_in` is always 0: built-in rows do not exist. `source_template` records the template name
+ * the saved tactic was originally created from, even if later overwritten.
+ * `write_request_id` is nullable and used for idempotency checks per operation.
+ *
+ * No index: read wholesale (the whole library), at most a few dozen rows.
+ */
+export const tacticLibrary = sqliteTable(
+  "tactic_library",
+  {
+    id: integer("id").primaryKey(),
+    name: text("name").notNull(),
+    revision: integer("revision").notNull().default(0),
+    isBuiltIn: integer("is_built_in").notNull().default(0),
+    sourceTemplate: text("source_template").notNull(),
+    ...textColumns(Object.keys(TEAM_INSTRUCTION_VALUES)),
+    ...switchColumns(TEAM_SWITCHES),
+    ...textColumns(Object.keys(TEAM_SET_PIECE_VALUES)),
+    writeRequestId: text("write_request_id"),
+  },
+  (table) => [
+    /** Unique case-insensitive name. Since SQLite's `UNIQUE` is case-insensitive for text columns
+     *  by default on non-binary collation, this enforces the invariant. */
+    uniqueIndex("tactic_library_name_unique").on(table.name),
+    check("tactic_library_revision", sql`revision >= 0`),
+    check("tactic_library_is_built_in", sql`is_built_in IN (0,1)`),
+    check("tactic_library_source_template", sql`length(trim(source_template)) > 0`),
+    ...valueChecks("tactic_library", { ...TEAM_INSTRUCTION_VALUES, ...TEAM_SET_PIECE_VALUES }),
+    ...TEAM_SWITCHES.map((name) =>
+      check(`tactic_library_${snakeCase(name)}`, sql.raw(`${snakeCase(name)} IN (0,1)`)),
+    ),
+  ],
+);
+
+/**
+ * The eleven slots of a Tactic Template in the library, in slot order: same columns as `tactic_slots`
+ * but with no `player_id` (templates have no player assignments). Slot 0 is the goalkeeper cell;
+ * the same slot-index, cell, run, instructions and set-piece role constraints apply.
+ *
+ * No index: read by the library id prefix of its own key.
+ */
+export const tacticLibrarySlots = sqliteTable(
+  "tactic_library_slots",
+  {
+    libraryId: integer("library_id")
+      .notNull()
+      .references(() => tacticLibrary.id),
+    slotIndex: integer("slot_index").notNull(),
+    cellRow: text("cell_row").notNull(),
+    cellColumn: text("cell_column").notNull(),
+    runRow: text("run_row"),
+    runColumn: text("run_column"),
+    ...textColumns(Object.keys(PLAYER_OVERRIDE_VALUES)),
+    ...textColumns(Object.keys(PLAYER_STANDALONE_VALUES)),
+    ...textColumns(PLAYER_SWITCHES),
+    ...textColumns(Object.keys(SET_PIECE_ROLE_VALUES)),
+  },
+  (table) => [
+    primaryKey({ columns: [table.libraryId, table.slotIndex] }),
+    check("tactic_library_slots_slot_index", sql`slot_index BETWEEN 0 AND 10`),
+    check("tactic_library_slots_cell_row", oneOf("cell_row", ROWS)),
+    check("tactic_library_slots_cell_column", oneOf("cell_column", COLUMNS)),
+    check("tactic_library_slots_goalkeeper_first", sql`(slot_index = 0) = (cell_row = 'GK')`),
+    check("tactic_library_slots_goalkeeper_column", sql`cell_row <> 'GK' OR cell_column = 'C'`),
+    check("tactic_library_slots_run_pair", sql`(run_row IS NULL) = (run_column IS NULL)`),
+    check("tactic_library_slots_run_row", sql.raw(`run_row IS NULL OR run_row IN (${ROWS.filter((row) => row !== "GK").map((row) => `'${row}'`).join(",")})`)),
+    check("tactic_library_slots_run_column", sql.raw(`run_column IS NULL OR run_column IN (${COLUMNS.map((column) => `'${column}'`).join(",")})`)),
+    check("tactic_library_slots_distribution_goalkeeper_only", sql`cell_row = 'GK' OR distribution = 'default'`),
+    ...valueChecks("tactic_library_slots", {
+      ...PLAYER_OVERRIDE_VALUES,
+      ...PLAYER_STANDALONE_VALUES,
+      ...Object.fromEntries(PLAYER_SWITCHES.map((name) => [name, SWITCH_VALUES])),
+      ...SET_PIECE_ROLE_VALUES,
+    }),
+  ],
+);
+
+/**
+ * The eleven slots of a club's Tactic, in slot order: each one's grid cell, its optional run target,
+ * its player, its Player Instructions and its set-piece roles, one column each. Slot 0 is the
+ * goalkeeper cell and no other slot may be; the GK cell has no column of its own (`C`); a run is
+ * both columns or neither; Distribution is set only on the goalkeeper slot. The distinct-cells rule
+ * spans rows and is upheld by `validateTactic`.
+ *
+ * No index: read by the club prefix of its own key.
+ */
 export const tacticSlots = sqliteTable(
   "tactic_slots",
   {
@@ -668,15 +804,61 @@ export const tacticSlots = sqliteTable(
       .notNull()
       .references(() => tactics.clubId),
     slotIndex: integer("slot_index").notNull(),
-    position: text("position").notNull(),
-    role: text("role").notNull(),
+    cellRow: text("cell_row").notNull(),
+    cellColumn: text("cell_column").notNull(),
+    runRow: text("run_row"),
+    runColumn: text("run_column"),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    ...textColumns(Object.keys(PLAYER_OVERRIDE_VALUES)),
+    ...textColumns(Object.keys(PLAYER_STANDALONE_VALUES)),
+    ...textColumns(PLAYER_SWITCHES),
+    ...textColumns(Object.keys(SET_PIECE_ROLE_VALUES)),
+  },
+  (table) => [
+    primaryKey({ columns: [table.clubId, table.slotIndex] }),
+    check("tactic_slots_slot_index", sql`slot_index BETWEEN 0 AND 10`),
+    check("tactic_slots_cell_row", oneOf("cell_row", ROWS)),
+    check("tactic_slots_cell_column", oneOf("cell_column", COLUMNS)),
+    check("tactic_slots_goalkeeper_first", sql`(slot_index = 0) = (cell_row = 'GK')`),
+    check("tactic_slots_goalkeeper_column", sql`cell_row <> 'GK' OR cell_column = 'C'`),
+    check("tactic_slots_run_pair", sql`(run_row IS NULL) = (run_column IS NULL)`),
+    check("tactic_slots_run_row", sql.raw(`run_row IS NULL OR run_row IN (${ROWS.filter((row) => row !== "GK").map((row) => `'${row}'`).join(",")})`)),
+    check("tactic_slots_run_column", sql.raw(`run_column IS NULL OR run_column IN (${COLUMNS.map((column) => `'${column}'`).join(",")})`)),
+    check("tactic_slots_distribution_goalkeeper_only", sql`cell_row = 'GK' OR distribution = 'default'`),
+    ...valueChecks("tactic_slots", {
+      ...PLAYER_OVERRIDE_VALUES,
+      ...PLAYER_STANDALONE_VALUES,
+      ...Object.fromEntries(PLAYER_SWITCHES.map((name) => [name, SWITCH_VALUES])),
+      ...SET_PIECE_ROLE_VALUES,
+    }),
+  ],
+);
+
+/**
+ * The ordered taker lists and the captain: for each list, the nominees best first, one row per
+ * place. Only the live Tactic has them, since they name players; the next nominee steps up when the
+ * first is off the pitch. Rewritten wholesale with the rest of the Tactic on every accepted save.
+ *
+ * No index: read by the club prefix of its own key.
+ */
+export const tacticTakers = sqliteTable(
+  "tactic_takers",
+  {
+    clubId: text("club_id")
+      .notNull()
+      .references(() => tactics.clubId),
+    list: text("list").notNull(),
+    place: integer("place").notNull(),
     playerId: text("player_id")
       .notNull()
       .references(() => players.id),
   },
   (table) => [
-    primaryKey({ columns: [table.clubId, table.slotIndex] }),
-    check("tactic_slots_position", oneOf("position", POSITIONS)),
+    primaryKey({ columns: [table.clubId, table.list, table.place] }),
+    check("tactic_takers_list", oneOf("list", TAKER_LISTS)),
+    check("tactic_takers_place", sql`place >= 0`),
   ],
 );
 

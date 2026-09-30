@@ -68,11 +68,15 @@ export class SquadPlayerView extends Schema.Class<SquadPlayerView>("SquadPlayerV
   ...PositionSummaryFields,
   overallRating: Schema.Finite,
   /** The player's 1-100 fit rating at each Position: Position Rating scaled by Suitability, the map
-   *  selection reads. */
+   *  Squad Quality and the AI's squad-gap check read. Transitional, like the ten-Position list. */
   positionRatings: Schema.Record(Schema.String, Schema.Finite),
-  /** The player's 1-20 Suitability for each Position's cell, derived on read from his positional
-   *  ratings (never the ratings themselves, which no screen shows). What the Tactics screen's fit
-   *  indicator reads. Keyed by Position while the Tactic is built from Positions. */
+  /** The player's 1-100 fit rating at each of the grid's 31 cells, keyed by the cell's label
+   *  (`GK`, `D RC`): Position Rating in the cell scaled by Suitability. What the assistant's pick and
+   *  the AI's best XI read. */
+  cellRatings: Schema.Record(Schema.String, Schema.Finite),
+  /** The player's 1-20 Suitability for each of the grid's 31 cells, keyed by the cell's label,
+   *  derived on read from his positional ratings (never the ratings themselves, which no screen
+   *  shows). What the Tactics screen's fit indicator and the lineup bar read. */
   suitability: Schema.Record(Schema.String, Schema.Finite),
   /** The player's current Condition (%) from the Season's fitness ledger (ticket 10) — below 100
    * means they carry a shortfall from a recent heavy fixture/injury that hasn't fully recovered. */

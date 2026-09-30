@@ -184,6 +184,7 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
         case "MalformedNewsMessageIdError":
           return "That message could not be identified. Refresh to see the current list.";
       }
+      return "An unexpected error occurred.";
   }
 };
 

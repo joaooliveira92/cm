@@ -15,17 +15,23 @@ const p = PlayerId.make("p");
 const at = (minute: number, tag: string, teamClubId: ClubId, extra: Record<string, unknown> = {}) =>
   ({ _tag: tag, minute, half: minute <= 45 ? 1 : 2, teamClubId, playerId: p, ...extra }) as unknown as MatchEvent;
 
+const goalEvent = (minute: number, teamClubId: ClubId, homeScore: number, awayScore: number) =>
+  ({ _tag: "Goal", minute, half: minute <= 45 ? 1 : 2, teamClubId, playerId: p, homeScore, awayScore, chanceType: "throughBall", assistPlayerId: p }) as unknown as MatchEvent;
+
+const shotOnTarget = (minute: number, teamClubId: ClubId) =>
+  ({ _tag: "ShotOnTarget", minute, half: minute <= 45 ? 1 : 2, teamClubId, playerId: p, chanceType: "throughBall", assistPlayerId: p }) as unknown as MatchEvent;
+
 const TIMELINE: ReadonlyArray<MatchEvent> = [
   { _tag: "MatchStarted", minute: 0, seed: 1, homeClubId: home, awayClubId: away } as unknown as MatchEvent,
   at(5, "ShotMissed", home),
-  at(12, "Goal", home, { homeScore: 1, awayScore: 0 }),
-  at(20, "ShotOnTarget", away),
-  at(31, "BigChance", away),
+  goalEvent(12, home, 1, 0),
+  shotOnTarget(20, away),
+  at(31, "ShotMissed", away),
   at(40, "YellowCard", away),
   { _tag: "HalfTimeReached", minute: 45, homeScore: 1, awayScore: 0 } as unknown as MatchEvent,
   at(50, "Injury", home, { trigger: "contact", severity: "light", tier: "orange", type: "deadLeg" }),
   { _tag: "Substitution", minute: 52, half: 2, teamClubId: home, outPlayerId: p, inPlayerId: p, forcedByInjury: true } as unknown as MatchEvent,
-  at(77, "Goal", away, { homeScore: 1, awayScore: 1 }),
+  goalEvent(77, away, 1, 1),
   at(88, "RedCard", home),
   { _tag: "FullTimeWhistle", minute: 90, homeScore: 1, awayScore: 1 } as unknown as MatchEvent,
 ];
@@ -39,8 +45,10 @@ describe("aggregateMatchStatistics — team totals folded from the Match Events"
       goals: [1, 1],
       attempts: [2, 3],
       shotsOnTarget: [1, 2],
-      shotsOffTarget: [1, 0],
-      bigChances: [0, 1],
+      shotsOffTarget: [1, 1],
+      bigChances: [0, 0],
+      fouls: [0, 0],
+      offsides: [0, 0],
       yellowCards: [0, 1],
       redCards: [1, 0],
       injuries: [1, 0],

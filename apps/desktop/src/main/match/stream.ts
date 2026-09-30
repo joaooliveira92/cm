@@ -8,6 +8,7 @@
 import type { ClubId, PlayerId, Tactic } from "@cm-clone/contracts";
 import {
   simulateMatchWithCounts,
+  toMatchTactic,
   type MatchCommand,
   type MatchEvent,
   type MatchPlayerCountEntry,
@@ -127,7 +128,7 @@ export const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
   for (const row of stream.slice(1)) {
     if (row.tag === "TacticsChanged") {
       const p = row.payload as PersistedTacticsChanged;
-      schedule({ _tag: "ChangeTactics", clubId: p.clubId, tactic: p.tactic }, p.minute, p.isHalftime);
+      schedule({ _tag: "ChangeTactics", clubId: p.clubId, tactic: toMatchTactic(p.tactic) }, p.minute, p.isHalftime);
     } else if (row.tag === "SubstitutionMade") {
       const p = row.payload as PersistedSubstitutionMade;
       schedule(

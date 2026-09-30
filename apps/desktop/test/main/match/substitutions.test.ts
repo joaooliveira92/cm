@@ -5,7 +5,7 @@
  */
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchEvent, MatchHalf, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
-import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
+import { builtInTemplate, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, type PlayerAttributes } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
 import { lineupFacts, pitchAsOf, type LineupCommand } from "../../../src/main/match/pitch.js";
 import {
@@ -193,18 +193,23 @@ const thirteen: MatchTeamSetup = {
   squad: ["gk", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "b", "r"].map((id) => ({
     id: player(id),
     attributes: {} as PlayerAttributes,
+    positionalRatings: {
+      lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 },
+      sides: { R: 10, L: 10, C: 10 },
+      freeRole: 10,
+    },
   })),
   tactic: {
-    formation: "4-4-2",
-    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
+    slots: builtInTemplate("4-4-2")!.slots.map((slot, index) => ({
+      cell: slot.cell,
+      run: null,
       playerId: player(index === 0 ? "gk" : `s${index}`),
     })),
     bench: [player("b"), null, null, null, null, null, null],
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
+    team: { passing: "mixed", focusPassing: "mixed", tackling: "normal", closingDown: "default", mentality: "normal", offsideTrap: false, zonalMarking: false, counterAttack: false, menBehindTheBall: false },
+    slotInstructions: [],
+    teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+    takers: EMPTY_TAKERS,
   },
 };
 

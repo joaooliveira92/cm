@@ -24,7 +24,7 @@ import {
   type SaveId,
 } from "@cm-clone/contracts";
 import { deriveSeed, type PlayerAttributes } from "@cm-clone/shared";
-import { type MatchTeamSetup } from "@cm-clone/game-engine";
+import { toMatchTactic, type MatchPlayerInput, type MatchTeamSetup } from "@cm-clone/game-engine";
 import { Context, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadManagerProfile } from "../career/managerProfile.js";
@@ -36,7 +36,19 @@ import { loadSeasonRow } from "../season/currentSeason.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import { clubColourResolver, displayNames } from "../world/displayNames.js";
+import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
 import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "./stream.js";
+
+/**
+ * Load positional ratings for a club's players for use in match player input.
+ */
+const loadPlayerPositionalRatings = (clubId: ClubId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql<PositionalRatingRow & { readonly id: import("@cm-clone/contracts").PlayerId }>`
+      SELECT p.id, ${sql.unsafe(positionalRatingSelectList("p."))}
+      FROM players p WHERE p.club_id = ${clubId}`;
+  });
 
 /**
  * Builds a `MatchTeamSetup` from the club's persisted Tactic, and fails when it has none.
@@ -52,6 +64,8 @@ import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "./stream.js";
 const loadTeamSetup = (clubId: ClubId) =>
   Effect.gen(function* () {
     const squad = yield* loadSquadPlayers(clubId);
+    const positionalRows = yield* loadPlayerPositionalRatings(clubId);
+    const positionalMap = new Map(positionalRows.map((r) => [r.id, positionalRatingsOf(r)]));
     const tactic = yield* loadPersistedTactic(clubId);
     if (tactic === null) return yield* new TacticMissingError({ clubId });
     const setup: MatchTeamSetup = {
@@ -59,11 +73,14 @@ const loadTeamSetup = (clubId: ClubId) =>
       squad: squad.map((player) => ({
         id: player.id,
         attributes: player.attributes as PlayerAttributes,
-        // A player carrying a Condition shortfall from the Season's fitness ledger (ticket 10)
-        // kicks off the live match below full.
         startingCondition: player.condition,
-      })),
-      tactic,
+        positionalRatings: positionalMap.get(player.id) ?? positionalRatingsOf({
+          lineGk: 10, lineSw: 10, lineD: 10, lineDm: 10, lineM: 10,
+          lineAm: 10, lineF: 10, lineWb: 10,
+          sideR: 10, sideL: 10, sideC: 10, freeRole: 10,
+        }),
+      } as MatchPlayerInput)),
+      tactic: toMatchTactic(tactic),
     };
     return setup;
   });

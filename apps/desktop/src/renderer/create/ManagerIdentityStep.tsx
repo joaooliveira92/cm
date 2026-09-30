@@ -25,7 +25,6 @@ export const ManagerIdentityStep = () => {
     dateOfBirth,
     pillars,
     preferredFormation,
-    preferredStyleId,
     avatarPrimaryColor,
     avatarSecondaryColor,
     managerStep: step,
@@ -185,11 +184,9 @@ export const ManagerIdentityStep = () => {
             >
               <ManagerStyleAppearancePane
                 preferredFormation={preferredFormation}
-                preferredStyleId={preferredStyleId}
                 avatarPrimaryColor={avatarPrimaryColor}
                 avatarSecondaryColor={avatarSecondaryColor}
                 onFormationChange={(formation) => update({ preferredFormation: formation })}
-                onStyleChange={(style) => update({ preferredStyleId: style })}
                 onAvatarChange={(primary, secondary) =>
                   update({ avatarPrimaryColor: primary, avatarSecondaryColor: secondary })
                 }

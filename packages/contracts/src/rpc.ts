@@ -51,7 +51,6 @@ import {
   SquadDevelopmentView,
   CollidingOverrideError,
   FixturesView,
-  FormationSchema,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
   InvalidBindingShapeError,
@@ -63,7 +62,7 @@ import {
   ManagerProfileScreenView,
   ManagerProfileView,
   ManagerArchetypeSchema,
-  TacticalStylePresetSchema,
+  TemplateNameSchema,
   MatchCommandPayload,
   ChangeTacticsPayload,
   FixtureId,
@@ -121,6 +120,17 @@ import {
   BudgetReviewView,
   TransferHistoryView,
   ContractRenewalNotDueError,
+  TacticLibraryNameTakenError,
+  TacticLibraryNotFoundError,
+  TacticLibraryRevisionConflictError,
+  TacticLibraryReadOnlyError,
+  TacticLibraryView,
+  SaveTacticTemplatePayload,
+  RenameTacticTemplatePayload,
+  OverwriteTacticTemplatePayload,
+  DuplicateTacticTemplatePayload,
+  DeleteTacticTemplatePayload,
+  QuickLoadTacticPayload,
 } from "./schemas/index.js";
 import { ScoutingRpcs } from "./rpc-scouting.js";
 
@@ -181,8 +191,7 @@ commitCareer: {
       nationalityId: NationId,
       dateOfBirth: Schema.String,
       favoriteClubId: Schema.NullOr(ClubId),
-      preferredFormation: FormationSchema,
-      preferredStyleId: TacticalStylePresetSchema,
+      preferredFormation: TemplateNameSchema,
       avatarPortraitKey: Schema.NullOr(Schema.String),
       avatarPrimaryColor: Schema.String,
       avatarSecondaryColor: Schema.String,
@@ -273,6 +282,76 @@ commitCareer: {
     success: TacticsScreenView,
     error: Schema.Union([
       SaveNotFoundError,
+      InvalidTacticError,
+      SaveArchivedError,
+      TacticRevisionConflictError,
+    ]),
+  },
+  /** Tactic Library (ticket 25): the manager's saved Tactic Templates and the built-in names. */
+  getTacticLibrary: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: TacticLibraryView,
+    error: SaveNotFoundError,
+  },
+  /** Save the current live Tactic as a named template. */
+  saveTacticTemplate: {
+    payload: SaveTacticTemplatePayload,
+    success: TacticLibraryView,
+    error: Schema.Union([SaveNotFoundError, TacticLibraryNameTakenError, InvalidTacticError]),
+  },
+  /** Rename a saved template. */
+  renameTacticTemplate: {
+    payload: RenameTacticTemplatePayload,
+    success: TacticLibraryView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      TacticLibraryNotFoundError,
+      TacticLibraryNameTakenError,
+      TacticLibraryRevisionConflictError,
+      TacticLibraryReadOnlyError,
+    ]),
+  },
+  /** Overwrite a saved template's content from the live Tactic. */
+  overwriteTacticTemplate: {
+    payload: OverwriteTacticTemplatePayload,
+    success: TacticLibraryView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      TacticLibraryNotFoundError,
+      TacticLibraryNameTakenError,
+      TacticLibraryRevisionConflictError,
+      TacticLibraryReadOnlyError,
+      InvalidTacticError,
+    ]),
+  },
+  /** Duplicate a saved template with a new auto-named copy. */
+  duplicateTacticTemplate: {
+    payload: DuplicateTacticTemplatePayload,
+    success: TacticLibraryView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      TacticLibraryNotFoundError,
+      TacticLibraryNameTakenError,
+    ]),
+  },
+  /** Delete a saved template. */
+  deleteTacticTemplate: {
+    payload: DeleteTacticTemplatePayload,
+    success: TacticLibraryView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      TacticLibraryNotFoundError,
+      TacticLibraryRevisionConflictError,
+      TacticLibraryReadOnlyError,
+    ]),
+  },
+  /** Quick-load a template onto the current Tactic, keeping players by slot number. */
+  quickLoadTactic: {
+    payload: QuickLoadTacticPayload,
+    success: TacticsScreenView,
+    error: Schema.Union([
+      SaveNotFoundError,
+      TacticLibraryNotFoundError,
       InvalidTacticError,
       SaveArchivedError,
       TacticRevisionConflictError,

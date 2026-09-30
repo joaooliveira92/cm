@@ -23,7 +23,7 @@ import {
   SetPiecesCard,
   TeamInstructionsCard,
 } from "./overviewCards.js";
-import { capitalize } from "./overviewFormat.js";
+import { spaced } from "./overviewFormat.js";
 import {
   admitSnapshot,
   overviewViewState,
@@ -241,12 +241,11 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
 
 /** The one line the polite announcer reads on `ready`: the totals, never the per-slot detail. */
 const headline = (view: TacticsOverviewView): string => {
-  const formation = view.formation === null ? "No tactic saved" : view.formation.formation;
+  const formation =
+    view.formation === null
+      ? "No tactic saved"
+      : `${view.formation.template}${view.formation.modified ? " (modified)" : ""}`;
   const instructions =
-    view.instructions === null
-      ? ""
-      : `. ${capitalize(view.instructions.mentality)} mentality, ${capitalize(
-        view.instructions.tempo,
-      )} tempo, ${capitalize(view.instructions.pressing)} pressing`;
+    view.instructions === null ? "" : `. ${spaced(view.instructions.mentality)} mentality`;
   return `Tactics overview. ${formation}${instructions}. ${view.selection.starters.length} starters, ${view.selection.substitutes.length} substitutes.`;
 };

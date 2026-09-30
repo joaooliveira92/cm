@@ -5,14 +5,46 @@ export const HOME_ADVANTAGE_MULTIPLIER = 1.075;
 export const STOPPAGE_MIN_MINUTES = 1;
 export const STOPPAGE_MAX_MINUTES = 5;
 
-export const BASE_ATTACK_EVENT_CHANCE = 0.16;
-export const GOAL_SHARE = 0.12;
-export const BIG_CHANCE_SHARE = 0.18;
-export const SHOT_ON_TARGET_SHARE = 0.35;
-// remainder (1 - the three shares above) is ShotMissed
+// ─── Attack event chance ────────────────────────────────────────────────────
 
-export const BASE_CARD_PROBABILITY = 0.01;
+export const BASE_ATTACK_EVENT_CHANCE = 0.16;
+
+// ─── Chance type weights (relative, sum need not be 1 — they're normalised at use) ──
+// These are multiplied by the per-slot behaviour weights before normalisation.
+
+export const CHANCE_TYPE_WEIGHTS = {
+  throughBall: 1.0,
+  cross: 1.0,
+  longShot: 0.7,
+  runWithBall: 0.8,
+  holdUpLayOff: 0.6,
+  counter: 0.5,
+} as const;
+
+// ─── Outcome probabilities (relative shares within a resolved chance) ────────
+
+/** Base goal probability at equal attacker/defender quality. Adjusted by attributes at runtime. */
+export const BASE_GOAL_PROBABILITY = 0.15;
+
+/** Share of non-goal outcomes that are saved (on target but kept out). */
+export const SAVE_SHARE = 0.45;
+
+/** Share of non-goal outcomes that miss the target entirely. */
+export const MISS_SHARE = 0.40;
+
+// remainder is the share blocked / deflected (no event emitted for simplicity v1)
+
+// ─── Foul & card constants ──────────────────────────────────────────────────
+
+export const BASE_FOUL_PROBABILITY = 0.04;
+export const YELLOW_CARD_SHARE_OF_FOULS = 0.15;
 export const RED_CARD_SHARE_OF_CARDS = 0.08;
+
+// ─── Offside constants ──────────────────────────────────────────────────────
+
+export const BASE_OFFSIDE_PROBABILITY = 0.03;
+
+// ─── Injury constants (unchanged from v1) ────────────────────────────────────
 
 /** Scaling for the per-minute non-contact (fatigue) injury risk (ticket 04). */
 export const NON_CONTACT_RISK_SCALE = 0.012;
@@ -22,3 +54,35 @@ export const DUEL_CHECK_BASE = 0.06;
 export const BASE_COLLISION = 0.05;
 
 export const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
+
+/** Attribute effect scaling constant — how much a 1-point attribute difference shifts probability. */
+export const ATTRIBUTE_EFFECT_SCALE = 0.02;
+
+// ─── Set piece constants ─────────────────────────────────────────────────────
+
+/** Probability that a saved/blocked shot (ShotOnTarget) or cleared cross leads to a corner. */
+export const CORNER_CHANCE = 0.25;
+/** Base goal probability at equal attacker/defender quality for corner headers. */
+export const CORNER_GOAL_BASE = 0.08;
+/** Share of non-goal corner outcomes that are saved (on target but kept out). */
+export const CORNER_SAVE_SHARE = 0.40;
+/** Share of non-goal corner outcomes that miss the target entirely. */
+export const CORNER_MISS_SHARE = 0.50;
+
+/** Probability that a foul leads to a free kick (foul in attacking third). */
+export const FOUL_LEADS_TO_FREE_KICK = 0.15;
+/** Base goal probability at equal attacker/defender quality for free kicks. */
+export const FREE_KICK_GOAL_BASE = 0.10;
+/** Share of non-goal free kick outcomes that are saved. */
+export const FREE_KICK_SAVE_SHARE = 0.35;
+/** Share of non-goal free kick outcomes that miss. */
+export const FREE_KICK_MISS_SHARE = 0.45;
+
+/** Probability that a foul leads to a penalty (foul in the box). */
+export const FOUL_LEADS_TO_PENALTY = 0.08;
+/** Base goal probability for penalties (finishing vs GK reflexes). */
+export const PENALTY_GOAL_BASE = 0.18;
+/** Share of non-goal penalty outcomes that are saved. */
+export const PENALTY_SAVE_SHARE = 0.50;
+/** Share of non-goal penalty outcomes that miss. */
+export const PENALTY_MISS_SHARE = 0.30;

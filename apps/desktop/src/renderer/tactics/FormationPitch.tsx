@@ -1,6 +1,6 @@
-import { useState, type DragEvent } from "react";
-import type { SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
-import type { Position } from "@cm-clone/shared";
+import { useState, useCallback, useMemo, type DragEvent } from "react";
+import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
+import { familiarityOf, slotLabel, type Slot } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
 import { dropZoneAt, pitchLayout, type DropZone } from "./pitchLayout.js";
 
@@ -15,6 +15,12 @@ const draggedSlotOf = (event: DragEvent): number | null => {
 /** "Gilardino, A" — the marker caption; the full name is in the Team Selection list beside it. */
 const markerName = (player: SquadPlayerView): string =>
   `${player.lastName}, ${player.firstName.slice(0, 1)}`;
+
+/** The fit tier word for a player in their slot. */
+const fitTierWord = (player: SquadPlayerView, cell: Slot): string => {
+  const t = familiarityOf(player.suitability[slotLabel(cell)] ?? 1);
+  return t === "natural" ? "Natural" : t === "competent" ? "Competent" : "Unfamiliar";
+};
 
 /** Pitch markings in a 68 × 100 box, stretched to the pitch. Decorative: the slots are the list. */
 export const PitchMarkings = () => (
@@ -64,55 +70,80 @@ const pointOnPitch = (event: DragEvent<HTMLElement>): PitchPoint | null => {
 const DISC_REACH = 20;
 
 /** What a drop at a point would do: swap with the marker there, move the dragged slot to the
- *  Position whose zone it is, or nothing (its own spot, the keeper's end, or off the pitch). */
+ *  cell whose zone it is, or nothing (its own spot, an occupied cell, the keeper's end, or off the
+ *  pitch). */
 type DropIntent =
   | { readonly kind: "swap"; readonly slotIndex: number }
   | { readonly kind: "move"; readonly zone: DropZone }
   | null;
 
 const intentKey = (intent: DropIntent): string =>
-  intent === null ? "" : intent.kind === "swap" ? `swap ${intent.slotIndex}` : `move ${intent.zone.position}`;
+  intent === null ? "" : intent.kind === "swap" ? `swap ${intent.slotIndex}` : `move ${slotLabel(intent.zone.cell)}`;
+
+/** The 31 grid cells, each that is empty of any slot. */
+const ALL_CELLS: ReadonlyArray<Slot> = [
+  { row: "GK", column: "C" },
+  ...(["SW", "D", "DM", "M", "AM", "F"] as const).flatMap((row) =>
+    (["L", "LC", "C", "RC", "R"] as const).map((column) => ({ row, column } as Slot)),
+  ),
+];
 
 /**
  * The Tactic's starting eleven drawn on a pitch, attacking up the screen. The markers are an
  * ordered list in slot order, so a screen reader hears the same eleven the pickers name.
  *
- * A marker is a pointer shortcut onto the Team Selection pickers, never the only path: clicking
- * one opens that slot's picker (`onPick`). Dragging a marker onto another's disc swaps the two
- * slots' players (`onSwap`). Dragging an outfield marker onto open grass moves the slot itself to
- * the Position under the pointer (`onMove`), reshaping the Formation: the zone under the pointer
- * lights up with its Position, and the line makes room, with the dragged marker drawn dashed where
- * it will land. An empty outfield slot drags too, so a shape can be set before its players. The
- * keeper's end takes no outfield slot and the GK never moves.
- *
- * What a drop does is decided against the markers' committed spots, never the previewed ones, so a
- * marker sliding under the pointer to make room cannot turn a move into a swap and back. The
- * markers stay out of the tab order, where the pickers and the Pos selects stand for each slot.
+ * Extends the existing drag-and-drop with CM 03/04-style interaction:
+ * - Clicking a marker selects that slot (highlighted with a ring)
+ * - Clicking an empty cell moves the selected slot's player there
+ * - Runs are shown as dotted lines
+ * - Keyboard: Tab/arrows to navigate markers, Enter to select, R for run, Escape to deselect
  */
 export const FormationPitch = ({
   formation,
   slots,
+  assignments,
   squadById,
-  onPick,
+  selectedSlot,
+  onSelectSlot,
   onSwap,
   onMove,
+  onToggleRun,
 }: {
   readonly formation: string;
   readonly slots: ReadonlyArray<TacticSlot>;
+  readonly assignments: ReadonlyArray<PlayerId>;
   readonly squadById: ReadonlyMap<string, SquadPlayerView>;
-  readonly onPick: (slotIndex: number) => void;
+  readonly selectedSlot: number | null;
+  readonly onSelectSlot: (slotIndex: number | null) => void;
   readonly onSwap: (from: number, to: number) => void;
-  readonly onMove: (slotIndex: number, position: Position) => void;
+  readonly onMove: (slotIndex: number, cell: Slot) => void;
+  readonly onToggleRun: (slotIndex: number, target: Slot | null) => void;
 }) => {
-  const positions = slots.map((slot) => slot.position);
-  const spots = pitchLayout(positions);
-  // The slot being dragged: the drag's data store is unreadable until the drop, and the preview
-  // needs to know which marker is moving.
+  const cells = slots.map((slot) => slot.cell);
+  const spots = pitchLayout(cells);
   const [dragging, setDragging] = useState<number | null>(null);
-  // What dropping here and now would do, for the preview.
   const [intent, setIntent] = useState<DropIntent>(null);
+  const [runMode, setRunMode] = useState(false);
 
-  const hasPlayer = (slotIndex: number) => squadById.has(slots[slotIndex]!.playerId);
+  const hasPlayer = (slotIndex: number) => squadById.has(assignments[slotIndex]!);
+
+  /** The cells already occupied by a slot — used to draw empty-cell indicators. */
+  const occupiedLabels = useMemo(
+    () => new Set(slots.map((slot) => slotLabel(slot.cell))),
+    [slots],
+  );
+
+  /** Empty cells that the selected slot could move to (all but its own and the GK's). */
+  const eligibleCells = useMemo(() => {
+    if (selectedSlot === null) return [];
+    const currentLabel = slotLabel(slots[selectedSlot]!.cell);
+    return ALL_CELLS.filter((cell) => {
+      if (cell.row === "GK" && slots[selectedSlot]!.cell.row !== "GK") return false;
+      if (cell.row !== "GK" && slots[selectedSlot]!.cell.row === "GK") return false;
+      const label = slotLabel(cell);
+      return label !== currentLabel && !occupiedLabels.has(label);
+    });
+  }, [selectedSlot, slots, occupiedLabels]);
 
   const intentAt = (point: PitchPoint | null, from: number | null): DropIntent => {
     if (point === null || from === null) return null;
@@ -122,13 +153,14 @@ export const FormationPitch = ({
         DISC_REACH,
     );
     if (hit !== undefined) {
-      // A swap needs a player on one side of it; the dragged marker's own spot does nothing.
       return hit.slotIndex !== from && (hasPlayer(from) || hasPlayer(hit.slotIndex))
         ? { kind: "swap", slotIndex: hit.slotIndex }
         : null;
     }
     const zone = dropZoneAt(point.x, point.y);
-    return zone === null || positions[from] === "GK" ? null : { kind: "move", zone };
+    if (zone === null || cells[from]!.row === "GK") return null;
+    const label = slotLabel(zone.cell);
+    return cells.some((cell) => slotLabel(cell) === label) ? null : { kind: "move", zone };
   };
 
   const endDrag = () => {
@@ -136,25 +168,66 @@ export const FormationPitch = ({
     setIntent(null);
   };
 
-  // While a move is previewed the line makes room: every marker is drawn where it would stand.
+  // While a move is previewed the dragged marker is drawn where it would land.
   const shown =
-    dragging !== null && intent?.kind === "move" && intent.zone.position !== positions[dragging]
-      ? pitchLayout(
-          positions.map((position, index) => (index === dragging ? intent.zone.position : position)),
-        )
+    dragging !== null && intent?.kind === "move"
+      ? pitchLayout(cells.map((cell, index) => (index === dragging ? intent.zone.cell : cell)))
       : spots;
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onSelectSlot(null);
+        setRunMode(false);
+        return;
+      }
+      if (selectedSlot === null) return;
+      if (event.key === "r" || event.key === "R") {
+        event.preventDefault();
+        const slot = slots[selectedSlot]!;
+        if (slot.run !== null) {
+          // Clear the run
+          onToggleRun(selectedSlot, null);
+          setRunMode(false);
+        } else {
+          setRunMode(!runMode);
+        }
+        return;
+      }
+      // Arrow keys: navigate between markers
+      const slotCount = slots.length;
+      let next = selectedSlot;
+      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
+        event.preventDefault();
+        next = (selectedSlot + 1) % slotCount;
+      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
+        event.preventDefault();
+        next = (selectedSlot - 1 + slotCount) % slotCount;
+      } else if (event.key === "Enter") {
+        event.preventDefault();
+        // Toggle selection (Enter on the already-selected slot deselects)
+        onSelectSlot(null);
+        return;
+      }
+      if (next !== selectedSlot) {
+        onSelectSlot(next);
+      }
+    },
+    [selectedSlot, slots, onSelectSlot, onToggleRun, runMode],
+  );
 
   return (
     <div
       data-testid="formation-pitch"
       className="pitch-grass relative mx-auto aspect-[68/100] h-full max-h-[640px] w-full max-w-[440px] overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
+      tabIndex={0}
+      onKeyDown={handleKeyDown}
       onDragOver={(event) => {
         const next = intentAt(pointOnPitch(event), dragging);
         if (next !== null) {
           event.preventDefault();
           event.dataTransfer.dropEffect = "move";
         }
-        // Only a change of intent re-renders; dragover fires every few milliseconds.
         setIntent((current) => (intentKey(current) === intentKey(next) ? current : next));
       }}
       onDragLeave={(event) => {
@@ -167,15 +240,101 @@ export const FormationPitch = ({
         endDrag();
         if (from === null || drop === null) return;
         if (drop.kind === "swap") {
-          // Dragging an empty slot onto a player pulls that player into it.
           if (hasPlayer(from)) onSwap(from, drop.slotIndex);
           else onSwap(drop.slotIndex, from);
-        } else if (drop.zone.position !== positions[from]) {
-          onMove(from, drop.zone.position);
+        } else {
+          onMove(from, drop.zone.cell);
         }
       }}
     >
       <PitchMarkings />
+
+      {/* Runs: dotted lines from base cell to run target */}
+      <svg
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 size-full"
+        viewBox="0 0 100 100"
+        preserveAspectRatio="none"
+      >
+        {slots.map((slot, index) => {
+          if (slot.run === null) return null;
+          const from = spots[index]!;
+          const to = pitchLayout([slot.run])[0];
+          if (to === undefined) return null;
+          return (
+            <line
+              key={index}
+              x1={from.x}
+              y1={from.y}
+              x2={to.x}
+              y2={to.y}
+              stroke="var(--color-text-highlight)"
+              strokeWidth="1.5"
+              strokeDasharray="2 3"
+              opacity={0.8}
+            />
+          );
+        })}
+      </svg>
+
+      {/* Empty cells as clickable circles when a slot is selected */}
+      {selectedSlot !== null && !runMode && (
+        <>
+          {eligibleCells.map((cell) => {
+            const spot = pitchLayout([cell])[0];
+            if (spot === undefined) return null;
+            return (
+              <button
+                key={slotLabel(cell)}
+                type="button"
+                aria-label={`Move to ${slotLabel(cell)}`}
+                tabIndex={-1}
+                onClick={() => onMove(selectedSlot, cell)}
+                className={`absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-text-bright/50 bg-transparent text-caption font-bold text-text-muted transition-colors hover:border-text-bright hover:text-text-bright ${FOCUS_RING.join(" ")}`}
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+              >
+                <span className="sr-only">{slotLabel(cell)}</span>
+              </button>
+            );
+          })}
+        </>
+      )}
+
+      {/* Run mode: clicking an eligible cell sets the run target */}
+      {runMode && selectedSlot !== null && (
+        <>
+          {ALL_CELLS.filter((cell) => {
+            const label = slotLabel(cell);
+            const current = slotLabel(slots[selectedSlot]!.cell);
+            return label !== current;
+          }).map((cell) => {
+            const spot = pitchLayout([cell])[0];
+            if (spot === undefined) return null;
+            const alreadyOccupied = occupiedLabels.has(slotLabel(cell));
+            return (
+              <button
+                key={slotLabel(cell)}
+                type="button"
+                aria-label={alreadyOccupied ? `Run to ${slotLabel(cell)}` : `Run to empty ${slotLabel(cell)}`}
+                tabIndex={-1}
+                onClick={() => {
+                  onToggleRun(selectedSlot, cell);
+                  setRunMode(false);
+                }}
+                className={`absolute flex size-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 ${
+                  alreadyOccupied
+                    ? "border-text-highlight bg-text-highlight/10 text-text-highlight"
+                    : "border-dashed border-orange-400/70 bg-orange-400/10 text-orange-300"
+                } text-caption font-bold transition-colors hover:border-orange-300 hover:text-orange-200 ${FOCUS_RING.join(" ")}`}
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+              >
+                {slotLabel(cell)}
+              </button>
+            );
+          })}
+        </>
+      )}
+
       {intent?.kind === "move" && (
         <div
           aria-hidden="true"
@@ -189,24 +348,29 @@ export const FormationPitch = ({
           }}
         >
           <span className="absolute left-1 top-0.5 text-caption font-bold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
-            {intent.zone.position}
+            {slotLabel(intent.zone.cell)}
           </span>
         </div>
       )}
       <ol aria-label={`${formation} on the pitch`} className="absolute inset-0">
         {shown.map(({ slotIndex, x, y }) => {
           const slot = slots[slotIndex]!;
-          const player = squadById.get(slot.playerId);
-          const isKeeper = slot.position === "GK";
+          const player = squadById.get(assignments[slotIndex]!);
+          const isKeeper = slot.cell.row === "GK";
           const isDragged = dragging === slotIndex;
-          // The dragged marker, drawn where it will land while a move is previewed.
           const landing = isDragged && shown !== spots;
           const swapTarget = intent?.kind === "swap" && intent.slotIndex === slotIndex;
+          const isSelected = selectedSlot === slotIndex;
+          const hasRun = slot.run !== null;
+
+          // Fit tier as word, never a colour (no raw positional rating)
+          const fitWord = player ? fitTierWord(player, slot.cell) : null;
+
           return (
             <li
               key={slotIndex}
               data-landing={landing || undefined}
-              // The disc (1.75rem) is centred on the spot; the caption hangs below it.
+              data-selected={isSelected || undefined}
               className="absolute w-24 -translate-x-1/2 transition-[left,top] duration-200 ease-out motion-reduce:transition-none"
               style={{ left: `${x}%`, top: `calc(${y}% - 0.875rem)` }}
             >
@@ -216,13 +380,15 @@ export const FormationPitch = ({
                 draggable={player !== undefined || !isKeeper}
                 data-action-id="swap-slot-players"
                 data-slot-index={slotIndex}
-                aria-label={`Slot ${slotIndex + 1}, ${slot.position}: ${
+                aria-label={`Slot ${slotIndex + 1}, ${slotLabel(slot.cell)}: ${
                   player === undefined ? "unassigned" : `${player.firstName} ${player.lastName}`
-                }. Choose a player`}
+                }${hasRun ? `, runs to ${slotLabel(slot.run)}` : ""}. Click to select.`}
                 className={`flex w-full cursor-pointer flex-col items-center rounded-control transition-opacity ${
                   isDragged && !landing ? "opacity-40" : ""
                 } ${FOCUS_RING.join(" ")}`}
-                onClick={() => onPick(slotIndex)}
+                onClick={() => {
+                  onSelectSlot(slotIndex);
+                }}
                 onDragStart={(event) => {
                   event.dataTransfer.effectAllowed = "move";
                   event.dataTransfer.setData(SLOT_DRAG, String(slotIndex));
@@ -230,29 +396,56 @@ export const FormationPitch = ({
                 }}
                 onDragEnd={endDrag}
               >
+                {/* Numbered disc */}
                 <span
                   aria-hidden="true"
                   className={`flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
- landing
- ? "border-dashed border-text-bright bg-pitch-marker/60"
- : player === undefined
- ? "border-dashed border-text-bright/70 bg-transparent"
- : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
-                  } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""}`}
+                    landing
+                      ? "border-dashed border-text-bright bg-pitch-marker/60"
+                      : player === undefined
+                      ? "border-dashed border-text-bright/70 bg-transparent"
+                      : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
+                  } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""} ${
+                    isSelected ? "ring-2 ring-focus-ring ring-offset-2 ring-offset-bg-base scale-110" : ""
+                  } ${hasRun && !isSelected ? "after:absolute after:bottom-0 after:right-0 after:h-2 after:w-2 after:rounded-full after:bg-text-highlight" : ""}`}
                 >
                   {slotIndex + 1}
                 </span>
+                {/* Surname, First initial caption */}
                 <span
                   aria-hidden="true"
                   className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
                 >
-                  {player === undefined ? slot.position : markerName(player)}
+                  {player === undefined ? slotLabel(slot.cell) : markerName(player)}
                 </span>
+                {/* Fit word as non-colour indicator */}
+                {fitWord !== null && (
+                  <span
+                    aria-hidden="true"
+                    className="text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+                  >
+                    {fitWord}
+                  </span>
+                )}
               </button>
             </li>
           );
         })}
       </ol>
+
+      {/* Mode indicator */}
+      <div className="pointer-events-none absolute bottom-2 left-2 flex gap-2">
+        {runMode && (
+          <span className="rounded-sm bg-orange-600/80 px-2 py-0.5 text-caption font-bold text-white">
+            Run mode — click a cell to set run target
+          </span>
+        )}
+        {selectedSlot !== null && !runMode && (
+          <span className="rounded-sm bg-sky-700/80 px-2 py-0.5 text-caption text-white">
+            Player selected — R for run, click empty cell to move
+          </span>
+        )}
+      </div>
     </div>
   );
 };

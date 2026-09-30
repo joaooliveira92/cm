@@ -1,9 +1,13 @@
 import {
-  FORMATION_SLOTS,
-  POSITION_ROLES,
+  builtInTemplate,
   createSeededRng,
+  DEFAULT_TEAM_INSTRUCTIONS,
+  DEFAULT_PLAYER_INSTRUCTIONS,
+  DEFAULT_TEAM_SET_PIECES,
+  EMPTY_TAKERS,
   deriveSeed,
   generateSquad,
+  legacyPositionOf,
   projectLegacyPositions,
   type ClubStrength,
   type GeneratedPlayer,
@@ -29,6 +33,7 @@ const withIds = (
   squad.map((player, index) => ({
     id: PlayerId.make(`${clubId}-p${index}`),
     attributes: player.attributes,
+    positionalRatings: player.positionalRatings,
     primaryPosition: projectLegacyPositions(player.positionalRatings)[0]!.position,
   }));
 
@@ -37,8 +42,8 @@ const withIds = (
  *  enum alone. */
 const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 
-/** Builds a full squad + a Tactic filling every Formation slot from a natural-fit player, for match-sim tests. */
-export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): GeneratedTeam => {
+/** Builds a full squad + a Tactic filling every cell of a built-in template from a natural-fit player, for match-sim tests. */
+export const buildTeam = (clubId: ClubId, seed: number, template = "4-4-2"): GeneratedTeam => {
   const squad = withIds(
     clubId,
     generateSquad(MID_TABLE, {
@@ -49,19 +54,23 @@ export const buildTeam = (clubId: ClubId, seed: number, formation: keyof typeof 
   );
 
   const usedIds = new Set<PlayerId>();
-  const slots = FORMATION_SLOTS[formation].map((position) => {
+  const slots = builtInTemplate(template)!.slots.map(({ cell }) => {
+    const position = legacyPositionOf(cell);
     const player = squad.find((p) => p.primaryPosition === position && !usedIds.has(p.id)) ?? squad.find((p) => !usedIds.has(p.id))!;
     usedIds.add(player.id);
-    return { position, role: POSITION_ROLES[position], playerId: player.id };
+    return { cell, playerId: player.id, run: null };
   });
 
   const tactic: MatchTactic = {
-    formation,
     slots,
     bench: [null, null, null, null, null, null, null],
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
+    team: { ...DEFAULT_TEAM_INSTRUCTIONS },
+    slotInstructions: slots.map((slot) => ({
+      cell: slot.cell,
+      instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
+    })),
+    teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+    takers: EMPTY_TAKERS,
   };
 
   return {

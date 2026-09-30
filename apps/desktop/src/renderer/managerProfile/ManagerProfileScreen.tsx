@@ -9,7 +9,6 @@ import { Button } from "../components/ui/button.js";
 import { Card } from "../components/ui/card.js";
 import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { FOCUS_RING } from "../focus.js";
-import { STYLE_LABELS } from "../create/managerStyleCopy.js";
 import { getActiveMatch } from "../match/session.js";
 import { navigate } from "../navigation/adapter.js";
 import { useDialogKeyboard } from "../transfers/dialogKeyboard.js";
@@ -249,10 +248,6 @@ export const ManagerProfileScreen = ({ saveId }: { readonly saveId: SaveId }) =>
           <KeyValueRow>
             <KeyValueKey>Formation</KeyValueKey>
             <KeyValueValue>{profile.preferredFormation}</KeyValueValue>
-          </KeyValueRow>
-          <KeyValueRow>
-            <KeyValueKey>Tactical style</KeyValueKey>
-            <KeyValueValue>{STYLE_LABELS[profile.preferredStyleId]}</KeyValueValue>
           </KeyValueRow>
         </KeyValueList>
       </Card>

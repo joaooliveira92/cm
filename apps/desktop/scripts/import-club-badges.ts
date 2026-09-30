@@ -5,7 +5,7 @@ import { CLUB_BADGE_LIBRARY_DIR } from "./club-badges/manifest.js";
 /**
  * The only way club badges enter the library:
  *
- *   pnpm import-club-badges <source-dir> --adapter football-logos
+ *   pnpm import-club-badges <source-dir> --adapter football-logos | brazil-logos
  *
  * Copies the dump's newest badge per club into `src/renderer/assets/club-badges/<nation>/`, rewrites
  * the manifest, and prints the keys added, replaced and removed. It exits non-zero, having written

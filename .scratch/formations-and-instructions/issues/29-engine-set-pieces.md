@@ -17,7 +17,7 @@ Seam: resolution and engine; the captain handover is also read by the match repo
 
 **Blocked by:** 26
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Changing the penalty taker changes who takes penalties; conversion follows his attributes.
 - [ ] A directional test per team set-piece instruction and role family.

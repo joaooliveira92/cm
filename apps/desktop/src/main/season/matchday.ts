@@ -1,5 +1,5 @@
-import { TacticMissingError, type ClubId, type FixtureId, type PlayerId } from "@cm-clone/contracts";
-import { conditionAfterDays, simulateMatchWithCondition, type MatchTeamSetup } from "@cm-clone/game-engine";
+import { TacticMissingError, type ClubId, type FixtureId, type PlayerId, type SquadPlayerView } from "@cm-clone/contracts";
+import { conditionAfterDays, simulateMatchWithCondition, toMatchTactic, type MatchPlayerInput, type MatchTeamSetup } from "@cm-clone/game-engine";
 import {
   NATION_PROFILES,
   collapseSquadStrength,
@@ -19,6 +19,7 @@ import { discardScoutingForPlayers } from "../club/scouting.js";
 import { loadSquadPlayers } from "../club/squad.js";
 import { loadPersistedTactic } from "../club/tactics.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
+import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
 
 /** Raised when `simulateMatch` returns without a `FullTimeWhistle` event — an invariant of the
  * engine's match simulation. */
@@ -269,23 +270,38 @@ export const resolveFixtureScore = (
     const homeTactic = yield* getTacticForClub(homeClubId);
     const awayTactic = yield* getTacticForClub(awayClubId);
 
+    const loadPositionalRatings = (clubId: ClubId) =>
+      Effect.gen(function* () {
+        const sql = yield* SqlClient;
+        return yield* sql<PositionalRatingRow & { readonly id: PlayerId }>`
+          SELECT p.id, ${sql.unsafe(positionalRatingSelectList("p."))}
+          FROM players p WHERE p.club_id = ${clubId}`;
+      });
+
+    const homePosRows = yield* loadPositionalRatings(homeClubId);
+    const awayPosRows = yield* loadPositionalRatings(awayClubId);
+    const homePosMap = new Map(homePosRows.map((r) => [r.id, positionalRatingsOf(r)]));
+    const awayPosMap = new Map(awayPosRows.map((r) => [r.id, positionalRatingsOf(r)]));
+    const toMatchInput = (player: SquadPlayerView, posMap: Map<PlayerId, import("@cm-clone/shared").PositionalRatings>): MatchPlayerInput => ({
+      id: player.id,
+      attributes: player.attributes as PlayerAttributes,
+      startingCondition: player.condition,
+      positionalRatings: posMap.get(player.id) ?? positionalRatingsOf({
+        lineGk: 10, lineSw: 10, lineD: 10, lineDm: 10, lineM: 10,
+        lineAm: 10, lineF: 10, lineWb: 10,
+        sideR: 10, sideL: 10, sideC: 10, freeRole: 10,
+      }),
+    });
+
     const home: MatchTeamSetup = {
       clubId: homeClubId,
-      squad: homeSquad.map((player) => ({
-        id: player.id,
-        attributes: player.attributes as PlayerAttributes,
-        startingCondition: player.condition,
-      })),
-      tactic: homeTactic,
+      squad: homeSquad.map((player) => toMatchInput(player, homePosMap)),
+      tactic: toMatchTactic(homeTactic),
     };
     const away: MatchTeamSetup = {
       clubId: awayClubId,
-      squad: awaySquad.map((player) => ({
-        id: player.id,
-        attributes: player.attributes as PlayerAttributes,
-        startingCondition: player.condition,
-      })),
-      tactic: awayTactic,
+      squad: awaySquad.map((player) => toMatchInput(player, awayPosMap)),
+      tactic: toMatchTactic(awayTactic),
     };
 
     const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed: matchSeed, home, away }));
@@ -353,6 +369,8 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
     yield* sql`DELETE FROM tactic_slots WHERE ${doomed}`;
     yield* sql`DELETE FROM tactic_bench_slots WHERE ${sql.in("club_id", clubIds)}`;
     yield* sql`DELETE FROM tactic_bench_slots WHERE ${doomed}`;
+    yield* sql`DELETE FROM tactic_takers WHERE ${sql.in("club_id", clubIds)}`;
+    yield* sql`DELETE FROM tactic_takers WHERE ${doomed}`;
     yield* sql`DELETE FROM tactics WHERE ${sql.in("club_id", clubIds)}`;
     yield* sql`DELETE FROM players WHERE ${sql.in("club_id", clubIds)}`;
   });

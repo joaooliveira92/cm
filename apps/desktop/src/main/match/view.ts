@@ -39,7 +39,19 @@ const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
     case "Goal":
     case "ShotOnTarget":
     case "ShotMissed":
-    case "BigChance":
+    case "ThroughBall":
+    case "Cross":
+    case "LongShot":
+    case "RunWithBall":
+    case "HoldUpLayOff":
+    case "Counter":
+    case "Foul":
+    case "Offside":
+    case "BeatenTrap":
+    case "KeyPass":
+    case "Corner":
+    case "FreeKick":
+    case "Penalty":
     case "YellowCard":
     case "RedCard":
     case "Injury":

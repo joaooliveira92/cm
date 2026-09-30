@@ -41,6 +41,7 @@ import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { PlayerNotePanel, PlayerPanel, PlayerRow } from "../player/panels.js";
 import { POSITION_NAMES } from "../positionNames.js";
+import { spaced } from "../tactics/overviewFormat.js";
 import { describeRpcError, staffProfileAtom, typedError, useAtomValue } from "../rpc.js";
 
 const PAGE_CLASS = `flex flex-1 flex-col gap-3 px-4 pt-3 pb-6 text-foreground ${FOCUS_RING.join(" ")}`;
@@ -156,9 +157,7 @@ const StaffProfileBody = ({
         {profile.tactics !== null && (
           <PlayerPanel title="Tactics">
             <PlayerRow label="Preferred Formation" value={profile.tactics.formation} />
-            <PlayerRow label="Mentality" value={capitalise(profile.tactics.mentality)} />
-            <PlayerRow label="Tempo" value={capitalise(profile.tactics.tempo)} />
-            <PlayerRow label="Pressing" value={capitalise(profile.tactics.pressing)} />
+            <PlayerRow label="Mentality" value={spaced(profile.tactics.mentality)} />
             <PlayerRow label="Coaching Emphasis" value={capitalise(profile.tactics.coachingEmphasis)} />
           </PlayerPanel>
         )}

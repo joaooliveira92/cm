@@ -1,7 +1,7 @@
 import type { BottomBarPlan } from "../chrome/bottom-bar/index.js";
 import { createContext, use } from "react";
 import type { ClubId, LeagueSelectionSnapshot, NationId } from "@cm-clone/contracts";
-import type { Formation, ManagerArchetype, PillarDistribution, TacticalStylePreset } from "@cm-clone/shared";
+import type { ManagerArchetype, PillarDistribution } from "@cm-clone/shared";
 import type { ClubSelectionRecord } from "../create/clubSelection.js";
 import type { FavoriteTeamRecord } from "../create/favoriteTeam.js";
 import type { GenerationState } from "../create/generation.js";
@@ -32,11 +32,10 @@ export interface CreationSession {
    *  `selectedFavoriteTeamOf` is the read path, because a record left over from a replaced world
    *  is not a selection. Optional: not every manager supports a club. */
   readonly favoriteTeam: FavoriteTeamRecord | null;
-  /** The manager's tactical identity: the formation and style their first Tactic seeds from, or
-   *  `null` until the Style & Appearance panel has collected them. They start unset so the panel's
-   *  completion gate is a real choice rather than a pre-filled no-op. */
-  readonly preferredFormation: Formation | null;
-  readonly preferredStyleId: TacticalStylePreset | null;
+  /** The manager's tactical identity: the built-in Tactic Template (by name) their first Tactic
+   *  loads, or `null` until the Style & Appearance panel has collected it. It starts unset so the
+   *  panel's completion gate is a real choice rather than a pre-filled no-op. */
+  readonly preferredFormation: string | null;
   /** The manager's appearance. `avatarPortraitKey` is null until a portrait asset set exists; the
    *  two colours are the accent scheme the colour/initials fallback renders. */
   readonly avatarPortraitKey: string | null;

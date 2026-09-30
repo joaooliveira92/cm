@@ -281,7 +281,6 @@ export interface ManagerProfileParams {
   readonly dateOfBirth: string;
   readonly favoriteClubId: ClubId | null;
   readonly preferredFormation: string;
-  readonly preferredStyleId: string;
   readonly avatarPortraitKey: string | null;
   readonly avatarPrimaryColor: string;
   readonly avatarSecondaryColor: string;
@@ -323,10 +322,10 @@ export const commitCareer = (
       }
       yield* sql`UPDATE clubs SET is_user_club = 1 WHERE id = ${selectedClubId}`;
       yield* materialiseStaff(selectedClubId);
-      yield* sql`INSERT INTO manager_profile (id, first_name, last_name, nationality_id, date_of_birth, favorite_club_id, preferred_formation, preferred_style_id, avatar_portrait_key, avatar_primary_color, avatar_secondary_color, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
+      yield* sql`INSERT INTO manager_profile (id, first_name, last_name, nationality_id, date_of_birth, favorite_club_id, preferred_formation, avatar_portrait_key, avatar_primary_color, avatar_secondary_color, archetype_origin, tactical_acumen, influence, regimen, technical_coaching)
         VALUES (1, ${managerProfile.firstName}, ${managerProfile.lastName}, ${managerProfile.nationalityId},
           ${managerProfile.dateOfBirth}, ${managerProfile.favoriteClubId}, ${managerProfile.preferredFormation},
-          ${managerProfile.preferredStyleId}, ${managerProfile.avatarPortraitKey}, ${managerProfile.avatarPrimaryColor},
+          ${managerProfile.avatarPortraitKey}, ${managerProfile.avatarPrimaryColor},
           ${managerProfile.avatarSecondaryColor}, ${managerProfile.archetypeOrigin},
           ${managerProfile.pillars.tacticalAcumen}, ${managerProfile.pillars.influence}, ${managerProfile.pillars.regimen}, ${managerProfile.pillars.technicalCoaching})`;
       yield* startSeason(id);
@@ -403,7 +402,6 @@ export const createSave = (
       dateOfBirth: "1980-01-01",
       favoriteClubId: null,
       preferredFormation: "4-4-2",
-      preferredStyleId: "balanced",
       avatarPortraitKey: null,
       avatarPrimaryColor: "#1f2937",
       avatarSecondaryColor: "#f8fafc",

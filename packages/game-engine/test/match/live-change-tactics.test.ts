@@ -1,10 +1,11 @@
 /**
- * A live `ChangeTactics` changes only the three Team Instructions (group-g-match-day ticket 40,
- * decision request 01 Option A): Mentality, Tempo and Pressing. It changes no slot, formation, role
- * or bench, so who is on the pitch stays owned by substitutions, red cards, injuries and bring-offs.
+ * A live `ChangeTactics` changes only the Team Instructions (group-g-match-day ticket 40,
+ * decision request 01 Option A): it changes no slot, formation or bench, so who is on the pitch
+ * stays owned by substitutions, red cards, injuries and bring-offs.
  */
 import type { PlayerId } from "@cm-clone/contracts";
 import { describe, expect, it } from "vitest";
+import { DEFAULT_TEAM_INSTRUCTIONS } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
 import type { MatchEvent, RedCardEvent } from "../../src/match/events.js";
 import { simulateMatch, simulateMatchWithCounts } from "../../src/match/simulate/index.js";
@@ -23,7 +24,7 @@ const changeTactics = (team: TeamRuntimeState, tactic: MatchTactic, minute: numb
 
 const setup = withNamedBench(buildTeam(HOME, 7).setup);
 const reserves = setup.tactic.bench.filter((id): id is PlayerId => id !== null);
-const attacking: MatchTactic = { ...setup.tactic, mentality: "attacking", tempo: "fast", pressing: "high" };
+const attacking: MatchTactic = { ...setup.tactic, team: { ...setup.tactic.team, mentality: "attacking" } };
 
 describe("applyCommand's live ChangeTactics", () => {
   it("after a red card leaves the team with 10 and changes its Team Instructions", () => {
@@ -38,8 +39,8 @@ describe("applyCommand's live ChangeTactics", () => {
 
     expect(onPitch(team)).toEqual(tenMen);
     expect(onPitch(team)).not.toContain(sentOff);
-    expect(team.resolved.instructions).toEqual(resolveTeamInstructions(attacking));
-    expect(team.resolved.instructions).not.toEqual(resolveTeamInstructions(setup.tactic));
+    expect(team.resolved.instructions).toEqual(resolveTeamInstructions(attacking, team.playersById));
+    expect(team.resolved.instructions).not.toEqual(resolveTeamInstructions(setup.tactic, team.playersById));
     expect(computeTeamStrengths(team).modifiers.attack).toBeGreaterThan(attackBefore);
   });
 
@@ -49,7 +50,6 @@ describe("applyCommand's live ChangeTactics", () => {
     const starter = setup.tactic.slots[5]!.playerId;
     const redrafted: MatchTactic = {
       ...attacking,
-      formation: "4-3-3",
       slots: setup.tactic.slots.map((slot, index) => (index === 5 ? { ...slot, playerId: reserves[0]! } : slot)),
       bench: [starter, ...reserves.slice(1), null],
     };
@@ -68,28 +68,48 @@ describe("applyCommand's live ChangeTactics", () => {
 });
 
 describe("simulateMatch — seeded: a live ChangeTactics after a red card", () => {
-  // Seed 107: the unscheduled match gives the home side exactly one red card, at minute 9 of the
-  // first half, and no Injury or Substitution. Found by enumerating seeds 1-400 for that shape.
-  const seed = 107;
-  const home = withNamedBench(buildTeam(HOME, seed).setup);
-  const away = withNamedBench(buildTeam(AWAY, seed + 1000).setup);
+  // Find a seed where the home side gets exactly one early red card and no other events
+  // that change the home side (no injury, no substitution for home). The pipeline changed, so
+  // previously-pinned seeds no longer produce the same shape.
+  const findSeedWithEarlyRedCard = (): number | undefined => {
+    for (let seed = 1; seed < 2000; seed++) {
+      const home = withNamedBench(buildTeam(HOME, seed).setup);
+      const away = withNamedBench(buildTeam(AWAY, seed + 1000).setup);
+      const { events, counts } = simulateMatchWithCounts({ seed, home, away });
+      const redCards = events.filter((e): e is RedCardEvent => e._tag === "RedCard" && e.teamClubId === HOME);
+      if (redCards.length === 1 && redCards[0]!.half === 1 && redCards[0]!.minute <= 20) {
+        const homeChanges = events.filter(
+          (e) => (e._tag === "Injury" || e._tag === "Substitution") && e.teamClubId === HOME,
+        );
+        if (homeChanges.length === 0) return seed;
+      }
+    }
+    return undefined;
+  };
+
+  const pinnedSeed = findSeedWithEarlyRedCard() ?? 107;
+  const home = withNamedBench(buildTeam(HOME, pinnedSeed).setup);
+  const away = withNamedBench(buildTeam(AWAY, pinnedSeed + 1000).setup);
   const COMMAND_MINUTE = 60;
   const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-    [COMMAND_MINUTE, [{ _tag: "ChangeTactics", clubId: HOME, tactic: { ...home.tactic, mentality: "attacking", pressing: "high" } }]],
+    [COMMAND_MINUTE, [{ _tag: "ChangeTactics", clubId: HOME, tactic: { ...home.tactic, team: { ...home.tactic.team, mentality: "gungHo" } } }]],
   ]);
-  const plain = simulateMatchWithCounts({ seed, home, away });
-  const changed = simulateMatchWithCounts({ seed, home, away, commandsByMinute });
+  const plain = simulateMatchWithCounts({ seed: pinnedSeed, home, away });
+  const changed = simulateMatchWithCounts({ seed: pinnedSeed, home, away, commandsByMinute });
   const homeRed = (events: ReadonlyArray<MatchEvent>) =>
     events.filter((event): event is RedCardEvent => event._tag === "RedCard" && event.teamClubId === HOME);
 
-  it("seed 107 still has its shape: one early home red card and no other home change", () => {
-    expect(homeRed(plain.events)).toEqual([{ _tag: "RedCard", minute: 9, half: 1, teamClubId: HOME, playerId: expect.any(String) }]);
+  it("seed has its shape: one early home red card and no other home change", () => {
+    const reds = homeRed(plain.events);
+    expect(reds.length).toBe(1);
+    expect(reds[0]!.half).toBe(1);
+    expect(reds[0]!.minute).toBeLessThanOrEqual(20);
     expect(plain.events.some((event) => (event._tag === "Injury" || event._tag === "Substitution") && event.teamClubId === HOME)).toBe(false);
   });
 
   it("keeps the home side at 10 from the command to full time, with the sent-off player out of play", () => {
     const [red] = homeRed(changed.events);
-    expect(red).toMatchObject({ minute: 9, half: 1 });
+    expect(red).toBeDefined();
     const sentOff = red!.playerId;
 
     const afterCommand = changed.counts.filter((entry) => entry.half === 2 && entry.minute >= COMMAND_MINUTE);
@@ -100,15 +120,17 @@ describe("simulateMatch — seeded: a live ChangeTactics after a red card", () =
   });
 
   it("changes the play after the command, and only after it", () => {
-    const before = (events: ReadonlyArray<MatchEvent>) =>
-      events.slice(
-        0,
-        events.findIndex(
-          (event) => event._tag === "FullTimeWhistle" || ("half" in event && event.half === 2 && event.minute >= COMMAND_MINUTE),
-        ),
-      );
+    const before = (events: ReadonlyArray<MatchEvent>) => {
+      const COMMAND_MINUTE_LOCAL = COMMAND_MINUTE;
+      const idx = events.findIndex((event) => {
+        if (event._tag === "FullTimeWhistle") return true;
+        if (event._tag === "MatchStarted") return false;
+        return "half" in event && (event as { half: number; minute: number }).half === 2 && (event as { half: number; minute: number }).minute >= COMMAND_MINUTE_LOCAL;
+      });
+      return events.slice(0, Math.max(0, idx));
+    };
     expect(before(changed.events)).toEqual(before(plain.events));
     expect(changed.events).not.toEqual(plain.events);
-    expect(simulateMatch({ seed, home, away, commandsByMinute })).toEqual(changed.events);
+    expect(simulateMatch({ seed: pinnedSeed, home, away, commandsByMinute })).toEqual(changed.events);
   });
 });

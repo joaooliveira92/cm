@@ -361,18 +361,18 @@ describe("AC-33 — the panel layer composes with splash/palette/help Escape sta
 describe("Screen 97 — the panel and the standalone screens share one live line-up", () => {
   it("drafts a tactics change from the line-up a standalone substitution left, not the pre-match one", async () => {
     const substituted = fullTactic();
-    const slots = substituted.slots.map((slot, index) => (index === 3 ? { ...slot, playerId: rid("bench-1") } : slot));
+    const assignments = substituted.assignments.map((id, index) => (index === 3 ? rid("bench-1") : id));
     setActiveMatch(session() as never);
-    recordLiveTactic(rid("s1"), MatchId.make("m1"), { ...substituted, slots } as never);
+    recordLiveTactic(rid("s1"), MatchId.make("m1"), { ...substituted, assignments } as never);
 
     const submissions = await mountMatchDayWithSpine(session());
     openPanel();
     fireEvent.click(screen.getByRole("button", { name: "Apply tactics change" }));
 
     await waitFor(() => expect(submissions.calls).toHaveLength(1));
-    const command = submissions.calls[0]!.payload.command as { tactic: { slots: Array<{ playerId: string }> } };
-    expect(command.tactic.slots[3]!.playerId).toBe("bench-1");
-    expect(command.tactic.slots.some((slot) => slot.playerId === "on-3")).toBe(false);
+    const command = submissions.calls[0]!.payload.command as { tactic: { assignments: Array<string> } };
+    expect(command.tactic.assignments[3]).toBe("bench-1");
+    expect(command.tactic.assignments.includes("on-3")).toBe(false);
   });
 
   it("records a panel substitution so the standalone screens start from it", async () => {
@@ -383,6 +383,6 @@ describe("Screen 97 — the panel and the standalone screens share one live line
     act(() => void dispatchAction("make-substitution"));
 
     await waitFor(() => expect(submissions.calls).toHaveLength(1));
-    await waitFor(() => expect(getLiveTactic(rid("s1"))?.slots[2]?.playerId).toBe("bench-2"));
+    await waitFor(() => expect(getLiveTactic(rid("s1"))?.assignments[2]).toBe("bench-2"));
   });
 });

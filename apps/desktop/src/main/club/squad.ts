@@ -9,7 +9,8 @@ import {
   ageOn,
   nationName,
   fitRatingsByPosition,
-  suitabilityByPositionOf,
+  fitRatingsByCell,
+  suitabilityByCellOf,
   overallRatingOverCells,
   projectLegacyPositions,
   seasonEndDate,
@@ -116,7 +117,6 @@ export const loadSquadPlayers = (clubId: ClubId) =>
       // Fit-adjusted: Best XI, squad quality and the AI's squad-gap check all read this map, and
       // each should prefer the player who can actually play there.
       const positionRatings = fitRatingsByPosition(attributes, ratings);
-      const suitabilityByPosition = suitabilityByPositionOf(ratings);
 
       return new SquadPlayerView({
         id: row.id,
@@ -128,7 +128,8 @@ export const loadSquadPlayers = (clubId: ClubId) =>
         positions: positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
         overallRating: overall,
         positionRatings,
-        suitability: suitabilityByPosition,
+        cellRatings: fitRatingsByCell(attributes, ratings),
+        suitability: suitabilityByCellOf(ratings),
         ...positionSummaryOf(ratings),
         condition: row.condition,
         trainingFocus: (row.trainingFocus as Category | null) ?? null,

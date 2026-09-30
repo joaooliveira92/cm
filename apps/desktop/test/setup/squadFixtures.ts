@@ -4,13 +4,13 @@
  *  it — invisible to most assertions, and misleading to any that look for an alert. */
 import {
   FAMILIARITY_TIERS,
-  FORMATION_SLOTS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
+  STARTER_COUNT,
   STATURE_TIERS,
 } from "@cm-clone/shared";
+import { wireTactic } from "./tacticFixtures.js";
 import { positionSummaryFor } from "./positionFixtures.js";
 
 /** Every attribute at one value — enough for a row to render; never what a test asserts on. */
@@ -32,6 +32,7 @@ export const squadPlayer = (id: string, name: string, position: string) => ({
   ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { ST: 12 },
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition: 100,
@@ -51,18 +52,7 @@ export const squadView = (clubId: string, clubName: string, players: ReadonlyArr
 });
 
 /** A 4-4-2 with no player assigned to any slot or bench place. */
-export const emptyTactic = () => ({
-  formation: "4-4-2" as const,
-  slots: FORMATION_SLOTS["4-4-2"].map((position) => ({
-    position,
-    role: POSITION_ROLES[position],
-    playerId: "",
-  })),
-  bench: [null, null, null, null, null, null, null],
-  mentality: "balanced" as const,
-  tempo: "normal" as const,
-  pressing: "medium" as const,
-});
+export const emptyTactic = () => wireTactic(Array.from({ length: STARTER_COUNT }, () => ""));
 
 /** A `getTactics` success payload for the given club and squad. */
 export const tacticsView = (

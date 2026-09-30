@@ -39,8 +39,6 @@ const ownCount = (event: MatchEvent): keyof Counted | null => {
       return "goals";
     case "ShotOnTarget":
       return "shotsOnTarget";
-    case "BigChance":
-      return "bigChances";
     case "ShotMissed":
       return "shotsMissed";
     case "YellowCard":
@@ -52,6 +50,19 @@ const ownCount = (event: MatchEvent): keyof Counted | null => {
     case "MatchStarted":
     case "HalfTimeReached":
     case "FullTimeWhistle":
+    case "ThroughBall":
+    case "Cross":
+    case "LongShot":
+    case "RunWithBall":
+    case "HoldUpLayOff":
+    case "Counter":
+    case "Foul":
+    case "Offside":
+    case "BeatenTrap":
+    case "KeyPass":
+    case "Corner":
+    case "FreeKick":
+    case "Penalty":
       return null;
   }
 };

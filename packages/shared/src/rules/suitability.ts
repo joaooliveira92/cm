@@ -1,7 +1,7 @@
 import { POSITIONS, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
 import type { Line, PositionalRatings } from "./positionalRatings.js";
 import { weightedRating } from "./ratings.js";
-import { POSITION_SLOT, SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, weightTableOf, widthOf, type Slot } from "./slots.js";
+import { POSITION_SLOT, SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, slotLabel, weightTableOf, widthOf, type Slot } from "./slots.js";
 
 /**
  * The line a slot's row is rated against. D and DM on the flanks read the better of the row's line
@@ -64,9 +64,8 @@ export const fitRatingAt = (attributes: PlayerAttributes, ratings: PositionalRat
   Math.round(positionRatingAt(attributes, slot) * suitabilityFactor(suitability(ratings, slot)));
 
 /**
- * Transitional: the fit rating at each of the ten Positions' cells, the map Best XI and the AI's
- * squad-gap check read while the Tactic is still built from Positions. Replaced by cells with the
- * Tactic.
+ * Transitional: the fit rating at each of the ten Positions' cells, the map Squad Quality and the
+ * AI's squad-gap check read. Deleted with the legacy projection.
  */
 export const fitRatingsByPosition = (
   attributes: PlayerAttributes,
@@ -76,12 +75,18 @@ export const fitRatingsByPosition = (
     POSITIONS.map((position) => [position, fitRatingAt(attributes, ratings, POSITION_SLOT[position])]),
   ) as Record<Position, number>;
 
-/** Transitional: Suitability at each of the ten Positions' cells, for screens that still work in
- *  Positions. Replaced by cells with the Tactic. */
-export const suitabilityByPositionOf = (ratings: PositionalRatings): Record<Position, number> =>
-  Object.fromEntries(
-    POSITIONS.map((position) => [position, suitability(ratings, POSITION_SLOT[position])]),
-  ) as Record<Position, number>;
+/** The fit rating at every cell of the grid, keyed by `slotLabel` (`GK`, `D RC`): what the Tactic's
+ *  selection reads, for the Squad view and the AI's best XI. */
+export const fitRatingsByCell = (
+  attributes: PlayerAttributes,
+  ratings: PositionalRatings,
+): Record<string, number> =>
+  Object.fromEntries(SLOTS.map((slot) => [slotLabel(slot), fitRatingAt(attributes, ratings, slot)]));
+
+/** Suitability (1-20) at every cell of the grid, keyed by `slotLabel`: what the Tactics screen's fit
+ *  indicator and the lineup bar read. */
+export const suitabilityByCellOf = (ratings: PositionalRatings): Record<string, number> =>
+  Object.fromEntries(SLOTS.map((slot) => [slotLabel(slot), suitability(ratings, slot)]));
 
 /**
  * Overall Rating over the grid: the best Position Rating among cells where the player is Natural. A

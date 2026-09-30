@@ -19,6 +19,9 @@ export type InjuryType =
   | "calf"
   | "strain";
 
+/** The chance type of an attack: how the chance was created. */
+export type ChanceType = "throughBall" | "cross" | "longShot" | "runWithBall" | "holdUpLayOff" | "counter";
+
 interface BaseMatchEvent {
   readonly minute: number;
 }
@@ -40,18 +43,88 @@ export interface GoalEvent extends TeamPlayerEvent {
   readonly _tag: "Goal";
   readonly homeScore: number;
   readonly awayScore: number;
+  readonly chanceType: ChanceType;
+  readonly assistPlayerId?: PlayerId;
 }
 
 export interface ShotOnTargetEvent extends TeamPlayerEvent {
   readonly _tag: "ShotOnTarget";
+  readonly chanceType: ChanceType;
+  readonly assistPlayerId?: PlayerId;
 }
 
 export interface ShotMissedEvent extends TeamPlayerEvent {
   readonly _tag: "ShotMissed";
+  readonly chanceType: ChanceType;
+  readonly assistPlayerId?: PlayerId;
 }
 
-export interface BigChanceEvent extends TeamPlayerEvent {
-  readonly _tag: "BigChance";
+/** Chance type events — each represents a specific chance creation mechanism. */
+export interface ThroughBallEvent extends TeamPlayerEvent {
+  readonly _tag: "ThroughBall";
+  readonly assistPlayerId?: PlayerId;
+}
+
+export interface CrossEvent extends TeamPlayerEvent {
+  readonly _tag: "Cross";
+  readonly assistPlayerId?: PlayerId;
+}
+
+export interface LongShotEvent extends TeamPlayerEvent {
+  readonly _tag: "LongShot";
+  readonly assistPlayerId?: PlayerId;
+}
+
+export interface RunWithBallEvent extends TeamPlayerEvent {
+  readonly _tag: "RunWithBall";
+  readonly assistPlayerId?: PlayerId;
+}
+
+export interface HoldUpLayOffEvent extends TeamPlayerEvent {
+  readonly _tag: "HoldUpLayOff";
+  readonly assistPlayerId?: PlayerId;
+}
+
+export interface CounterEvent extends TeamPlayerEvent {
+  readonly _tag: "Counter";
+  readonly assistPlayerId?: PlayerId;
+}
+
+export interface FoulEvent extends TeamPlayerEvent {
+  readonly _tag: "Foul";
+  readonly isYellowCard: boolean;
+}
+
+/** A corner kick awarded after a saved/blocked shot or a cleared cross. The taker delivers from this event. */
+export interface CornerEvent extends TeamPlayerEvent {
+  readonly _tag: "Corner";
+  readonly deliveryType: string;
+  readonly side: "left" | "right";
+}
+
+/** A free kick awarded after a foul in the attacking third. */
+export interface FreeKickEvent extends TeamPlayerEvent {
+  readonly _tag: "FreeKick";
+  readonly side: "left" | "right";
+}
+
+/** A penalty kick awarded after a foul in the box. */
+export interface PenaltyEvent extends TeamPlayerEvent {
+  readonly _tag: "Penalty";
+}
+
+export interface OffsideEvent extends TeamPlayerEvent {
+  readonly _tag: "Offside";
+}
+
+/** A player beats the offside trap — only fired when the defender's offside-trap team instruction is set. */
+export interface BeatenTrapEvent extends TeamPlayerEvent {
+  readonly _tag: "BeatenTrap";
+}
+
+export interface KeyPassEvent extends TeamPlayerEvent {
+  readonly _tag: "KeyPass";
+  readonly chanceType: string;
 }
 
 export interface YellowCardEvent extends TeamPlayerEvent {
@@ -100,13 +173,25 @@ export type MatchEvent =
   | GoalEvent
   | ShotOnTargetEvent
   | ShotMissedEvent
-  | BigChanceEvent
+  | ThroughBallEvent
+  | CrossEvent
+  | LongShotEvent
+  | RunWithBallEvent
+  | HoldUpLayOffEvent
+  | CounterEvent
+  | FoulEvent
+  | OffsideEvent
+  | BeatenTrapEvent
+  | KeyPassEvent
   | YellowCardEvent
   | RedCardEvent
   | InjuryEvent
   | SubstitutionEvent
   | HalfTimeReachedEvent
-  | FullTimeWhistleEvent;
+  | FullTimeWhistleEvent
+  | CornerEvent
+  | FreeKickEvent
+  | PenaltyEvent;
 
 export const STOPPAGE_CAUSING_TAGS: ReadonlySet<MatchEvent["_tag"]> = new Set([
   "Goal",
@@ -114,4 +199,5 @@ export const STOPPAGE_CAUSING_TAGS: ReadonlySet<MatchEvent["_tag"]> = new Set([
   "RedCard",
   "Injury",
   "Substitution",
+  "Foul",
 ]);

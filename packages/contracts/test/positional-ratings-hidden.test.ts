@@ -13,6 +13,10 @@ import * as schemas from "../src/schemas/index.js";
  */
 const FORBIDDEN_PROPERTIES = ["freeRole", "lineRatings", "sideRatings", "positionalRatings"];
 
+/** The Player Instruction of the same name, CM's `Free Role` switch, is a `normal`/`often` choice on a
+ *  Tactic slot and says nothing about a player's rating; the rating is a number. */
+const isFreeRoleInstruction = (schema: unknown): boolean => JSON.stringify(schema).includes('"often"');
+
 /** Every property name in a JSON Schema document, plus each object that has both `lines` and
  *  `sides` (the shape of `PositionalRatings`; `lines` alone is a commentary field). */
 const inspect = (node: unknown, found: { names: Set<string>; ratingShapes: number }): void => {
@@ -25,7 +29,10 @@ const inspect = (node: unknown, found: { names: Set<string>; ratingShapes: numbe
   const properties = record["properties"];
   if (typeof properties === "object" && properties !== null && !Array.isArray(properties)) {
     const names = Object.keys(properties);
-    for (const name of names) found.names.add(name);
+    for (const name of names) {
+      if (name === "freeRole" && isFreeRoleInstruction((properties as Record<string, unknown>)[name])) continue;
+      found.names.add(name);
+    }
     if (names.includes("lines") && names.includes("sides")) found.ratingShapes += 1;
   }
   for (const value of Object.values(record)) inspect(value, found);
@@ -47,6 +54,13 @@ describe("positional ratings stay hidden", () => {
       if (hits.length > 0 || found.ratingShapes > 0) offenders.push(`${name}: ${hits.join(", ") || "lines+sides"}`);
     }
     expect(offenders).toEqual([]);
+  });
+
+  it("tells the Free Role instruction switch from a Free Role Rating", () => {
+    const instruction = Schema.Struct({ freeRole: Schema.Literals(["normal", "often"]) });
+    const found = { names: new Set<string>(), ratingShapes: 0 };
+    inspect(Schema.toJsonSchemaDocument(instruction), found);
+    expect(found.names.has("freeRole")).toBe(false);
   });
 
   it("would notice a schema that did expose them", () => {

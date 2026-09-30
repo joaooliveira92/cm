@@ -18,7 +18,6 @@ const profileView = (overrides: Record<string, unknown> = {}) => ({
     favoriteClubId: null,
     favoriteClubName: null,
     preferredFormation: "4-4-2",
-    preferredStyleId: "balanced",
     avatarPortraitKey: null,
     avatarPrimaryColor: "#1f2937",
     avatarSecondaryColor: "#f8fafc",

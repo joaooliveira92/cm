@@ -6,7 +6,7 @@ const COLUMNS = ["Club", "Stature", "Squad"] as const;
 export const ClubRailHeader = () => (
   <div
     role="row"
-    className={`${CLUB_ROW_GRID} border-b border-panel-border bg-surface-raised text-overline uppercase text-text-secondary`}
+    className={`${CLUB_ROW_GRID} bg-transparent text-overline uppercase text-text-secondary`}
   >
     {COLUMNS.map((column) => (
       <div key={column} role="columnheader" className="min-w-0 truncate">

@@ -18,7 +18,7 @@ export const ClubHero = ({ club }: ClubHeroProps) => {
       style={{ backgroundColor: pColour, color: fColour }}
     >
       <div className="flex items-center gap-3">
-        <ClubBadge badgeKey={club.badgeKey} colours={club.clubColours} clubName={club.clubName} size={40} />
+        <ClubBadge badgeKey={club.badgeKey} colours={club.clubColours} clubName={club.clubName} size={42} />
         <div className="flex-1 min-w-0">
           <h2
             className="text-heading truncate leading-tight"
@@ -26,12 +26,7 @@ export const ClubHero = ({ club }: ClubHeroProps) => {
           >
             {club.clubName}
           </h2>
-          <div className="flex items-center gap-2 mt-1">
-            <Badge variant="secondary">
-              {statureLabel(club.statureTier)}
-            </Badge>
-            <Badge>{club.squadQualityBand}</Badge>
-          </div>
+
         </div>
       </div>
       {/* Subtle gradient overlay at the bottom of the band */}

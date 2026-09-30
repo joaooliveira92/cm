@@ -1,51 +1,114 @@
 import { Schema } from "effect";
 import {
-  FORMATIONS,
-  MENTALITY_OPTIONS,
-  PRESSING_OPTIONS,
-  ROLES,
-  TACTICAL_STYLE_PRESETS,
-  TEMPO_OPTIONS,
+  COLUMNS,
+  PLAYER_OVERRIDE_VALUES,
+  PLAYER_STANDALONE_VALUES,
+  PLAYER_SWITCHES,
+  SET_PIECE_ROLE_VALUES,
+  SWITCH_VALUES,
+  TAKER_LISTS,
+  TEAM_INSTRUCTION_VALUES,
+  TEAM_SET_PIECE_VALUES,
+  TEAM_SWITCHES,
+  BUILT_IN_TEMPLATE_NAMES,
 } from "@cm-clone/shared";
 
 import { ClubSummary } from "./clubs.js";
 import { PlayerId, SaveId, WriteRequestId } from "./ids.js";
-import { FamiliarityTierSchema, PositionSchema, SquadPlayerView } from "./squad.js";
+import { FamiliarityTierSchema, SquadPlayerView } from "./squad.js";
 
-export const FormationSchema = Schema.Literals(FORMATIONS);
-export const RoleSchema = Schema.Literals(ROLES);
-/** The Role union as a type, for callers that hold a Role rather than decode one — a Contract
- *  Offer's terms name the Role a Position carries (`POSITION_ROLES` in `@cm-clone/shared`). */
-export type Role = typeof RoleSchema.Type;
-export const MentalitySchema = Schema.Literals(MENTALITY_OPTIONS);
-export const TempoSchema = Schema.Literals(TEMPO_OPTIONS);
-export const PressingSchema = Schema.Literals(PRESSING_OPTIONS);
-/** The manager's preferred Tactical Style (`TACTICAL_STYLE_PRESETS`), chosen at career creation.
- *  Not a Tactic field: it seeds a Tactic's three instructions but is never stored on one. */
-export const TacticalStylePresetSchema = Schema.Literals(TACTICAL_STYLE_PRESETS);
+/** One of the 29 built-in Tactic Templates, by name. The manager's preferred formation is one. */
+export const TemplateNameSchema = Schema.Literals(BUILT_IN_TEMPLATE_NAMES);
 
+/** The team Mentality value set (CM's five), for the surfaces that show or change only it. */
+export const MentalitySchema = Schema.Literals(TEAM_INSTRUCTION_VALUES.mentality);
+export type Mentality = typeof MentalitySchema.Type;
+
+const literalFields = <const T extends Record<string, ReadonlyArray<string>>>(values: T) =>
+  Object.fromEntries(Object.entries(values).map(([key, options]) => [key, Schema.Literals(options)])) as {
+    readonly [K in keyof T]: Schema.Literals<T[K]>;
+  };
+
+const switchFields = <const K extends ReadonlyArray<string>, V extends Schema.Top>(names: K, schema: V) =>
+  Object.fromEntries(names.map((name) => [name, schema])) as { readonly [N in K[number]]: V };
+
+/** One cell of the grid: the goalkeeper's single cell, or an outfield row and a column. */
+export const CellSchema = Schema.Union([
+  Schema.Struct({ row: Schema.Literal("GK"), column: Schema.Literal("C") }),
+  Schema.Struct({ row: Schema.Literals(["SW", "D", "DM", "M", "AM", "F"]), column: Schema.Literals(COLUMNS) }),
+]);
+export type Cell = typeof CellSchema.Type;
+
+export const TeamInstructionsSchema = Schema.Struct({
+  ...literalFields(TEAM_INSTRUCTION_VALUES),
+  ...switchFields(TEAM_SWITCHES, Schema.Boolean),
+});
+
+export const PlayerInstructionsSchema = Schema.Struct({
+  ...literalFields(PLAYER_OVERRIDE_VALUES),
+  ...literalFields(PLAYER_STANDALONE_VALUES),
+  ...switchFields(PLAYER_SWITCHES, Schema.Literals(SWITCH_VALUES)),
+});
+
+export const SetPieceRolesSchema = Schema.Struct(literalFields(SET_PIECE_ROLE_VALUES));
+export const TeamSetPiecesSchema = Schema.Struct(literalFields(TEAM_SET_PIECE_VALUES));
+
+/** The ordered taker lists and the captain, each best nominee first. */
+export const TakersSchema = Schema.Struct(switchFields(TAKER_LISTS, Schema.Array(PlayerId)));
+
+/** One slot of the Tactic: a grid cell, an optional run target, and the slot's own instructions and
+ *  set-piece roles. */
 export class TacticSlot extends Schema.Class<TacticSlot>("TacticSlot")({
-  position: PositionSchema,
-  role: RoleSchema,
-  playerId: PlayerId,
+  cell: CellSchema,
+  run: Schema.NullOr(CellSchema),
+  instructions: PlayerInstructionsSchema,
+  setPieceRoles: SetPieceRolesSchema,
 }) {}
 
-/** The `ChangeTactics` command payload shape (ADR-0003 / ticket 03): a Formation, a Role and
- *  player per slot, the 3 Team Instructions, and the fixed-size match-day bench. A bench entry is
- *  `null` while that substitute slot is unnamed — a club may field fewer than the rule allows. */
+/**
+ * The complete Tactic, the `ChangeTactics` command payload and what `getTactics` returns: eleven
+ * slots (goalkeeper first) each with its cell, run and instructions, the nine Team Instructions and
+ * team set-piece instructions, the players assigned to the slots in slot order, the fixed-size
+ * match-day bench (a `null` entry is an unnamed substitute) and the ordered taker lists, all named by
+ * the template it came from. A save replaces the whole of it. See the Agent Note
+ * `.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md`.
+ */
 export class Tactic extends Schema.Class<Tactic>("Tactic")({
-  formation: FormationSchema,
+  sourceTemplate: Schema.String,
   slots: Schema.Array(TacticSlot),
+  team: TeamInstructionsSchema,
+  teamSetPieces: TeamSetPiecesSchema,
+  assignments: Schema.Array(PlayerId),
   bench: Schema.Array(Schema.NullOr(PlayerId)),
-  mentality: MentalitySchema,
-  tempo: TempoSchema,
-  pressing: PressingSchema,
+  takers: TakersSchema,
 }) {}
 
+/** The rules' named problems with a Tactic, as `validateTactic` returns them. */
+export const TacticProblemSchema = Schema.Union([
+  Schema.TaggedStruct("WrongSlotCount", { count: Schema.Finite }),
+  Schema.TaggedStruct("GoalkeeperNotFirst", {}),
+  Schema.TaggedStruct("GoalkeeperOutsideSlotZero", { slot: Schema.Finite }),
+  Schema.TaggedStruct("UnknownCell", { slot: Schema.Finite }),
+  Schema.TaggedStruct("DuplicateCell", { slot: Schema.Finite, cell: Schema.String }),
+  Schema.TaggedStruct("RunToGoalkeeper", { slot: Schema.Finite }),
+  Schema.TaggedStruct("DistributionOffGoalkeeper", { slot: Schema.Finite }),
+  Schema.TaggedStruct("InvalidValue", { where: Schema.String, field: Schema.String, value: Schema.Unknown }),
+  Schema.TaggedStruct("BlankTemplateName", {}),
+  Schema.TaggedStruct("WrongAssignmentCount", { count: Schema.Finite }),
+  Schema.TaggedStruct("WrongBenchSize", { count: Schema.Finite }),
+  Schema.TaggedStruct("PlayerTwice", { playerId: Schema.String }),
+  Schema.TaggedStruct("PlayerNotInSquad", { playerId: Schema.String }),
+  Schema.TaggedStruct("DuplicateTaker", { list: Schema.String, playerId: Schema.String }),
+  Schema.TaggedStruct("UnknownTakerList", { list: Schema.String }),
+]);
+
+/** A Tactic the rules refuse. `problems` are the rules' named problems, every one found; `reason`
+ *  is them in one sentence for a surface with no room to mark each. */
 export class InvalidTacticError extends Schema.TaggedError<InvalidTacticError>()(
   "InvalidTacticError",
   {
     reason: Schema.String,
+    problems: Schema.Array(TacticProblemSchema),
   },
 ) {}
 
@@ -64,9 +127,10 @@ export class TacticRevisionConflictError extends Schema.TaggedError<TacticRevisi
 ) {}
 
 /**
- * The `changeTactics` command payload: the Tactic to write, the `expectedRevision` the caller
- * read, and a fresh `requestId` per submit. A submit whose revision is stale fails with a typed
- * conflict; a replay of an already-accepted `requestId` is a no-op that returns the current state.
+ * The `changeTactics` command payload: the complete Tactic to write in place of the stored one, the
+ * `expectedRevision` the caller read, and a fresh `requestId` per submit. A submit whose revision is
+ * stale fails with a typed conflict; a replay of an already-accepted `requestId` is a no-op that
+ * returns the current state.
  */
 export class ChangeTacticsPayload extends Schema.Class<ChangeTacticsPayload>(
   "ChangeTacticsPayload",
@@ -88,49 +152,163 @@ export class TacticsScreenView extends Schema.Class<TacticsScreenView>("TacticsS
 }) {}
 
 // ---------------------------------------------------------------------------
+// Tactic Library (ticket 25)
+// ---------------------------------------------------------------------------
+
+/**
+ * One Tactic Template's summary in the library view: enough for the sidebar list the
+ * renderer holds and for identifying which template a mutation targets.
+ */
+export class TacticTemplateSummary extends Schema.Class<TacticTemplateSummary>("TacticTemplateSummary")({
+  id: Schema.Natural,
+  name: Schema.String,
+  sourceTemplate: Schema.String,
+  isBuiltIn: Schema.Boolean,
+  revision: Schema.Natural,
+  rowCountLabel: Schema.String,
+}) {}
+
+/** Save a new Tactic Template from the current live Tactic. */
+export class SaveTacticTemplatePayload extends Schema.Class<SaveTacticTemplatePayload>(
+  "SaveTacticTemplatePayload",
+)({
+  saveId: SaveId,
+  name: Schema.String,
+  tactic: Tactic,
+  requestId: WriteRequestId,
+}) {}
+
+/** Rename a saved Tactic Template. */
+export class RenameTacticTemplatePayload extends Schema.Class<RenameTacticTemplatePayload>(
+  "RenameTacticTemplatePayload",
+)({
+  saveId: SaveId,
+  id: Schema.Natural,
+  name: Schema.String,
+  expectedRevision: Schema.Natural,
+  requestId: WriteRequestId,
+}) {}
+
+/** Overwrite a saved Tactic Template's content from the current live Tactic. */
+export class OverwriteTacticTemplatePayload extends Schema.Class<OverwriteTacticTemplatePayload>(
+  "OverwriteTacticTemplatePayload",
+)({
+  saveId: SaveId,
+  id: Schema.Natural,
+  tactic: Tactic,
+  expectedRevision: Schema.Natural,
+  requestId: WriteRequestId,
+}) {}
+
+/** Duplicate a saved Tactic Template. */
+export class DuplicateTacticTemplatePayload extends Schema.Class<DuplicateTacticTemplatePayload>(
+  "DuplicateTacticTemplatePayload",
+)({
+  saveId: SaveId,
+  id: Schema.Natural,
+  requestId: WriteRequestId,
+}) {}
+
+/** Delete a saved Tactic Template. */
+export class DeleteTacticTemplatePayload extends Schema.Class<DeleteTacticTemplatePayload>(
+  "DeleteTacticTemplatePayload",
+)({
+  saveId: SaveId,
+  id: Schema.Natural,
+  expectedRevision: Schema.Natural,
+  requestId: WriteRequestId,
+}) {}
+
+/** Quick-load a saved Tactic Template onto the current Tactic, keeping players by slot number. */
+export class QuickLoadTacticPayload extends Schema.Class<QuickLoadTacticPayload>(
+  "QuickLoadTacticPayload",
+)({
+  saveId: SaveId,
+  id: Schema.Natural,
+  requestId: WriteRequestId,
+}) {}
+
+/** The tactic library view: all saved templates and built-in template names. */
+export class TacticLibraryView extends Schema.Class<TacticLibraryView>("TacticLibraryView")({
+  templates: Schema.Array(TacticTemplateSummary),
+  builtInTemplateNames: Schema.Array(Schema.String),
+}) {}
+
+/** A template name that is already taken (case-insensitive uniqueness violated). */
+export class TacticLibraryNameTakenError extends Schema.TaggedError<TacticLibraryNameTakenError>()(
+  "TacticLibraryNameTakenError",
+  {
+    saveId: SaveId,
+    name: Schema.String,
+  },
+) {}
+
+/** No template found for the given id. */
+export class TacticLibraryNotFoundError extends Schema.TaggedError<TacticLibraryNotFoundError>()(
+  "TacticLibraryNotFoundError",
+  {
+    saveId: SaveId,
+    id: Schema.Natural,
+  },
+) {}
+
+/** The expected revision does not match the stored revision — a stale write or delete. */
+export class TacticLibraryRevisionConflictError extends Schema.TaggedError<TacticLibraryRevisionConflictError>()(
+  "TacticLibraryRevisionConflictError",
+  {
+    saveId: SaveId,
+    id: Schema.Natural,
+    currentRevision: Schema.Natural,
+  },
+) {}
+
+/** The template is read-only (built-in) and cannot be renamed, overwritten, or deleted. */
+export class TacticLibraryReadOnlyError extends Schema.TaggedError<TacticLibraryReadOnlyError>()(
+  "TacticLibraryReadOnlyError",
+  {
+    saveId: SaveId,
+    id: Schema.Natural,
+    name: Schema.String,
+  },
+) {}
+
+// ---------------------------------------------------------------------------
 // Tactics Overview snapshot (Screen 80 / ticket 02)
 // ---------------------------------------------------------------------------
 
-/** One slot of the formation preview — the Position the Tactic's shape fills, in slot order. */
+/** One slot of the formation preview — the cell the Tactic's shape fills and where it runs to, in
+ *  slot order. */
 export class FormationSlotView extends Schema.Class<FormationSlotView>("FormationSlotView")({
-  position: PositionSchema,
+  cell: CellSchema,
+  run: Schema.NullOr(CellSchema),
 }) {}
 
-/** The formation summary: the active Formation's name and its eleven preview slots, so the overview
- *  can draw a pitch without importing `FORMATION_SLOTS` itself. */
+/** The formation summary: the template the Tactic came from, whether it has moved off it, the
+ *  row-count shape it makes now, and its eleven preview slots, so the overview can draw a pitch
+ *  without importing the template table itself. `modified` and `shape` are derived on the read. */
 export class FormationSummaryView extends Schema.Class<FormationSummaryView>("FormationSummaryView")({
-  formation: FormationSchema,
-  /** The Tactic's slots, the GK first, in slot order: the Formation's template or the manager's
-   *  custom shape built from it. */
+  template: Schema.String,
+  modified: Schema.Boolean,
+  /** The row-count label of the slots as they stand (`4-4-2`, `3-2-3-2`). */
+  shape: Schema.String,
+  /** The Tactic's slots, the GK first, in slot order. */
   slots: Schema.Array(FormationSlotView),
 }) {}
 
-/** The three Team Instructions as the active Tactic carries them. */
-export class TeamInstructionSummaryView extends Schema.Class<TeamInstructionSummaryView>(
-  "TeamInstructionSummaryView",
-)({
-  mentality: MentalitySchema,
-  tempo: TempoSchema,
-  pressing: PressingSchema,
-}) {}
-
 /**
- * One starter's assignment to a Tactic slot, with the ratings that justify it already computed at
+ * One starter's assignment to a Tactic slot, with the numbers that justify it already computed at
  * the trusted boundary — the renderer displays numbers and derives nothing tactical itself.
  *
- * `firstName`/`lastName`/`positionRating`/`roleRating` are null for a slot whose named player has
- * since left the squad: the readiness issues name that blocker and the overview shows the gap.
+ * `firstName`/`lastName`/`positionRating` are null for a slot whose named player has since left the
+ * squad: the readiness issues name that blocker and the overview shows the gap.
  */
 export class PlayerAssignmentView extends Schema.Class<PlayerAssignmentView>("PlayerAssignmentView")({
   playerId: PlayerId,
   firstName: Schema.NullOr(Schema.String),
   lastName: Schema.NullOr(Schema.String),
-  position: PositionSchema,
-  role: RoleSchema,
-  /** The assigned player's 1-100 Position Rating at `position`, computed on this read. */
+  cell: CellSchema,
+  /** The assigned player's 1-100 Position Rating in `cell`, computed on this read. */
   positionRating: Schema.NullOr(Schema.Finite),
-  /** The assigned player's 1-100 Role Rating at `role`, computed on this read. */
-  roleRating: Schema.NullOr(Schema.Finite),
   /** How well the assigned player suits the slot: his Familiarity Tier, derived from Suitability on
    *  this read. */
   familiarity: Schema.NullOr(FamiliarityTierSchema),
@@ -138,8 +316,8 @@ export class PlayerAssignmentView extends Schema.Class<PlayerAssignmentView>("Pl
 
 /**
  * The derived familiarity summary: how many of the starters are Natural, Competent, or Unfamiliar
- * in the Position their slot assigns. Derived, never assigned — folded from each starter's existing
- * position-familiarity tier and the selection the Tactic makes of them. Formation- and
+ * in the cell their slot assigns. Derived, never assigned — folded from each starter's Suitability
+ * and the selection the Tactic makes of them. Formation- and
  * instruction-level familiarity are deferred to the Training domain, so v1 carries these counts only.
  */
 export class FamiliaritySummaryView extends Schema.Class<FamiliaritySummaryView>(
@@ -169,9 +347,10 @@ export class SelectionSummaryView extends Schema.Class<SelectionSummaryView>("Se
 }) {}
 
 /**
- * Set-piece status. "none" until Screen 86 (Set Pieces) lands: v1's Tactic carries no set-piece
- * plans, so the summary is one status rather than an empty list that would imply configuration
- * could exist. The snapshot neither invents set pieces nor reveals hidden opposition or scouting data.
+ * Set-piece status. "none" until the Set Priorities screen reads the Tactic's set-piece settings:
+ * the Tactic stores them now, but the overview shows one status rather than an empty list that
+ * would imply configuration could be seen here. The snapshot neither invents set pieces nor
+ * reveals hidden opposition or scouting data.
  */
 export class SetPieceStatusView extends Schema.Class<SetPieceStatusView>("SetPieceStatusView")({
   status: Schema.Literal("none"),
@@ -202,10 +381,10 @@ export class TacticsOverviewView extends Schema.Class<TacticsOverviewView>("Tact
   club: ClubSummary,
   /** The club tactic revision this snapshot was read at — every section binds to this one revision. */
   revision: Schema.Natural,
-  /** The active formation and its preview slots, or `null` while no Tactic is saved. */
+  /** The active template, its shape and its preview slots, or `null` while no Tactic is saved. */
   formation: Schema.NullOr(FormationSummaryView),
-  /** The three Team Instruction values, or `null` while no Tactic is saved. */
-  instructions: Schema.NullOr(TeamInstructionSummaryView),
+  /** The nine Team Instruction values, or `null` while no Tactic is saved. */
+  instructions: Schema.NullOr(TeamInstructionsSchema),
   /** One assignment per Tactic slot; empty while no Tactic is saved. */
   assignments: Schema.Array(PlayerAssignmentView),
   /** The derived familiarity counts over the starters, or `null` while no Tactic is saved. */

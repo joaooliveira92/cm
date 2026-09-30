@@ -1,5 +1,4 @@
-import { FORMATIONS, TACTICAL_STYLE_PRESETS } from "@cm-clone/shared";
-import type { Formation, TacticalStylePreset } from "@cm-clone/shared";
+import { BUILT_IN_TEMPLATE_NAMES } from "@cm-clone/shared";
 import {
   Select,
   SelectContent,
@@ -10,41 +9,34 @@ import {
 import { Label } from "../components/ui/label.js";
 import { FOCUS_RING } from "../focus.js";
 import { cn } from "../lib/utils.js";
-import { AVATAR_PALETTE, STYLE_LABELS, styleAxisSummary } from "./managerStyleCopy.js";
+import { AVATAR_PALETTE } from "./managerStyleCopy.js";
 import { StepHeading } from "./StepHeading.js";
 
 export interface ManagerStyleAppearancePaneProps {
-  readonly preferredFormation: Formation | null;
-  readonly preferredStyleId: TacticalStylePreset | null;
+  readonly preferredFormation: string | null;
   readonly avatarPrimaryColor: string;
   readonly avatarSecondaryColor: string;
-  readonly onFormationChange: (formation: Formation) => void;
-  readonly onStyleChange: (style: TacticalStylePreset) => void;
+  readonly onFormationChange: (formation: string) => void;
   readonly onAvatarChange: (primary: string, secondary: string) => void;
 }
 
 /**
  * The Manager step's third panel: the manager's tactical identity and appearance. It collects the
- * two required preferences — a formation and a Tactical Style, both unset until picked, so the
- * panel is a real step — and the optional avatar accent scheme.
- *
- * The style cards carry the axes each preset seeds (`styleAxisSummary`), so the picker says what it
- * will do rather than only naming a football idiom. The palette is a fixed set of accent pairs, not
- * a colour wheel: contrast is guaranteed by construction and a swatch is a stable test target.
+ * one required preference — a preferred formation, one of CM 03/04's 29 built-in templates, unset
+ * until picked, so the panel is a real step — and the optional avatar accent scheme. The palette is a
+ * fixed set of accent pairs, not a colour wheel: contrast is guaranteed by construction and a swatch is a stable test target.
  */
 export const ManagerStyleAppearancePane = ({
   preferredFormation,
-  preferredStyleId,
   avatarPrimaryColor,
   avatarSecondaryColor,
   onFormationChange,
-  onStyleChange,
   onAvatarChange,
 }: ManagerStyleAppearancePaneProps) => (
   <>
     <div>
       <StepHeading title="Style & Appearance">
-        Set the tactical identity your first formation starts from, and how you appear.
+        Choose the formation your first Tactic starts from, and how you appear.
       </StepHeading>
     </div>
 
@@ -55,14 +47,14 @@ export const ManagerStyleAppearancePane = ({
           <Select
             value={preferredFormation ?? ""}
             onValueChange={(value) => {
-              if (value !== "" && value !== null) onFormationChange(value as Formation);
+              if (value !== "" && value !== null) onFormationChange(value);
             }}
           >
             <SelectTrigger aria-label="Preferred formation" className="mt-2">
               <SelectValue placeholder="Select a formation" />
             </SelectTrigger>
             <SelectContent>
-              {FORMATIONS.map((formation) => (
+              {BUILT_IN_TEMPLATE_NAMES.map((formation) => (
                 <SelectItem key={formation} value={formation}>
                   {formation}
                 </SelectItem>
@@ -111,40 +103,6 @@ export const ManagerStyleAppearancePane = ({
           <p className="mt-2 text-data text-text-muted">
             Your colours and initials stand in for a portrait.
           </p>
-        </div>
-      </div>
-
-      <div className="mt-8">
-        <h3 className="text-text-primary text-heading">Tactical style</h3>
-        <p className="mt-1 text-body text-text-secondary">
-          The starting instructions your first Tactic is seeded with.
-        </p>
-
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {TACTICAL_STYLE_PRESETS.map((style) => {
-            const selected = style === preferredStyleId;
-            return (
-              <button
-                key={style}
-                type="button"
-                aria-label={STYLE_LABELS[style]}
-                aria-pressed={selected}
-                onClick={() => onStyleChange(style)}
-                className={cn(
-                  "rounded-panel border p-3 text-left transition-colors",
-                  selected
-                    ? "border-primary bg-primary/10"
-                    : "border-panel-border bg-panel-bg hover:bg-surface-raised",
-                  ...FOCUS_RING,
-                )}
-              >
-                <span className="block text-body font-semibold text-text-primary">
-                  {STYLE_LABELS[style]}
-                </span>
-                <span className="mt-1 block text-data text-text-muted">{styleAxisSummary(style)}</span>
-              </button>
-            );
-          })}
         </div>
       </div>
     </div>

@@ -4,6 +4,7 @@
  * the re-derived `MatchEvent` timeline and the journaled bring-offs.
  */
 import { MatchPitchView, PitchSlotView, type ClubId, type PlayerId } from "@cm-clone/contracts";
+import { legacyPositionOf } from "@cm-clone/shared";
 import type { MatchEvent, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
 import type { PersistedForcedOff, PersistedSubstitutionMade } from "./stream.js";
 
@@ -37,7 +38,19 @@ const minuteStart = (events: ReadonlyArray<MatchEvent>, command: PersistedForced
       case "Goal":
       case "ShotOnTarget":
       case "ShotMissed":
-      case "BigChance":
+      case "ThroughBall":
+      case "Cross":
+      case "LongShot":
+      case "RunWithBall":
+      case "HoldUpLayOff":
+      case "Counter":
+      case "Foul":
+      case "Offside":
+      case "BeatenTrap":
+      case "KeyPass":
+      case "Corner":
+      case "FreeKick":
+      case "Penalty":
       case "YellowCard":
       case "RedCard":
       case "Injury":
@@ -111,7 +124,8 @@ const foldPitch = (
   observe?: PitchObserver,
 ): PitchFold => {
   const clubId: ClubId = setup.clubId;
-  let slots = setup.tactic.slots.map((slot) => ({ playerId: slot.playerId, position: slot.position }));
+  // Match screens still speak in the ten Positions; a slot's cell folds to the nearest one.
+  let slots = setup.tactic.slots.map((slot) => ({ playerId: slot.playerId, position: legacyPositionOf(slot.cell) }));
   const beenOn = new Set<PlayerId>(slots.map((slot) => slot.playerId));
   const standInsOfCommands = new Set<SubstitutionEvent>();
   const benchless = new Set<SubstitutionEvent>();

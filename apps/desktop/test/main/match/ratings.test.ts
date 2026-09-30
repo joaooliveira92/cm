@@ -39,6 +39,7 @@ const goal = (minute: number, teamClubId: ClubId, playerId: string, homeScore: n
   playerId: pid(playerId),
   homeScore,
   awayScore,
+  chanceType: "throughBall",
 });
 const fullTime = (homeScore: number, awayScore: number): MatchEvent => ({ _tag: "FullTimeWhistle", minute: 90, homeScore, awayScore });
 
@@ -114,9 +115,9 @@ const kickoffSetup = {
   squad: ["gk", "dc", "st", "bench1", "bench2"].map((id) => ({ id: pid(id) })),
   tactic: {
     slots: [
-      { playerId: pid("gk"), position: "GK" },
-      { playerId: pid("dc"), position: "DC" },
-      { playerId: pid("st"), position: "ST" },
+      { playerId: pid("gk"), cell: { row: "GK", column: "C" } },
+      { playerId: pid("dc"), cell: { row: "D", column: "C" } },
+      { playerId: pid("st"), cell: { row: "F", column: "C" } },
     ],
     bench: [pid("bench1"), pid("bench2")],
   },

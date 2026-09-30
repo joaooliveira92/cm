@@ -652,6 +652,11 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
     "vendored reui event calendar; kept whole so it can be re-synced against upstream",
   "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-time-grid.tsx":
     "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  // RPC handler registry — one `onRpc` per endpoint, growing linearly with the method count.
+  // Splitting it would scatter the single dispatch table across files, hiding the full endpoint
+  // surface from a glance.
+  "apps/desktop/src/main/rpc/rpcServer.ts":
+    "RPC handler registry; grows linearly with endpoint count; structural value as single dispatch table",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

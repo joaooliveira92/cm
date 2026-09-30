@@ -9,7 +9,6 @@ import { getCareerSetupSummary } from "../rpc.js";
 import type { CreationSession } from "../router/createSessionContext.js";
 import { selectedClubOf } from "./clubSelection.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
-import { STYLE_LABELS } from "./managerStyleCopy.js";
 import { describeCompetitions, describeStaff } from "./careerSetupSummary.js";
 import { provisionalIdOf } from "./generation.js";
 import { StepHeading } from "./StepHeading.js";
@@ -78,7 +77,6 @@ export const ReviewPane = ({
     { label: "Date of birth", value: session.dateOfBirth || "Not selected" },
     { label: "Favorite team", value: selectedFavoriteTeamOf(session)?.clubName ?? "None" },
     { label: "Formation", value: session.preferredFormation ?? "Not selected" },
-    { label: "Tactical style", value: session.preferredStyleId === null ? "Not selected" : STYLE_LABELS[session.preferredStyleId] },
     { label: "Archetype", value: session.archetype.replaceAll("_", " ") },
     { label: "Club", value: selectedClubOf(session)?.clubName ?? "Not selected" },
     { label: "League scope", value: leagueScope },

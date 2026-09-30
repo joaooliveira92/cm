@@ -57,7 +57,6 @@ const createEmptySession = (): CreationSession => ({
   dateOfBirth: "",
   favoriteTeam: null,
   preferredFormation: null,
-  preferredStyleId: null,
   avatarPortraitKey: null,
   avatarPrimaryColor: DEFAULT_AVATAR.primary,
   avatarSecondaryColor: DEFAULT_AVATAR.secondary,
@@ -341,13 +340,11 @@ export const useCreateSession = (): CreateFlowSession => {
     const lastName = currentSession.lastName.trim();
     const nationalityId = currentSession.nationalityId;
     const preferredFormation = currentSession.preferredFormation;
-    const preferredStyleId = currentSession.preferredStyleId;
 
     if (
       provisionalId === null ||
       nationalityId === null ||
       preferredFormation === null ||
-      preferredStyleId === null ||
       !personalDetailsComplete(currentSession)
     ) {
       update({ error: "Please fill in all required fields" });
@@ -390,7 +387,6 @@ export const useCreateSession = (): CreateFlowSession => {
         dateOfBirth: currentSession.dateOfBirth,
         favoriteClubId: selectedFavoriteTeamOf(currentSession)?.clubId ?? null,
         preferredFormation,
-        preferredStyleId,
         avatarPortraitKey: currentSession.avatarPortraitKey,
         avatarPrimaryColor: currentSession.avatarPrimaryColor,
         avatarSecondaryColor: currentSession.avatarSecondaryColor,

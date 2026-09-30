@@ -15,9 +15,9 @@ Seam: renderer only.
 
 **Blocked by:** 22
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Each list adds, reorders and removes players and saves the order.
-- [ ] A nominee outside the eleven shows a warning but is kept.
-- [ ] Reordering works by keyboard.
-- [ ] Renderer tests pass, and typecheck and lint pass.
+- [x] Each list adds, reorders and removes players and saves the order.
+- [x] A nominee outside the eleven shows a warning but is kept.
+- [x] Reordering works by keyboard.
+- [x] Renderer tests pass, and typecheck and lint pass.

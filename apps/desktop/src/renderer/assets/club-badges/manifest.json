@@ -406,6 +406,146 @@
     "adapter": "football-logos"
   },
   {
+    "key": "bra/athletico-paranaense",
+    "file": "bra/athletico-paranaense.png",
+    "sha256": "e544f456270b1dab30adbccc106cf6498b6e6f9888d8ccf8b575d5bbecd3e5d1",
+    "source": "atletico-pr.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/atletico-mineiro",
+    "file": "bra/atletico-mineiro.png",
+    "sha256": "754809a45b0c4b3af910732dae7df6691a9aa97a5dcc9e5efe12a3d1fe4e3b66",
+    "source": "Atlético Mineiro.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/bahia",
+    "file": "bra/bahia.png",
+    "sha256": "93e74b90d40ae119558e28a8e3b6bff6bef74bf965d0b2367f8e1a4143119f10",
+    "source": "Bahia.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/botafogo",
+    "file": "bra/botafogo.png",
+    "sha256": "897b828cfee6eed505f459fde571d195e1a029271d228d9755255bc045c74768",
+    "source": "Botafogo.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/chapecoense",
+    "file": "bra/chapecoense.png",
+    "sha256": "fda250ae53474fe240097c36a134710d70a4bd0d19a50b5ddbd73b148ce99509",
+    "source": "Chapecoense.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/corinthians",
+    "file": "bra/corinthians.png",
+    "sha256": "daa77719eff42b570be0b3b63829e2e54bb0d52d2944043fabeb01c252824217",
+    "source": "Corinthians.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/coritiba",
+    "file": "bra/coritiba.png",
+    "sha256": "4c2ddd3e244f8d3718446e33929b222edb3ee75073127c4b5863497766093799",
+    "source": "Coritiba.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/cruzeiro",
+    "file": "bra/cruzeiro.png",
+    "sha256": "81e56be3940e9622f919ef9330175c8064cc129074d8337543a26cff247a46f8",
+    "source": "Cruzeiro.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/flamengo",
+    "file": "bra/flamengo.png",
+    "sha256": "2a040077ab11eab135ac25c9bd982cbefc3bcff13fd56a1f950a3f643a750d8d",
+    "source": "Flamengo.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/fluminense",
+    "file": "bra/fluminense.png",
+    "sha256": "fadb8d8e9190e1549362db8c344e49fcb9fa89aad676ec12b95c3749658c196d",
+    "source": "Fluminense.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/gremio",
+    "file": "bra/gremio.png",
+    "sha256": "bc282f55e720d44d3c51b2642b42964c987ae2ff3940cc494b9f4556de30f8e6",
+    "source": "Grêmio.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/internacional",
+    "file": "bra/internacional.png",
+    "sha256": "177bca4715dc580a250f2394fc0c3650f0f9eb4d92b8383006c901ee5fd398b5",
+    "source": "Internacional.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/mirassol",
+    "file": "bra/mirassol.png",
+    "sha256": "2d4a7ec880d515fd25d13263f9ea263bf7236ba840176114225b349d0e15a932",
+    "source": "Mirassol-SP.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/palmeiras",
+    "file": "bra/palmeiras.png",
+    "sha256": "f1d60fe492d43206d11227bea8da40e8817416173dc2c2465640844a64611937",
+    "source": "Palmeiras.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/red-bull-bragantino",
+    "file": "bra/red-bull-bragantino.png",
+    "sha256": "036645d26a1919172c5a4a2e70ebcdb1e61cdfd3beebea88a22e23733d23974d",
+    "source": "Red Bull Bragantino.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/remo",
+    "file": "bra/remo.png",
+    "sha256": "276e41c59e00a1da0bc5245e377432d66d2d08656fadbd20abe2e90aadff5e9e",
+    "source": "Remo.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/santos",
+    "file": "bra/santos.png",
+    "sha256": "f97e4565f79da3b69efe824332e17199229b77ca8be9eaeee0d4436fbe7267e8",
+    "source": "Santos.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/sao-paulo",
+    "file": "bra/sao-paulo.png",
+    "sha256": "0eadb94af923386cbd1950c5ca225b2784c7e47c85260e2c7938abe9640e1228",
+    "source": "São Paulo.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/vasco-da-gama",
+    "file": "bra/vasco-da-gama.png",
+    "sha256": "de510d28b51134c0f88ae25b60d657ca349374a409e2b887223acbe6f953ae6c",
+    "source": "Vasco da Gama.png",
+    "adapter": "brazil-logos"
+  },
+  {
+    "key": "bra/vitoria",
+    "file": "bra/vitoria.png",
+    "sha256": "f851e01e10aaa846e19ab2cfca29e3c37b274e4e4eadb2c331354d3a3c71cf66",
+    "source": "Vitória.png",
+    "adapter": "brazil-logos"
+  },
+  {
     "key": "che/bsc-young-boys",
     "file": "che/bsc-young-boys.png",
     "sha256": "83c8380cc80869a728256d8eb16cb40359ef27771d986d741d98a35b9f50ab62",

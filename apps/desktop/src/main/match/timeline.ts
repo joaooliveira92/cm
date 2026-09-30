@@ -31,13 +31,30 @@ const teamPlayer = {
 
 const scoreAt = { minute: Schema.Finite, homeScore: Schema.Finite, awayScore: Schema.Finite };
 
+const ChanceTypeSchema = Schema.Literals(["throughBall", "cross", "longShot", "runWithBall", "holdUpLayOff", "counter"]);
+const chanceFields = { ...teamPlayer, chanceType: ChanceTypeSchema, assistPlayerId: Schema.optional(PlayerId) };
+const attackFields = { ...chanceFields, homeScore: Schema.Finite, awayScore: Schema.Finite };
+
 /** The engine's `MatchEvent` union, field for field, so a stored timeline decodes back to it. */
 const StoredMatchEvent = Schema.Union([
   Schema.TaggedStruct("MatchStarted", { seed: Schema.Finite, homeClubId: ClubId, awayClubId: ClubId }),
-  Schema.TaggedStruct("Goal", { ...teamPlayer, homeScore: Schema.Finite, awayScore: Schema.Finite }),
-  Schema.TaggedStruct("ShotOnTarget", teamPlayer),
-  Schema.TaggedStruct("ShotMissed", teamPlayer),
-  Schema.TaggedStruct("BigChance", teamPlayer),
+  Schema.TaggedStruct("Goal", attackFields),
+  Schema.TaggedStruct("ShotOnTarget", chanceFields),
+  Schema.TaggedStruct("ShotMissed", chanceFields),
+  Schema.TaggedStruct("ThroughBall", teamPlayer),
+  Schema.TaggedStruct("Cross", teamPlayer),
+  Schema.TaggedStruct("LongShot", teamPlayer),
+  Schema.TaggedStruct("RunWithBall", teamPlayer),
+  Schema.TaggedStruct("HoldUpLayOff", teamPlayer),
+  Schema.TaggedStruct("Counter", teamPlayer),
+  Schema.TaggedStruct("KeyPass", { ...teamPlayer, chanceType: Schema.String }),
+  Schema.TaggedStruct("Foul", { ...teamPlayer, isYellowCard: Schema.Boolean }),
+  Schema.TaggedStruct("Offside", teamPlayer),
+  Schema.TaggedStruct("Offside", teamPlayer),
+  Schema.TaggedStruct("BeatenTrap", teamPlayer),
+  Schema.TaggedStruct("Corner", { ...teamPlayer, deliveryType: Schema.String, side: Schema.Literals(["left", "right"]) }),
+  Schema.TaggedStruct("FreeKick", { ...teamPlayer, side: Schema.Literals(["left", "right"]) }),
+  Schema.TaggedStruct("Penalty", teamPlayer),
   Schema.TaggedStruct("YellowCard", teamPlayer),
   Schema.TaggedStruct("RedCard", teamPlayer),
   Schema.TaggedStruct("Injury", {

@@ -61,7 +61,7 @@ const seeded = (seed: number) =>
     const clubId = humanClubOf(match);
     // A substitute must be named on the bench (decision request 04, ticket 35).
     const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
-    const goalkeeper = tactic.slots.find((slot) => slot.position === "GK")!.playerId;
+    const goalkeeper = tactic.assignments[0]!;
     const command = (minute: number, isHalftime: boolean, body: SubmitBody, revealedEvents: number | null = 0) =>
       submitMatchCommand(savesDir, save.id, match.matchId, 0, revealedEvents, minute, isHalftime, { clubId, ...body } as never);
     const sub = (outPlayerId: PlayerId, inPlayerId: PlayerId): SubmitBody => ({ _tag: "MakeSubstitution", outPlayerId, inPlayerId });
@@ -94,7 +94,7 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
  * Re-pinned for group-g-match-day ticket 35: seed 26 held this while the three substitutions brought
  * on the first squad players outside the XI; they now come off the named bench, which moves the rolls.
  */
-const GOALKEEPER_STAND_IN_SEED = 478;
+const GOALKEEPER_STAND_IN_SEED = 978;
 const STAND_IN_INJURY_LINE = 29;
 /** Which bench entries come on at minutes 1, 2 and 3; the first is the one later dragged into goal. */
 const STAND_IN_BENCH_ORDER = [1, 0, 2] as const;
@@ -106,7 +106,7 @@ it.effect(
       const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
       const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
       for (const minute of [1, 2, 3]) {
-        const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[STAND_IN_BENCH_ORDER[minute - 1]!]!));
+        const response = yield* s.command(minute, false, s.sub(s.tactic.assignments[minute]!, s.bench[STAND_IN_BENCH_ORDER[minute - 1]!]!));
         strictEqual(response.substitutionApplied, true, repin);
       }
       const keeperOff = yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper });
@@ -143,7 +143,7 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
     const s = yield* seeded(GOALKEEPER_STAND_IN_SEED);
     const repin = `repin GOALKEEPER_STAND_IN_SEED (${GOALKEEPER_STAND_IN_SEED})`;
     for (const minute of [1, 2, 3]) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[STAND_IN_BENCH_ORDER[minute - 1]!]!));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.assignments[minute]!, s.bench[STAND_IN_BENCH_ORDER[minute - 1]!]!));
       strictEqual(response.substitutionApplied, true, repin);
     }
     strictEqual((yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper })).forceOffApplied, true, repin);
@@ -262,11 +262,11 @@ it.effect("a forced substitution in regular minute 45 spends a window", () =>
 it.effect("a command clamped to minute 45 spends a window; a halftime instruction does not", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const clamped = yield* s.command(45, false, s.sub(s.tactic.slots[1]!.playerId, s.bench[0]!));
+    const clamped = yield* s.command(45, false, s.sub(s.tactic.assignments[1]!, s.bench[0]!));
     strictEqual(clamped.substitutionApplied, true);
     strictEqual(humanSubs(clamped, s.match).windowsUsed, 1, "a first-half stoppage command applies in minute 45 and opens a window");
 
-    const halftime = yield* s.command(45, true, s.sub(s.tactic.slots[2]!.playerId, s.bench[1]!));
+    const halftime = yield* s.command(45, true, s.sub(s.tactic.assignments[2]!, s.bench[1]!));
     strictEqual(halftime.substitutionApplied, true);
     strictEqual(humanSubs(halftime, s.match).used, 2);
     strictEqual(humanSubs(halftime, s.match).windowsUsed, 1, "a halftime instruction opens no window");
@@ -277,10 +277,10 @@ it.effect("a minute-45 command the window cap refuses leaves a halftime instruct
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
     for (const minute of [1, 2, 3]) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[minute]!.playerId, s.bench[minute - 1]!));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.assignments[minute]!, s.bench[minute - 1]!));
       strictEqual(response.substitutionApplied, true);
     }
-    const pair = s.sub(s.tactic.slots[4]!.playerId, s.bench[3]!);
+    const pair = s.sub(s.tactic.assignments[4]!, s.bench[3]!);
     const clamped = yield* s.command(45, false, pair);
     strictEqual(clamped.substitutionApplied, false, "no window is left");
     const halftime = yield* s.command(45, true, pair);
@@ -319,10 +319,10 @@ it.effect("windows follow the engine's last-window minute, not the set of distin
     strictEqual(s.bench.length, 7, "the bench is full");
 
     for (const [minute, index] of [[47, 0], [48, 1]] as const) {
-      const response = yield* s.command(minute, false, s.sub(s.tactic.slots[index + 1]!.playerId, s.bench[index + 4]!));
+      const response = yield* s.command(minute, false, s.sub(s.tactic.assignments[index + 1]!, s.bench[index + 4]!));
       strictEqual(response.substitutionApplied, true, repin);
     }
-    const refused = yield* s.command(60, false, s.sub(s.tactic.slots[3]!.playerId, s.bench[6]!));
+    const refused = yield* s.command(60, false, s.sub(s.tactic.assignments[3]!, s.bench[6]!));
     strictEqual(refused.substitutionApplied, false, `the engine has used three windows — ${repin}`);
     const whole = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, null);
     strictEqual(humanSubs(whole, s.match).used, 3, repin);
@@ -334,7 +334,7 @@ it.effect("windows follow the engine's last-window minute, not the set of distin
 it.effect("the statistics count manager substitutions as the panel does: once journaled", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const response = yield* s.command(3, false, s.sub(s.tactic.slots[1]!.playerId, s.bench[0]!));
+    const response = yield* s.command(3, false, s.sub(s.tactic.assignments[1]!, s.bench[0]!));
     strictEqual(humanSubs(response, s.match).used, 1);
     strictEqual(yield* humanStatistic(s.save.id, s.match.matchId, s.match, 0), 1);
   }),
@@ -343,7 +343,7 @@ it.effect("the statistics count manager substitutions as the panel does: once jo
 it.effect("the same substitution submitted twice in one minute is applied once and refused once", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const pair = s.sub(s.tactic.slots[1]!.playerId, s.bench[0]!);
+    const pair = s.sub(s.tactic.assignments[1]!, s.bench[0]!);
     strictEqual((yield* s.command(3, false, pair)).substitutionApplied, true);
     const again: SubmitMatchCommandView = yield* s.command(3, false, pair);
     strictEqual(again.substitutionApplied, false, "the player has already come off");
@@ -354,7 +354,7 @@ it.effect("the same substitution submitted twice in one minute is applied once a
 it.effect("a bring-off reports whether the player left the pitch", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
-    const starter = s.tactic.slots[1]!.playerId;
+    const starter = s.tactic.assignments[1]!;
     const off = yield* s.command(3, false, { _tag: "ForceOff", playerId: starter });
     strictEqual(off.forceOffApplied, true);
     strictEqual(off.substitutionApplied, null);
@@ -364,7 +364,7 @@ it.effect("a bring-off reports whether the player left the pitch", () =>
       false,
       "never on",
     );
-    const sub = yield* s.command(5, false, s.sub(s.tactic.slots[2]!.playerId, s.bench[0]!));
+    const sub = yield* s.command(5, false, s.sub(s.tactic.assignments[2]!, s.bench[0]!));
     strictEqual(sub.forceOffApplied, null);
   }),
 );

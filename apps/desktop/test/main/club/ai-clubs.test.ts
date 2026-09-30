@@ -8,13 +8,13 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   ALL_ATTRIBUTES,
   BENCH_SIZE,
-  FORMATIONS,
+  BUILT_IN_TEMPLATE_NAMES,
+  slotLabel,
   HIDDEN_ATTRIBUTES,
   fitRatingsByPosition,
   selectBench,
-  selectBestFormationXI,
+  selectBestTemplateXI,
   transferValue,
-  type BestXiSlot,
   type PlayerAttributes,
   type PositionalRatings,
 } from "@cm-clone/shared";
@@ -83,10 +83,9 @@ it.effect("every AI club gets a valid, fixed Tactic at Season start; the user's 
       }
 
       ok(tactic, `AI club ${club.id} should have a persisted Tactic at Season start`);
-      ok(FORMATIONS.includes(tactic!.formation), `${tactic!.formation} should be one of the 5 v1 Formations`);
-      strictEqual(tactic!.mentality, "balanced");
-      strictEqual(tactic!.tempo, "normal");
-      strictEqual(tactic!.pressing, "medium");
+      ok(BUILT_IN_TEMPLATE_NAMES.includes(tactic!.sourceTemplate), `${tactic!.sourceTemplate} should be one of the 29 built-in templates`);
+      // AI clubs now derive tactical preferences from the world seed (ticket 32), so their
+      // team instructions reflect those preferences rather than matching template defaults.
 
       const squad = yield* withSave(save.id, loadSquadPlayers(club.id));
       const squadIds = new Set(squad.map((player) => player.id));
@@ -94,7 +93,7 @@ it.effect("every AI club gets a valid, fixed Tactic at Season start; the user's 
       ok(validation._tag === "Success", `AI club ${club.id}'s Tactic should pass the same validateTactic rules the human Tactics screen enforces`);
 
       // Group-g 34: the persisted Tactic names a bench — the shared selection, off this squad's XI.
-      const xi = tactic!.slots.map((slot) => slot.playerId);
+      const xi = tactic!.assignments;
       deepStrictEqual(tactic!.bench, selectBench(squad, xi), `AI club ${club.id}'s bench should be the shared bench selection`);
       const named = tactic!.bench.filter((id): id is PlayerId => id !== null);
       strictEqual(named.length, Math.min(BENCH_SIZE, squad.length - xi.length), `AI club ${club.id} should name a full bench when the squad allows`);
@@ -382,10 +381,10 @@ ok(tacticRightAfterCreate, "AI Tactic assignment already landed synchronously in
 );
 
 // ---------------------------------------------------------------------------
-// pickBestFormationTactic matches selectBestFormationXI (ticket 01a: ordered preservation)
+// pickBestFormationTactic matches selectBestTemplateXI (ticket 01a: ordered preservation)
 // ---------------------------------------------------------------------------
 
-it.effect("pickBestFormationTactic returns the same formation and slots as selectBestFormationXI", () =>
+it.effect("pickBestFormationTactic returns the same template and players as selectBestTemplateXI", () =>
   Effect.gen(function* () {
     const save = yield* createSave(savesDir, "Test Career");
     const clubs = yield* allClubs(save.id);
@@ -396,39 +395,27 @@ it.effect("pickBestFormationTactic returns the same formation and slots as selec
       const squad = yield* withSave(save.id, loadSquadPlayers(club.id));
       const tacticYielded = yield* withSave(save.id, pickBestFormationTactic(squad));
 
-      // selectBestFormationXI is pure; call it directly
-      const algorithmResult = selectBestFormationXI(squad);
+      // selectBestTemplateXI is pure; call it directly
+      const algorithmResult = selectBestTemplateXI(squad);
 
-      ok(algorithmResult._tag === "success", `selectBestFormationXI should succeed for club ${club.id}`);
-      if (algorithmResult._tag === "success") {
-        ok(FORMATIONS.includes(tacticYielded.formation), `formation ${tacticYielded.formation} should be one of the 5 v1 Formations`);
+      ok(algorithmResult !== null, `selectBestTemplateXI should succeed for club ${club.id}`);
+      strictEqual(
+        tacticYielded.sourceTemplate,
+        algorithmResult.template.name,
+        `pickBestFormationTactic's template must match selectBestTemplateXI's for club ${club.id}`,
+      );
+      strictEqual(tacticYielded.slots.length, algorithmResult.filled.length, `slot count must match for club ${club.id}`);
+      for (const [i, entry] of algorithmResult.filled.entries()) {
         strictEqual(
-          tacticYielded.formation,
-          algorithmResult.formation,
-          `pickBestFormationTactic's formation must match selectBestFormationXI's for club ${club.id}`,
+          slotLabel(tacticYielded.slots[i]!.cell),
+          slotLabel(entry.cell),
+          `slot ${i} cell mismatch for club ${club.id}`,
         );
-
-        // The slots from pickBestFormationTactic (with roles/mentality/etc filled in) must
-        // correspond position-by-position to selectBestFormationXI's slots.
         strictEqual(
-          tacticYielded.slots.length,
-          algorithmResult.slots.length,
-          `slot count must match for club ${club.id}`,
+          tacticYielded.assignments[i],
+          entry.playerId,
+          `slot ${i} player mismatch for club ${club.id}: pickBestFormationTactic chose ${tacticYielded.assignments[i]} but selectBestTemplateXI chose ${entry.playerId}`,
         );
-        for (let i = 0; i < algorithmResult.slots.length; i++) {
-          const algorithmSlot: BestXiSlot<PlayerId> = algorithmResult.slots[i]!;
-          const tacticSlot = tacticYielded.slots[i]!;
-          strictEqual(
-            tacticSlot.position,
-            algorithmSlot.position,
-            `slot ${i} position mismatch for club ${club.id}`,
-          );
-          strictEqual(
-            tacticSlot.playerId,
-            algorithmSlot.playerId,
-            `slot ${i} player mismatch for club ${club.id}: pickBestFormationTactic chose ${tacticSlot.playerId} but selectBestFormationXI chose ${algorithmSlot.playerId}`,
-          );
-        }
       }
     }
   }),

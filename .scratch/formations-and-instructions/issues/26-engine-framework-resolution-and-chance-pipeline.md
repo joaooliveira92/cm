@@ -19,10 +19,10 @@ exact under the seed.
 
 **Blocked by:** 21
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The engine package imports no tactics vocabulary.
-- [ ] A seeded match replays event for event; seeded match specs are re-pinned where their scenario moved.
-- [ ] Directional tests: more attacking Mentality raises attempts and goals conceded; Long passing lowers possession.
-- [ ] The calibration script reports league averages inside the targets (goals 2.5-2.8, yellows 3-4, fouls 20-26).
-- [ ] Engine, shared and main match tests pass.
+- [x] The engine package imports no tactics vocabulary.
+- [x] A seeded match replays event for event; seeded match specs are re-pinned where their scenario moved.
+- [x] Directional tests: more attacking Mentality raises attempts and goals conceded; Long passing lowers possession.
+- [x] The calibration script reports league averages inside the targets (goals 2.5-2.8, yellows 3-4, fouls 20-26).
+- [x] Engine, shared and main match tests pass.

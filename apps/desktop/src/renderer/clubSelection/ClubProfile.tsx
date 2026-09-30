@@ -19,7 +19,7 @@ export const ClubProfile = ({ club, leagueSize }: ClubProfileProps) => (
     <SquadQualityCard band={club.squadQualityBand} accentColour={club.clubColours.primary.background} />
     <FinancesCard transferBudget={club.transferBudget} wageBudget={club.wageBudget} />
 
-    <Separator className="my-2" />
+
 
     <TopPlayersCard players={club.detail.topPlayers} />
 

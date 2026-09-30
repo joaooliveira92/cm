@@ -1,124 +1,113 @@
-import { useState } from "react";
-import { Tactic, type SaveId } from "@cm-clone/contracts";
-import { MENTALITY_OPTIONS, PRESSING_OPTIONS, TEMPO_OPTIONS } from "@cm-clone/shared";
-import { Button } from "../components/ui/button.js";
+import { useCallback, useState } from "react";
+import { Tactic, type SaveId, type PlayerId } from "@cm-clone/contracts";
+import { type MatchPitchView } from "@cm-clone/contracts";
 import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
 import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
+import { InMatchTactics, TacticsScreen } from "../tactics/TacticsScreen.js";
 
-/** Screen 97, tactics half: the formation and the players the match has on the pitch, and the three
- *  live Team Instructions, submitted to the match as one `ChangeTactics`. */
-export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const commands = useLiveMatchCommands(saveId);
-  return (
-    <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands}>
-      {(ready) => (
-        <TacticsForm
-          // A new tactic sent to the match (an accepted change) resets the draft.
-          key={JSON.stringify(ready.tactic)}
-          ready={ready}
-          pending={commands.status?._tag === "pending"}
-          onSubmit={(tactic) => commands.submit({ _tag: "ChangeTactics", clubId: ready.clubId, tactic })}
-        />
-      )}
-    </LiveCommandFrame>
-  );
+/**
+ * Validate a live tactic change against the revealed pitch.
+ * A player not on the pitch (sent off, injured off, red-carded) cannot be named in a tactic.
+ * Returns null when valid, or an error message when refused.
+ *
+ * Exported for testing.
+ */
+export const validateLiveTactic = (tactic: Tactic, ready: LiveMatchReady): string | null => {
+  const onPitchPlayerIds = new Set(ready.snapshot.pitch.onPitch.map((slot) => slot.playerId));
+  for (const playerId of tactic.assignments) {
+    if (playerId === "") continue; // Empty slot allowed (shorthanded)
+    if (!onPitchPlayerIds.has(playerId)) {
+      const player = ready.squad.find((p) => p.id === playerId);
+      const name = player ? `${player.firstName} ${player.lastName}` : String(playerId);
+      return `${name} is not on the pitch and cannot be assigned.`;
+    }
+  }
+  return null;
 };
 
-const InstructionChoice = <T extends string>({
-  label,
-  options,
-  value,
-  onChange,
-}: {
-  readonly label: string;
-  readonly options: ReadonlyArray<T>;
-  readonly value: T;
-  readonly onChange: (value: T) => void;
-}) => (
-  <div role="group" aria-label={label}>
-    <p className="text-data text-text-secondary">{label}</p>
-    <div className="mt-1 flex gap-1">
-      {options.map((option) => (
-        <Button
-          key={option}
-          type="button"
-          size="sm"
-          variant={option === value ? "default" : "secondary"}
-          aria-pressed={option === value}
-          className="capitalize"
-          onClick={() => onChange(option)}
-        >
-          {option}
-        </Button>
-      ))}
-    </div>
-  </div>
-);
-
-const TacticsForm = ({
-  ready,
-  pending,
-  onSubmit,
-}: {
-  readonly ready: LiveMatchReady;
-  readonly pending: boolean;
-  readonly onSubmit: (tactic: Tactic) => Promise<void>;
-}) => {
-  const [draft, setDraft] = useState<Tactic>(ready.tactic);
-  const nameOf = (id: string) => {
-    const player = ready.squad.find((p) => p.id === id);
-    return player ? `${player.firstName} ${player.lastName}` : id;
-  };
-  const changed =
-    draft.mentality !== ready.tactic.mentality ||
-    draft.tempo !== ready.tactic.tempo ||
-    draft.pressing !== ready.tactic.pressing;
+/** Screen 97, tactics half: the full TacticsScreen showing, as the manager
+ *  would see it pre-match, but with Confirm/Undo Last/Cancel in place of the
+ *  normal save flow and validated against the revealed pitch. */
+export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+  const commands = useLiveMatchCommands(saveId);
+  const [draftTactic, setDraftTactic] = useState<Tactic | null>(null);
+  const [undoStack, setUndoStack] = useState<Array<Tactic>>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   return (
-    <>
-      <section aria-label="Formation in play" className="rounded-panel border border-panel-border bg-panel-bg p-4">
-        <p className="font-semibold">Formation: {draft.formation}</p>
-        <p className="mt-1 text-data text-text-muted">
-          The formation stays fixed while the match is live; only Mentality, Tempo and Pressing change.
-        </p>
-        {/* The players come from the match's pitch, never a Tactic: a live change moves no one, and
-            only the pitch reflects red cards, forced substitutions, bring-offs and a goalkeeper
-            stand-in (group-g-match-day 43). */}
-        <ul className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1">
-          {ready.snapshot.pitch.onPitch.map((slot) => (
-            <li key={`${slot.position}-${slot.playerId}`}>
-              <span className="mr-2 font-mono text-data text-text-tertiary">{slot.position}</span>
-              {nameOf(slot.playerId)}
-            </li>
-          ))}
-        </ul>
-      </section>
+    <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands}>
+      {(ready) => {
+        const tactic = draftTactic ?? ready.tactic;
 
-      <section aria-label="Team instructions" className="space-y-3">
-        <div className="flex flex-wrap gap-6">
-          <InstructionChoice
-            label="Mentality"
-            options={MENTALITY_OPTIONS}
-            value={draft.mentality}
-            onChange={(mentality) => setDraft(new Tactic({ ...draft, mentality }))}
+        const onEdit = useCallback(
+          (newTactic: Tactic) => {
+            // Push the pre-edit tactic onto the undo stack before updating
+            const currentStack = undoStack;
+            const nextStack = [...currentStack, tactic];
+            setUndoStack(nextStack);
+            setDraftTactic(newTactic);
+            setValidationError(null);
+          },
+          [ready.tactic, tactic, undoStack, setUndoStack, setDraftTactic, setValidationError],
+        );
+
+        const onConfirm = useCallback(
+          () => {
+            // Validate against the revealed pitch
+            const error = validateLiveTactic(tactic, ready);
+            if (error !== null) {
+              setValidationError(error);
+              return;
+            }
+            setValidationError(null);
+            // Clear the undo stack — changes are now in the match
+            setUndoStack([]);
+            setDraftTactic(null);
+            void commands.submit({ _tag: "ChangeTactics", clubId: ready.clubId, tactic });
+          },
+          [tactic, ready, commands, setUndoStack, setDraftTactic, setValidationError],
+        );
+
+        const onUndoLast = useCallback(
+          () => {
+            const stack = undoStack;
+            if (stack.length === 0) return;
+            const previous = stack[stack.length - 1];
+            if (previous === undefined) return;
+            setUndoStack(stack.slice(0, -1));
+            setDraftTactic(previous);
+            setValidationError(null);
+          },
+          [undoStack, setUndoStack, setDraftTactic, setValidationError],
+        );
+
+        const onCancel = useCallback(
+          () => {
+            setDraftTactic(null);
+            setUndoStack([]);
+            setValidationError(null);
+          },
+          [setDraftTactic, setUndoStack, setValidationError],
+        );
+
+        return (
+          <TacticsScreen
+            saveId={saveId}
+            inMatch={{
+              tactic,
+              squad: ready.squad,
+              clubName: ready.match.isHome ? ready.match.homeClubName : ready.match.awayClubName,
+              setTactic: onEdit,
+              onConfirm,
+              onUndoLast,
+              onCancel,
+              pendingCount: undoStack.length,
+              validationError,
+              isPending: commands.status?._tag === "pending",
+            }}
           />
-          <InstructionChoice
-            label="Tempo"
-            options={TEMPO_OPTIONS}
-            value={draft.tempo}
-            onChange={(tempo) => setDraft(new Tactic({ ...draft, tempo }))}
-          />
-          <InstructionChoice
-            label="Pressing"
-            options={PRESSING_OPTIONS}
-            value={draft.pressing}
-            onChange={(pressing) => setDraft(new Tactic({ ...draft, pressing }))}
-          />
-        </div>
-        <Button type="button" disabled={!changed || pending} onClick={() => void onSubmit(draft)}>
-          {pending ? "Submitting..." : "Apply tactics change"}
-        </Button>
-      </section>
-    </>
+        );
+      }}
+    </LiveCommandFrame>
   );
 };

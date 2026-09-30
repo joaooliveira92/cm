@@ -16,16 +16,11 @@ describe("condition ledger", () => {
   });
 
   it("decays faster for a low-Stamina player than a fit one", () => {
-    const low = conditionDecayPerMinute(6, 1);
-    const high = conditionDecayPerMinute(18, 1);
+    const low = conditionDecayPerMinute(6);
+    const high = conditionDecayPerMinute(18);
     expect(low).toBeGreaterThan(high);
   });
 
-  it("decays faster under a high Tempo multiplier", () => {
-    const slow = conditionDecayPerMinute(12, 0.8);
-    const fast = conditionDecayPerMinute(12, 1.2);
-    expect(fast).toBeGreaterThan(slow);
-  });
 it("seeds players at their carried-over startingCondition", () => {
     const ledger = newConditionLedger(
       [playerId("a"), playerId("b")],

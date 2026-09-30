@@ -1,99 +1,141 @@
 import { Tactic, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import {
   COMPETENT_SUITABILITY,
-  FORMATIONS,
-  FORMATION_SLOTS,
   POSITIONS,
-  POSITION_ROLES,
   POSITION_SLOT,
+  STARTER_COUNT,
+  aiTacticFromResult,
+  aiResolveTactic,
+  aiTacticPreferences,
   selectBench,
-  selectBestFormationXI,
+  selectBestTemplateXI,
   suitability,
+  tacticFromTemplate,
   transferValue,
   weeklyWage,
-  type Formation,
-  type Position,
   type BenchCandidate,
+  type CellRatingsLike,
+  type Position,
 } from "@cm-clone/shared";
 import { Data, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers } from "./squad.js";
 import { persistTactic, validateTactic } from "./tactics.js";
 import { aiPlaceBid, aiSignFreeAgent, loadAllPlayersEcon, loadClubBudgetRow, loadWageBudgetUsed } from "../transfers/index.js";
+import { readGenerationManifest } from "../world/worldGeneration.js";
 
 // ---------------------------------------------------------------------------
 // Domain errors
 // ---------------------------------------------------------------------------
 
-/** Raised when a squad has fewer players than a Formation's fixed slot count — the greedy best-XI
- * fill cannot field the Formation. */
+/** Raised when a squad has fewer players than a Tactic's eleven slots — the greedy best-XI fill
+ * cannot field any template. */
 export class SquadTooSmallError extends Data.TaggedError("SquadTooSmallError")<{
-  readonly formation: Formation;
   readonly slots: number;
   readonly squadSize: number;
 }> {}
 
 // ---------------------------------------------------------------------------
 // AI Tactic assignment (ticket 17 / ADR-0005): one fixed Tactic per AI club, chosen once at
-// Season start by best-fit against the squad's own Position Ratings, never touched again.
+// Season start using seeded preferences (formations-and-instructions ticket 32).
 //
-// The core best-XI algorithm lives in `packages/shared/src/bestXi.ts` (`selectBestFormationXI`).
-// This module owns the Effect-level squad-size wrapper, `SquadTooSmallError`, and Tactic
-// construction — the thinnest possible seam (ADR-0005, ticket 01a).
+// Each club derives its five CM staff preferences from the world seed and its stature tier:
+// preferred formation, playing mentality, pressing style, playing style, marking style.
+// The tactic starts from the preferred template and falls back when the squad is unsuited.
+// The core best-XI algorithm lives in `packages/shared/src/rules/bestXi.ts`
+// (`selectBestTemplateXI`). This module owns the Effect-level squad-size wrapper,
+// `SquadTooSmallError`, and Tactic construction.
 // ---------------------------------------------------------------------------
 
 /**
- * Best-fit Tactic for one club's squad: the Formation (among the 5 v1 Formations) maximizing
- * mean Position Rating across its 11 slots, filled greedily; roles defaulted to each slot's v1
- * Role (`POSITION_ROLES`); instructions fixed at balanced/normal/medium; the bench from the shared
- * `selectBench` (spare goalkeeper first, then by rating — group-g 34). Wraps the shared
- * `selectBestFormationXI` with the Effect-level `SquadTooSmallError`.
+ * Best-fit Tactic for one club's squad: the built-in template (of the 29) maximizing mean fit
+ * rating across its 11 cells, filled greedily; the template's own instructions and set-piece
+ * settings, no takers; the bench from the shared `selectBench` (spare goalkeeper first, then by
+ * rating — group-g 34). Wraps the shared `selectBestTemplateXI` with the Effect-level
+ * `SquadTooSmallError`. Tests that exercise the shared algorithm without seeded preferences call
+ * this directly.
  */
 export const pickBestFormationTactic = (
-  squad: ReadonlyArray<BenchCandidate<PlayerId>>,
+  squad: ReadonlyArray<CellRatingsLike<PlayerId> & BenchCandidate<PlayerId>>,
 ): Effect.Effect<Tactic, SquadTooSmallError> =>
   Effect.gen(function* () {
-    const result = selectBestFormationXI(squad);
-    if (result._tag === "failure") {
-      // All formations failed — report the first formation's slot count for context
-      return yield* new SquadTooSmallError({ formation: FORMATIONS[0], slots: FORMATION_SLOTS[FORMATIONS[0]].length, squadSize: squad.length });
+    const best = selectBestTemplateXI(squad);
+    if (best === null) {
+      return yield* new SquadTooSmallError({ slots: STARTER_COUNT, squadSize: squad.length });
     }
+    const assignments = best.filled.map((entry) => entry.playerId);
+    return new Tactic(tacticFromTemplate(best.template, assignments, selectBench(squad, assignments)));
+  });
+
+/**
+ * Best-fit Tactic for one club's squad using seeded preferences (ticket 32):
+ * preferences from (worldSeed, clubId, statureTier), then pre-match resolution.
+ *
+ * Falls back to `SquadTooSmallError` when the squad cannot field eleven.
+ */
+const pickSeededTactic = (
+  worldSeed: number,
+  clubId: string,
+  statureTier: "big" | "mid" | "small",
+  squad: ReadonlyArray<
+    CellRatingsLike<PlayerId> &
+    BenchCandidate<PlayerId> & {
+      readonly suitability: Readonly<Record<string, number>>;
+    }
+  >,
+): Effect.Effect<Tactic, SquadTooSmallError> =>
+  Effect.gen(function* () {
+    const preferences = aiTacticPreferences(worldSeed, clubId, statureTier);
+    const squadMean =
+      squad.length > 0
+        ? squad.reduce((sum, p) => {
+            const vals = Object.values(p.cellRatings);
+            return sum + (vals.length > 0 ? vals.reduce((a, b) => a + b, 0) / vals.length : 0);
+          }, 0) / squad.length
+        : 50;
+
+    const result = aiResolveTactic(preferences, squad, true, {
+      phaseStrengths: { attack: squadMean, midfield: squadMean, defense: squadMean },
+      lastFormationName: preferences.preferredFormation,
+    });
+
+    if (result.filled.length === 0) {
+      return yield* new SquadTooSmallError({ slots: STARTER_COUNT, squadSize: squad.length });
+    }
+
+    const tactic = aiTacticFromResult(result, squad);
     return new Tactic({
-      formation: result.formation,
-      slots: result.slots.map((slot) => ({
-        position: slot.position,
-        role: POSITION_ROLES[slot.position],
-        playerId: slot.playerId,
-      })),
-      bench: selectBench(
-        squad,
-        result.slots.map((slot) => slot.playerId),
-      ),
-      mentality: "balanced",
-      tempo: "normal",
-      pressing: "medium",
+      sourceTemplate: tactic.sourceTemplate,
+      slots: result.template.slots,
+      team: tactic.team,
+      teamSetPieces: result.template.teamSetPieces,
+      assignments: tactic.assignments,
+      bench: tactic.bench,
+      takers: { captain: [], penalties: [], freeKicksLeft: [], freeKicksRight: [], cornersLeft: [], cornersRight: [], throwInsLeft: [], throwInsRight: [] },
     });
   });
 
 /**
- * Season-start AI Tactic assignment (ticket 17): every non-user club gets one fixed Tactic for
- * the whole Season, persisted the same way `changeTactics` persists the user's — direct in-process
- * writes via `tactics.ts`'s `persistTactic`, never through the RpcGroup. Called once from
- * `startSeason`; nothing else ever recomputes or rewrites an AI club's Tactic afterward, so "never
- * changes mid-season" holds by construction rather than needing an explicit guard. Clubs
- * processed in id order for determinism (ticket 17), though tactic assignment is per-club
- * independent so order has no effect on the outcome — kept for consistency with the transfer-
- * window orchestration below, where order does matter.
+ * Season-start AI Tactic assignment (ticket 17/32): every non-user club gets one fixed Tactic for
+ * the whole Season, derived from its seeded preferences, persisted the same way `changeTactics`
+ * persists the user's — direct in-process writes via `tactics.ts`'s `persistTactic`, never through
+ * the RpcGroup. Called once from `startSeason`; nothing else ever recomputes or rewrites an AI
+ * club's Tactic afterward, so "never changes mid-season" holds by construction rather than needing
+ * an explicit guard. Clubs processed in id order for determinism (ticket 17), though tactic
+ * assignment is per-club independent so order has no effect on the outcome — kept for consistency
+ * with the transfer-window orchestration below, where order does matter.
  */
 /** A side. Below this no formation can be filled, whatever the formation. */
 export const ELEVEN = 11;
 
 export const assignAiTactics = Effect.gen(function* () {
   const sql = yield* SqlClient;
+  const manifest = yield* readGenerationManifest;
   const clubs = yield* sql<{
     id: ClubId;
+    statureTier: "big" | "mid" | "small";
     isUserClub: number;
-  }>`SELECT id, is_user_club as "isUserClub" FROM clubs ORDER BY id`;
+  }>`SELECT id, stature_tier as "statureTier", is_user_club as "isUserClub" FROM clubs ORDER BY id`;
 
   for (const club of clubs) {
     if (club.isUserClub === 1) continue;
@@ -104,7 +146,7 @@ export const assignAiTactics = Effect.gen(function* () {
     // by a season's contract expiries are all the same case here — and the last one is why the test
     // is "can field a side" rather than "has any players at all".
     if (squad.length < ELEVEN) continue;
-    const tactic = yield* pickBestFormationTactic(squad);
+    const tactic = yield* pickSeededTactic(manifest.worldSeed, club.id, club.statureTier, squad);
     yield* validateTactic(tactic, new Set(squad.map((player) => player.id)));
     // Revision 0, explicitly: an AI club's Tactic is never revisioned — nothing reads an AI club's
     // revision, and `persistTactic` writes the caller's value rather than relying on the column

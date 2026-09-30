@@ -4,7 +4,7 @@ import { STAFF_COACHING_RATINGS, STAFF_MENTAL_RATINGS } from "@cm-clone/shared";
 import { ClubPersonRoleSchema, ClubSummary } from "./clubs.js";
 import { ClubId, PlayerId } from "./ids.js";
 import { PositionSchema, TrainingFocusSchema } from "./squad.js";
-import { FormationSchema, MentalitySchema, PressingSchema, TempoSchema } from "./tactics.js";
+import { MentalitySchema, TemplateNameSchema } from "./tactics.js";
 
 /** The address of one person in a club's backroom — `<role>-<ordinal>`, as `staffKey` mints it.
  *  Carried as a plain string: main parses it, and a key naming no one is `StaffNotFoundError`. */
@@ -22,10 +22,8 @@ export const StaffCoachingRatingsSchema = ratingsSchema(STAFF_COACHING_RATINGS);
 export const StaffMentalRatingsSchema = ratingsSchema(STAFF_MENTAL_RATINGS);
 
 export class StaffTacticsView extends Schema.Class<StaffTacticsView>("StaffTacticsView")({
-  formation: FormationSchema,
+  formation: TemplateNameSchema,
   mentality: MentalitySchema,
-  tempo: TempoSchema,
-  pressing: PressingSchema,
   coachingEmphasis: TrainingFocusSchema,
 }) {}
 

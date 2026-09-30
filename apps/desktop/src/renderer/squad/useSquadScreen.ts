@@ -319,12 +319,12 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
         const { tactic, setTactic, autosave } = latest.current.lineup;
         const next = assistantLineupOf(tactic, latest.current.squad);
         if (next === null) {
-          setBarNotice(`The squad is too small to field a ${tactic.formation}.`);
+          setBarNotice(`The squad is too small to field a ${tactic.sourceTemplate}.`);
           return;
         }
         setTactic(next);
         void autosave(next);
-        setBarNotice(`The assistant manager picked the team in a ${tactic.formation}.`);
+        setBarNotice(`The assistant manager picked the team in a ${tactic.sourceTemplate}.`);
       }),
     );
     unregisters.push(

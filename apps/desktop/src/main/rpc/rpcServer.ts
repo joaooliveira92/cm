@@ -34,6 +34,15 @@ import { getSquad } from "../club/squad.js";
 import { changeTactics, getTactics } from "../club/tactics.js";
 import { getTacticsOverview } from "../club/tacticsOverview.js";
 import {
+  loadTacticLibrary,
+  saveTacticTemplate,
+  renameTacticTemplate,
+  overwriteTacticTemplate,
+  duplicateTacticTemplate,
+  deleteTacticTemplate,
+  quickLoadTactic,
+} from "../club/tacticLibrary.js";
+import {
   getContractExpiryScreen,
   getContractOffer,
   getBudgetReviewScreen,
@@ -173,8 +182,8 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     }),
   commitCareer: (payload, ctx) =>
     Effect.gen(function* () {
-      const { id, name, selectedClubId, firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, preferredFormation, preferredStyleId, avatarPortraitKey, avatarPrimaryColor, avatarSecondaryColor, archetypeOrigin, pillars } = yield* Schema.decodeUnknownEffect(AppRpcs.commitCareer.payload)(payload);
-      return yield* commitCareer(ctx.savesDir, id, name, selectedClubId, { firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, preferredFormation, preferredStyleId, avatarPortraitKey, avatarPrimaryColor, avatarSecondaryColor, archetypeOrigin, pillars });
+      const { id, name, selectedClubId, firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, preferredFormation, avatarPortraitKey, avatarPrimaryColor, avatarSecondaryColor, archetypeOrigin, pillars } = yield* Schema.decodeUnknownEffect(AppRpcs.commitCareer.payload)(payload);
+      return yield* commitCareer(ctx.savesDir, id, name, selectedClubId, { firstName, lastName, nationalityId, dateOfBirth, favoriteClubId, preferredFormation, avatarPortraitKey, avatarPrimaryColor, avatarSecondaryColor, archetypeOrigin, pillars });
     }),
   discardCareer: (payload, ctx) =>
     Effect.gen(function* () {
@@ -244,6 +253,53 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
         AppRpcs.changeTactics.payload,
       )(payload);
       return yield* changeTactics(ctx.savesDir, saveId, tactic, expectedRevision, requestId);
+    }),
+  getTacticLibrary: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId } = yield* Schema.decodeUnknownEffect(AppRpcs.getTacticLibrary.payload)(payload);
+      return yield* loadTacticLibrary(ctx.savesDir, saveId);
+    }),
+  saveTacticTemplate: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, name, tactic, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.saveTacticTemplate.payload,
+      )(payload);
+      return yield* saveTacticTemplate(ctx.savesDir, saveId, name, tactic, requestId);
+    }),
+  renameTacticTemplate: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, id, name, expectedRevision, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.renameTacticTemplate.payload,
+      )(payload);
+      return yield* renameTacticTemplate(ctx.savesDir, saveId, id, name, expectedRevision, requestId);
+    }),
+  overwriteTacticTemplate: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, id, tactic, expectedRevision, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.overwriteTacticTemplate.payload,
+      )(payload);
+      return yield* overwriteTacticTemplate(ctx.savesDir, saveId, id, tactic, expectedRevision, requestId);
+    }),
+  duplicateTacticTemplate: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, id, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.duplicateTacticTemplate.payload,
+      )(payload);
+      return yield* duplicateTacticTemplate(ctx.savesDir, saveId, id, requestId);
+    }),
+  deleteTacticTemplate: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, id, expectedRevision, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.deleteTacticTemplate.payload,
+      )(payload);
+      return yield* deleteTacticTemplate(ctx.savesDir, saveId, id, expectedRevision, requestId);
+    }),
+  quickLoadTactic: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, id, requestId } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.quickLoadTactic.payload,
+      )(payload);
+      return yield* quickLoadTactic(ctx.savesDir, saveId, id, requestId);
     }),
   getLeagueTable: (payload, ctx) =>
     Effect.gen(function* () {

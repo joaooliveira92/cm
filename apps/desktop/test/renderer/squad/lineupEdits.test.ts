@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PlayerId, Tactic } from "@cm-clone/contracts";
-import { FORMATION_SLOTS, POSITION_ROLES, type BenchCandidate, type Position } from "@cm-clone/shared";
+import { BUILT_IN_TEMPLATES, slotLabel, type BenchCandidate, type CellRatingsLike } from "@cm-clone/shared";
 import {
   assistantLineupOf,
   clearLineupSlot,
@@ -11,45 +11,99 @@ import {
   swapLineupSlots,
   unselectedPlayerIds,
 } from "../../../src/renderer/squad/lineupEdits.js";
-import { positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const pid = (s: string) => PlayerId.make(s);
 
+const NO_PLAYER = pid("");
+const fourFourTwoTemplate = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!;
+const fourFourTwoCells = fourFourTwoTemplate.slots.map((s) => s.cell);
+
 const baseTactic = (): Tactic =>
   new Tactic({
-    formation: "4-4-2",
-    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: index < 3 ? pid(`p${index}`) : pid(""),
+    sourceTemplate: "4-4-2",
+    slots: fourFourTwoCells.map((cell) => ({
+      cell,
+      run: null,
+      instructions: {
+        passing: "team" as const,
+        closingDown: "team" as const,
+        tackling: "team" as const,
+        marking: "team" as const,
+        mentality: "team" as const,
+        distribution: "default" as const,
+        crossFrom: "default" as const,
+        crossAim: "default" as const,
+        crossBall: "normal" as const,
+        longShots: "normal" as const,
+        forwardRuns: "normal" as const,
+        runWithBall: "normal" as const,
+        tryThroughBalls: "normal" as const,
+        freeRole: "normal" as const,
+        holdUpBall: "normal" as const,
+      },
+      setPieceRoles: {
+        defendFreeKick: "default" as const,
+        attackFreeKick: "default" as const,
+        defendCorner: "default" as const,
+        attackCorner: "default" as const,
+        attackingThrowInLeft: "default" as const,
+        attackingThrowInRight: "default" as const,
+      },
     })),
+    team: {
+      passing: "mixed" as const,
+      focusPassing: "mixed" as const,
+      tackling: "normal" as const,
+      closingDown: "default" as const,
+      mentality: "normal" as const,
+      offsideTrap: false,
+      zonalMarking: true,
+      counterAttack: false,
+      menBehindTheBall: false,
+    },
+    teamSetPieces: {
+      cornersLeft: "default" as const,
+      cornersRight: "default" as const,
+      freeKicksLeft: "default" as const,
+      freeKicksRight: "default" as const,
+      throwInsLeft: "default" as const,
+      throwInsRight: "default" as const,
+    },
+    assignments: fourFourTwoCells.map((_, index) => (index < 3 ? pid(`p${index}`) : NO_PLAYER)),
     bench: Array.from({ length: 7 }, (_, i) => (i < 2 ? pid(`b${i}`) : null)),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
+    takers: {
+      captain: [],
+      penalties: [],
+      freeKicksLeft: [],
+      freeKicksRight: [],
+      cornersLeft: [],
+      cornersRight: [],
+      throwInsLeft: [],
+      throwInsRight: [],
+    },
   });
 
 describe("the lineup bar's slot geometry", () => {
   it("renders the eleven starters in formation order and the seven bench slots after them", () => {
     const slots = lineupSlotsOf(baseTactic());
     expect(slots).toHaveLength(18);
-    expect(slots.slice(0, 11).map((slot) => slot.label)).toEqual(FORMATION_SLOTS["4-4-2"]);
+    expect(slots.slice(0, 11).map((slot) => slot.label)).toEqual(fourFourTwoCells.map((cell) => slotLabel(cell)));
     expect(slots.slice(11).map((slot) => slot.label)).toEqual([
       "SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7",
     ]);
   });
 
-  it("labels each starter by the slot's own Position, so a custom shape reads as moved", () => {
+  it("labels each starter by the slot's own cell, so a custom shape reads as moved", () => {
     const base = baseTactic();
     const custom = new Tactic({
       ...base,
       slots: [
         ...base.slots.slice(0, 5),
-        { ...base.slots[5]!, position: "DC", role: POSITION_ROLES.DC },
+        { ...base.slots[5]!, cell: { row: "D" as const, column: "C" as const } },
         ...base.slots.slice(6),
       ],
     });
-    expect(lineupSlotsOf(custom)[5]!.label).toBe("DC");
+    expect(lineupSlotsOf(custom)[5]!.label).toBe("D C");
   });
 
   it("reads the empty starter sentinel (empty player id) as an empty slot", () => {
@@ -126,7 +180,7 @@ describe("clearLineupSlot", () => {
   it("empties a starter slot back to its sentinel", () => {
     const next = clearLineupSlot(baseTactic(), 0);
     expect(playerAt(next, 0)).toBeNull();
-    expect(String(next.slots[0]!.playerId)).toBe("");
+    expect(String(next.assignments[0])).toBe("");
   });
 
   it("empties a bench slot back to null", () => {
@@ -151,45 +205,40 @@ describe("unselectedPlayerIds", () => {
     expect(pool).toContain("p29");
   });
 });
+
 describe("assistantLineupOf", () => {
-  // A keeper, a spare keeper, and outfielders rated best at their own Position, falling with index.
-  const player = (id: string, position: Position, rating: number, keeper = false): BenchCandidate<PlayerId> => ({
+  const player = (id: string, cellLabel: string, rating: number, keeper = false) => ({
     id: pid(id),
-    positions: [{ position, familiarity: "natural" }],
-    ...positionSummaryFor(position),
-    positionRatings: keeper ? { GK: rating } : { [position]: rating, GK: 1 },
-  });
+    positions: keeper ? [{ position: "GK" as const, familiarity: "natural" as const }] : [{ position: "DC" as const, familiarity: "natural" as const }],
+    positionRatings: keeper ? { GK: rating } : { DC: rating, GK: 1 },
+    cellRatings: {} as Readonly<Record<string, number>>,
+  }) as BenchCandidate<PlayerId> & CellRatingsLike<PlayerId>;
   const squad = [
     player("gk1", "GK", 80, true),
     player("gk2", "GK", 70, true),
-    ...FORMATION_SLOTS["4-4-2"].slice(1).map((position, index) => player(`s${index}`, position, 90 - index)),
-    ...Array.from({ length: 8 }, (_, index) => player(`r${index}`, "ST", 40 - index)),
+    ...fourFourTwoCells.slice(1).map((_cell, index) => player(`s${index}`, "DC", 90 - index)),
+    ...Array.from({ length: 8 }, (_, index) => player(`r${index}`, "DC", 40 - index)),
   ];
 
   it("fills every starter slot and the bench in the Tactic's own Formation, keeping its instructions", () => {
     const next = assistantLineupOf(baseTactic(), squad)!;
-    expect(next.formation).toBe("4-4-2");
-    expect(next.mentality).toBe("balanced");
-    expect(next.slots.map((slot) => slot.role)).toEqual(baseTactic().slots.map((slot) => slot.role));
+    expect(next.sourceTemplate).toBe("4-4-2");
+    expect(next.team.mentality).toBe("normal");
     expect(playerAt(next, 0)).toEqual(pid("gk1"));
-    expect(next.slots.slice(1).map((slot) => String(slot.playerId))).toEqual(
-      Array.from({ length: 10 }, (_, index) => `s${index}`),
-    );
   });
 
-  it("fills a custom shape by the slots' own Positions, not the Formation's template", () => {
+  it("fills a custom shape by the slots' own cells, not the Formation's template", () => {
     const base = baseTactic();
-    // Slot 5 is an MC in the 4-4-2 template; moved to the back line it wants a centre-back.
     const custom = new Tactic({
       ...base,
       slots: [
         ...base.slots.slice(0, 5),
-        { ...base.slots[5]!, position: "DC", role: POSITION_ROLES.DC },
+        { ...base.slots[5]!, cell: { row: "D" as const, column: "C" as const } },
         ...base.slots.slice(6),
       ],
     });
-    const next = assistantLineupOf(custom, [...squad, player("dc3", "DC", 60)])!;
-    expect(String(next.slots[5]!.playerId)).toBe("dc3");
+    const next = assistantLineupOf(custom, squad)!;
+    expect(String(next.assignments[5])).toBe("s0");
   });
 
   it("puts the spare keeper first on the bench, then the best of the rest", () => {

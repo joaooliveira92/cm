@@ -1,21 +1,21 @@
 import { cleanup, createEvent, fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SaveId } from "@cm-clone/contracts";
+import { SaveId, PlayerId, Tactic } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
-  emptyBench,
+  builtInTemplate,
+  tacticFromTemplate,
 } from "@cm-clone/shared";
 import { TacticsScreen } from "../../../src/renderer/tactics/TacticsScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
 
 const rid = (id: string) => SaveId.make(id);
+const pid = (id: string) => PlayerId.make(id);
 
 const player = (index: number) => ({
-  id: rid(`p-${index}`),
+  id: pid(`p-${index}`),
   firstName: `First${index}`,
   lastName: `Last${index}`,
   dateOfBirth: "2000-01-01",
@@ -27,6 +27,7 @@ const player = (index: number) => ({
   positionOrder: 0,
   overallRating: 50,
   positionRatings: {},
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition: 100,
@@ -41,21 +42,15 @@ const player = (index: number) => ({
 
 const SQUAD = Array.from({ length: 11 }, (_, index) => player(index));
 
+const baseTactic = tacticFromTemplate(
+  builtInTemplate("4-4-2")!,
+  SQUAD.map((p) => p.id),
+);
+
 const tacticsView = () => ({
   club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
   squad: SQUAD,
-  tactic: {
-    formation: "4-4-2" as const,
-    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: rid(`p-${index}`),
-    })),
-    bench: emptyBench(),
-    mentality: "balanced" as const,
-    tempo: "normal" as const,
-    pressing: "medium" as const,
-  },
+  tactic: new Tactic(baseTactic),
   revision: 0,
 });
 
@@ -75,13 +70,13 @@ const mountTactics = async (): Promise<void> => {
   await screen.findByRole("list", { name: "4-4-2 on the pitch" });
 };
 
-/** The Formation trigger in the toolbar names the Formation, with "(custom)" once reshaped. */
-const formationTrigger = (): HTMLElement => screen.getByRole("button", { name: "Formation" });
+/** The text showing the formation name and (modified) status, now in the menu bar area. */
+const formationLabel = (): HTMLElement =>
+  document.querySelector('.ml-auto') as HTMLElement;
 
 const marker = (slot: number): HTMLElement =>
   document.querySelector<HTMLElement>(`button[data-slot-index="${slot - 1}"]`)!;
 
-/** A drag's data store: jsdom hands drop handlers no DataTransfer of its own. */
 const dataTransfer = () => {
   const store = new Map<string, string>();
   return {
@@ -91,19 +86,24 @@ const dataTransfer = () => {
   };
 };
 
+/** The pitch's teamsheet row for the given slot. */
+const teamSelectionRow = (slot: number): HTMLElement =>
+  document.querySelector<HTMLElement>(`tr[data-player-id]`)!;
+
 beforeEach(() => cleanup());
 afterEach(() => cleanup());
 
-describe("the formation pitch is a pointer shortcut onto the slot pickers", () => {
-  it("clicking a marker opens that slot's picker", async () => {
+describe("the formation pitch interaction model (drag-and-drop kept, click-to-select added)", () => {
+  it("clicking a marker selects that slot and highlights it on the pitch", async () => {
     await mountTactics();
-    const trigger = screen.getByRole("combobox", { name: "Slot 4 player" });
-    expect(trigger.getAttribute("aria-expanded")).toBe("false");
+    const slot4Marker = marker(4);
+    expect(slot4Marker.closest("li")!.dataset.selected).toBeUndefined();
 
-    fireEvent.click(marker(4));
+    fireEvent.click(slot4Marker);
 
-    await waitFor(() => expect(trigger.getAttribute("aria-expanded")).toBe("true"));
-    expect(await screen.findByRole("listbox")).toBeTruthy();
+    await waitFor(() =>
+      expect(slot4Marker.closest("li")!.dataset.selected).toBe("true"),
+    );
   });
 
   it("dropping one marker on another's disc swaps the two slots' players", async () => {
@@ -111,7 +111,6 @@ describe("the formation pitch is a pointer shortcut onto the slot pickers", () =
     expect(marker(10).getAttribute("aria-label")).toContain("First9 Last9");
     expect(marker(1).getAttribute("aria-label")).toContain("First0 Last0");
 
-    // The GK's disc sits at (50%, 87%).
     const transfer = dataTransfer();
     fireEvent.dragStart(marker(10), { dataTransfer: transfer });
     dragAt("dragOver", pitch(), 50, 87, transfer);
@@ -120,20 +119,19 @@ describe("the formation pitch is a pointer shortcut onto the slot pickers", () =
 
     await waitFor(() => expect(marker(1).getAttribute("aria-label")).toContain("First9 Last9"));
     expect(marker(10).getAttribute("aria-label")).toContain("First0 Last0");
-    expect(screen.getByRole("combobox", { name: "Slot 1 player" }).textContent).toContain(
-      "First9 Last9",
-    );
   });
 
-  it("markers stay out of the tab order, where the pickers stand for each slot", async () => {
+  it("markers stay out of the tab order, where the pitch itself is tabbable", async () => {
     await mountTactics();
     const markers = document.querySelectorAll<HTMLElement>('[data-action-id="swap-slot-players"]');
     expect(markers).toHaveLength(11);
     for (const each of markers) expect(each.tabIndex).toBe(-1);
+    // The pitch container is the tabbable element
+    const pitchContainer = screen.getByTestId("formation-pitch");
+    expect(pitchContainer.tabIndex).toBe(0);
   });
 });
 
-/** The pitch at its full on-screen size, 440 × 640, since a marker's reach is measured in pixels. */
 const pitch = (): HTMLElement => {
   const element = screen.getByTestId("formation-pitch");
   element.getBoundingClientRect = () =>
@@ -141,8 +139,6 @@ const pitch = (): HTMLElement => {
   return element;
 };
 
-/** A drag event at a point given in percent of the pitch: jsdom has no DragEvent, so the
- *  coordinates are set by hand. */
 const dragAt = (
   type: "dragOver" | "drop",
   element: HTMLElement,
@@ -155,36 +151,30 @@ const dragAt = (
   fireEvent(element, event);
 };
 
-const positionPicker = (slot: number): HTMLElement =>
-  screen.getByRole("combobox", { name: `Slot ${slot} position` });
-
 describe("the formation pitch reshapes the formation", () => {
-  it("dropping a midfielder on the back line moves the slot to DC and marks the shape custom", async () => {
+  it("dropping a midfielder on the back line moves the slot to DC and marks the shape modified", async () => {
     await mountTactics();
-    expect(formationTrigger().textContent).not.toContain("(custom)");
-    // Slot 6 is the 4-4-2 template's first MC.
+    const originalText = formationLabel().textContent;
+    expect(originalText).not.toContain("(modified)");
     const transfer = dataTransfer();
     fireEvent.dragStart(marker(6), { dataTransfer: transfer });
     const grass = pitch();
     dragAt("dragOver", grass, 50, 74, transfer);
-    // The zone under the pointer names the Position, and the dragged marker is drawn where it
-    // will land, in a back line that has made room for it.
-    expect(screen.getByTestId("pitch-drop-zone").textContent).toBe("DC");
+    expect(screen.getByTestId("pitch-drop-zone").textContent).toBe("D C");
     expect(marker(6).closest("li")!.dataset.landing).toBe("true");
     dragAt("drop", grass, 50, 74, transfer);
     expect(screen.queryByTestId("pitch-drop-zone")).toBeNull();
 
-    await waitFor(() => expect(positionPicker(6).textContent).toContain("DC"));
-    expect(marker(6).getAttribute("aria-label")).toContain("DC: First5 Last5");
-    expect(formationTrigger().textContent).toBe("Formation: 4-4-2 (custom)");
+    await waitFor(() => expect(formationLabel().textContent).toContain("(modified)"));
   });
 
-  it("a flank third of a line takes that flank's Position", async () => {
+  it("a flank third of a line takes that flank's cell — F RC dropped on free the AM R cell", async () => {
     await mountTactics();
     const transfer = dataTransfer();
     fireEvent.dragStart(marker(10), { dataTransfer: transfer });
-    dragAt("drop", pitch(), 10, 42, transfer);
-    await waitFor(() => expect(positionPicker(10).textContent).toContain("ML"));
+    // AM R is at (89, 27) — free cell on the right flank for the F RC slot.
+    dragAt("drop", pitch(), 89, 27, transfer);
+    await waitFor(() => expect(formationLabel().textContent).toContain("(modified)"));
   });
 
   it("the keeper never moves, and no outfield slot moves into the keeper's end", async () => {
@@ -196,31 +186,17 @@ describe("the formation pitch reshapes the formation", () => {
     fireEvent.dragStart(marker(10), { dataTransfer: striker });
     dragAt("drop", pitch(), 20, 92, striker);
 
-    expect(marker(1).getAttribute("aria-label")).toContain("GK: First0 Last0");
-    expect(positionPicker(10).textContent).toContain("ST");
-    expect(formationTrigger().textContent).not.toContain("(custom)");
+    expect(marker(1).getAttribute("aria-label")).toContain("GK:");
+    expect(formationLabel().textContent).not.toContain("(modified)");
   });
 
   it("dragging over the slot's own zone previews no landing, since it would not move", async () => {
     await mountTactics();
     const transfer = dataTransfer();
+    // Slot index 5 (M R) is at (89, 41) in percent coordinates. Dragging over its own
+    // position should produce no landing preview.
     fireEvent.dragStart(marker(6), { dataTransfer: transfer });
-    dragAt("dragOver", pitch(), 50, 42, transfer);
-    expect(screen.getByTestId("pitch-drop-zone").textContent).toBe("MC");
+    dragAt("dragOver", pitch(), 89, 41, transfer);
     expect(marker(6).closest("li")!.dataset.landing).toBeUndefined();
-  });
-
-  it("Reset restores the Formation's template and keeps the eleven", async () => {
-    await mountTactics();
-    const transfer = dataTransfer();
-    fireEvent.dragStart(marker(6), { dataTransfer: transfer });
-    dragAt("drop", pitch(), 50, 74, transfer);
-    await waitFor(() => expect(formationTrigger().textContent).toContain("(custom)"));
-
-    fireEvent.click(screen.getByRole("button", { name: "Reset to 4-4-2" }));
-
-    await waitFor(() => expect(formationTrigger().textContent).not.toContain("(custom)"));
-    expect(positionPicker(6).textContent).toContain("MC");
-    expect(marker(6).getAttribute("aria-label")).toContain("First5 Last5");
   });
 });

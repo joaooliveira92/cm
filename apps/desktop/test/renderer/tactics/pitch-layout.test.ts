@@ -1,26 +1,26 @@
 import { describe, expect, it } from "vitest";
-import { FORMATIONS, FORMATION_SLOTS } from "@cm-clone/shared";
-import { dropZoneAt, pitchLayout, positionAt } from "../../../src/renderer/tactics/pitchLayout.js";
+import { BUILT_IN_TEMPLATES } from "@cm-clone/shared";
+import { cellAt, dropZoneAt, pitchLayout } from "../../../src/renderer/tactics/pitchLayout.js";
 
 describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () => {
-  it("places every slot of every formation once, inside the pitch, in slot order", () => {
-    for (const formation of FORMATIONS) {
-      const spots = pitchLayout(FORMATION_SLOTS[formation]);
-      expect(spots.map((spot) => spot.slotIndex)).toEqual([...FORMATION_SLOTS[formation].keys()]);
+  it("places every slot of every built-in template once, inside the pitch, in slot order", () => {
+    for (const template of BUILT_IN_TEMPLATES) {
+      const cells = template.slots.map((slot) => slot.cell);
+      const spots = pitchLayout(cells);
+      expect(spots.map((spot) => spot.slotIndex)).toEqual([...cells.keys()]);
       for (const { x, y } of spots) {
         expect(x).toBeGreaterThan(0);
         expect(x).toBeLessThan(100);
         expect(y).toBeGreaterThan(0);
         expect(y).toBeLessThan(100);
       }
-      // No two markers share a spot.
       expect(new Set(spots.map(({ x, y }) => `${x},${y}`)).size).toBe(spots.length);
     }
   });
 
   it("lays a line out left flank, centre, right flank, whatever the slot order", () => {
-    // 4-4-2's back four is stored DC, DC, DL, DR.
-    const spots = pitchLayout(FORMATION_SLOTS["4-4-2"]);
+    const cells = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => slot.cell);
+    const spots = pitchLayout(cells);
     const [dcA, dcB, dl, dr] = [1, 2, 3, 4].map((slot) => spots[slot]!);
     expect(dl!.x).toBeLessThan(dcA!.x);
     expect(dcA!.x).toBeLessThan(dcB!.x);
@@ -29,7 +29,8 @@ describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () 
   });
 
   it("puts the keeper deepest and the strikers highest", () => {
-    const spots = pitchLayout(FORMATION_SLOTS["4-4-2"]);
+    const cells = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => slot.cell);
+    const spots = pitchLayout(cells);
     const ys = spots.map((spot) => spot.y);
     expect(spots[0]!.y).toBe(Math.max(...ys));
     expect(spots[9]!.y).toBe(Math.min(...ys));
@@ -37,28 +38,28 @@ describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () 
   });
 });
 
-describe("positionAt — the Position a drop point on the pitch stands for", () => {
-  it("reads the nearest line, then the flank third across it", () => {
-    expect(positionAt(50, 10)).toBe("ST");
-    expect(positionAt(90, 28)).toBe("AMC");
-    expect(positionAt(10, 42)).toBe("ML");
-    expect(positionAt(50, 42)).toBe("MC");
-    expect(positionAt(90, 42)).toBe("MR");
-    expect(positionAt(10, 58)).toBe("DM");
-    expect(positionAt(10, 74)).toBe("DL");
-    expect(positionAt(50, 74)).toBe("DC");
-    expect(positionAt(90, 74)).toBe("DR");
+describe("cellAt — the cell a drop point on the pitch stands for", () => {
+  it("reads the nearest row, then the nearest column across it", () => {
+    expect(cellAt(50, 10)).toMatchObject({ row: "F", column: "C" });
+    expect(cellAt(90, 28)).toMatchObject({ row: "AM", column: "R" });
+    expect(cellAt(10, 42)).toMatchObject({ row: "M", column: "L" });
+    expect(cellAt(50, 42)).toMatchObject({ row: "M", column: "C" });
+    expect(cellAt(90, 42)).toMatchObject({ row: "M", column: "R" });
+    expect(cellAt(10, 58)).toMatchObject({ row: "DM", column: "L" });
+    expect(cellAt(10, 74)).toMatchObject({ row: "D", column: "L" });
+    expect(cellAt(50, 74)).toMatchObject({ row: "D", column: "C" });
+    expect(cellAt(90, 74)).toMatchObject({ row: "D", column: "R" });
   });
 
-  it("takes no outfield slot in the keeper's end", () => {
-    expect(positionAt(50, 85)).toBeNull();
+  it("takes no outfield cell in the keeper's end", () => {
+    expect(cellAt(50, 85)).toBeNull();
   });
 });
 
-describe("dropZoneAt — the patch of grass a Position's drop covers", () => {
+describe("dropZoneAt — the patch of grass a cell's drop covers", () => {
   it("cuts a flanked line into thirds and spans a centre-only line across the pitch", () => {
-    expect(dropZoneAt(10, 74)).toMatchObject({ position: "DL", left: 0 });
-    expect(dropZoneAt(50, 58)).toMatchObject({ position: "DM", left: 0, right: 100 });
+    expect(dropZoneAt(10, 74)).toMatchObject({ cell: { row: "D", column: "L" }, left: 0 });
+    expect(dropZoneAt(50, 58)).toMatchObject({ cell: { row: "DM", column: "C" }, left: 0, right: 100 });
   });
 
   it("tiles the outfield: each zone ends where the next line's begins", () => {

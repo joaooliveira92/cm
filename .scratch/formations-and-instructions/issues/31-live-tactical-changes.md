@@ -16,7 +16,7 @@ failures are the invalid-Tactic error and the existing live-command refusals.
 
 **Blocked by:** 23, 26
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A confirmed change takes effect at M+1, and replay reproduces it.
 - [ ] A change naming a sent-off player is refused.

@@ -10,7 +10,18 @@ Status: implemented
 First consumer: club selection screen (Step 3), with badge in rail and detail panel. Second consumer:
 career header, with badge in the identity zone.
 
-**Remaining:** Further consumers (Step 4), Brazilian badges (Step 5).
+**Shipped (Step 5, partly):** `brazil-logos` adapter (a flat folder of `<Club Name>.png`, nation fixed
+to `bra`) and the Série A mapping to all 20 `bra/` badges. The Série B pack still maps nothing: the
+Brazilian dump holds only the 2026 Série A clubs, so those 20 have no crest until a Série B dump is
+imported through the same adapter.
+
+**Shipped (German Bundesliga):** the `deu/` badges were already in the library from the
+`football-logos` import, but no pack named the clubs. `GERMAN_BUNDESLIGA_PACK` now names the 18
+clubs of `comp_deu_1` and maps each to its `deu/` key, and `comp_deu_1` is registered in
+`LEAGUE_PACKS`. Nine German home cities were added to `cities.ts` for the pack's pins. The 2. and 3.
+Bundesliga divisions have no pack yet and resolve through the base pack.
+
+**Remaining:** Further consumers (Step 4), Série B badges.
 
 ## Problem
 
@@ -124,7 +135,8 @@ so only a pack can say which badge it wears. `ContentPack` gains
    [club colours note](../../implemented/architecture/2026-09-03-club-colours-and-the-header-scope.md),
    add the field where it's read, not to a contract shared by screens that don't render it.
 5. Brazilian badges: a new adapter plus Série A/B mappings, landing in `club-badges/bra/`. No design
-   change.
+   change. The dump is a flat folder, so the adapter's override table only fixes file names that
+   aren't the club's name (`Mirassol-SP`, `atletico-pr`).
 
 ## Alternatives considered
 

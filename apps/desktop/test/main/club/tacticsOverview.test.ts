@@ -7,17 +7,17 @@ import { it } from "@effect/vitest";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Tactic, WriteRequestId, type PlayerId, type SaveId } from "@cm-clone/contracts";
 import {
+  BUILT_IN_TEMPLATES,
   familiarityOf,
-  FORMATION_SLOTS,
-  POSITION_ROLES,
-  positionRating,
-  roleRating,
+  positionRatingAt,
+  slotLabel,
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { afterEach, beforeEach } from "vitest";
 import { createSave } from "../../seeded-save.js";
+import { tacticOf } from "../../setup/tacticFixtures.js";
 import {
   changeTactics,
   getSquad,
@@ -34,18 +34,7 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 const buildTactic = (squadIds: ReadonlyArray<PlayerId>): Tactic =>
-  new Tactic({
-    formation: "4-4-2",
-    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: squadIds[index]!,
-    })),
-    bench: Array.from({ length: 7 }, (_, benchIndex) => squadIds[11 + benchIndex] ?? null),
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
-  });
+  tacticOf(squadIds, { bench: Array.from({ length: 7 }, (_, benchIndex) => squadIds[11 + benchIndex] ?? null) });
 
 const rid = (s: string) => WriteRequestId.make(s);
 
@@ -87,42 +76,36 @@ it.effect("every section binds to the revision the tactic was saved at, and rati
     const snapshot = yield* getTacticsOverview(savesDir, save.id);
 
     strictEqual(snapshot.revision, 1);
-    strictEqual(snapshot.formation?.formation, "4-4-2");
+    strictEqual(snapshot.formation?.template, "4-4-2");
+    strictEqual(snapshot.formation?.modified, false);
+    strictEqual(snapshot.formation?.shape, "4-4-2");
     strictEqual(snapshot.formation?.slots.length, 11);
     deepStrictEqual(
-      snapshot.formation?.slots.map((slot) => slot.position),
-      FORMATION_SLOTS["4-4-2"],
+      snapshot.formation?.slots.map((slot) => slotLabel(slot.cell)),
+      BUILT_IN_TEMPLATES.find((template) => template.name === "4-4-2")!.slots.map((slot) => slotLabel(slot.cell)),
     );
-    deepStrictEqual({ ...snapshot.instructions }, {
-      mentality: "balanced",
-      tempo: "normal",
-      pressing: "medium",
-    });
+    deepStrictEqual({ ...snapshot.instructions }, { ...tactic.team });
 
     // 11 assignments, one per slot, names and ratings computed at the trusted boundary.
     strictEqual(snapshot.assignments.length, 11);
     const assignmentByPlayer = new Map(
       snapshot.assignments.map((assignment) => [assignment.playerId, assignment]),
     );
-    for (const slot of tactic.slots) {
-      const player = before.squad.find((p) => p.id === slot.playerId);
+    for (const [index, slot] of tactic.slots.entries()) {
+      const playerId = tactic.assignments[index]!;
+      const player = before.squad.find((p) => p.id === playerId);
       ok(player, "slot player is in the squad");
-      const assignment = assignmentByPlayer.get(slot.playerId);
+      const assignment = assignmentByPlayer.get(playerId);
       ok(assignment);
       strictEqual(assignment.firstName, player.firstName);
       strictEqual(assignment.lastName, player.lastName);
-      strictEqual(assignment.position, slot.position);
-      strictEqual(assignment.role, slot.role);
+      strictEqual(slotLabel(assignment.cell), slotLabel(slot.cell));
       strictEqual(
         assignment.positionRating,
-        positionRating(player.attributes as PlayerAttributes, slot.position),
-      );
-      strictEqual(
-        assignment.roleRating,
-        roleRating(player.attributes as PlayerAttributes, slot.role),
+        positionRatingAt(player.attributes as PlayerAttributes, slot.cell),
       );
       // The fit shown is the tier of the player's Suitability for the slot's cell.
-      strictEqual(assignment.familiarity, familiarityOf(player.suitability[slot.position]!));
+      strictEqual(assignment.familiarity, familiarityOf(player.suitability[slotLabel(slot.cell)]!));
     }
 
     // Familiarity sums to the eleven starters; selection is the match-day eighteen.
@@ -135,7 +118,7 @@ it.effect("every section binds to the revision the tactic was saved at, and rati
     strictEqual(snapshot.selection.starters.length, 11);
     deepStrictEqual(
       snapshot.selection.starters.map((player) => player.id),
-      tactic.slots.map((slot) => slot.playerId),
+      tactic.assignments,
     );
     deepStrictEqual(
       snapshot.selection.substitutes.map((player) => player.id),
@@ -165,7 +148,7 @@ it.effect("a slot that names a departed player reports the blocker, nulls that a
     const tactic = buildTactic(before.squad.map((player) => player.id));
     yield* changeTactics(savesDir, save.id, tactic, before.revision, rid("first"));
 
-    const departed = tactic.slots[0]!.playerId;
+    const departed = tactic.assignments[0]!;
     yield* withSaveWrite(
       save.id,
       Effect.gen(function* () {
@@ -188,7 +171,6 @@ it.effect("a slot that names a departed player reports the blocker, nulls that a
     strictEqual(departedAssignment.firstName, null);
     strictEqual(departedAssignment.lastName, null);
     strictEqual(departedAssignment.positionRating, null);
-    strictEqual(departedAssignment.roleRating, null);
 
     // The departed player is not on the match-day eighteen: starters drop to ten, the bench keeps its
 // seven, and the gap is the blocker rather than a phantom starter or substitute.

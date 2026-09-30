@@ -49,7 +49,6 @@ const createSeededCareer = (savesDir: string) =>
       dateOfBirth: "1980-01-01",
       favoriteClubId: null,
       preferredFormation: "4-4-2",
-      preferredStyleId: "balanced",
       avatarPortraitKey: null,
       avatarPrimaryColor: "#1f2937",
       avatarSecondaryColor: "#f8fafc",

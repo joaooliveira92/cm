@@ -11,12 +11,12 @@ import { cleanup, createEvent, fireEvent, screen } from "@testing-library/react"
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
-  FORMATION_SLOTS,
+  BUILT_IN_TEMPLATES,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
+  slotLabel,
   type FamiliarityTier,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
@@ -48,6 +48,7 @@ const player = (id: string, lastName: string, position: string, familiarity: Fam
   ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { [position]: 74 },
+  cellRatings: {},
   suitability: suitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
@@ -69,21 +70,44 @@ const SQUAD = [
   player("p6", "Foxtrot", "GK", "natural"),
 ];
 
-const GK_INDEX = FORMATION_SLOTS["4-4-2"].indexOf("GK");
+const fourFourTwoTemplate = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!;
+const fourFourTwoCells = fourFourTwoTemplate.slots.map((s) => s.cell);
+const fourFourTwoLabels = fourFourTwoCells.map((cell) => slotLabel(cell));
+
+const GK_INDEX = 0;
 
 /** Only the goalkeeper is on the lineup, so there is a filled slot to pick up and empty starters
  *  to select — the two things these keys mean, side by side. */
 const TACTIC = {
-  formation: "4-4-2" as const,
-  slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-    position,
-    role: POSITION_ROLES[position],
-    playerId: index === GK_INDEX ? rid("p6") : "",
+  sourceTemplate: "4-4-2",
+  slots: fourFourTwoTemplate.slots.map((slot) => ({
+    cell: slot.cell,
+    run: slot.run,
+    instructions: {
+      passing: "team" as const, closingDown: "team" as const, tackling: "team" as const, marking: "team" as const, mentality: "team" as const,
+      distribution: "default" as const, crossFrom: "default" as const, crossAim: "default" as const,
+      crossBall: "normal" as const, longShots: "normal" as const, forwardRuns: "normal" as const, runWithBall: "normal" as const,
+      tryThroughBalls: "normal" as const, freeRole: "normal" as const, holdUpBall: "normal" as const,
+    },
+    setPieceRoles: {
+      defendFreeKick: "default" as const, attackFreeKick: "default" as const, defendCorner: "default" as const,
+      attackCorner: "default" as const, attackingThrowInLeft: "default" as const, attackingThrowInRight: "default" as const,
+    },
   })),
-  bench: [null, null, null, null, null, null, null],
-  mentality: "balanced" as const,
-  tempo: "normal" as const,
-  pressing: "medium" as const,
+  team: {
+    passing: "mixed" as const, focusPassing: "mixed" as const, tackling: "normal" as const,
+    closingDown: "default" as const, mentality: "normal" as const, offsideTrap: false, zonalMarking: true, counterAttack: false, menBehindTheBall: false,
+  },
+  teamSetPieces: {
+    cornersLeft: "default" as const, cornersRight: "default" as const, freeKicksLeft: "default" as const, freeKicksRight: "default" as const,
+    throwInsLeft: "default" as const, throwInsRight: "default" as const,
+  },
+  assignments: fourFourTwoCells.map((_cell, index) => index === GK_INDEX ? rid("p6") : ""),
+  bench: Array.from({ length: 7 }, () => null),
+  takers: {
+    captain: [], penalties: [], freeKicksLeft: [], freeKicksRight: [],
+    cornersLeft: [], cornersRight: [], throwInsLeft: [], throwInsRight: [],
+  },
 };
 
 const mountSquadScreen = async (): Promise<void> => {
@@ -114,11 +138,13 @@ const mountSquadScreen = async (): Promise<void> => {
       <SquadScreen saveId={rid("s1")} />
     </RegistryProvider>,
   );
-  await screen.findByRole("button", { name: "GK slot, Pep Foxtrot" });
+  const gkLabel = fourFourTwoLabels[GK_INDEX]!;
+  await screen.findByRole("button", { name: `${gkLabel} slot, Pep Foxtrot` });
 };
 
-const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "DC slot" })[0]!;
-const theFilledSlot = (): HTMLElement => screen.getByRole("button", { name: "GK slot, Pep Foxtrot" });
+const firstEmptyLabel = fourFourTwoLabels[1]!;
+const anEmptyStarterSlot = (): HTMLElement => screen.getAllByRole("button", { name: `${firstEmptyLabel} slot` })[0]!;
+const theFilledSlot = (): HTMLElement => screen.getByRole("button", { name: `${fourFourTwoLabels[GK_INDEX]!} slot, Pep Foxtrot` });
 const carried = (): HTMLElement | null => screen.queryByTestId("lineup-carried");
 const contextLine = (): HTMLElement | null => screen.queryByTestId("squad-fit-context");
 
@@ -138,32 +164,32 @@ describe("Enter and Space on an empty starter slot", () => {
   it("sets the context and does not start a carry", async () => {
     await mountSquadScreen();
 
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
 
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
     expect(carried()).toBeNull();
-    expect(anEmptyDcSlot().getAttribute("aria-pressed")).toBe("false");
+    expect(anEmptyStarterSlot().getAttribute("aria-pressed")).toBe("false");
   });
 
   it("does the same on Space, and clears itself on the second press", async () => {
     await mountSquadScreen();
 
-    fireEvent.keyDown(anEmptyDcSlot(), { key: " " });
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: " " });
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
 
-    fireEvent.keyDown(anEmptyDcSlot(), { key: " " });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: " " });
     expect(contextLine()).toBeNull();
   });
 
   it("marks the selected slot as the current one, separately from a held player", async () => {
     await mountSquadScreen();
-    expect(anEmptyDcSlot().getAttribute("aria-current")).toBeNull();
+    expect(anEmptyStarterSlot().getAttribute("aria-current")).toBeNull();
 
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
 
-    expect(anEmptyDcSlot().getAttribute("aria-current")).toBe("true");
+    expect(anEmptyStarterSlot().getAttribute("aria-current")).toBe("true");
     // A selection is not a pickup: `aria-pressed` stays false so the two never read alike.
-    expect(anEmptyDcSlot().getAttribute("aria-pressed")).toBe("false");
+    expect(anEmptyStarterSlot().getAttribute("aria-pressed")).toBe("false");
   });
 
   // An empty starter is a real `<button>` carrying BOTH `onKeyDown` and `onClick`, and a button's
@@ -181,13 +207,13 @@ describe("Enter and Space on an empty starter slot", () => {
   ) => {
     await mountSquadScreen();
 
-    const event = createEvent.keyDown(anEmptyDcSlot(), { key, cancelable: true });
-    fireEvent(anEmptyDcSlot(), event);
+    const event = createEvent.keyDown(anEmptyStarterSlot(), { key, cancelable: true });
+    fireEvent(anEmptyStarterSlot(), event);
 
     expect(event.defaultPrevented).toBe(true);
     // And the press did its work anyway: preventing the default suppresses the browser's
     // activation, not this handler.
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
   });
 
   // The pointer path is the same single toggle. A click handler that both set and cleared would
@@ -196,11 +222,11 @@ describe("Enter and Space on an empty starter slot", () => {
     await mountSquadScreen();
     expect(contextLine()).toBeNull();
 
-    fireEvent.click(anEmptyDcSlot());
+    fireEvent.click(anEmptyStarterSlot());
 
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
 
-    fireEvent.click(anEmptyDcSlot());
+    fireEvent.click(anEmptyStarterSlot());
 
     expect(contextLine()).toBeNull();
   });
@@ -209,14 +235,14 @@ describe("Enter and Space on an empty starter slot", () => {
 describe("Enter on a filled slot", () => {
   it("still picks the player up, and leaves the context alone", async () => {
     await mountSquadScreen();
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
 
     fireEvent.keyDown(theFilledSlot(), { key: "Enter" });
 
     expect(carried()!.textContent).toMatch(/Foxtrot/);
     expect(theFilledSlot().getAttribute("aria-pressed")).toBe("true");
     expect(theFilledSlot().getAttribute("aria-current")).toBeNull();
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
   });
 
   it("still places a held player on an empty slot rather than selecting it", async () => {
@@ -224,9 +250,9 @@ describe("Enter on a filled slot", () => {
     fireEvent.keyDown(theFilledSlot(), { key: "Enter" });
     expect(carried()).toBeTruthy();
 
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
 
-    expect(screen.getByRole("button", { name: "DC slot, Pep Foxtrot" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${firstEmptyLabel} slot, Pep Foxtrot` })).toBeTruthy();
     expect(carried()).toBeNull();
   });
 });
@@ -234,7 +260,7 @@ describe("Enter on a filled slot", () => {
 describe("Escape with a carry held", () => {
   it("releases the player first, and only the second Escape clears the context", async () => {
     await mountSquadScreen();
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
     fireEvent.keyDown(theFilledSlot(), { key: "Enter" });
     expect(carried()).toBeTruthy();
     expect(contextLine()).toBeTruthy();
@@ -242,27 +268,28 @@ describe("Escape with a carry held", () => {
     // First Escape: the carry goes, the context stays.
     fireEvent.keyDown(theFilledSlot(), { key: "Escape" });
     expect(carried()).toBeNull();
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
-    expect(screen.getByRole("button", { name: "GK slot, Pep Foxtrot" })).toBeTruthy();
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
+    const gkLabel = fourFourTwoLabels[GK_INDEX]!;
+    expect(screen.getByRole("button", { name: `${gkLabel} slot, Pep Foxtrot` })).toBeTruthy();
 
     // Second Escape: the context goes, and the lineup is untouched either way.
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Escape" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Escape" });
     expect(contextLine()).toBeNull();
-    expect(screen.getByRole("button", { name: "GK slot, Pep Foxtrot" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${gkLabel} slot, Pep Foxtrot` })).toBeTruthy();
   });
 });
 
 describe("carrying a non-fitting player into the selected slot", () => {
   it("places a player who cannot fill the slot, which then clears the context", async () => {
     await mountSquadScreen();
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
-    expect(contextLine()!.textContent).toContain("Showing players for DC");
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
+    expect(contextLine()!.textContent).toContain(`Showing players for ${firstEmptyLabel}`);
 
-    // Foxtrot is a goalkeeper, so the DC slot is the wrong home for him — and it takes him anyway.
+    // Foxtrot is a goalkeeper, so the non-GK slot is the wrong home for him — and it takes him anyway.
     fireEvent.keyDown(theFilledSlot(), { key: "Enter" });
-    fireEvent.keyDown(anEmptyDcSlot(), { key: "Enter" });
+    fireEvent.keyDown(anEmptyStarterSlot(), { key: "Enter" });
 
-    expect(screen.getByRole("button", { name: "DC slot, Pep Foxtrot" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${firstEmptyLabel} slot, Pep Foxtrot` })).toBeTruthy();
     expect(contextLine()).toBeNull();
   });
 });

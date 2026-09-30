@@ -6,7 +6,7 @@ import { compactPositionLabel } from "../../src/rules/positionLabel.js";
 import { ARCHETYPES, drawPositionalRatings, primarySlotOf } from "../../src/rules/positionalGeneration.js";
 import { COMPETENT_SUITABILITY, NATURAL_SUITABILITY, suitability } from "../../src/rules/suitability.js";
 import { POSITION_SLOT } from "../../src/rules/slots.js";
-import { FORMATIONS, FORMATION_SLOTS } from "../../src/rules/tactics.js";
+import { QUALITY_FORMATIONS, QUALITY_FORMATION_SLOTS } from "../../src/rules/bestXi.js";
 
 const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 
@@ -95,8 +95,8 @@ describe("generated squads", () => {
   it("can each field the 4-4-2, 4-3-3, 3-5-2 and 5-3-2 shapes with competent players", () => {
     for (let seed = 1; seed <= 100; seed += 1) {
       const squad = squadFor(seed);
-      for (const formation of FORMATIONS) {
-        const cells = FORMATION_SLOTS[formation].map((position) => POSITION_SLOT[position]);
+      for (const formation of QUALITY_FORMATIONS) {
+        const cells = QUALITY_FORMATION_SLOTS[formation].map((position) => POSITION_SLOT[position]);
         expect(canFill(squad, cells), `seed ${seed}, ${formation}`).toBe(true);
       }
     }

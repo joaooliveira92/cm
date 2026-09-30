@@ -4,12 +4,12 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { SaveId } from "@cm-clone/contracts";
 import {
   FAMILIARITY_TIERS,
-  FORMATION_SLOTS,
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
-  POSITION_ROLES,
   STATURE_TIERS,
+  BUILT_IN_TEMPLATES,
+  slotLabel,
 } from "@cm-clone/shared";
 import { SquadScreen } from "../../../src/renderer/squad/SquadScreen.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
@@ -32,6 +32,58 @@ const CONFLICT = {
   _tag: "TacticRevisionConflictError",
   saveId: rid("s1"),
   currentRevision: 4,
+};
+
+const fourFourTwoTemplate = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!;
+const fourFourTwoCells = fourFourTwoTemplate.slots.map((s) => s.cell);
+const fourFourTwoLabels = fourFourTwoCells.map((cell) => slotLabel(cell));
+
+const slotInstructions = {
+  passing: "team" as const,
+  closingDown: "team" as const,
+  tackling: "team" as const,
+  marking: "team" as const,
+  mentality: "team" as const,
+  distribution: "default" as const,
+  crossFrom: "default" as const,
+  crossAim: "default" as const,
+  crossBall: "normal" as const,
+  longShots: "normal" as const,
+  forwardRuns: "normal" as const,
+  runWithBall: "normal" as const,
+  tryThroughBalls: "normal" as const,
+  freeRole: "normal" as const,
+  holdUpBall: "normal" as const,
+};
+
+const slotRoles = {
+  defendFreeKick: "default" as const,
+  attackFreeKick: "default" as const,
+  defendCorner: "default" as const,
+  attackCorner: "default" as const,
+  attackingThrowInLeft: "default" as const,
+  attackingThrowInRight: "default" as const,
+};
+
+const teamInstructions = {
+  passing: "mixed" as const,
+  focusPassing: "mixed" as const,
+  tackling: "normal" as const,
+  closingDown: "default" as const,
+  mentality: "normal" as const,
+  offsideTrap: false,
+  zonalMarking: true,
+  counterAttack: false,
+  menBehindTheBall: false,
+};
+
+const teamSetPieces = {
+  cornersLeft: "default" as const,
+  cornersRight: "default" as const,
+  freeKicksLeft: "default" as const,
+  freeKicksRight: "default" as const,
+  throwInsLeft: "default" as const,
+  throwInsRight: "default" as const,
 };
 
 const attributes = (value: number): Record<string, number> => ({
@@ -71,21 +123,30 @@ interface SquadOverrides {
   readonly getTactics?: () => Promise<unknown>;
 }
 
-/** A starter-shaped wire Tactic: p0/p1/p2 start, the rest spots empty, an unnamed bench. */
 const seededTactic = () => ({
-  formation: "4-4-2" as const,
-  slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-    position,
-    role: POSITION_ROLES[position],
-    playerId: index < 3 ? rid(`p${index}`) : "",
+  sourceTemplate: "4-4-2",
+  slots: fourFourTwoCells.map((cell) => ({
+    cell,
+    run: null,
+    instructions: slotInstructions,
+    setPieceRoles: slotRoles,
   })),
+  team: teamInstructions,
+  teamSetPieces,
+  assignments: fourFourTwoLabels.map((_label, index) => (index < 3 ? rid(`p${index}`) : "")),
   bench: [null, null, null, null, null, null, null],
-  mentality: "balanced" as const,
-  tempo: "normal" as const,
-  pressing: "medium" as const,
+  takers: {
+    captain: [],
+    penalties: [],
+    freeKicksLeft: [],
+    freeKicksRight: [],
+    cornersLeft: [],
+    cornersRight: [],
+    throwInsLeft: [],
+    throwInsRight: [],
+  },
 });
 
-/** jsdom has no DataTransfer; a drop needs a fake that remembers what a drag wrote. */
 const makeDataTransfer = (): { effectAllowed: string; setData: (t: string, v: string) => void; getData: (t: string) => string } => {
   const store = new Map<string, string>();
   return {
@@ -137,7 +198,8 @@ const mountSquadScreen = async (overrides: SquadOverrides = {}): Promise<void> =
       <RegisteredScreenBar />
     </RegistryProvider>,
   );
-  await screen.findByRole("button", { name: "GK slot, Pep Shearer" });
+  const firstLabel = fourFourTwoLabels[0]!;
+  await screen.findByRole("button", { name: `${firstLabel} slot, Pep Shearer` });
 };
 
 const p0 = player("p0", "Shearer");
@@ -147,24 +209,17 @@ const p3 = player("p3", "Van Persie");
 const p4 = player("p4", "Beresford");
 const p5 = player("p5", "Solano");
 
-/** Enough players for a whole lineup plus one spare: the server only accepts a Tactic whose eleven
- *  starter slots all name a player, so autosave is exercised against a complete one. */
 const FULL_SQUAD = [
   p0, p1, p2, p3, p4, p5,
   ...["Hall", "Ince", "Keane", "Lee", "Batty", "Speed"].map((name, index) => player(`p${index + 6}`, name)),
 ];
 
-/** p0..p10 start, p11 (Speed) is the spare. */
 const completeTactic = () => ({
   ...seededTactic(),
-  slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
-    position,
-    role: POSITION_ROLES[position],
-    playerId: rid(`p${index}`),
-  })),
+  assignments: fourFourTwoLabels.map((_label, index) => rid(`p${index}`)),
 });
 
-const ML_INDEX = FORMATION_SLOTS["4-4-2"].indexOf("ML");
+const ML_INDEX = fourFourTwoLabels.indexOf("M L");
 
 const successfulSave = (payload: unknown) =>
   ({
@@ -196,10 +251,10 @@ describe("the match-day bar", () => {
       .getAllByRole("button")
       .filter((b) => b.getAttribute("aria-label")?.includes(" slot") ?? false);
     expect(slotButtons).toHaveLength(18);
-    const starterLabels = FORMATION_SLOTS["4-4-2"].map((position, index) =>
-      index < 3 ? `${position} slot, Pep ${["Shearer", "Moore", "Nistelrooy"][index]}` : `${position} slot`,
+    const starterLabels = fourFourTwoLabels.map((label, index) =>
+      index < 3 ? `${label} slot, Pep ${["Shearer", "Moore", "Nistelrooy"][index]}` : `${label} slot`,
     );
-    const benchLabels = ["SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7"].map((label) => `${label} slot`);
+    const benchLabels = ["SB1", "SB2", "SB3", "SB4", "SB5", "SB6", "SB7"].map((l) => `${l} slot`);
     expect(slotButtons.map((b) => b.getAttribute("aria-label"))).toEqual([
       ...starterLabels,
       ...benchLabels,
@@ -208,39 +263,37 @@ describe("the match-day bar", () => {
 
   it("assigns a squad player onto an empty slot by dragging from the roster", async () => {
     await mountSquadScreen();
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
     drag(
       screen.getByRole("button", { name: "Van Persie, Pep" }),
-      screen.getByRole("button", { name: "ML slot" }),
+      screen.getByRole("button", { name: `${mlLabel} slot` }),
     );
-    expect(screen.getByRole("button", { name: "ML slot, Pep Van Persie" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${mlLabel} slot, Pep Van Persie` })).toBeTruthy();
   });
 
   it("flips the roster row's leading indicator to Playing as the player is dragged into a slot", async () => {
     await mountSquadScreen();
-    // Seeded lineup: the first three slots are filled; six players, so three
-    // rows read Not selected.
     expect(screen.getByText("Playing (GK)")).toBeTruthy();
     expect(screen.getAllByText("Not selected")).toHaveLength(3);
 
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
     drag(
       screen.getByRole("button", { name: "Van Persie, Pep" }),
-      screen.getByRole("button", { name: "ML slot" }),
+      screen.getByRole("button", { name: `${mlLabel} slot` }),
     );
     await waitFor(() =>
-      expect(screen.getByText("Playing (ML)")).toBeTruthy(),
+      expect(screen.getByText(`Playing (${mlLabel})`)).toBeTruthy(),
     );
     expect(screen.getAllByText("Not selected")).toHaveLength(2);
 
-    // Unassigning the slot hands the player back to the unselected pool, and
-    // the indicator empties with it.
     drag(
-      screen.getByRole("button", { name: "ML slot, Pep Van Persie" }),
+      screen.getByRole("button", { name: `${mlLabel} slot, Pep Van Persie` }),
       screen.getByTestId("lineup-bar"),
     );
     await waitFor(() =>
       expect(screen.getAllByText("Not selected")).toHaveLength(3),
     );
-    expect(screen.queryByText("Playing (ML)")).toBeNull();
+    expect(screen.queryByText(`Playing (${mlLabel})`)).toBeNull();
   });
 
   it("replaces the occupant when a squad player lands on a filled slot, the occupant leaves the lineup", async () => {
@@ -255,12 +308,13 @@ describe("the match-day bar", () => {
 
   it("swaps two filled slots when one is dragged onto the other", async () => {
     await mountSquadScreen();
+    const dcLabel = fourFourTwoLabels[1]!;
     drag(
       screen.getByRole("button", { name: "GK slot, Pep Shearer" }),
-      screen.getByRole("button", { name: "DC slot, Pep Moore" }),
+      screen.getByRole("button", { name: `${dcLabel} slot, Pep Moore` }),
     );
     expect(screen.getByRole("button", { name: "GK slot, Pep Moore" })).toBeTruthy();
-    expect(screen.getByRole("button", { name: "DC slot, Pep Shearer" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${dcLabel} slot, Pep Shearer` })).toBeTruthy();
   });
 
   it("unassigns a slot by dragging it back onto the bar", async () => {
@@ -284,20 +338,21 @@ describe("the match-day bar", () => {
     });
     expect(screen.queryByRole("button", { name: "Save Lineup" })).toBeNull();
 
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
     drag(
       screen.getByRole("button", { name: "Speed, Pep" }),
-      screen.getByRole("button", { name: /^ML slot, / }),
+      screen.getByRole("button", { name: new RegExp(`^${mlLabel} slot, `) }),
     );
     expect(await screen.findByText("Saved.")).toBeTruthy();
 
     expect(saves).toHaveLength(1);
     const payload = saves[0] as {
       expectedRevision: number;
-      tactic: { slots: Array<{ position: string; playerId: unknown }> };
+      tactic: { assignments: Array<unknown> };
     };
     expect(payload.expectedRevision).toBe(0);
-    expect(String(payload.tactic.slots[ML_INDEX]!.playerId)).toBe("p11");
-    expect(String(payload.tactic.slots[0]!.playerId)).toBe("p0");
+    expect(String(payload.tactic.assignments[ML_INDEX])).toBe("p11");
+    expect(String(payload.tactic.assignments[0])).toBe("p0");
   });
 
   it("does not save while a starter slot is empty, and says how many are missing", async () => {
@@ -308,16 +363,17 @@ describe("the match-day bar", () => {
         return successfulSave(payload);
       },
     });
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
     drag(
       screen.getByRole("button", { name: "Van Persie, Pep" }),
-      screen.getByRole("button", { name: "ML slot" }),
+      screen.getByRole("button", { name: `${mlLabel} slot` }),
     );
     expect(screen.getByText("Not saved yet: pick 7 more starters.")).toBeTruthy();
     expect(saves).toHaveLength(0);
   });
 
   it("sends edits made during a save as one follow-up save at the new revision", async () => {
-    const saves: Array<{ expectedRevision: number; tactic: { slots: Array<{ playerId: unknown }> } }> = [];
+    const saves: Array<{ expectedRevision: number; tactic: { assignments: Array<unknown> } }> = [];
     const pending: Array<() => void> = [];
     await mountSquadScreen({
       squad: FULL_SQUAD,
@@ -328,19 +384,18 @@ describe("the match-day bar", () => {
       },
     });
 
-    drag(screen.getByRole("button", { name: "Speed, Pep" }), screen.getByRole("button", { name: /^ML slot, / }));
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
+    drag(screen.getByRole("button", { name: "Speed, Pep" }), screen.getByRole("button", { name: new RegExp(`^${mlLabel} slot, `) }));
     await waitFor(() => expect(saves).toHaveLength(1));
-    // Two more edits while the first save is on the wire: they must not race it.
-    drag(screen.getByRole("button", { name: "GK slot, Pep Shearer" }), screen.getByRole("button", { name: "DC slot, Pep Moore" }));
-    drag(screen.getByRole("button", { name: "GK slot, Pep Moore" }), screen.getByRole("button", { name: "DC slot, Pep Shearer" }));
+    drag(screen.getByRole("button", { name: "GK slot, Pep Shearer" }), screen.getByRole("button", { name: `${fourFourTwoLabels[1]!} slot, Pep Moore` }));
+    drag(screen.getByRole("button", { name: "GK slot, Pep Moore" }), screen.getByRole("button", { name: `${fourFourTwoLabels[1]!} slot, Pep Shearer` }));
     expect(saves).toHaveLength(1);
 
     pending.shift()!();
     await waitFor(() => expect(saves).toHaveLength(2));
     expect(saves[1]!.expectedRevision).toBe(1);
-    // Only the newest draft is sent: the second swap undid the first.
-    expect(String(saves[1]!.tactic.slots[0]!.playerId)).toBe("p0");
-    expect(String(saves[1]!.tactic.slots[ML_INDEX]!.playerId)).toBe("p11");
+    expect(String(saves[1]!.tactic.assignments[0])).toBe("p0");
+    expect(String(saves[1]!.tactic.assignments[ML_INDEX])).toBe("p11");
     pending.shift()!();
     expect(await screen.findByText("Saved.")).toBeTruthy();
     expect(saves).toHaveLength(2);
@@ -354,7 +409,7 @@ describe("the match-day bar", () => {
       getTactics: async () => {
         loads += 1;
         const revision = loads === 1 ? 3 : 5;
-        const tactic = loads === 1 ? completeTactic() : { ...completeTactic(), formation: "5-3-2" as const };
+        const tactic = loads === 1 ? completeTactic() : { ...completeTactic(), sourceTemplate: "5-3-2" as const };
         return {
           _tag: "Success",
           value: {
@@ -367,46 +422,45 @@ describe("the match-day bar", () => {
       },
     });
 
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
     drag(
       screen.getByRole("button", { name: "Speed, Pep" }),
-      screen.getByRole("button", { name: /^ML slot, / }),
+      screen.getByRole("button", { name: new RegExp(`^${mlLabel} slot, `) }),
     );
 
-    // The conflict is reported in the shell's bottom bar, not under the slots.
     const line = await screen.findByText(/newer tactic was saved/);
     expect(line.closest("[data-testid='lineup-bar']")).toBeNull();
     expect(screen.getByRole("button", { name: "Refresh" })).toBeTruthy();
 
     fireEvent.click(screen.getByRole("button", { name: "Refresh" }));
     await waitFor(() => expect(screen.queryByText(/newer tactic was saved/)).toBeNull());
-    // The refreshed view (5-3-2) re-seeds the draft.
-    expect(screen.getByRole("button", { name: /^DR slot/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /^D R slot/ })).toBeTruthy();
   });
 
   it("carries a player by keyboard: Enter picks up a filled slot, Enter on a slot places them, Escape releases", async () => {
     await mountSquadScreen();
+    const mlLabel = fourFourTwoLabels[ML_INDEX]!;
     const gk = screen.getByRole("button", { name: "GK slot, Pep Shearer" });
     fireEvent.keyDown(gk, { key: "Enter" });
     expect(screen.getByTestId("lineup-carried").textContent).toMatch(/Shearer/);
     expect(gk.getAttribute("aria-pressed")).toBe("true");
 
-    fireEvent.keyDown(screen.getByRole("button", { name: "ML slot" }), { key: "Enter" });
-    expect(screen.getByRole("button", { name: "ML slot, Pep Shearer" })).toBeTruthy();
+    fireEvent.keyDown(screen.getByRole("button", { name: `${mlLabel} slot` }), { key: "Enter" });
+    expect(screen.getByRole("button", { name: `${mlLabel} slot, Pep Shearer` })).toBeTruthy();
     expect(screen.getByRole("button", { name: "GK slot" })).toBeTruthy();
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
 
-    // Escape releases the carry without changing anything.
-    const another = screen.getByRole("button", { name: "DC slot, Pep Nistelrooy" });
+    const dcLabel = fourFourTwoLabels[1]!;
+    const another = screen.getByRole("button", { name: `${dcLabel} slot, Pep Nistelrooy` });
     fireEvent.keyDown(another, { key: "Enter" });
     expect(screen.getByTestId("lineup-carried")).toBeTruthy();
     fireEvent.keyDown(another, { key: "Escape" });
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
-    expect(screen.getByRole("button", { name: "DC slot, Pep Nistelrooy" })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${dcLabel} slot, Pep Nistelrooy` })).toBeTruthy();
   });
 });
 
 describe("the table layouts lead with the same match-day indicator", () => {
-  /** Each row's indicator state, keyed by the row's focus id, which both layouts share. */
   const statesByRow = (rowSelector: string): Record<string, string> =>
     Object.fromEntries(
       [...document.querySelectorAll(rowSelector)].map((row) => [
@@ -438,7 +492,6 @@ describe("the table layouts lead with the same match-day indicator", () => {
     await waitFor(() => expect(within(tbody).queryByText("Playing (GK)")).toBeNull());
     expect(within(tbody).getAllByText("Not selected")).toHaveLength(4);
 
-    // Every focusable thing in a row is the row's one roving name button.
     const focusable = [...tbody.querySelectorAll("button, a[href], input, [tabindex]")];
     expect(focusable.length).toBe(6);
     expect(focusable.every((element) => element.hasAttribute("data-focus-id"))).toBe(true);

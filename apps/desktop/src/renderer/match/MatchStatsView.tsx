@@ -7,6 +7,8 @@ const STATISTIC: Readonly<Record<MatchStatisticKey, { readonly label: string; re
   shotsOnTarget: { label: "Shots on target", definition: "Goals plus shots saved" },
   shotsOffTarget: { label: "Shots off target", definition: "Shots that missed the goal" },
   bigChances: { label: "Big chances", definition: "Clear chances not converted into a recorded shot" },
+  fouls: { label: "Fouls", definition: "Fouls committed" },
+  offsides: { label: "Offsides", definition: "Offsides caught" },
   yellowCards: { label: "Yellow cards", definition: "Yellow cards shown" },
   redCards: { label: "Red cards", definition: "Red cards shown" },
   injuries: { label: "Injuries", definition: "Players injured" },
@@ -16,8 +18,6 @@ const STATISTIC: Readonly<Record<MatchStatisticKey, { readonly label: string; re
 const UNAVAILABLE_LABEL: Readonly<Record<UnavailableMatchStatistic, string>> = {
   possession: "Possession",
   corners: "Corners",
-  fouls: "Fouls",
-  offsides: "Offsides",
 };
 
 /**

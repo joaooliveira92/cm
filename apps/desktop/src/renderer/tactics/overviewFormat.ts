@@ -2,8 +2,9 @@
 
 export const capitalize = (value: string): string => value.charAt(0).toUpperCase() + value.slice(1);
 
-/** "BallPlayingDefender" → "Ball Playing Defender". */
-export const roleLabel = (role: string): string => role.replace(/(?<!^)([A-Z])/g, " $1");
+/** "ultraDefensive" → "Ultra defensive": an instruction value read as words. */
+export const spaced = (value: string): string =>
+  capitalize(value.replace(/[A-Z]/g, (letter) => ` ${letter.toLowerCase()}`));
 
 /** How well a 1-100 rating fits: 70 and up is a strong fit, under 50 a poor one. */
 type Fit = "strong" | "fair" | "poor" | "none";

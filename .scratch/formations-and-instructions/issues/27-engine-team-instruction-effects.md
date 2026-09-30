@@ -12,7 +12,7 @@ Seam: resolution and engine; no new failure channel.
 
 **Blocked by:** 26
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] A directional test per instruction value, over many seeded matches.
 - [ ] Calibration stays inside its targets.

@@ -26,12 +26,12 @@ idempotent replays are unchanged.
 
 **Blocked by:** 20
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Saving and re-reading a complete Tactic round-trips every field.
-- [ ] An invalid Tactic is refused with its named problems; a stale revision is refused with the existing conflict; a replayed Request Id is a no-op.
-- [ ] No Role, Role Rating, Tempo, Pressing or Tactical Style remains in packages or the app outside tests of their absence.
-- [ ] A new career's first Tactic is the manager's preferred template; AI clubs field a valid new-model Tactic.
-- [ ] Matches still simulate, deterministically, through the transitional adapter.
-- [ ] An older save is refused with the schema-mismatch error; the commit says this DDL change refuses older saves.
-- [ ] Typecheck, lint, effect-lint and the affected main, contracts and renderer tests pass.
+- [x] Saving and re-reading a complete Tactic round-trips every field.
+- [x] An invalid Tactic is refused with its named problems; a stale revision is refused with the existing conflict; a replayed Request Id is a no-op.
+- [x] No Role, Role Rating, Tempo, Pressing or Tactical Style remains in packages or the app outside tests of their absence.
+- [x] A new career's first Tactic is the manager's preferred template; AI clubs field a valid new-model Tactic.
+- [x] Matches still simulate, deterministically, through the transitional adapter.
+- [x] An older save is refused with the schema-mismatch error; the commit says this DDL change refuses older saves.
+- [x] Typecheck, lint, effect-lint and the affected main, contracts and renderer tests pass.

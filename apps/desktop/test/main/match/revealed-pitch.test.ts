@@ -15,6 +15,7 @@ import {
   type SquadPlayerView,
   type SubmitMatchCommandView,
 } from "@cm-clone/contracts";
+import { legacyPositionOf } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
@@ -73,7 +74,7 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, RED_CARD_THEN_FORCED_SUB_SEED);
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
-    const startingXi = new Set(tactic.slots.map((slot) => slot.playerId));
+    const startingXi = new Set([...tactic.assignments]);
     const outsideXi = squad.map((player) => player.id).filter((id) => !startingXi.has(id));
     const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
     ok(bench.length > 0, "the human Tactic names a bench");
@@ -100,7 +101,7 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     const kickoff = yield* at(RED_CARD_LINE);
     deepStrictEqual(
       humanPitch(kickoff, match).onPitch.map(({ playerId, position }) => ({ playerId, position })),
-      tactic.slots.map(({ playerId, position }) => ({ playerId, position })),
+      tactic.slots.map((slot, index) => ({ playerId: tactic.assignments[index]!, position: legacyPositionOf(slot.cell) })),
     );
     deepStrictEqual(humanPitch(kickoff, match).substitutes, bench);
 
@@ -123,11 +124,11 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
 
     // The forced substitution revealed: the injured player is off, the replacement in their slot.
     const afterSub = yield* at(FORCED_SUB_LINE + 1);
-    const injuredSlot = tactic.slots.find((slot) => slot.playerId === injured.id)!;
+    const injuredSlot = tactic.slots[tactic.assignments.indexOf(injured.id)]!;
     ok(!onPitchIds(afterSub, match).includes(injured.id), "the injured player is no longer offered off");
     ok(
       humanPitch(afterSub, match).onPitch.some(
-        (slot) => slot.playerId === replacement.id && slot.position === injuredSlot.position,
+        (slot) => slot.playerId === replacement.id && slot.position === legacyPositionOf(injuredSlot.cell),
       ),
     );
     ok(!humanPitch(afterSub, match).substitutes.includes(replacement.id), "the replacement is no longer offered on");
@@ -146,18 +147,18 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
     const lines = yield* drainLines(save.id, match.matchId);
     strictEqual(lines[RED_CARD_LINE]?.tag, "RedCard", repin);
     const sentOff = playerNamedIn(squad, lines[RED_CARD_LINE]);
-    ok(sentOff && tactic.slots.some((slot) => slot.playerId === sentOff.id), `a human starter is sent off — ${repin}`);
+    ok(sentOff && tactic.assignments.includes(sentOff.id), `a human starter is sent off — ${repin}`);
     const redMinute = lines[RED_CARD_LINE]!.minute;
 
     // The redraft names the kickoff eleven, the sent-off player included, with a bench player in
     // place of another starter, and changes the Mentality.
-    const benched = tactic.slots.find((slot) => slot.playerId !== sentOff.id && slot.position !== "GK")!.playerId;
+    const benched = tactic.assignments.find((id, index) => id !== sentOff.id && index !== 0)!;
     const benchPlayer = tactic.bench.find((id): id is PlayerId => id !== null)!;
     const redrafted = new Tactic({
       ...tactic,
-      slots: tactic.slots.map((slot) => (slot.playerId === benched ? { ...slot, playerId: benchPlayer } : slot)),
+      assignments: tactic.assignments.map((id) => (id === benched ? benchPlayer : id)),
       bench: tactic.bench.map((id) => (id === benchPlayer ? benched : id)),
-      mentality: tactic.mentality === "attacking" ? "defensive" : "attacking",
+      team: { ...tactic.team, mentality: tactic.team.mentality === "attacking" ? "defensive" : "attacking" },
     });
     const changed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, RED_CARD_LINE + 1, redMinute + 1, false, {
       _tag: "ChangeTactics",
@@ -169,7 +170,7 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
     // player still offered on.
     deepStrictEqual(
       [...onPitchIds(changed, match)].sort(),
-      tactic.slots.map((slot) => slot.playerId).filter((id) => id !== sentOff.id).sort(),
+      [...tactic.assignments].filter((id) => id !== sentOff.id).sort(),
     );
     ok(humanPitch(changed, match).substitutes.includes(benchPlayer));
 
@@ -203,7 +204,7 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
  * and the player goes off to ten men. Found by enumerating seeds over `simulateMatch` with those
  * three commands; the test re-checks it.
  */
-const RED_INJURY_WITHOUT_WINDOWS_SEED = 17;
+const RED_INJURY_WITHOUT_WINDOWS_SEED = 517;
 const UNREPLACED_INJURY_LINE = 8;
 
 it.effect("a severe Injury with no substitution left takes the player off from the moment it is revealed", () =>
@@ -219,7 +220,7 @@ it.effect("a severe Injury with no substitution left takes the player off from t
       const response: SubmitMatchCommandView = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 0, minute, false, {
         _tag: "MakeSubstitution",
         clubId,
-        outPlayerId: tactic.slots[minute]!.playerId,
+        outPlayerId: tactic.assignments[minute]!,
         inPlayerId: bench[minute - 1]!,
       });
       strictEqual(response.substitutionApplied, true);
@@ -248,9 +249,9 @@ it.effect("a journaled substitution and bring-off change the pitch from the comm
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
     const clubId = humanClubOf(match);
-    const outPlayerId = tactic.slots[1]!.playerId;
-    const inPlayerId = squad.find((player) => !tactic.slots.some((slot) => slot.playerId === player.id))!.id;
-    const broughtOff = tactic.slots[2]!.playerId;
+    const outPlayerId = tactic.assignments[1]!;
+    const inPlayerId = squad.find((player) => !tactic.assignments.includes(player.id))!.id;
+    const broughtOff = tactic.assignments[2]!;
 
     // Nothing revealed yet: a command applies at the start of its minute, ahead of any reveal.
     const subbed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 0, 3, false, {
@@ -276,7 +277,7 @@ it.effect("a journaled substitution and bring-off change the pitch from the comm
 
     // Bringing off the only goalkeeper drags an outfield player into goal: the engine records that
     // as a forced Substitution of the same minute, which belongs to the command, not to the reveal.
-    const goalkeeper = tactic.slots.find((slot) => slot.position === "GK")!.playerId;
+    const goalkeeper = tactic.assignments[0]!;
     const keeperOff = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 0, 3, false, {
       _tag: "ForceOff",
       clubId,
@@ -298,8 +299,8 @@ it.effect("a bring-off of a player brought on earlier in the same minute takes t
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
     const clubId = humanClubOf(match);
-    const outPlayerId = tactic.slots[1]!.playerId;
-    const inPlayerId = squad.find((player) => !tactic.slots.some((slot) => slot.playerId === player.id))!.id;
+    const outPlayerId = tactic.assignments[1]!;
+    const inPlayerId = squad.find((player) => !tactic.assignments.includes(player.id))!.id;
 
     // The engine applies a minute's commands in journal order: the substitution, then the bring-off.
     const subbed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, 0, 3, false, {

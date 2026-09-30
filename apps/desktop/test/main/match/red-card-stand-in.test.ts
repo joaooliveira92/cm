@@ -33,7 +33,7 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * enumerating seeds over `deriveMatchEvents` with the kickoff setups; the first such seed for the
  * human club. Re-pinned 2026-09-29 when players gained CM line and side ratings.
  */
-const KEEPER_SENT_OFF_SEED = 32;
+const KEEPER_SENT_OFF_SEED = 532;
 const RED_CARD_LINE = 7;
 const RED_CARD_MINUTE = 33;
 const repin = `repin KEEPER_SENT_OFF_SEED (${KEEPER_SENT_OFF_SEED})`;
@@ -57,14 +57,14 @@ const seeded = Effect.gen(function* () {
   const match = yield* startSeededMatch(savesDir, save.id, fixtureId, KEEPER_SENT_OFF_SEED);
   const { squad, tactic } = yield* getTactics(savesDir, save.id);
   ok(tactic !== null);
-  const keeper = squad.find((player) => player.id === tactic.slots.find((slot) => slot.position === "GK")!.playerId)!;
+  const keeper = squad.find((player) => player.id === tactic.assignments[0]!)!;
   const lines = yield* drainLines(save.id, match.matchId);
   const red = lines[RED_CARD_LINE];
   strictEqual(red?.tag, "RedCard", repin);
   strictEqual(red.minute, RED_CARD_MINUTE, repin);
   ok(red.text.includes(`${keeper.firstName} ${keeper.lastName}`), `the human goalkeeper is sent off — ${repin}`);
   strictEqual(lines[RED_CARD_LINE + 1]?.tag, "Substitution", `the stand-in follows the red card — ${repin}`);
-  return { save, fixtureId, match, keeper, clubId: humanClubOf(match), starters: tactic.slots.map((slot) => slot.playerId) };
+  return { save, fixtureId, match, keeper, clubId: humanClubOf(match), starters: [...tactic.assignments] };
 });
 
 it.effect("the pitch has an outfield stand-in in goal and ten men, and no substitution is spent", () =>
