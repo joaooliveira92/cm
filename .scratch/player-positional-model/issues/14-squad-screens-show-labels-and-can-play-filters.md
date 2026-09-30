@@ -17,7 +17,7 @@ and suitability are derived on read from data the read already holds.
 
 **Blocked by:** 13
 
-**Status:** claimed
+**Status:** ready-for-agent
 
 - [ ] Every listed screen shows the label from one shared function.
 - [ ] Sorting the position column orders GK first and F/S last, then by side R, L, C.
@@ -25,3 +25,9 @@ and suitability are derived on read from data the read already holds.
 - [ ] A contract-level test asserts no view schema exposes Line, Side or Free Role Ratings.
 - [ ] Renderer tests for the squad table's column, sort and filter pass.
 - [ ] `pnpm check:all` is green, and the affected e2e specs pass.
+
+## Comments
+
+2026-09-29: claimed and released unstarted. A parallel session has uncommitted changes in files this
+ticket must edit (`SquadTable.tsx`, `ClubSquadScreen.tsx`, the `clubSquad` and `transfers`
+contracts); take it once those land.

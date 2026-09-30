@@ -15,7 +15,7 @@ failure channel; the existing squad-too-small failure of Best XI is unchanged.
 
 **Blocked by:** 13
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] Best XI picks a natural full-back over an unfamiliar one of higher raw attributes when the suitability-adjusted rating says so.
 - [ ] Overall Rating equals the best Position Rating among Natural cells for a table of fixture players.
