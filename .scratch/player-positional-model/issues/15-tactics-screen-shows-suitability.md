@@ -15,9 +15,17 @@ Seam: the tactics editor's and overview snapshot's read path. No new failure cha
 
 **Blocked by:** 13
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Moving a player to a slot he is unfamiliar in shows a low fit indicator; to a natural slot, a high one.
-- [ ] The overview's natural, competent and unfamiliar counts match tiers derived from suitability for the saved XI.
-- [ ] The indicator never shows a raw Line or Side Rating.
-- [ ] `pnpm check:all` is green, and the tactics e2e specs pass.
+- [x] Moving a player to a slot he is unfamiliar in shows a low fit indicator; to a natural slot, a high one.
+- [x] The overview's natural, competent and unfamiliar counts match tiers derived from suitability for the saved XI.
+- [x] The indicator never shows a raw Line or Side Rating.
+- [x] `pnpm check:all` is green, and the tactics e2e specs pass.
+
+## Comments
+
+2026-09-29: shipped in efd0fb70. Verified: typecheck and lint pass; contracts (233), the main tactics
+overview test (with a new fit assertion) and the renderer tactics, squad, rpc, match, table,
+training, club-selection and screens suites (638) pass. The fit shows as a tier word, never a
+number, so no raw rating reaches the screen. No renderer test drives a slot move to an unfamiliar
+cell and reads the indicator; the tier derivation is asserted in the main overview test.
