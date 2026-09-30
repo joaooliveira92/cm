@@ -72,6 +72,16 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 - [How each tactical setting acts on the three-phase engine](issues/08-mapping-tactics-onto-the-three-phase-engine.md):
   a chance pipeline, Foul and Offside events, per-slot behaviour vectors resolved outside the engine,
   a suitability cost, runs counted in possession, tuning proved by tests and calibration.
+- [Team instruction effects](issues/15-team-instruction-effects.md): approved direction-and-size
+  table for the nine team instructions.
+- [Player instruction effects](issues/16-player-instruction-effects.md): approved table; "normal" is
+  baseline, "often" roughly doubles the behaviour.
+- [When a live tactical change takes effect](issues/09-the-live-tactical-change-boundary.md): the
+  existing M+1 / half-time boundary, validated on submit, substitutions first.
+- [AI tactic selection and in-match adjustment](issues/11-ai-tactic-selection-and-in-match-adjustment.md):
+  seeded CM preferences, a deterministic rule table, a controller outside the engine.
+- [Formation, run and suitability effects](issues/17-formation-run-and-suitability-effects.md):
+  coverage-scaled Phase Strength, runs in possession, the suitability curve, new stats and commentary.
 
 ## Not yet specified
 
@@ -85,7 +95,6 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
   Only if research shows CM 03/04 modelled it; otherwise out of scope.
 - **Scouting and reports.** The Team Scout Report predicts an opponent's shape from the old
   five-template vocabulary. It needs a successor once presets are fixed.
-- **Match statistics and commentary** that make new instruction effects visible, after ticket 08.
 
 ## Out of scope
 

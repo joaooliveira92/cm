@@ -2,6 +2,7 @@
 
 Type: grilling
 Blocked by: 04, 08
+Status: resolved
 
 ## Question
 
@@ -12,3 +13,12 @@ engine's chunk boundary), how a change queued between boundaries is held, and ho
 player to another slot interacts with substitutions made at the same stoppage. Confirm determinism:
 a match with the same seed and the same changes at the same boundaries resimulates identically.
 Supersedes the "mid-match only Team Instructions take effect" clause of **Tactic** in `CONTEXT.md`.
+
+## Answer
+
+**The complete Tactic uses the existing live-command boundary: it applies at the start of the first
+unseen minute (M+1), or at the break for a half-time change, with no separate stoppage concept.** A
+live `ChangeTactics` is validated on submit against the revealed pitch (sent-off players cannot be
+assigned; ten men leave a slot empty); substitutions at the same boundary apply first, then the slot
+layout. Replaying the seed and journaled commands reproduces the match. No Agent Note: this extends
+the existing command-timing rule in `game-engine/match/commandTiming.ts` to the complete Tactic.
