@@ -458,7 +458,7 @@ export const SquadTable = () => {
 
         {/* The panel CM 03/04 drew the list in, titled with what you are looking
             at, named by the view that drew it. A tinted surface, no border. */}
-        <section className="mt-3 rounded-panel px-3 pt-2 pb-3">
+        <section className="rounded-panel px-3 pt-2 pb-3">
           <h2 className="text-heading text-text-highlight">
             Players ({view.label})
           </h2>

@@ -88,6 +88,7 @@ const usePlayerIdentity = (profile: PlayerProfileView | null, wage: number | nul
   useEffect(() => {
     if (profile === null) return;
     setScreenIdentity({
+      kind: "player",
       name: `${profile.firstName} ${profile.lastName}`,
       qualifier: profile.club.name,
       facts: `${positionsLine(profile)}, ${nationName(profile.nationality)}, Age ${profile.age}`,

@@ -29,8 +29,16 @@ const respondTo = (method: string, value: unknown): void => {
 
 const club = { id: cid("club-7"), name: "Northport Rovers", statureTier: "mid" };
 
+const clubColours = {
+  primary: { foreground: "#ffffff", background: "#1d4ed8" },
+  secondary: { foreground: "#ffffff", background: "#1e3a8a" },
+  tertiary: null,
+  quaternary: null,
+};
+
 const fixturesView = (options: { readonly isUserClub?: boolean; readonly empty?: boolean } = {}) => ({
   club,
+  clubColours,
   isUserClub: options.isUserClub ?? true,
   season: { seasonNumber: 1, currentDate: "2024-08-01", phase: "in_season", awaitingFixture: null },
   fixtures: options.empty
@@ -53,6 +61,7 @@ const fixturesView = (options: { readonly isUserClub?: boolean; readonly empty?:
 
 const transfersView = (options: { readonly isUserClub?: boolean; readonly empty?: boolean } = {}) => ({
   club,
+  clubColours,
   isUserClub: options.isUserClub ?? true,
   entries: options.empty
     ? []

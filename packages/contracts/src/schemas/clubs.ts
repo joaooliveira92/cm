@@ -72,6 +72,11 @@ export class ClubStaffDepartmentGroupView extends Schema.Class<ClubStaffDepartme
 export class ClubStaffView extends Schema.Class<ClubStaffView>("ClubStaffView")({
   club: ClubSummary,
   /**
+   * The club's kit, resolved through the content pack — carried so a foreign club's name can be
+   * painted in its own colours rather than a second read the screen has to reconcile.
+   */
+  clubColours: ClubColoursView,
+  /**
    * Whether this club is the one the manager manages, answered by the same read that names the
    * club. The screen marks a foreign club `[Not your club]`, and asking the save directly keeps
    * that a property of the club being read rather than a second read the screen has to reconcile:
@@ -95,6 +100,7 @@ export class ClubStaffView extends Schema.Class<ClubStaffView>("ClubStaffView")(
  */
 export class ClubInformationView extends Schema.Class<ClubInformationView>("ClubInformationView")({
   club: ClubSummary,
+  clubColours: ClubColoursView,
   isUserClub: Schema.Boolean,
   /** The club's home town, and the nation that town sits in — the club's nationality is its city's. */
   cityName: Schema.String,

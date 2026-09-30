@@ -17,6 +17,7 @@
  * the owner.
  */
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
+import { ClubColouredName } from "../components/shared/ClubColouredName.js";
 import { KeyValueKey, KeyValueList, KeyValueRow, KeyValueValue } from "../components/ui/key-value.js";
 import { FOCUS_RING } from "../focus.js";
 import {
@@ -26,6 +27,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { useClubIdentity } from "../screenIdentity.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -70,6 +72,9 @@ export const ClubInformationScreen = ({
 }) => {
   const result = useAtomValue(clubInformationAtom(saveId, clubId));
 
+  // A foreign club's page names that club in the navbar until the screen leaves it.
+  useClubIdentity(result._tag === "Success" ? result.value : null);
+
   if (result._tag === "Failure") {
     return <ClubInformationMessage message={messageOf(typedError(result))} />;
   }
@@ -86,7 +91,9 @@ export const ClubInformationScreen = ({
       aria-label="Club Information"
       className={PAGE_CLASS}
     >
-      <h1 className="text-title">{view.club.name}</h1>
+      <h1 className="text-title">
+        <ClubColouredName name={view.club.name} colours={view.clubColours} />
+      </h1>
       {/* The same marker ClubStaffScreen uses, for the same reason: the route carries any club, so
           the page has to say whose it is rather than leave the reader to assume. */}
       {view.isUserClub ? null : (

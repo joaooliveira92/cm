@@ -70,6 +70,7 @@ describe("a screen's identity in place of the club name", () => {
         clubColours={null}
         badgeKey={null}
         identity={{
+          kind: "player",
           name: "Florian David",
           qualifier: "Benfica",
           facts: "GK, France, Age 22",
@@ -86,6 +87,25 @@ describe("a screen's identity in place of the club name", () => {
     expect(screen.getByText("Florian David", { exact: false })).toBeTruthy();
     expect(screen.getByText("(Benfica)")).toBeTruthy();
     expect(screen.getByText("GK, France, Age 22")).toBeTruthy();
+    expect(screen.queryByText("Northport Rovers")).toBeNull();
+  });
+
+  it("names a foreign club over the manager's club, in the club's own badge colours", () => {
+    render(
+      <CareerIdentity
+        clubName="Northport Rovers"
+        clubColours={SAMPLE_COLOURS}
+        badgeKey={null}
+        identity={{
+          kind: "club",
+          name: "Lisbon Union",
+          qualifier: "Not your club",
+          colours: SAMPLE_COLOURS,
+        }}
+      />,
+    );
+    expect(screen.getByRole("img", { name: "Lisbon Union crest" })).toBeTruthy();
+    expect(screen.getByText("(Not your club)")).toBeTruthy();
     expect(screen.queryByText("Northport Rovers")).toBeNull();
   });
 });

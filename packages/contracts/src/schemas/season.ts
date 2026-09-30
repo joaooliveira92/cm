@@ -1,7 +1,7 @@
 import { Schema } from "effect";
 import { MANAGER_OUTCOMES, VERDICTS } from "@cm-clone/shared";
 
-import { ClubSummary } from "./clubs.js";
+import { ClubColoursView, ClubSummary } from "./clubs.js";
 import { ClubId, CompetitionId, FixtureId, MatchId, SaveId } from "./ids.js";
 import { ArchivedCauseSchema } from "./saves.js";
 import { ReadinessIssueView } from "./tactics.js";
@@ -218,6 +218,7 @@ export class SeasonSummaryView extends Schema.Class<SeasonSummaryView>("SeasonSu
  */
 export class ClubFixturesView extends Schema.Class<ClubFixturesView>("ClubFixturesView")({
   club: ClubSummary,
+  clubColours: ClubColoursView,
   isUserClub: Schema.Boolean,
   season: SeasonView,
   fixtures: Schema.Array(FixtureView),

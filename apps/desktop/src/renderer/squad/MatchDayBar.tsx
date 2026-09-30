@@ -237,8 +237,8 @@ const PositionsPanel = ({
   readonly onSelectSlot: (order: number) => void;
   readonly onSlotKeyDown: (event: React.KeyboardEvent) => void;
 }) => (
-  <section className="rounded-panel px-3 pt-1.5 pb-2.5">
-    <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
+  <section className="rounded-panel">
+    <div className=" flex flex-wrap items-center justify-center gap-1">
       {slots.map((slot) => (
         <SlotBox
           key={`${slot.kind}-${slot.groupIndex}`}

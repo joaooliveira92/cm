@@ -1,7 +1,7 @@
 import type { KnownFigure } from "@cm-clone/shared";
 import { Schema } from "effect";
 
-import { ClubSummary } from "./clubs.js";
+import { ClubColoursView, ClubSummary } from "./clubs.js";
 import { BidId, ClubId, PlayerId, SaveId } from "./ids.js";
 import { SeasonView } from "./season.js";
 import { PlayerPositionView } from "./squad.js";
@@ -254,6 +254,7 @@ export class TransferHistoryView extends Schema.Class<TransferHistoryView>("Tran
  *  Declared here because this module already depends on `clubs.ts`. */
 export class ClubTransfersView extends Schema.Class<ClubTransfersView>("ClubTransfersView")({
   club: ClubSummary,
+  clubColours: ClubColoursView,
   isUserClub: Schema.Boolean,
   entries: Schema.Array(TransferHistoryEntryView),
 }) {}
@@ -268,6 +269,7 @@ export class ClubTransfersView extends Schema.Class<ClubTransfersView>("ClubTran
  */
 export class ClubFinancesView extends Schema.Class<ClubFinancesView>("ClubFinancesView")({
   club: ClubSummary,
+  clubColours: ClubColoursView,
   isUserClub: Schema.Boolean,
   transferBudgetRemaining: Schema.Finite,
   wageBudget: Schema.Finite,

@@ -1,5 +1,6 @@
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
 import { STAFF_DEPARTMENTS, type StaffDepartment } from "@cm-clone/shared";
+import { ClubColouredName } from "../components/shared/ClubColouredName.js";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import { STAFF_ROLE_TITLES } from "../staffProfile/StaffProfileScreen.js";
@@ -10,6 +11,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { useClubIdentity } from "../screenIdentity.js";
 import { clubStaffViewState } from "./clubStaffViewState.js";
 
 /** The department heading the wire's `department` key becomes, in the one place a reader sees it. */
@@ -50,6 +52,9 @@ export const ClubStaffScreen = ({
   const staffResult = useAtomValue(clubStaffAtom(saveId, clubId));
   const state = clubStaffViewState(staffResult);
 
+  // A foreign club's staff names that club in the navbar until the screen leaves it.
+  useClubIdentity(staffResult._tag === "Success" ? staffResult.value : null);
+
   if (state === "error") {
     return <ClubStaffMessage message={messageOf(typedError(staffResult))} />;
   }
@@ -73,7 +78,7 @@ export const ClubStaffScreen = ({
         {/* The club header is the `<main>` region's label, so the first thing read is which club's
             staff this is — and the foreign marker when that club is not the user's. */}
         <h1 id="club-staff-heading" className="text-title">
-          {view.club.name} · Club Staff{" "}
+          <ClubColouredName name={view.club.name} colours={view.clubColours} /> · Club Staff{" "}
           {!view.isUserClub && (
             <span className="text-body font-semibold text-text-secondary">[Not your club]</span>
           )}

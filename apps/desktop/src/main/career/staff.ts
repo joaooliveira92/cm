@@ -23,7 +23,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 
 /**
  * A club's Stature Tier and first-season competition's nation id, or `null` when the id names no
@@ -185,6 +185,7 @@ const readClubStaff = (clubId: ClubId) =>
       worldSeed,
     });
     const nameOf = yield* displayNames;
+    const coloursOf = yield* clubColourResolver;
     const summary = new ClubSummary({
       id: clubId,
       name: nameOf(clubId),
@@ -193,6 +194,7 @@ const readClubStaff = (clubId: ClubId) =>
 
     return new ClubStaffView({
       club: summary,
+      clubColours: coloursOf(clubId),
       // SQLite has no boolean: the column is the integer flag world generation writes.
       isUserClub: club.isUserClub === 1,
       groups: groups.map(

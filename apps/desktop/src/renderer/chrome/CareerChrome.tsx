@@ -131,7 +131,11 @@ const CareerChromeInner = ({
                 style={NO_DRAG}
               >
                 <Header.SecondaryRow
-                  state={{ view: "career", career, player: identity?.player ?? null }}
+                  state={{
+                    view: "career",
+                    career,
+                    player: identity?.kind === "player" ? identity.player : null,
+                  }}
                 />
               </div>
             </header>

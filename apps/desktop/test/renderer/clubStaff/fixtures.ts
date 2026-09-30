@@ -25,8 +25,29 @@ interface GroupWire {
   readonly members: readonly MemberWire[];
 }
 
+interface ColourPairWire {
+  readonly foreground: string;
+  readonly background: string;
+}
+
+interface ClubColoursWire {
+  readonly primary: ColourPairWire;
+  readonly secondary: ColourPairWire;
+  readonly tertiary: null;
+  readonly quaternary: null;
+}
+
+/** The kit the header paints a foreign club's name in, as the wire resolves it. */
+const clubColours: ClubColoursWire = {
+  primary: { foreground: "#ffffff", background: "#1d4ed8" },
+  secondary: { foreground: "#ffffff", background: "#1e3a8a" },
+  tertiary: null,
+  quaternary: null,
+};
+
 export interface ClubStaffViewWire {
   readonly club: { readonly id: ClubId; readonly name: string; readonly statureTier: string };
+  readonly clubColours: ClubColoursWire;
   readonly isUserClub: boolean;
   readonly groups: readonly GroupWire[];
 }
@@ -69,6 +90,7 @@ export const staffView = (
   const { clubId = "club-7", clubName = "Northport Rovers", isUserClub = true } = options;
   return {
     club: { id: cid(clubId), name: clubName, statureTier: STATURE_TIERS[0] },
+    clubColours,
     isUserClub,
     groups: STAFF_DEPARTMENTS.map((department) => ({
       department,
@@ -84,6 +106,7 @@ export const populatedStaffView = (
   const { clubId = "club-7", isUserClub = true } = options;
   return {
     club: { id: cid(clubId), name: "Northport Rovers", statureTier: STATURE_TIERS[0] },
+    clubColours,
     isUserClub,
     groups: [
       { department: "executive", members: [member("president", "Alan", "Reyes")] },

@@ -12,6 +12,13 @@ const roundTrip = <A, I>(schema: Schema.ConstraintCodec<A, I>, wire: unknown): v
 describe("Club Staff view (Screen 38)", () => {
   const staffView = {
     club: { id: "c1", name: "Castlemere United", statureTier: "big" },
+    // The club's kit rides on the view so the screen can paint its name in the right colours.
+    clubColours: {
+      primary: { foreground: "#ffffff", background: "#7c2d12" },
+      secondary: { foreground: "#ffffff", background: "#431407" },
+      tertiary: null,
+      quaternary: null,
+    },
     // Whose club it is rides on this view, so the screen needs no second read to mark a rival.
     isUserClub: false,
     groups: [

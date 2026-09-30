@@ -11,7 +11,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 import { loadUserClub } from "../club/squad.js";
 import { loadClubBudgetRow, loadWageBudgetUsed } from "./budgets.js";
 
@@ -38,11 +38,13 @@ export const getClubFinances = (savesDir: string, saveId: SaveId, clubId: ClubId
       }
 
       const nameOf = yield* displayNames;
+      const coloursOf = yield* clubColourResolver;
       const budget = yield* loadClubBudgetRow(clubId);
       const committedWages = yield* loadWageBudgetUsed(clubId);
 
       return new ClubFinancesView({
         club: new ClubSummary({ id: clubId, name: nameOf(clubId), statureTier: club.statureTier }),
+        clubColours: coloursOf(clubId),
         // SQLite has no boolean: the column is the integer flag world generation writes.
         isUserClub: club.isUserClub === 1,
         transferBudgetRemaining: budget.transferBudgetRemaining,

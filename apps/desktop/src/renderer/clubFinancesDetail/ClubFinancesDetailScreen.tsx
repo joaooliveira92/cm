@@ -13,6 +13,7 @@
  */
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
 import { BudgetFigures } from "../budgetReview/BudgetFigures.js";
+import { ClubColouredName } from "../components/shared/ClubColouredName.js";
 import { FOCUS_RING } from "../focus.js";
 import {
   clubFinancesAtom,
@@ -21,6 +22,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { useClubIdentity } from "../screenIdentity.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -44,6 +46,9 @@ export const ClubFinancesDetailScreen = ({
 }) => {
   const result = useAtomValue(clubFinancesAtom(saveId, clubId));
 
+  // A foreign club's finances name that club in the navbar until the screen leaves it.
+  useClubIdentity(result._tag === "Success" ? result.value : null);
+
   if (result._tag === "Failure") return <ClubFinancesMessage message={messageOf(typedError(result))} />;
   if (result._tag !== "Success") return <ClubFinancesMessage message="Loading club finances..." />;
 
@@ -51,7 +56,9 @@ export const ClubFinancesDetailScreen = ({
 
   return (
     <main tabIndex={-1} data-focus-id="clubFinancesDetail" aria-label="Club Finances" className={PAGE_CLASS}>
-      <h1 className="text-title">{view.club.name}</h1>
+      <h1 className="text-title">
+        <ClubColouredName name={view.club.name} colours={view.clubColours} />
+      </h1>
       {view.isUserClub ? null : <p className="mt-1 text-body text-text-secondary">[Not your club]</p>}
       <p className="mt-1 mb-6 text-body text-text-secondary">
         This club's current Transfer Budget, Wage Budget, and committed wages.

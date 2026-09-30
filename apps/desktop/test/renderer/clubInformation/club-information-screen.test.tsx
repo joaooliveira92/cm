@@ -13,6 +13,7 @@ import { ClubInformationScreen } from "../../../src/renderer/clubInformation/Clu
 import { ClubInfoScreen } from "../../../src/renderer/clubInfo/ClubInfoScreen.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { getScreenIdentity } from "../../../src/renderer/screenIdentity.js";
 
 const rid = (id: string): SaveId => SaveId.make(id);
 const cid = (id: string): ClubId => ClubId.make(id);
@@ -21,8 +22,16 @@ const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown
   (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
 };
 
+const clubColours = {
+  primary: { foreground: "#ffffff", background: "#1d4ed8" },
+  secondary: { foreground: "#ffffff", background: "#1e3a8a" },
+  tertiary: null,
+  quaternary: null,
+};
+
 const infoView = (options: { readonly isUserClub?: boolean } = {}) => ({
   club: { id: cid("club-7"), name: "Northport Rovers", statureTier: "mid" },
+  clubColours,
   isUserClub: options.isUserClub ?? true,
   cityName: "Northport",
   nationName: "England",
@@ -81,6 +90,11 @@ describe("ClubInformationScreen", () => {
     renderScreen();
 
     await waitFor(() => expect(screen.getByText("[Not your club]")).toBeTruthy());
+    expect(getScreenIdentity()).toMatchObject({
+      kind: "club",
+      name: "Northport Rovers",
+      qualifier: "Not your club",
+    });
   });
 
   it("does not mark the manager's own club", async () => {
@@ -91,6 +105,7 @@ describe("ClubInformationScreen", () => {
       expect(screen.getByRole("heading", { name: "Northport Rovers", level: 1 })).toBeTruthy(),
     );
     expect(screen.queryByText("[Not your club]")).toBeNull();
+    expect(getScreenIdentity()).toBeNull();
   });
 
   /**

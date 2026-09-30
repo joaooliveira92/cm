@@ -86,7 +86,7 @@ const namedColours = (colours: ClubColoursView): readonly string[] => {
  * white-on-maroon rather than whatever neutral happens to contrast slightly more. Only when no
  * authored colour clears the bar do black or white paint the header.
  */
-const readableHeaderForeground = (colours: ClubColoursView): string => {
+export const readableHeaderForeground = (colours: ClubColoursView): string => {
   const background = colours.primary.background;
   const authoredForeground = colours.primary.foreground;
 

@@ -10,6 +10,7 @@ import { OUTFIELD_ATTRIBUTES } from "@cm-clone/shared";
 import { ClubSquadScreen } from "../../../src/renderer/clubSquad/ClubSquadScreen.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
+import { getScreenIdentity } from "../../../src/renderer/screenIdentity.js";
 import { ScreenToolbarSlot } from "../../../src/renderer/chrome/ScreenToolbarSlot.js";
 
 const rid = (id: string): SaveId => SaveId.make(id);
@@ -28,6 +29,14 @@ const respondTo = (method: string, value: unknown): void => {
 };
 
 const club = { id: cid("club-7"), name: "Northport Rovers", statureTier: "mid" };
+
+/** The club's kit pair, as the wire carries it; the header paints the name on `background`. */
+const clubColours = {
+  primary: { foreground: "#ffffff", background: "#1d4ed8" },
+  secondary: { foreground: "#ffffff", background: "#1e3a8a" },
+  tertiary: null,
+  quaternary: null,
+};
 
 const outfieldFigures = (figure: unknown): Record<string, unknown> =>
   Object.fromEntries(OUTFIELD_ATTRIBUTES.map((attribute) => [attribute, figure]));
@@ -60,6 +69,7 @@ const exactPlayer = (id: string) => ({
 
 const squadView = ({ isUserClub, players }: { readonly isUserClub: boolean; readonly players: readonly unknown[] }) => ({
   club,
+  clubColours,
   isUserClub,
   players,
 });
@@ -88,6 +98,11 @@ describe("ClubSquadScreen — the any-club squad", () => {
     await waitFor(() =>
       expect(screen.getByRole("heading", { name: /Northport Rovers/, level: 1 })).toBeTruthy(),
     );
+    // The club name is painted in the club's own kit, not the screen's default text colour.
+    const namePill = screen.getByRole("heading", { level: 1 }).querySelector("span");
+    expect(namePill?.textContent).toBe("Northport Rovers");
+    expect(namePill?.style.backgroundColor).toBe("#1d4ed8");
+    expect(namePill?.style.color).toBe("#ffffff");
     // The roster shows the shared columns only: no Status/Condition/Training Focus (fields a
     // rival's read does not carry), and the figures as `low–high` Attribute Ranges.
     for (const absent of ["Status", "Condition", "Training Focus"]) {
@@ -116,6 +131,32 @@ describe("ClubSquadScreen — the any-club squad", () => {
     renderScreen();
 
     await waitFor(() => expect(screen.getByText("[Not your club]")).toBeTruthy());
+  });
+
+  it("names the rival club in the navbar identity slot, and restores the manager's on the way out", async () => {
+    respondTo("getClubSquad", squadView({ isUserClub: false, players: [rangedPlayer("p1")] }));
+    const { unmount } = renderScreen();
+
+    await waitFor(() =>
+      expect(getScreenIdentity()).toMatchObject({
+        kind: "club",
+        name: "Northport Rovers",
+        qualifier: "Not your club",
+        colours: clubColours,
+      }),
+    );
+    unmount();
+    expect(getScreenIdentity()).toBeNull();
+  });
+
+  it("leaves the identity slot alone for the manager's own club", async () => {
+    respondTo("getClubSquad", squadView({ isUserClub: true, players: [exactPlayer("p1")] }));
+    renderScreen();
+
+    await waitFor(() =>
+      expect(screen.getByRole("heading", { name: /Northport Rovers/, level: 1 })).toBeTruthy(),
+    );
+    expect(getScreenIdentity()).toBeNull();
   });
 
   it("renders the manager's own club exact and unmarked", async () => {

@@ -22,20 +22,37 @@ export const CareerIdentity = ({
   readonly badgeKey: string | null;
   /** Replaces the club name while a screen names something else. */
   readonly identity: ScreenIdentity | null;
-}) => (
-  <span className="flex min-w-0 items-center gap-2 truncate text-title">
-    {clubName !== null && clubColours !== null && (
-      <ClubBadge badgeKey={badgeKey} colours={clubColours} clubName={clubName} size={24} />
-    )}
-    {identity === null ? (
-      <span className="truncate">{clubName ?? " "}</span>
-    ) : (
-      <span className="flex min-w-0 flex-col leading-tight">
-        <span className="truncate">
-          {identity.name} <span className="font-semibold opacity-80">({identity.qualifier})</span>
-        </span>
-        <span className="truncate text-data font-semibold opacity-80">{identity.facts}</span>
+}) => {
+  if (identity === null) {
+    return (
+      <span className="flex min-w-0 items-center gap-2 truncate text-title">
+        {clubName !== null && clubColours !== null && (
+          <ClubBadge badgeKey={badgeKey} colours={clubColours} clubName={clubName} size={24} />
+        )}
+        <span className="truncate">{clubName ?? " "}</span>
       </span>
-    )}
-  </span>
-);
+    );
+  }
+  if (identity.kind === "club") {
+    // A foreign club's screen: the badge shield in that club's own colours — no badge key rides the
+    // club reads, so `ClubBadge` paints the initials-holding shield — followed by its name and the
+    // foreign marker, exactly the pair the page's own header draws.
+    return (
+      <span className="flex min-w-0 items-center gap-2 truncate text-title">
+        <ClubBadge badgeKey={null} colours={identity.colours} clubName={identity.name} size={24} />
+        <span className="truncate">
+          {identity.name}{" "}
+          <span className="font-semibold opacity-80">({identity.qualifier})</span>
+        </span>
+      </span>
+    );
+  }
+  return (
+    <span className="flex min-w-0 flex-col leading-tight">
+      <span className="truncate">
+        {identity.name} <span className="font-semibold opacity-80">({identity.qualifier})</span>
+      </span>
+      <span className="truncate text-data font-semibold opacity-80">{identity.facts}</span>
+    </span>
+  );
+};

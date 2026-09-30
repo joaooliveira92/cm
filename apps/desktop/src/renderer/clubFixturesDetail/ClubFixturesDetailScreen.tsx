@@ -9,6 +9,7 @@
  * dated fixtures at all. An unknown club fails, so the two cannot be confused.
  */
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
+import { ClubColouredName } from "../components/shared/ClubColouredName.js";
 import { FixtureDayList } from "../fixtures/FixtureDayList.js";
 import { FOCUS_RING } from "../focus.js";
 import {
@@ -18,6 +19,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { useClubIdentity } from "../screenIdentity.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -41,6 +43,9 @@ export const ClubFixturesDetailScreen = ({
 }) => {
   const result = useAtomValue(clubFixturesAtom(saveId, clubId));
 
+  // A foreign club's fixtures name that club in the navbar until the screen leaves it.
+  useClubIdentity(result._tag === "Success" ? result.value : null);
+
   if (result._tag === "Failure") return <ClubFixturesMessage message={messageOf(typedError(result))} />;
   if (result._tag !== "Success") return <ClubFixturesMessage message="Loading club fixtures..." />;
 
@@ -48,7 +53,9 @@ export const ClubFixturesDetailScreen = ({
 
   return (
     <main tabIndex={-1} data-focus-id="clubFixturesDetail" aria-label="Club Fixtures" className={PAGE_CLASS}>
-      <h1 className="text-title">{view.club.name}</h1>
+      <h1 className="text-title">
+        <ClubColouredName name={view.club.name} colours={view.clubColours} />
+      </h1>
       {/* The route carries any club, so the page says whose it is rather than leaving the reader
           to assume — the same marker `ClubStaffScreen` uses. */}
       {view.isUserClub ? null : <p className="mt-1 text-body text-text-secondary">[Not your club]</p>}

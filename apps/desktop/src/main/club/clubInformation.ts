@@ -22,7 +22,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 
 export const getClubInformation = (savesDir: string, saveId: SaveId, clubId: ClubId) =>
   withExistingSave(savesDir, saveId, (filename) =>
@@ -61,6 +61,7 @@ const readClubInformation = (clubId: ClubId) =>
     // club and competition identities only, and `nationName` reads the profile in code. Passing a
     // nation id to `nameOf` returns the id unchanged, which is how `nation_eng` reaches a screen.
     const nameOf = yield* displayNames;
+    const coloursOf = yield* clubColourResolver;
 
     return new ClubInformationView({
       club: new ClubSummary({
@@ -68,6 +69,7 @@ const readClubInformation = (clubId: ClubId) =>
         name: nameOf(clubId),
         statureTier: row.statureTier,
       }),
+      clubColours: coloursOf(clubId),
       // SQLite has no boolean: the column is the integer flag world generation writes.
       isUserClub: row.isUserClub === 1,
       cityName: row.cityName,

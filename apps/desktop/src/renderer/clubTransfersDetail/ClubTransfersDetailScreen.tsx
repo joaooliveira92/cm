@@ -9,6 +9,7 @@
  * Transfer Window. An unknown club fails, so the two cannot be confused.
  */
 import { type ClubId, type SaveId } from "@cm-clone/contracts";
+import { ClubColouredName } from "../components/shared/ClubColouredName.js";
 import { FOCUS_RING } from "../focus.js";
 import {
   clubTransfersAtom,
@@ -17,6 +18,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { useClubIdentity } from "../screenIdentity.js";
 import { TransferEntriesTable } from "../transferHistory/TransferEntriesTable.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
@@ -41,6 +43,9 @@ export const ClubTransfersDetailScreen = ({
 }) => {
   const result = useAtomValue(clubTransfersAtom(saveId, clubId));
 
+  // A foreign club's transfers name that club in the navbar until the screen leaves it.
+  useClubIdentity(result._tag === "Success" ? result.value : null);
+
   if (result._tag === "Failure") return <ClubTransfersMessage message={messageOf(typedError(result))} />;
   if (result._tag !== "Success") return <ClubTransfersMessage message="Loading club transfers..." />;
 
@@ -48,7 +53,9 @@ export const ClubTransfersDetailScreen = ({
 
   return (
     <main tabIndex={-1} data-focus-id="clubTransfersDetail" aria-label="Club Transfers" className={PAGE_CLASS}>
-      <h1 className="text-title">{view.club.name}</h1>
+      <h1 className="text-title">
+        <ClubColouredName name={view.club.name} colours={view.clubColours} />
+      </h1>
       {view.isUserClub ? null : <p className="mt-1 text-body text-text-secondary">[Not your club]</p>}
       <p className="mt-1 text-body text-text-secondary">
         Every completed transfer into or out of this club, newest first.

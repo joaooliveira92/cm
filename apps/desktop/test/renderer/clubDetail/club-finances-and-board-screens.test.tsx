@@ -30,8 +30,16 @@ const respondTo = (method: string, value: unknown): void => {
 
 const club = { id: cid("club-7"), name: "Northport Rovers", statureTier: "mid" };
 
+const clubColours = {
+  primary: { foreground: "#ffffff", background: "#1d4ed8" },
+  secondary: { foreground: "#ffffff", background: "#1e3a8a" },
+  tertiary: null,
+  quaternary: null,
+};
+
 const financesView = (options: { readonly isUserClub?: boolean; readonly headroom?: number } = {}) => ({
   club,
+  clubColours,
   isUserClub: options.isUserClub ?? true,
   transferBudgetRemaining: 2_000_000,
   wageBudget: 800_000,

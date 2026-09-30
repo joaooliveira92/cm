@@ -22,7 +22,7 @@ import { nationName, type StatureTier, type Verdict } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "./decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 import { loadManagerStatus } from "../career/managerStatus.js";
 import { loadUserClub } from "../club/squad.js";
 import { loadSeasonRow, toSeasonView } from "./currentSeason.js";
@@ -131,6 +131,7 @@ export const getClubFixtures = (savesDir: string, saveId: SaveId, clubId: ClubId
       }
 
       const nameOf = yield* displayNames;
+      const coloursOf = yield* clubColourResolver;
       const seasonRow = yield* loadSeasonRow;
       return new ClubFixturesView({
         club: new ClubSummary({
@@ -138,6 +139,7 @@ export const getClubFixtures = (savesDir: string, saveId: SaveId, clubId: ClubId
           name: nameOf(clubId),
           statureTier: club.statureTier,
         }),
+        clubColours: coloursOf(clubId),
         // SQLite has no boolean: the column is the integer flag world generation writes.
         isUserClub: club.isUserClub === 1,
         season: yield* toSeasonView(seasonRow),

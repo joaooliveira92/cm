@@ -26,6 +26,8 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
+import { ClubColouredName } from "../components/shared/ClubColouredName.js";
+import { useClubIdentity } from "../screenIdentity.js";
 import { SquadRoster } from "../squad/SquadRoster.js";
 import { clubSquadRowOf } from "../table/squad/squadColumns.js";
 import { useClubSquadRoster } from "./useClubSquadRoster.js";
@@ -61,6 +63,9 @@ export const ClubSquadScreen = ({
 }) => {
   const squadResult = useAtomValue(clubSquadAtom(saveId, clubId));
   const loaded = squadResult._tag === "Success" ? squadResult.value : null;
+
+  // A foreign club's squad names that club in the navbar until the screen leaves it.
+  useClubIdentity(loaded);
 
   // The roster hook and the navigation callbacks run on every render (loading, ready and failed
   // alike) so the hook count never changes; before the view lands there are simply no rows to
@@ -106,9 +111,12 @@ export const ClubSquadScreen = ({
     >
       <header>
         {/* The club header is the `<main>` region's label, so the first thing read is which club's
-            squad this is — and the foreign marker when that club is not the user's. */}
+            squad this is — and the foreign marker when that club is not the user's. The club's name
+            is painted in its own kit (`primary.background`, with a foreground the club's own palette
+            can read on it) so a foreign club is identified by its colours, not just the marker. */}
         <h1 id="club-squad-heading" className="text-title">
-          {view.club.name} · Squad{" "}
+          <ClubColouredName name={view.club.name} colours={view.clubColours} />{" "}
+          · Squad{" "}
           {!view.isUserClub && (
             <span className="text-body font-semibold text-text-secondary">[Not your club]</span>
           )}
@@ -121,7 +129,7 @@ export const ClubSquadScreen = ({
       {view.players.length === 0 ? (
         <p className="mt-8 text-text-secondary italic">This club has no players.</p>
       ) : (
-        <section className="mt-3 rounded-panel px-3 pt-2 pb-3">
+        <section className="rounded-panel px-3 pt-2 pb-3">
           <h2 className="text-heading text-text-highlight">Players</h2>
           <SquadRoster
             table={roster.table}

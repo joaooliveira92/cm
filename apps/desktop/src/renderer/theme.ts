@@ -112,7 +112,7 @@ export const MODAL_WIDE =
 /** The chrome-gradient title band: same grammar as the career-chrome title bar,
  *  so an overlay announces the same voice as the shell. */
 export const MODAL_TITLE_BAND =
-  "chrome-gradient flex items-center justify-between rounded-t-panel border-b border-panel-border-dark px-3 py-2 shadow-chrome";
+  "flex items-center justify-between rounded-t-panel border-b border-panel-border-dark px-3 py-2";
 
 /** The strong-panel body surface beneath the title band. */
 export const MODAL_BODY = "px-3 py-3";

@@ -1,6 +1,6 @@
 import { Schema } from "effect";
 import { AttributeFiguresSchema } from "./players.js";
-import { ClubSummary } from "./clubs.js";
+import { ClubColoursView, ClubSummary } from "./clubs.js";
 import { PlayerId } from "./ids.js";
 import { PlayerPositionView } from "./squad.js";
 import { PlayerFigureSchema } from "./transfers.js";
@@ -35,9 +35,13 @@ export class ClubSquadPlayerView extends Schema.Class<ClubSquadPlayerView>("Club
  * Scouting Progress. `isUserClub` rides along for the same reason it does on `ClubStaffView`: one
  * read answers the whole page, so the screen marks a foreign club `[Not your club]` and renders
  * exact figures for the manager's own without a second read to reconcile.
+ *
+ * `clubColours` rides the same read so the screen can paint the club's name in its own kit — a
+ * foreign club is read by its identity, not by the marker.
  */
 export class ClubSquadView extends Schema.Class<ClubSquadView>("ClubSquadView")({
   club: ClubSummary,
+  clubColours: ClubColoursView,
   isUserClub: Schema.Boolean,
   players: Schema.Array(ClubSquadPlayerView),
 }) {}

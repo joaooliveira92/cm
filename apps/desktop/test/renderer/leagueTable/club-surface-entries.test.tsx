@@ -44,10 +44,12 @@ const mount = () => {
   );
 };
 
-/** Every surface but Staff sits behind the row's options popover; the club's name opens Staff. */
+/** Every surface but Staff sits behind the row's options hover card; the club's name opens Staff. */
 const surfaceControl = async (clubName: string, label: string) => {
-  if (label !== "club staff")
-    fireEvent.click(await screen.findByRole("button", { name: `${clubName} — club options` }));
+  if (label !== "club staff") {
+    // The hover card opens on mouse enter, not click.
+    fireEvent.mouseEnter(await screen.findByRole("button", { name: `${clubName} — club staff` }));
+  }
   return screen.findByRole("button", { name: `${clubName} — ${label}` });
 };
 
@@ -108,25 +110,18 @@ describe("the league table row is the entry point to every club-scoped surface",
     expect(navigateSpy).toHaveBeenCalled();
   });
 
-  it("the row is the club name and an options control — the result cells stay unclickable", async () => {
+  it("the row is the club name, whose hover reveals the other surfaces — the result cells stay unclickable", async () => {
     mount();
     await screen.findByRole("button", { name: "Northport Rovers — club staff" });
     const labels = () =>
       [...document.querySelectorAll("button")].map((button) => button.getAttribute("aria-label"));
-    expect(labels()).toEqual([
-      "Northport Rovers — club staff",
-      "Northport Rovers — club options",
-      "Eastvale United — club staff",
-      "Eastvale United — club options",
-    ]);
+    expect(labels()).toEqual(["Northport Rovers — club staff", "Eastvale United — club staff"]);
 
-    fireEvent.click(screen.getByRole("button", { name: "Northport Rovers — club options" }));
+    fireEvent.mouseEnter(screen.getByRole("button", { name: "Northport Rovers — club staff" }));
     await screen.findByRole("button", { name: "Northport Rovers — scout report" });
     expect(labels()).toEqual([
       "Northport Rovers — club staff",
-      "Northport Rovers — club options",
       "Eastvale United — club staff",
-      "Eastvale United — club options",
       "Northport Rovers — scout report",
       "Northport Rovers — club information",
       "Northport Rovers — club fixtures",

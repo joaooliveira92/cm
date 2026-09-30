@@ -11,7 +11,9 @@
  * Profile, the offer, the search, the comparison and the scout report resolve it through.
  *
  * One read answers the whole page, including whose club it is, so the screen can mark a foreign
- * club [Not your club] without a second read. Same shape as `getClubStaff`, deliberately.
+ * club [Not your club] without a second read. Same shape as `getClubStaff`, deliberately; the one
+ * addition is `clubColours`, resolved here so the screen can paint the club's name in its own kit
+ * rather than a second read to reconcile.
  */
 import {
   ClubNotFoundError,
@@ -34,7 +36,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 import { loadProgressOnClubPlayers } from "./scoutingProgress.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
 
@@ -83,6 +85,7 @@ const readClubSquad = (clubId: ClubId) =>
     });
 
     const nameOf = yield* displayNames;
+    const coloursOf = yield* clubColourResolver;
 
     return new ClubSquadView({
       club: new ClubSummary({
@@ -90,6 +93,7 @@ const readClubSquad = (clubId: ClubId) =>
         name: nameOf(clubId),
         statureTier: clubRow.statureTier,
       }),
+      clubColours: coloursOf(clubId),
       isUserClub,
       players,
     });

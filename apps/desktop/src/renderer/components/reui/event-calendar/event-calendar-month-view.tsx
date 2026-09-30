@@ -370,8 +370,13 @@ function EventCalendarMonthWeek({
     }
     return start === -1 ? null : { col: start, span: end - start + 1 }
   }
-  // bars fit within the cap; deeper lanes fall into each day's "+N more"
-  const visibleBars = bars.filter((b) => (b.lane ?? 0) < cap)
+  // bars fit within the cap; deeper lanes fall into each day's "+N more".
+  // Local fix: autoFit gives up one timed row to the indicator, but bars took
+  // every lane, so a day of only all-day events squeezed "+N more" into the
+  // leftover pixels. When bars overflow, they now give up a lane as well.
+  const barCap =
+    autoFit && bars.some((b) => (b.lane ?? 0) >= cap) ? Math.max(0, cap - 1) : cap
+  const visibleBars = bars.filter((b) => (b.lane ?? 0) < barCap)
   const covers = (b: EventCalendarSegment, dayOffset: number) =>
     (b.colStart ?? 0) <= dayOffset &&
     dayOffset < (b.colStart ?? 0) + (b.colSpan ?? 1)
@@ -383,7 +388,7 @@ function EventCalendarMonthWeek({
     (_, col) =>
       new Set(
         bars
-          .filter((b) => (b.lane ?? 0) >= cap && covers(b, offsets[col]!))
+          .filter((b) => (b.lane ?? 0) >= barCap && covers(b, offsets[col]!))
           .map((b) => b.occurrence.key)
       )
   )

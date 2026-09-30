@@ -6,13 +6,15 @@ import {
   BanknoteIcon,
   BinocularsIcon,
   CalendarDaysIcon,
-  EllipsisIcon,
   InfoIcon,
   UsersIcon,
 } from "lucide-react";
 import { Alert } from "../components/ui/alert.js";
-import { Button } from "../components/ui/button.js";
-import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.js";
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from "../components/ui/hover-card.js";
 import type { CareerDestination } from "../navigation/destinations.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
@@ -92,41 +94,34 @@ const CLUB_SURFACES: ReadonlyArray<ClubSurface> = [
 
 /** The row is the entry point to every club surface: it names a club, which is what a
  *  club-scoped surface needs and what nothing else on this screen has. The club's name opens
- *  Staff, and the other surfaces sit behind one options popover (`@reui/c-popover-10`'s layout:
- *  a header naming the club over a list of controls), so the row reads as a club name instead
- *  of six links. Buttons rather than links: navigation goes through the adapter so focus follows
- *  the intent, and `intentOfClick` keeps a keyboard activation from being reported as a pointer
- *  arrival. Each control names its club, because "Scout report" repeated down twenty rows
- *  tells a screen-reader user nothing about which. */
+ *  Staff, and hovering it reveals the other surfaces behind one hover card
+ *  (`@reui/c-hover-card-3`'s layout: a header naming the club over a list of controls), so the
+ *  row reads as a club name instead of six links. The name's click still navigates (Staff);
+ *  the hover card just previews the rest. Buttons rather than links: navigation goes through the
+ *  adapter so focus follows the intent, and `intentOfClick` keeps a keyboard activation from
+ *  being reported as a pointer arrival. Each control names its club, because "Scout report"
+ *  repeated down twenty rows tells a screen-reader user nothing about which. */
 const LeagueClubCell = ({ saveId, standing }: ClubCellProps) => (
   <div className="flex items-center justify-between gap-2">
-    <button
-      type="button"
-      className="underline-offset-2 hover:underline focus-visible:underline"
-      aria-label={`${standing.clubName} — club staff`}
-      onClick={(event) =>
-        navigateCareer(
-          { type: "clubStaff", saveId, clubId: standing.clubId },
-          intentOfClick(event),
-        )
-      }
-    >
-      {standing.clubName}
-    </button>
-    <Popover>
-      <PopoverTrigger
+    <HoverCard>
+      <HoverCardTrigger
         render={
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            aria-label={`${standing.clubName} — club options`}
+          <button
+            type="button"
+            className="underline-offset-2 hover:underline focus-visible:underline"
+            aria-label={`${standing.clubName} — club staff`}
           />
         }
+        onClick={(event) =>
+          navigateCareer(
+            { type: "clubStaff", saveId, clubId: standing.clubId },
+            intentOfClick(event),
+          )
+        }
       >
-        <EllipsisIcon aria-hidden="true" />
-      </PopoverTrigger>
-      <PopoverContent className="w-56 p-0" align="end">
+        {standing.clubName}
+      </HoverCardTrigger>
+      <HoverCardContent className="w-56 p-0" align="end">
         <div className="border-b border-panel-border px-3 py-2">
           <p className="text-heading">{standing.clubName}</p>
           <p className="text-data text-text-secondary">Club pages</p>
@@ -147,8 +142,8 @@ const LeagueClubCell = ({ saveId, standing }: ClubCellProps) => (
             </button>
           ))}
         </div>
-      </PopoverContent>
-    </Popover>
+      </HoverCardContent>
+    </HoverCard>
   </div>
 );
 

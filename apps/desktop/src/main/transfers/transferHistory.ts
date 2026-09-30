@@ -13,7 +13,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadUserClub } from "../club/squad.js";
 import { withExistingSave } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { clubColourResolver, displayNames } from "../world/displayNames.js";
 
 /**
  * Transfer History screen (Screen 146): every completed transfer into or out of the manager's Club,
@@ -59,6 +59,7 @@ export const getClubTransfers = (savesDir: string, saveId: SaveId, clubId: ClubI
       }
 
       const nameOf = yield* displayNames;
+      const coloursOf = yield* clubColourResolver;
       const history = yield* readTransferHistory(clubId);
       return new ClubTransfersView({
         club: new ClubSummary({
@@ -66,6 +67,7 @@ export const getClubTransfers = (savesDir: string, saveId: SaveId, clubId: ClubI
           name: nameOf(clubId),
           statureTier: club.statureTier,
         }),
+        clubColours: coloursOf(clubId),
         // SQLite has no boolean: the column is the integer flag world generation writes.
         isUserClub: club.isUserClub === 1,
         entries: history.entries,
