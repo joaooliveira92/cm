@@ -229,6 +229,8 @@ injury risk climbs as Condition falls. A match's full-time Condition carries int
 ledger, and before each Fixture both clubs recover part of the gap back to 100, keyed to Natural
 Fitness and the last injury's Severity: a simulated Fixture recovers its clubs as it resolves, and
 the human's Fixture recovers both sides once, when the Calendar stops at its Pre-match Boundary.
+The human club's saved **Training Schedule** applies a recovery multiplier to this step
+(Balanced has no effect; a Recovery schedule leaves players fresher, a Heavy schedule less so).
 _Avoid_: Fitness (see Natural Fitness), stamina (Stamina is the attribute; Condition is the live state)
 
 **Natural Fitness**:
@@ -858,9 +860,12 @@ people-facing effects the Pillar is expected to gain), Charisma
 **Regimen**:
 The Manager Pillar governing the manager's ability to establish and sustain physical preparation and
 workload standards. In v1 it modifies the Condition lifecycle - in-match Condition decay and
-between-match Condition recovery - and separately modifies resolved injury severity. It has no
-direct effect on whether an injury occurs; it reaches injury frequency only through Condition and the
-existing non-contact risk threshold. Disciplinary authority is cut from v1: no discipline or fines
+between-match Condition recovery - and separately modifies resolved injury severity. The manager's
+saved **Training Schedule** applies a per-microcycle recovery multiplier inside Regimen's range
+(Balanced gives exactly 1.0; the band is 0.9–1.1, inside Regimen's 0.8–1.2), so a single week's
+plan never outweighs the manager's own capability. It has no direct effect on whether an injury
+occurs; it reaches injury frequency only through Condition and the existing non-contact risk
+threshold. Disciplinary authority is cut from v1: no discipline or fines
 system exists. Distinct from Condition (a player's live physical state), from Training Focus (what a
 player is working on), and from Match Intensity (the physical demand a match creates); Regimen is the
 manager's capability to impose and sustain the associated workload.
