@@ -7,8 +7,16 @@
  */
 import type { ClubId, PlayerId, Tactic } from "@cm-clone/contracts";
 import {
+  aiInMatchController,
+  aiTacticPreferences,
+  type AiTacticalPreferences,
+  type TeamInstructions,
+} from "@cm-clone/shared";
+import {
   simulateMatchWithCounts,
   toMatchTactic,
+  type AiTacticalChange,
+  type AiTacticalController,
   type MatchCommand,
   type MatchEvent,
   type MatchPlayerCountEntry,
@@ -104,8 +112,14 @@ export const journaledLineupCommands = (
  * `SubstitutionMade` command journal entry. Pure function of the stream's contents — same stream
  * in, same timeline out, which is what makes `resumeSimulation`'s cursor-based chunking and the
  * determinism test both work. Also returns each player's full-time Condition (ticket 02).
+ *
+ * When `aiPreferences` is provided, clubs with matching entries get an AI tactical controller
+ * that may change their tactics mid-match based on deterministic rules.
  */
-export const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
+export const deriveMatchEvents = (
+  stream: ReadonlyArray<StreamEvent>,
+  aiPreferences?: ReadonlyMap<ClubId, AiTacticalPreferences>,
+): {
   readonly events: ReadonlyArray<MatchEvent>;
   readonly conditions: ReadonlyMap<PlayerId, number>;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
@@ -142,11 +156,56 @@ export const deriveMatchEvents = (stream: ReadonlyArray<StreamEvent>): {
     }
   }
 
+  // Build AI controllers for clubs that have preferences
+  const aiController: AiTacticalController | undefined = aiPreferences && aiPreferences.size > 0
+    ? (state) => {
+        const prefs = aiPreferences.get(state.aiClubId as ClubId);
+        if (!prefs) return [];
+        return aiControllerFor(prefs, started.homeClubId, started.awayClubId)(state);
+      }
+    : undefined;
+
   return simulateMatchWithCounts({
     seed: started.seed,
     home: started.homeSetup,
     away: started.awaySetup,
     commandsByMinute,
     halftimeCommands,
+    aiController,
   });
+};
+
+/**
+ * Builds an `AiTacticalController` callback for an AI club's in-match tactical changes.
+ * The controller is deterministic: given the same state, it always returns the same changes.
+ *
+ * The AI club's preferences are derived from the world seed and club id, so the controller
+ * is stateless and pure.
+ */
+export const aiControllerFor = (
+  preferences: AiTacticalPreferences,
+  homeClubId: ClubId,
+  awayClubId: ClubId,
+): AiTacticalController => {
+  return (state) => {
+    const isHome = state.aiClubId === homeClubId;
+    const currentTeam = {
+      mentality: state.currentMentality as TeamInstructions["mentality"],
+      menBehindTheBall: state.currentMenBehindTheBall,
+    } as TeamInstructions;
+    const change = aiInMatchController(
+      preferences,
+      currentTeam,
+      isHome,
+      state.homeScore,
+      state.awayScore,
+      state.minute,
+      state.justHadRedCard,
+    );
+    if (change === null) return [];
+    const result: AiTacticalChange = {};
+    if (change.newMentality) result.mentality = change.newMentality;
+    if (change.teamOverrides) result.teamOverrides = change.teamOverrides as AiTacticalChange["teamOverrides"];
+    return [result];
+  };
 };

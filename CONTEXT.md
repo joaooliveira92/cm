@@ -76,10 +76,9 @@ _Avoid_: Drill, workout
 
 **Position**:
 One of the ten fixed slots a player can occupy on the pitch: GK, DC, DL, DR, DM, MC, ML, MR, AMC, ST.
-Distinct from a tactical Role (owned by the tactics ticket), which further specializes how a player
-behaves *within* a Position. Being replaced by Line and Side Ratings on the player and by Slots on
-the Tactic.
-_Avoid_: Role (reserved for tactics), Slot (a grid cell, a different concept)
+Now replaced by Line and Side Ratings on the player and by Slots on the Tactic; the type remains for
+player generation, squad filtering and Best XI selection until the player model effort removes it.
+_Avoid_: Slot (a grid cell, a different concept)
 
 **Familiarity Tier**:
 How well a player performs in one of their playable Positions: Natural, Competent, or Unfamiliar. A
@@ -178,10 +177,11 @@ is how a squad-bearing club is compared against one without a squad in a mixed c
 _Avoid_: club strength, team strength (the latter is already reserved against Phase Strength)
 
 **Tactical Modifiers**:
-A flat struct of numeric multipliers and biases — one each for attack, midfield, defense, tempo, and
-pressing-aggression — that a team's tactics (formation, roles, instructions; vocabulary owned by the
-tactics ticket) resolve into. The match engine consumes only this struct: it has no knowledge of
-formations, roles, or instructions themselves.
+A flat struct of numeric multipliers and biases — one each for attack, midfield, defense, and
+team-level behaviour modifiers (possession bias, pressing aggression, defensive line, foul rate, etc.)
+— that a team's Tactic (formations, instructions, set pieces; vocabulary owned by the tactics domain)
+resolves into via the resolution step. The match engine consumes only this struct: it has no knowledge
+of cells, instructions, or formations themselves.
 _Avoid_: Tactics (the source concept, owned by the tactics ticket; Tactical Modifiers is what the
 match engine actually reads)
 
@@ -261,7 +261,7 @@ _Avoid_: Commentary (fine as the general feed/feature name; Commentary Line is o
 
 **Commentary Template**:
 One fixed phrasing in the pool defined for a Match Event type (e.g. one of several ways to phrase a
-`Goal`), code-defined game-design data living in `packages/shared` alongside Position Weights and Role
+`Goal`), code-defined game-design data living in `packages/shared` alongside Position Weights and Slot
 Weights. A Commentary Line is a Commentary Template with its slots (player name, team name, scoreline)
 filled from the source Match Event's payload; the match engine and game-engine package never assemble
 a Commentary Line themselves — this is display data, not simulation state.
@@ -271,45 +271,61 @@ _Avoid_: Generator, script (there is no generation/composition step in v1 — se
 ### Tactics
 
 **Formation**:
-One of five v1 templates (4-4-2, 4-3-3, 4-5-1, 3-5-2, 5-3-2), each a starting set of 10 outfield
-Position slots plus the GK — no vocabulary beyond the existing Position taxonomy. A Tactic starts
-from a template, and the manager may move any outfield slot to another outfield Position, making a
-custom shape ("4-4-2 (custom)"); the GK stays alone in slot 0. Purely structural: the Tactic's slots
-determine which Positions are filled, and therefore which players' Position Ratings feed each Phase
-Strength. Carries no multiplier of its own.
+The arrangement of 11 grid cells (GK + 10 outfield) a Tactic places its players in. CM 03/04's grid
+is 7 rows (GK, SW, D, DM, M, AM, F) by 5 columns (L, LC, C, RC, R), giving up to 31 cells. Built-in
+presets assign a cell per slot; the manager may move any slot to another cell in the same row or
+between rows (preserving the GK in slot 0). A Tactic derived from a preset whose slots no longer
+match the original's cells reads as "(modified)". A formation's row-count label (e.g. "4-4-2") is
+derived from the count of outfield rows.
 
-**Role**:
-A tactical sub-choice within one Position slot of a Formation (e.g. Poacher within ST), chosen per
-slot when a Tactic is set — not a property saved on the player. One v1 Role per Position (Goalkeeper,
-Ball-Playing Defender, Wing-Back, Anchorman, Playmaker, Winger, Attacking Midfielder, Poacher).
-_Avoid_: Position (a Role specializes a Position, it doesn't replace it)
+**Tactic Template**:
+A named, reusable set of 11 grid cells with optional runs, per-slot Player Instructions and
+Set-Piece Roles, plus Team Instructions and team set-piece instructions. Built-in presets (CM 03/04's
+29) and the manager's saved tactics are the same type: a Tactic Template holds no player identities.
+The live **Tactic** is a template's contents plus player assignments and bench, taker lists and captain.
 
-**Role Weights**:
-A fixed, code-defined importance value for one (Role, Attribute) pair, used to compute Role Rating.
-Parallel construct to Position Weight, at the same tier: game-design data, never persisted as
-event-sourced state.
-
-**Role Rating**:
-A derived score, 1–100, for how well a specific player suits their assigned Role — a weighted average
-of that player's Attributes against that Role's Role Weights. Computed at tactic-resolution time
-(before the match engine runs), not inside the match engine itself, and used only to bias Tactical
-Modifiers — never substitutes for Position Rating in Phase Strength.
-_Avoid_: Position Rating (a different derived score, computed against Position Weight, and the one
-Phase Strength actually reads)
+**Run**:
+An optional second cell a player moves into when his team has possession, counting in the target
+cell's phase for the attack/defence resolution. Runs represent forward pushes (e.g. M → AM) and
+are built into each preset's slots. A run-having player tires slightly faster.
 
 **Team Instructions**:
-The three v1 sliders a manager sets per Tactic — Mentality (defensive/balanced/attacking), Tempo
-(slow/normal/fast), Pressing (low/medium/high) — each a three-state choice that feeds Tactical
-Modifiers.
+CM 03/04's nine team-level switches, each defaulting to the game's unticked state: Passing (mixed/
+short/direct/long), Focus Passing (mixed/bothFlanks/leftFlank/rightFlank/throughTheMiddle), Tackling
+(normal/hard/easy), Closing Down (default/ownHalfOnly/always/standOff), Mentality (ultraDefensive/
+defensive/normal/attacking/gungHo), Offside Trap (on/off), Zonal Marking (on/off), Counter Attack
+(on/off), Men Behind The Ball (on/off). No Tempo or Pressing sliders — CM had neither. The
+mentality instruction maps to attack/defence multipliers; the rest tune possession, pressing
+aggression, foul rate, defensive line and chance-type weights through the engine's resolution step.
+
+**Player Instructions**:
+Per-slot overrides for five of the team instructions — Passing, Closing Down, Tackling, Marking (man/
+zonal), Mentality — each with a `team` value that reads the team-level instruction. Three standalone
+settings: Distribution (default/longKick/askDefendersToCollect), Cross From (default/deep/touchline),
+Cross Aim (default/nearPost/centre/farPost/man). Seven "more often" switches (normal/often): Cross
+Ball, Long Shots, Forward Runs, Run With Ball, Try Through Balls, Free Role, Hold Up Ball. CM 03/04's
+seven instruction templates provide a Set To Preset shortcut, seeding the switches per cell.
+
+**Set-Piece Role**:
+Per-slot set-piece duties: Attack and Defend for Free Kicks and Corners, Attacking Throw-Ins (per
+side). Every value has a `default` state. Stored in the Tactic Template per slot.
+
+**Taker List**:
+An ordered list of player ids for each of eight set-piece types: Captain, Penalty Taker,
+Free Kick Taker (left/right), Corner Taker (left/right), Throw-In Taker (left/right). The captain
+and takers live only on the live Tactic, not in the template. Fallback: when the first nominee is
+off the pitch, the next in the list steps up; with no eligible nominee, the engine picks the player
+with the best relevant attribute.
 
 **Tactic**:
-The full value a manager sets for a team: a Formation, a Role and player assigned to each of its 11
-slots, the three Team Instructions, and the named **bench**. The payload of the `ChangeTactics`
-command, both pre-match and mid-match. Mid-match only its Team Instructions take effect: a live
-`ChangeTactics` changes no slot, formation, role or bench, and who is on the pitch changes only
-through substitutions, red cards, injuries and bring-offs. The bench is the only source of
-substitutes and is fixed at kickoff. A player comes on from it once and never re-enters,
-and a forced substitution takes like for like (a goalkeeper for a goalkeeper) before bench order.
+The full value a manager sets for a team: a source template name, 11 grid cells with optional runs,
+player assignments for each slot, per-slot Player Instructions, the nine Team Instructions, team
+set-piece instructions, per-slot Set-Piece Roles, eight ordered taker lists and the captain, and the
+named bench. The payload of the `ChangeTactics` command, both pre-match and mid-match. Mid-match,
+a complete Tactic replacement changes all of Team Instructions, per-slot Player Instructions and
+Set-Piece Roles (keeping who is on the pitch). Substitutions at the same M+1 / half-time boundary
+apply first. The bench is the only source of substitutes and is fixed at kickoff; a live Tactic
+change does not change it.
 
 **Expected Revision**:
 The monotonic Tactic version a save submit claims it was read at. The club's Tactic revision starts
@@ -931,7 +947,7 @@ permitted copy.
 
 **Player-Facing Attribute**:
 The subset of Attributes shown to the player: exactly those read by at least one shipped authoritative
-mechanic, whether a rating table (Position Weight, Role Weight) or another resolver (collision risk,
+mechanic, whether a rating table (Slot Weight, Position Weight) or another resolver (collision risk,
 injury resolution, Condition recovery). Membership follows mechanical consumption, not the schema, so
 an Attribute that is persisted and generated but read by nothing is not player-facing until something
 reads it.
@@ -941,7 +957,7 @@ _Avoid_: Visible Attribute (ambiguous with Hidden Attribute, which is about the 
 The single affordance carrying Contextual Help for a domain term: a visible, focusable,
 keyboard-operable control attached to the term that expands its grounded explanation in place. Used
 uniformly across every screen. Never a modal, never hover-only. Carries *meaning*; the values that
-drive the decision at hand (such as Role Rating in a tactic slot) stay inline rather than behind it.
+drive the decision at hand (such as suitability in a tactic slot) stay inline rather than behind it.
 
 **Irreversibility Disclosure**:
 The one class of Contextual Help whose provenance is architectural rather than numerical: a statement,

@@ -17,6 +17,8 @@ import {
   type PlayerAttributes,
   type PlayerInstructions,
   type TeamInstructions,
+  type PositionalRatings,
+  type Slot,
 } from "@cm-clone/shared";
 import type { MatchPlayerInput, MatchTactic, PhaseStrengths } from "./types.js";
 import type { PlayerId } from "@cm-clone/contracts";
@@ -26,7 +28,6 @@ import {
   type PerSlotBehaviour,
   type TeamBehaviourModifiers,
 } from "./resolveBehaviourVectors.js";
-import type { PositionalRatings, Slot } from "@cm-clone/shared";
 
 export type { Phase };
 
@@ -52,17 +53,9 @@ export const coverageFactor = (count: number, phase: Phase): number => {
 };
 
 // ─── Suitability factor ─────────────────────────────────────────────────────
-
-/**
- * Suitability curve: falls gently from 1.0 at 20 to ~0.9 at 15, then steeply.
- * Used to scale decision-making and positional attributes.
- */
-const suitabilityFactorValue = (suit: number): number => {
-  if (suit >= 18) return 1.0;
-  if (suit >= 15) return 0.85 + (suit - 15) * 0.05;
-  if (suit >= 10) return 0.6 + (suit - 10) * 0.05;
-  return Math.max(0.3, suit * 0.06);
-};
+// Uses the shared `suitabilityFactor` curve from `@cm-clone/shared`, imported
+// through `resolveBehaviourVectors.ts`. The engine's private copy was removed
+// in ticket 30 to keep a single source of truth.
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -102,9 +95,9 @@ export interface ResolvedInstructions {
  */
 export interface ResolvedTeamTactics {
   slots: Array<ResolvedSlot>;
-  readonly instructions: ResolvedInstructions;
+  instructions: ResolvedInstructions;
   /** Team-level behaviour modifiers. */
-  readonly teamModifiers: TeamBehaviourModifiers;
+  teamModifiers: TeamBehaviourModifiers;
 }
 
 // ─── Mentality multipliers (transitional, kept for backward compat) ─────────

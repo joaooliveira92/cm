@@ -5,6 +5,8 @@ export {
   simulateMatch,
   simulateMatchWithCondition,
   simulateMatchWithCounts,
+  type AiTacticalChange,
+  type AiTacticalController,
   type MatchPlayerCountEntry,
   type SimulateMatchInput,
 } from "./loop.js";

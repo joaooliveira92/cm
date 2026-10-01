@@ -9,28 +9,22 @@
  * The module is pure and in `shared` so the desktop wiring layer consumes it as a function call
  * rather than an Effect service.
  */
-import { createSeededRng, pickRandom, type RandomSource } from "../random.js";
+import { createSeededRng, pickRandom } from "../random.js";
 import { deriveSeed } from "../seed.js";
 import type { StatureTier } from "../content/clubs.js";
-import type { PositionRatingsLike } from "./bestXi.js";
-import { bestXiForCells, selectBestTemplateXI, type BestXiCell, type CellRatingsLike } from "./bestXi.js";
-import { slotLabel, type Slot } from "./slots.js";
-import { suitability } from "./suitability.js";
+import { bestXiForCells, selectBestTemplateXI, selectBench, type BestXiCell, type CellRatingsLike, type BenchCandidate } from "./bestXi.js";
+import { slotLabel } from "./slots.js";
 import {
   BUILT_IN_TEMPLATES,
   BUILT_IN_TEMPLATE_NAMES,
   builtInTemplate,
-  tacticFromTemplate,
 } from "./tacticTemplates.js";
 import {
   DEFAULT_TEAM_INSTRUCTIONS,
   TEAM_INSTRUCTION_VALUES,
-  type PlayerInstructions,
   type TacticTemplate,
   type TeamInstructions,
 } from "./tacticModel.js";
-import type { BenchCandidate } from "./bestXi.js";
-import { selectBench } from "./bestXi.js";
 
 // ---------------------------------------------------------------------------
 // Public types
@@ -88,6 +82,20 @@ export interface AiTacticResult<Id extends string = string> {
   readonly meanRating: number;
   /** The Team Instructions after preference mapping and mentality shift. */
   readonly team: TeamInstructions;
+}
+
+/**
+ * In-match tactical controller response: what the AI wants to change.
+ * The controller is called by the engine hook; the main process converts this
+ * into MatchCommand objects.
+ */
+export interface AiInMatchChange {
+  /** The new target formation name, or null to keep current. */
+  readonly newFormation?: string;
+  /** The new mentality, or null to keep current. */
+  readonly newMentality?: TeamInstructions["mentality"];
+  /** New team instruction overrides, or empty for no change. */
+  readonly teamOverrides?: Partial<TeamInstructions>;
 }
 
 // ---------------------------------------------------------------------------
@@ -307,6 +315,61 @@ export const aiResolveTactic = <Id extends string = string>(
   }
 
   return { template, filled, meanRating, team };
+};
+
+// ---------------------------------------------------------------------------
+// In-match tactical controller (ticket 33)
+// ---------------------------------------------------------------------------
+
+/**
+ * In-match AI tactical controller: decides whether an AI club changes tactics mid-match.
+ *
+ * Rules from the spec:
+ *   - Losing after 60' → Mentality +1
+ *   - Losing after 75' → +2 and the attacking variant
+ *   - Winning by one after 75' → Mentality -1
+ *   - Winning by one after 85' → Men Behind The Ball
+ *   - A red card → a template that drops a forward
+ *
+ * Pure and deterministic: given the same state, always returns the same changes.
+ */
+export const aiInMatchController = (
+  preferences: AiTacticalPreferences,
+  currentTeam: TeamInstructions,
+  isHome: boolean,
+  homeScore: number,
+  awayScore: number,
+  minute: number,
+  justHadRedCard: boolean,
+): AiInMatchChange | null => {
+  const aiScore = isHome ? homeScore : awayScore;
+  const opponentScore = isHome ? awayScore : homeScore;
+  const aiLeading = aiScore > opponentScore;
+  const aiLosing = opponentScore > aiScore;
+  const aiLeadByOne = aiLeading && aiScore - opponentScore <= 1;
+
+  // Red card → drop a forward (shift to defensive)
+  if (justHadRedCard) {
+    return { newMentality: "defensive" };
+  }
+
+  // Late match, losing → push forward
+  if (aiLosing && minute >= 75) {
+    return { newMentality: "attacking" };
+  }
+  if (aiLosing && minute >= 60) {
+    return { newMentality: shiftMentality(currentTeam.mentality, 1) };
+  }
+
+  // Late match, barely winning → sit back
+  if (aiLeadByOne && minute >= 85) {
+    return { teamOverrides: { menBehindTheBall: true } };
+  }
+  if (aiLeadByOne && minute >= 75) {
+    return { newMentality: shiftMentality(currentTeam.mentality, -1) };
+  }
+
+  return null;
 };
 
 /**

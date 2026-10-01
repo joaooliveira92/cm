@@ -18,7 +18,7 @@
  *   - Free role: freeRoleRating + flair + decisions
  */
 
-import type { PlayerAttributes, PlayerInstructions, TeamInstructions } from "@cm-clone/shared";
+import { suitabilityFactor, type PlayerAttributes, type PlayerInstructions, type TeamInstructions } from "@cm-clone/shared";
 
 // ─── Exported types ─────────────────────────────────────────────────────────
 
@@ -154,16 +154,9 @@ export const resolveSlotBehaviours = (
   const firstTouch = readAttr(attributes, "firstTouch");
   const decisions = readAttr(attributes, "decisions");
 
-  // Suitability factor: 1.0 at suitability 20, ~0.9 at 15, ~0.7 at 10, ~0.5 at 1.
-  // Formula: min(1, max(0.3, suitability / 20 * (1 + (suitability - 10) * 0.02)))
-  // Equivalent to a gentle descent from 20 to ~15, then steep.
-  const suitabilityFactor = suitability >= 18
-    ? 1.0
-    : suitability >= 15
-      ? 0.85 + (suitability - 15) * 0.05
-      : suitability >= 10
-        ? 0.6 + (suitability - 10) * 0.05
-        : Math.max(0.3, suitability * 0.06);
+  // Suitability factor: uses the shared curve from suitability.ts
+  // (1.0 at 20, ~0.9 at 15, ~0.5 at 1).
+  const suitabilityFactorValue = suitabilityFactor(suitability);
 
   // Core behaviour weights from switches × attribute factors (ticket 28)
   // Through balls: passing + creativity (flair)
@@ -239,7 +232,7 @@ export const resolveSlotBehaviours = (
     offsideRisk,
     crossFromDeep,
     crossAimPreference,
-    suitabilityFactor,
+suitabilityFactor: suitabilityFactorValue,
     distributionPreference,
     possessionRetention,
   };

@@ -7,12 +7,14 @@ import {
   builtInTemplate,
   DEFAULT_TEAM_INSTRUCTIONS,
   DEFAULT_PLAYER_INSTRUCTIONS,
+  DEFAULT_TEAM_SET_PIECES,
+  EMPTY_TAKERS,
   suitability,
-  type Slot,
   type PlayerAttributes,
   type PositionalRatings,
 } from "@cm-clone/shared";
 import { simulateMatch, type SimulateMatchInput } from "../../src/match/simulate/index.js";
+import { aggregatePhaseSlots, resolveTeamTactics } from "../../src/match/tactical-modifiers.js";
 import type { MatchPlayerInput, MatchTeamSetup, MatchTactic } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
 import { COMMENTARY_TEMPLATES, renderCommentary } from "../../src/match/commentary.js";
@@ -25,12 +27,6 @@ const AVERAGE_ATTRIBUTES: PlayerAttributes = {
   agility: 11, naturalFitness: 20, injuryProneness: 1,
 };
 
-const DEFAULT_RATINGS: PositionalRatings = {
-  lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 },
-  sides: { R: 10, L: 10, C: 10 },
-  freeRole: 10,
-};
-
 const baseInput = (seed: number): SimulateMatchInput => ({
   seed,
   home: buildTeam(makeClubId("home-club"), seed).setup,
@@ -41,7 +37,7 @@ describe("formations-and-instructions ticket 30", () => {
   // ─── 1. Runs → target cell phase ─────────────────────────────────────────
 
   describe("runs → target cell phase", () => {
-    it("a slot with a run counts in the run target's phase when the player is in a formation with runs", () => {
+    it("a slot with a run counts in the run target's phase when the team has possession", () => {
       const template = builtInTemplate("4-4-2 Diamond");
       expect(template).toBeDefined();
 
@@ -51,10 +47,64 @@ describe("formations-and-instructions ticket 30", () => {
 
       // Verify the first run-to slot phase is "attack" (targetting AM or F)
       const firstRun = hasRun[0]!;
-      const basePhase = firstRun.cell.row === "M" ? "midfield" as const : "defense" as const;
       const runTargetPhase = firstRun.run!.row === "AM" || firstRun.run!.row === "F" ? "attack" as const :
         firstRun.run!.row === "M" ? "midfield" as const : "defense" as const;
       expect(runTargetPhase).toBe("attack");
+    });
+
+    it("aggregatePhaseSlots shifts a run-having slot's rating into the target phase with possession", () => {
+      // Build a tactic with one slot that has a run from M C to AM C
+      const gk: MatchPlayerInput = {
+        id: makePlayerId("gk"), attributes: AVERAGE_ATTRIBUTES,
+        positionalRatings: { lines: { GK: 20, SW: 1, D: 1, DM: 1, M: 1, AM: 1, F: 1, WB: 1 }, sides: { R: 1, L: 1, C: 1 }, freeRole: 1 },
+      };
+      const dm: MatchPlayerInput = {
+        id: makePlayerId("dm"), attributes: AVERAGE_ATTRIBUTES,
+        positionalRatings: { lines: { GK: 1, SW: 1, D: 1, DM: 20, M: 20, AM: 1, F: 1, WB: 1 }, sides: { R: 1, L: 1, C: 20 }, freeRole: 1 },
+      };
+      const players = [gk, dm];
+      const playersById = new Map(players.map((p) => [p.id, p]));
+
+      // This player runs from M C to AM C
+      const runner: MatchPlayerInput = {
+        id: makePlayerId("runner"), attributes: AVERAGE_ATTRIBUTES,
+        positionalRatings: { lines: { GK: 1, SW: 1, D: 1, DM: 1, M: 15, AM: 15, F: 1, WB: 1 }, sides: { R: 1, L: 1, C: 15 }, freeRole: 1 },
+      };
+      players.push(runner);
+      playersById.set(runner.id, runner);
+
+      const tactic: MatchTactic = {
+        slots: [
+          { cell: { row: "GK", column: "C" }, playerId: gk.id, run: null },
+          { cell: { row: "D", column: "C" }, playerId: dm.id, run: null },
+          { cell: { row: "M", column: "C" }, playerId: runner.id, run: { row: "AM", column: "C" } },
+          { cell: { row: "D", column: "L" }, playerId: dm.id, run: null },
+          { cell: { row: "D", column: "R" }, playerId: dm.id, run: null },
+          { cell: { row: "DM", column: "C" }, playerId: dm.id, run: null },
+          { cell: { row: "M", column: "L" }, playerId: dm.id, run: null },
+          { cell: { row: "M", column: "R" }, playerId: dm.id, run: null },
+          { cell: { row: "AM", column: "C" }, playerId: dm.id, run: null },
+          { cell: { row: "AM", column: "L" }, playerId: dm.id, run: null },
+          { cell: { row: "F", column: "C" }, playerId: dm.id, run: null },
+        ],
+        bench: [null, null, null, null, null, null, null],
+        team: DEFAULT_TEAM_INSTRUCTIONS,
+        slotInstructions: [],
+        teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+        takers: EMPTY_TAKERS,
+      } as unknown as MatchTactic;
+
+      const resolved = resolveTeamTactics(tactic, playersById);
+
+      // Without possession: runner counts in midfield phase
+      const withoutPossession = aggregatePhaseSlots(resolved.slots, playersById, false);
+      // With possession: runner counts in attack phase instead
+      const withPossession = aggregatePhaseSlots(resolved.slots, playersById, true);
+
+      // The runner has M=15 and AM=15 (same rating), so the attack phase should be higher
+      // with possession because the midfielder adds his rating to attack instead of midfield
+      expect(withPossession.midfield).toBeLessThan(withoutPossession.midfield);
+      expect(withPossession.attack).toBeGreaterThan(withoutPossession.attack);
     });
 
     it("matches with runs complete successfully", () => {
@@ -90,6 +140,89 @@ describe("formations-and-instructions ticket 30", () => {
       // Suitability for D C slot
       const suitForD = suitability(ratings, { row: "D", column: "C" });
       expect(suitForD).toBeGreaterThanOrEqual(15);
+    });
+
+    it("a team playing players out of position scores fewer goals across many seeds", () => {
+      // Build a team where every player has terrible suitability for most slots
+      // (only D C is natural, everything else is 1)
+      const oopRatings: PositionalRatings = {
+        lines: { GK: 20, SW: 1, D: 20, DM: 1, M: 1, AM: 1, F: 1, WB: 1 },
+        sides: { R: 1, L: 1, C: 20 },
+        freeRole: 1,
+      };
+
+      const clubId = makeClubId("oop-club");
+      const oopSquad = Array.from({ length: 18 }, (_, i) => ({
+        id: makePlayerId(`oop-${i}`),
+        attributes: { ...AVERAGE_ATTRIBUTES },
+        positionalRatings: oopRatings,
+      }));
+
+      // Force them into a 4-4-2 where every outfield slot is a poor fit
+      // (all players are D C specialists, but 4-4-2 has M, AM, wide slots)
+      const template = builtInTemplate("4-4-2")!;
+      const tactic: MatchTactic = {
+        slots: template.slots.map((s, i) => ({
+          cell: s.cell,
+          playerId: oopSquad[i]!.id,
+          run: s.run,
+        })),
+        bench: [null, null, null, null, null, null, null],
+        team: DEFAULT_TEAM_INSTRUCTIONS,
+        slotInstructions: template.slots.map((s) => ({
+          cell: s.cell,
+          instructions: DEFAULT_PLAYER_INSTRUCTIONS,
+        })),
+        teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+        takers: EMPTY_TAKERS,
+      };
+      const oopSetup: MatchTeamSetup = { clubId, squad: oopSquad, tactic };
+
+      // Control team: same average attributes, but all-round good positional ratings
+      const goodRatings: PositionalRatings = {
+        lines: { GK: 15, SW: 15, D: 15, DM: 15, M: 15, AM: 15, F: 15, WB: 15 },
+        sides: { R: 15, L: 15, C: 15 },
+        freeRole: 15,
+      };
+      const goodSquad = Array.from({ length: 18 }, (_, i) => ({
+        id: makePlayerId(`good-${i}`),
+        attributes: { ...AVERAGE_ATTRIBUTES },
+        positionalRatings: goodRatings,
+      }));
+      const goodTemplate = builtInTemplate("4-4-2")!;
+      const goodTactic: MatchTactic = {
+        slots: goodTemplate.slots.map((s, i) => ({
+          cell: s.cell,
+          playerId: goodSquad[i]!.id,
+          run: s.run,
+        })),
+        bench: [null, null, null, null, null, null, null],
+        team: DEFAULT_TEAM_INSTRUCTIONS,
+        slotInstructions: goodTemplate.slots.map((s) => ({
+          cell: s.cell,
+          instructions: DEFAULT_PLAYER_INSTRUCTIONS,
+        })),
+        teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+        takers: EMPTY_TAKERS,
+      };
+      const goodSetup: MatchTeamSetup = { clubId: makeClubId("good-club"), squad: goodSquad, tactic: goodTactic };
+
+      let oopGoals = 0;
+      let goodGoals = 0;
+      for (let s = 0; s < 10; s++) {
+        const events = simulateMatch({
+          seed: s * 1000 + 100,
+          home: oopSetup,
+          away: goodSetup,
+        });
+        oopGoals += events.filter((e) => e._tag === "Goal" && e.teamClubId === clubId).length;
+        goodGoals += events.filter((e) => e._tag === "Goal" && e.teamClubId === goodSetup.clubId).length;
+      }
+
+      // The out-of-position team should score fewer goals — their players have
+      // suitability ~1-7 in most slots (suitabilityFactor ~0.5-0.67), heavily
+      // scaling down positioning/decisions/composure
+      expect(oopGoals).toBeLessThan(goodGoals);
     });
   });
 

@@ -1,4 +1,4 @@
-import { createSeededRng, type RandomSource } from "@cm-clone/shared";
+import { createSeededRng, type RandomSource, type TeamInstructions } from "@cm-clone/shared";
 import type { MatchCommand } from "../commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "../events.js";
 import type { MatchTeamSetup } from "../types.js";
@@ -29,6 +29,35 @@ import {
   type TeamRuntimeState,
 } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
+import { resolveTeamInstructions } from "../tactical-modifiers.js";
+import { resolveTeamModifiers } from "../resolveBehaviourVectors.js";
+
+/**
+ * A lightweight tactical change an AI controller can request, without needing to
+ * construct a full MatchTactic. The engine applies changes directly to team instructions
+ * and re-resolves the team-level modifiers and behaviour vectors.
+ */
+export interface AiTacticalChange {
+  mentality?: TeamInstructions["mentality"];
+  teamOverrides?: Partial<Pick<TeamInstructions, "menBehindTheBall">>;
+}
+
+export type AiTacticalController = (state: {
+  readonly minute: number;
+  readonly half: MatchHalf;
+  readonly homeScore: number;
+  readonly awayScore: number;
+  readonly justHadRedCard: boolean;
+  readonly justHadGoal: boolean;
+  readonly homeClubId: string;
+  readonly awayClubId: string;
+  /** The team's current mentality. */
+  readonly currentMentality: string;
+  /** Whether this team has Men Behind The Ball active. */
+  readonly currentMenBehindTheBall: boolean;
+  /** The club ID that this AI controller manages. */
+  readonly aiClubId: string;
+}) => ReadonlyArray<AiTacticalChange>;
 
 export interface SimulateMatchInput {
   readonly seed: number;
@@ -38,6 +67,9 @@ export interface SimulateMatchInput {
   readonly commandsByMinute?: ReadonlyMap<number, ReadonlyArray<MatchCommand>>;
   /** Commands applied at halftime — doesn't consume a substitution window (ticket 12). */
   readonly halftimeCommands?: ReadonlyArray<MatchCommand>;
+  /** Optional AI tactical controller callback, called every 5 minutes + after goals and red cards.
+   *  Implemented outside the engine; the controller is deterministic when its seed matches. */
+  readonly aiController?: AiTacticalController;
 }
 
 /** Match statistics accumulated during simulation. */
@@ -236,9 +268,54 @@ const runSimulation = (
   const away = initTeamState(input.away);
   const score = { home: 0, away: 0 };
   const counts: Array<MatchPlayerCountEntry> = [];
+  let lastAiMinute = 0;
 
   const snapshotCounts = (minute: number, half: MatchHalf): void => {
     counts.push({ half, minute, homeCount: home.resolved.slots.length, awayCount: away.resolved.slots.length });
+  };
+
+  const invokeAiController = (minute: number, half: MatchHalf, isHalftime: boolean, stopAfter: boolean): void => {
+    if (!input.aiController) return;
+    for (const team of [home, away]) {
+      const changes = input.aiController({
+        minute,
+        half,
+        homeScore: score.home,
+        awayScore: score.away,
+        justHadRedCard: stopAfter,
+        justHadGoal: stopAfter,
+        homeClubId: home.clubId,
+        awayClubId: away.clubId,
+        currentMentality: team.teamInstructions.mentality,
+        currentMenBehindTheBall: team.teamInstructions.menBehindTheBall,
+        aiClubId: team.clubId,
+      });
+      for (const change of changes) {
+        if (change.mentality) {
+          team.teamInstructions = { ...team.teamInstructions, mentality: change.mentality };
+        }
+        if (change.teamOverrides) {
+          team.teamInstructions = { ...team.teamInstructions, ...change.teamOverrides };
+        }
+        if (change.mentality || change.teamOverrides) {
+          // Re-resolve team-level modifiers and instructions
+          const newTeamModifiers = resolveTeamModifiers(team.teamInstructions);
+          team.resolved.teamModifiers = newTeamModifiers;
+          team.resolved.instructions = resolveTeamInstructions(
+            { team: team.teamInstructions },
+            team.playersById,
+          );
+          events.push({
+            _tag: "TacticsChanged",
+            minute,
+            half,
+            teamClubId: team.clubId,
+            fromFormationLabel: "",
+            toFormationLabel: `${team.teamInstructions.mentality}`, // mentality changes only for AI
+          });
+        }
+      }
+    }
   };
 
   events.push({
@@ -253,6 +330,10 @@ const runSimulation = (
     for (let minuteInHalf = 1; minuteInHalf <= HALF_LENGTH_MINUTES; minuteInHalf++) {
       const minute = half === 1 ? minuteInHalf : HALF_LENGTH_MINUTES + minuteInHalf;
       applyScheduledCommands(home, away, minute, half, input.commandsByMinute?.get(minute), false, events);
+      if (input.aiController && minute - lastAiMinute >= 5) {
+        invokeAiController(minute, half, false, false);
+        lastAiMinute = minute;
+      }
       resolveSlice(home, away, minute, half, score, random, events);
       snapshotCounts(minute, half);
     }
@@ -262,6 +343,9 @@ const runSimulation = (
       .filter((event) => STOPPAGE_CAUSING_TAGS.has(event._tag)).length;
     const addedMinutes = stoppageLength(causingEventCount, random);
     const stoppageMinute = half === 1 ? HALF_LENGTH_MINUTES + addedMinutes : HALF_LENGTH_MINUTES * 2 + addedMinutes;
+    if (causingEventCount > 0 && input.aiController) {
+      invokeAiController(stoppageMinute, half, false, true);
+    }
     resolveSlice(home, away, stoppageMinute, half, score, random, events);
     snapshotCounts(stoppageMinute, half);
 

@@ -288,13 +288,14 @@ describe("suitability factor", () => {
     expect(b.suitabilityFactor).toBeCloseTo(1.0);
   });
 
-  it("unfamiliar players (suit = 8) get suitabilityFactor < 0.6", () => {
+  it("unfamiliar players (suit = 8) get suitabilityFactor ~0.7", () => {
     const b = resolveSlotBehaviours(
       DEFAULT_PLAYER_INSTRUCTIONS as typeof DEFAULT_PLAYER_INSTRUCTIONS,
       defaultTeam(),
       8, DEFAULT_ATTRS, 10,
     );
-    expect(b.suitabilityFactor).toBeLessThan(0.6);
+    // Shared suitabilityFactor: 0.5 + 0.4 * (8-1)/14 = ~0.7
+    expect(b.suitabilityFactor).toBeCloseTo(0.7, 1);
   });
 });
 

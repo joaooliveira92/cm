@@ -3,9 +3,14 @@ import {
   aiTacticPreferences,
   aiResolveTactic,
   aiTacticFromResult,
+  aiInMatchController,
   type AiTacticalPreferences,
 } from "../../src/rules/aiTactics.js";
-import { BUILT_IN_TEMPLATES, BUILT_IN_TEMPLATE_NAMES } from "../../src/rules/tacticTemplates.js";
+import {
+  BUILT_IN_TEMPLATES,
+  BUILT_IN_TEMPLATE_NAMES,
+} from "../../src/rules/tacticTemplates.js";
+import { DEFAULT_TEAM_INSTRUCTIONS, type TeamInstructions } from "../../src/rules/tacticModel.js";
 import { STARTER_COUNT, BENCH_SIZE } from "../../src/rules/tactics.js";
 import { slotLabel } from "../../src/rules/slots.js";
 import type { Position } from "../../src/rules/positions.js";
@@ -300,5 +305,105 @@ describe("aiTacticFromResult", () => {
     for (const pid of built.bench) {
       if (pid !== null) expect(assignmentSet).not.toContain(pid);
     }
+  });
+});
+
+// ─── In-match AI controller (ticket 33) ─────────────────────────────────────
+
+describe("aiInMatchController", () => {
+  const neutralPrefs: AiTacticalPreferences = {
+    preferredFormation: "4-4-2",
+    mentality: "normal",
+    pressingStyle: "default",
+    playingStyle: "mixed",
+    markingStyle: "zonal",
+  };
+  const defaultTeam: TeamInstructions = { ...DEFAULT_TEAM_INSTRUCTIONS, mentality: "normal" };
+
+  it("returns null when no conditions are met (early match, tied score)", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 0, 0, 30, false);
+    expect(result).toBeNull();
+  });
+
+  it("returns null when the AI is drawing and no red card", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 1, 1, 85, false);
+    expect(result).toBeNull();
+  });
+
+  it("red card at any minute → defensive mentality", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 2, 0, 10, true);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("defensive");
+  });
+
+  it("losing by one after minute 75 → go attacking", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 1, 2, 76, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("attacking");
+  });
+
+  it("losing heavily after minute 75 → go attacking (not just by one)", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 0, 3, 80, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("attacking");
+  });
+
+  it("losing by one after minute 60 (but before 75) → shift mentality +1", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 0, 1, 65, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("attacking");
+  });
+
+  it("losing by one after minute 60: from defensive → normal", () => {
+    const defensiveTeam: TeamInstructions = { ...defaultTeam, mentality: "defensive" };
+    const result = aiInMatchController(neutralPrefs, defensiveTeam, true, 0, 1, 65, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("normal");
+  });
+
+  it("leading by one after minute 85 → men behind the ball", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 2, 1, 86, false);
+    expect(result).not.toBeNull();
+    expect(result!.teamOverrides?.menBehindTheBall).toBe(true);
+  });
+
+  it("leading by one after minute 75 (but before 85) → shift mentality -1", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 2, 1, 78, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("defensive");
+  });
+
+  it("red card overrides other conditions (losing while a man down)", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, false, 0, 2, 80, true);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("defensive");
+  });
+
+  it("boundary: minute = 60, losing → shift mentality +1 (60' and later)", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 0, 1, 60, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("attacking");
+  });
+
+  it("boundary: minute = 75, losing → attacking (75' and later)", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 0, 1, 75, false);
+    expect(result).not.toBeNull();
+    expect(result!.newMentality).toBe("attacking");
+  });
+
+  it("boundary: minute = 85, leading by one → men behind the ball", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 2, 1, 85, false);
+    expect(result).not.toBeNull();
+    expect(result!.teamOverrides?.menBehindTheBall).toBe(true);
+  });
+
+  it("leading by more than one → no change (the lead is safe)", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 3, 0, 85, false);
+    expect(result).toBeNull();
+  });
+
+  it("leading by one before minute 75 → no change", () => {
+    const result = aiInMatchController(neutralPrefs, defaultTeam, true, 1, 0, 60, false);
+    expect(result).toBeNull();
   });
 });
