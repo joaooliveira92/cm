@@ -27,7 +27,7 @@ import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
 import { injuryLabel } from "../player/injury.js";
 import { PlayerPanel, PlayerRow } from "../player/panels.js";
 import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
-import { ScoutPlayerAction } from "./ScoutPlayerAction.js";
+import { PlayerProfileActions } from "./PlayerProfileActions.js";
 
 const CATEGORY_LABELS: Record<Category, string> = {
   goalkeeping: "Goalkeeping",
@@ -86,7 +86,7 @@ export const PlayerProfileScreen = ({
   <PlayerScreenFrame saveId={saveId} playerId={playerId} tab="playerProfile">
     {(profile) => (
       <>
-        <ScoutPlayerAction saveId={saveId} playerId={playerId} profile={profile} />
+        <PlayerProfileActions saveId={saveId} playerId={playerId} profile={profile} />
         <div className="mt-3 grid gap-3 lg:grid-cols-3">
           <AttributeColumn category="technical" attributes={profile.attributes} />
           <AttributeColumn category="mental" attributes={profile.attributes} />

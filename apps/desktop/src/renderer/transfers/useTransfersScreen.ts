@@ -52,6 +52,7 @@ import {
 } from "./useTransferTables.js";
 import { useTablePaletteHandlers } from "./useTransferPaletteActions.js";
 import type { ContractTerms } from "./ContractOfferTerms.js";
+import { consumeTransferTarget } from "./transferTarget.js";
 
 export type { CounterState } from "./useBidDraft.js";
 export type { SelectedPlayer } from "./useTransferTables.js";
@@ -199,6 +200,10 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   const selectedRef = useRef(selected);
   selectedRef.current = selected;
 
+  // One-shot: a Make Offer action from the Player Profile set a target player.
+  // Stored in a ref so it survives until the view data loads.
+  const pendingRef = useRef(consumeTransferTarget());
+
   /** The live terms of the Contract Offer on screen. The form writes it on every render, so the
    *  once-per-save Action handler can read the current offer without re-registering. */
   const offerTermsRef = useRef<ContractTerms | null>(null);
@@ -256,6 +261,23 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   const datasetIds = [...marketRows, ...freeAgentRows].map((p) => p.id);
   marketRowsRef.current = marketRows;
   freeAgentRowsRef.current = freeAgentRows;
+
+  // One-shot: a Make Offer action from the Player Profile set a target player.
+  // After rows are loaded, select the player and switch to the right tab.
+  const pending = pendingRef.current;
+  if (pending !== null && view !== undefined && marketRows.length + freeAgentRows.length > 0) {
+    pendingRef.current = null;
+    const marketRow = marketRows.find((r) => r.id === String(pending.playerId));
+    if (marketRow !== undefined) {
+      setSelected({ tableId: MARKET, player: marketRow });
+    } else {
+      const freeRow = freeAgentRows.find((r) => r.id === String(pending.playerId));
+      if (freeRow !== undefined) {
+        setTabState("free-agents");
+        setSelected({ tableId: FREE, player: freeRow });
+      }
+    }
+  }
 
   const {
     marketFiltered,

@@ -6,7 +6,7 @@ second composer or change the existing one.
 
 Type: task
 
-**Status:** ready-for-agent
+**Status:** resolved
 
 **Blocked by:** none.
 
