@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { builtInTemplate, DEFAULT_TEAM_INSTRUCTIONS, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, tacticFromTemplate } from "@cm-clone/shared";
+import { builtInTemplate, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, tacticFromTemplate } from "@cm-clone/shared";
 import { computePhaseStrengths, resolveTacticalModifiers } from "../../src/match/tactical-modifiers.js";
 import { toMatchTactic } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId } from "./fixtures.js";

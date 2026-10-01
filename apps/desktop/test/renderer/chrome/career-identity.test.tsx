@@ -105,7 +105,9 @@ describe("a screen's identity in place of the club name", () => {
       />,
     );
     expect(screen.getByRole("img", { name: "Lisbon Union crest" })).toBeTruthy();
-    expect(screen.getByText("(Not your club)")).toBeTruthy();
+    expect(screen.getByText("Lisbon Union")).toBeTruthy();
+    // The crest and the name say whose screen it is; the qualifier stays on the page's own header.
+    expect(screen.queryByText("(Not your club)")).toBeNull();
     expect(screen.queryByText("Northport Rovers")).toBeNull();
   });
 });

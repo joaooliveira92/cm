@@ -6,7 +6,7 @@
  * Edits update the draft through `onTacticChange` and persist when the user presses Save.
  */
 import { useCallback, useMemo, useRef, useState } from "react";
-import { PlayerId, SquadPlayerView, Tactic } from "@cm-clone/contracts";
+import { Tactic, type PlayerId, type SquadPlayerView } from "@cm-clone/contracts";
 import {
   TAKER_LISTS,
   TEAM_SET_PIECE_VALUES,
@@ -72,7 +72,6 @@ const PlayerPicker = ({
   listKey,
   takerIds,
   squad,
-  squadById,
   onAdd,
 }: {
   readonly listKey: TakerList;
@@ -150,7 +149,6 @@ const TakerListPanel = ({
   onReorder,
   onRemove,
   onAdd,
-  onMoveFocus,
   focusState,
   onFocusItem,
 }: {

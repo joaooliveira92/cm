@@ -33,7 +33,7 @@ import { chooseOptionByLabel } from "../../setup/baseUiSelect.js";
 import { attributes, squadView, tacticsView } from "../../setup/squadFixtures.js";
 import { saveSquadViewId } from "../../../src/renderer/squad/squadViews.js";
 import type { SquadViewId } from "../../../src/renderer/squad/squadViews.js";
-import { positionSummaryFor, suitabilityFor } from "../../setup/positionFixtures.js";
+import { cellSuitabilityFor, positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -54,7 +54,8 @@ const player = (
   ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { [position]: 74 },
-  suitability: suitabilityFor(position, familiarity),
+  cellRatings: {},
+  suitability: cellSuitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
@@ -133,7 +134,7 @@ const drawnNames = (): string[] =>
     .filter((id) => id.startsWith("squad.squadTable."))
     .map((id) => BY_ID.get(id.slice("squad.squadTable.".length).split(".")[0]!) ?? "?");
 
-const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "DC slot" })[0]!;
+const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "D RC slot" })[0]!;
 
 /**
  * The claim, split into the properties the ticket states separately so a failure names which one

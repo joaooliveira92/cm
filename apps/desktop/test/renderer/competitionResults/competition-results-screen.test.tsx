@@ -111,7 +111,7 @@ describe("CompetitionResultsScreen", () => {
     expect(screen.queryByRole("table")).toBeNull();
   });
 
-  it("reads one RPC and no other", async () => {
+  it("reads the fixtures, plus the overview only for the header's competition name", async () => {
     const calls: string[] = [];
     mockPreload(async (method) => {
       calls.push(method);
@@ -129,7 +129,7 @@ describe("CompetitionResultsScreen", () => {
     renderScreen();
 
     await waitFor(() => expect(screen.getByText(/2 results/)).toBeTruthy());
-    expect([...new Set(calls)]).toEqual(["getCompetitionFixtures"]);
+    expect([...new Set(calls)].sort()).toEqual(["getCompetitionFixtures", "getCompetitionOverview"]);
   });
 
   it("reports a failed read instead of an empty results list", async () => {

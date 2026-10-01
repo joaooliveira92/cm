@@ -1,4 +1,4 @@
-import { pickRandom, regimenDecayModifier, type RandomSource } from "@cm-clone/shared";
+import { pickRandom, type RandomSource } from "@cm-clone/shared";
 import type { InjurySeverity, InjuryTier, InjuryTrigger, InjuryType } from "./events.js";
 
 /**

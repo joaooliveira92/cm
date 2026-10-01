@@ -12,7 +12,7 @@
 
 import { describe, it } from "vitest";
 import { createSeededRng, DEFAULT_TEAM_INSTRUCTIONS, DEFAULT_PLAYER_INSTRUCTIONS, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS } from "@cm-clone/shared";
-import type { PlayerAttributes } from "@cm-clone/shared";
+import type { PlayerAttributes, Slot } from "@cm-clone/shared";
 import { PlayerId, ClubId } from "@cm-clone/contracts";
 import { simulateMatch } from "../../src/match/simulate/loop.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
@@ -50,7 +50,7 @@ const build442Slots = (squad: ReadonlyArray<MatchPlayerInput>) => {
   const cols = ["C", "L", "C", "C", "R", "L", "C", "C", "R", "C", "C"] as const;
   return squad.slice(0, 11).map((player, i) => ({
     playerId: player.id,
-    cell: { row: rows[i] as any, column: cols[i] as any },
+    cell: { row: rows[i]!, column: cols[i]! } as Slot,
     run: null,
   }));
 };

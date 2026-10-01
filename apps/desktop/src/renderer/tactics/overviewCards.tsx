@@ -49,7 +49,7 @@ export const FormationCard = ({ view }: View) => (
           </span>
         )}
       </div>
-      <OverviewPitch assignments={view.assignments} />
+      <OverviewPitch assignments={view.assignments} slots={view.formation?.slots} />
     </CardContent>
   </Card>
 );

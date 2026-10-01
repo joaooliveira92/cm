@@ -1,17 +1,13 @@
-import type { Mentality } from "@cm-clone/contracts";
-import { useRef } from "react";
 import { FOCUS_RING } from "../focus.js";
-import { NO_SUBSTITUTES_LEFT } from "./substitution.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
-import { MatchControlContext, useMatchControlContext } from "./matchControlContext.js";
+import { MatchControlContext } from "./matchControlContext.js";
 import { controlledClubId } from "./controlledClub.js";
 import { useMatchControl, type MatchControlInput } from "./useMatchControl.js";
 import { PanelHeader } from "./components/PanelHeader.js";
 import { TeamInstructionSliders } from "./components/TeamInstructionSliders.js";
 import { SubstitutionControl } from "./components/SubstitutionControl.js";
 import { InjuryDecisionModal } from "./components/InjuryDecisionModal.js";
-import { InstructionSlider } from "./components/InstructionSlider.js";
 
 export { InstructionSlider } from "./components/InstructionSlider.js";
 

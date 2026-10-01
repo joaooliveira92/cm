@@ -35,12 +35,12 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * (line `RED_CARD_LINE`) and later a severe Injury to another starter (`INJURY_LINE`) forces a
  * substitution from outside the starting XI (`FORCED_SUB_LINE`). Found by enumerating seeds over
  * `deriveMatchEvents` with the kickoff setups. The test re-checks each part of the property from the
- * Commentary Lines and names this constant when one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
+ * Commentary Lines and names this constant when one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
-const RED_CARD_THEN_FORCED_SUB_SEED = 583;
-const RED_CARD_LINE = 4;
-const INJURY_LINE = 14;
-const FORCED_SUB_LINE = 15;
+const RED_CARD_THEN_FORCED_SUB_SEED = 334;
+const RED_CARD_LINE = 8;
+const INJURY_LINE = 40;
+const FORCED_SUB_LINE = 41;
 
 const repin = `repin RED_CARD_THEN_FORCED_SUB_SEED (${RED_CARD_THEN_FORCED_SUB_SEED})`;
 
@@ -74,7 +74,7 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     const match = yield* startSeededMatch(savesDir, save.id, fixtureId, RED_CARD_THEN_FORCED_SUB_SEED);
     const { squad, tactic } = yield* getTactics(savesDir, save.id);
     ok(tactic !== null);
-    const startingXi = new Set([...tactic.assignments]);
+    const startingXi = new Set(tactic.assignments);
     const outsideXi = squad.map((player) => player.id).filter((id) => !startingXi.has(id));
     const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
     ok(bench.length > 0, "the human Tactic names a bench");
@@ -199,13 +199,13 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
 
 /**
  * A match seed on the first Fixture of `WORLD_SEED` where, once the manager has used all three
- * substitution windows at minutes 1-3, the human club's 9th Match Event is a severe Injury at
- * minute 29 that leaves no substitution behind it: the engine refuses the forced substitution
- * and the player goes off to ten men. Found by enumerating seeds over `simulateMatch` with those
- * three commands; the test re-checks it.
+ * substitution windows at minutes 1-3, the human club's first severe Injury (line
+ * `UNREPLACED_INJURY_LINE`, minute 20) leaves no substitution behind it: the engine refuses the
+ * forced substitution and the player goes off to ten men. Found by enumerating seeds over
+ * `deriveMatchEvents` with those three commands; the test re-checks it. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
-const RED_INJURY_WITHOUT_WINDOWS_SEED = 517;
-const UNREPLACED_INJURY_LINE = 8;
+const RED_INJURY_WITHOUT_WINDOWS_SEED = 19;
+const UNREPLACED_INJURY_LINE = 30;
 
 it.effect("a severe Injury with no substitution left takes the player off from the moment it is revealed", () =>
   Effect.gen(function* () {

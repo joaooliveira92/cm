@@ -32,7 +32,7 @@ import {
   SQUAD_PROTECTED_COLUMN_IDS,
 } from "../../../src/renderer/table/features/visibility.js";
 import { SQUAD_FIT_COLUMN_ID } from "../../../src/renderer/table/squad/squadColumns.js";
-import { positionSummaryFor, suitabilityFor } from "../../setup/positionFixtures.js";
+import { cellSuitabilityFor, positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 
@@ -61,7 +61,8 @@ const player = (
   ...positionSummaryFor(position),
   overallRating: 80,
   positionRatings: { [position]: 74 },
-  suitability: suitabilityFor(position, familiarity),
+  cellRatings: {},
+  suitability: cellSuitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
@@ -102,6 +103,8 @@ const EMPTY_TACTIC = {
   slots: fourFourTwoTemplate.slots.map((slot) => ({
     cell: slot.cell,
     run: null,
+    subRow: slot.subRow,
+    subCol: slot.subCol,
     instructions: {
       passing: "team", closingDown: "team", tackling: "team", marking: "team", mentality: "team",
       distribution: "default", crossFrom: "default", crossAim: "default",
@@ -180,7 +183,7 @@ const FITTING_FIRST = ["Alpha", "Echo", "Bravo", "Charlie", "Delta", "Foxtrot"];
 
 /** The 4-4-2 template slots in order: slot 3 is D RC, slot 4 is D LC — the two centre-back
  *  cells. Use the first one for testing. */
-const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "D C slot" })[0]!;
+const anEmptyDcSlot = (): HTMLElement => screen.getAllByRole("button", { name: "D RC slot" })[0]!;
 
 /** The mark's accessible text for a player, or null when that player is not marked. Scoped to the
  *  mark itself: the leading match-day indicator in the same row is also an `.sr-only` span, and
@@ -240,8 +243,8 @@ describe("selecting an empty starter slot", () => {
     await mountSquadScreen();
     selectDc();
 
-    expect(markFor("Alpha")).toBe("Fits D C, Natural");
-    expect(markFor("Echo")).toBe("Fits D C, Competent");
+    expect(markFor("Alpha")).toBe("Fits D RC, Natural");
+    expect(markFor("Echo")).toBe("Fits D RC, Competent");
     expect(markFor("Charlie")).toBeNull();
     expect(markFor("Bravo")).toBeNull();
     expect(markFor("Foxtrot")).toBeNull();
@@ -253,7 +256,7 @@ describe("selecting an empty starter slot", () => {
 
     selectDc();
 
-    expect(contextLine().textContent).toContain("Showing players for D C");
+    expect(contextLine().textContent).toContain("Showing players for D RC");
     expect(within(contextLine()).getByRole("button", { name: "Clear" })).toBeTruthy();
   });
 
@@ -325,12 +328,12 @@ describe("clearing the context", () => {
   eachLayout("moves the selection to another slot rather than refusing to change", async () => {
     await mountSquadScreen();
     selectDc();
-    expect(contextLine().textContent).toContain("Showing players for D C");
+    expect(contextLine().textContent).toContain("Showing players for D RC");
 
     // 4-4-2 names ST twice, like DC.
-    fireEvent.click(screen.getAllByRole("button", { name: "F C slot" })[0]!);
+    fireEvent.click(screen.getAllByRole("button", { name: "F RC slot" })[0]!);
 
-    expect(contextLine().textContent).toContain("Showing players for F C");
+    expect(contextLine().textContent).toContain("Showing players for F RC");
   });
 
   it("does not come back after the screen unmounts — it is session state, not a preference", async () => {
@@ -396,8 +399,8 @@ describe("the fit mark", () => {
     const marks = screen.getAllByTestId("squad-fit-mark");
     expect(marks).toHaveLength(2);
     expect(marks.map((mark) => mark.querySelector(".sr-only")!.textContent)).toEqual([
-      "Fits D C, Natural",
-      "Fits D C, Competent",
+      "Fits D RC, Natural",
+      "Fits D RC, Competent",
     ]);
     // The star itself is decoration: announcing "black star" would be the wrong answer.
     expect(marks[0]!.querySelector("[aria-hidden]")!.textContent).toBe("★");

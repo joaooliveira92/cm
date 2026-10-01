@@ -67,6 +67,7 @@ const squadViewPayload = (saveId: string, clubName: string) => ({
       ...positionSummaryFor(POSITIONS[2]),
       overallRating: 90,
       positionRatings: { WB: 12 },
+      cellRatings: {},
       suitability: {},
       retrainingTarget: null,
       condition: 100,

@@ -11,10 +11,11 @@ import { Effect } from "effect";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { afterEach, beforeEach, vi } from "vitest";
 import { getMatchRatings, getMatchReport, getMatchStatistics, getPostMatchSummary, resumeSimulation } from "../../../src/main/match/index.js";
-import { MATCH_STREAM_TYPE, deriveMatchEvents } from "../../../src/main/match/stream.js";
+import { deriveStreamEvents } from "../../../src/main/match/aiPreferences.js";
+import { MATCH_STREAM_TYPE } from "../../../src/main/match/stream.js";
 import { MATCH_TIMELINE_TAG } from "../../../src/main/match/timeline.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
-import { loadStreamEvents } from "../../../src/main/season/decider.js";
+import { loadStreamEvents, type StreamEvent } from "../../../src/main/season/decider.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 /**
@@ -70,6 +71,14 @@ const matchStream = (saveId: SaveId, matchId: MatchId) =>
     Effect.scoped,
   );
 
+/** What the engine derives for a stream now, under the AI preferences every match reader passes. */
+const derivedNow = (saveId: SaveId, stream: ReadonlyArray<StreamEvent>) =>
+  deriveStreamEvents(stream).pipe(
+    Effect.map((derived) => derived.events),
+    Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
+    Effect.scoped,
+  );
+
 it.effect("a committed match keeps its timeline through an engine-rule change; a fresh derivation does not", () =>
   Effect.gen(function* () {
     const { save, fixtureId } = yield* atFirstFixture(savesDir);
@@ -81,7 +90,7 @@ it.effect("a committed match keeps its timeline through an engine-rule change; a
     const stream = yield* matchStream(save.id, match.matchId);
     const recorded = stream.filter((row) => row.tag === MATCH_TIMELINE_TAG);
     strictEqual(recorded.length, 1);
-    const derivedAtCommit = deriveMatchEvents(stream).events;
+    const derivedAtCommit = yield* derivedNow(save.id, stream);
     deepStrictEqual((recorded[0]!.payload as { events: unknown }).events, derivedAtCommit);
     ok(derivedAtCommit.some((event) => event._tag !== "MatchStarted"), "the match produced events to move");
 
@@ -93,7 +102,7 @@ it.effect("a committed match keeps its timeline through an engine-rule change; a
     rule.changed = true;
 
     // The engine now answers differently for the very same seed and command journal...
-    notDeepStrictEqual(deriveMatchEvents(stream).events, derivedAtCommit);
+    notDeepStrictEqual(yield* derivedNow(save.id, stream), derivedAtCommit);
     // ...and not one committed read moved.
     deepStrictEqual(yield* getMatchReport(savesDir, save.id, match.matchId), report);
     deepStrictEqual(yield* getPostMatchSummary(savesDir, save.id, match.matchId), summary);

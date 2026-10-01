@@ -77,7 +77,7 @@ placeholders removed from routes and navigation, and Group R disposed in full.
 
 | Work | Why now |
 |---|---|
-| Charter the squad work from `.scratch/squad-instructions.md` | It overlaps Group E (Screen 69) and has no effort yet (SPRINT-PLAN § Loose instructions). Whether to charter it is a human call. Its match-day bar is one of the two team-sheet editors [the team-sheet note](../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md) names. |
+| Charter the squad work from `.scratch/squad-instructions.md` | It overlaps Group E (Screen 69) and has no effort yet (SPRINT-PLAN § Loose instructions). Whether to charter it is a human call. Its match-day bar is one of the two team-sheet editors [the team-sheet note](../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note) names. |
 
 ### Tier 2 — the player and the team sheet
 
@@ -86,8 +86,8 @@ The core loop runs from player to squad to tactic to match. Most later groups li
 | Group | Depends on | Existing domain to build on | Reconciliation questions to expect |
 |---|---|---|---|
 | **D** Player and staff records (50–68) | — | **Attribute**, **Position Rating**, **Contract**, **Injury**, **Condition**, **Knowledge Confidence**, **Staff**. Placeholders exist for profile, attributes, form, history, contract, injuries, coach and scout report, and five staff screens. | 58 Happiness and 60 Discipline: morale and dressing-room relationships do not ship in v1 (**Influence**). 57 Transfer Status maps onto **Listed**. |
-| **E** Squad management (69–79) | D | Squad screen and lineup edits shipped under `renderer/squad/`; 69, 70 and 72 satisfied by it, 71 partial (status filter ticketed, attribute filters need-triage). | 69, 82, 89 and 92 follow [the team sheet is the Tactic](../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md): Squad's match-day bar and the tactics editor both edit it, and 89 and 92 are views. 76 Registration and 77 Eligibility have no domain term. 78 Grievance and 79 Team Meeting look out-of-scope for the same reason as 58. |
-| **F** remainder (81–90) | E (selection) | **Formation**, **Role**, **Team Instructions**, **Tactic**, **Expected Revision**, **Match Readiness**, **Readiness Blocker**. | 86 Set Pieces is **in scope**, settled 2026-09-19 — set pieces ship as **Tactic** fields and Group E Screen 75 is `deferred` here ([note](../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md)). Whether the engine uses a nomination is still open. 88 Import touches Group S's 276. 90 Opposition Scout Report likely reuses **Team Scout Report**. |
+| **E** Squad management (69–79) | D | Squad screen and lineup edits shipped under `renderer/squad/`; 69, 70 and 72 satisfied by it, 71 partial (status filter ticketed, attribute filters need-triage). | 69, 82, 89 and 92 follow [the team sheet is the Tactic](../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note): Squad's match-day bar and the tactics editor both edit it, and 89 and 92 are views. 76 Registration and 77 Eligibility have no domain term. 78 Grievance and 79 Team Meeting look out-of-scope for the same reason as 58. |
+| **F** remainder (81–90) | E (selection) | **Formation**, **Role**, **Team Instructions**, **Tactic**, **Expected Revision**, **Match Readiness**, **Readiness Blocker**. | 86 Set Pieces is **in scope**, settled 2026-09-19 — set pieces ship as **Tactic** fields and Group E Screen 75 is `deferred` here ([note](../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md) (superseded by that note)). Whether the engine uses a nomination is still open. 88 Import touches Group S's 276. 90 Opposition Scout Report likely reuses **Team Scout Report**. |
 
 ### Tier 3 — match and world
 

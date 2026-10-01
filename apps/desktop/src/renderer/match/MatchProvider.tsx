@@ -3,8 +3,8 @@ import {
   useContext,
   type ReactNode,
 } from "react";
-import type { MatchMode, MatchSummary, PendingFixtureView, SaveId } from "@cm-clone/contracts";
-import { useMatchLifecycle, type MatchLifecycleState, type MatchLifecycleActions } from "./hooks/useMatchLifecycle.js";
+import type { MatchMode, MatchSummary, PendingFixtureView, RpcPayload, SaveId } from "@cm-clone/contracts";
+import { useMatchLifecycle } from "./hooks/useMatchLifecycle.js";
 
 export type MatchPhase =
   | "awaiting-kickoff"
@@ -76,4 +76,4 @@ export const useMatchContext = (): MatchContextValue => {
 };
 
 /** The mid-match command union a live panel can raise. */
-export type MatchCommand = import("@cm-clone/contracts").RpcPayload<"submitMatchCommand">["command"];
+export type MatchCommand = RpcPayload<"submitMatchCommand">["command"];

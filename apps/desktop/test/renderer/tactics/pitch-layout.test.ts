@@ -1,9 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { BUILT_IN_TEMPLATES } from "@cm-clone/shared";
-import { cellAt, dropZoneAt, pitchLayout } from "../../../src/renderer/tactics/pitchLayout.js";
+import { BUILT_IN_TEMPLATES, type TacticTemplate } from "@cm-clone/shared";
+import { cellAt, dropZoneAt, pitchLayout, spotOf } from "../../../src/renderer/tactics/pitchLayout.js";
 
 describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () => {
-  const toPositions = (template: { readonly slots: ReadonlyArray<{ readonly cell: any; readonly subRow: number; readonly subCol: number }> }) =>
+  const toPositions = (template: TacticTemplate) =>
     template.slots.map((s) => ({ cell: s.cell, subRow: s.subRow, subCol: s.subCol }));
 
   it("places every slot of every built-in template once, inside the pitch, in slot order", () => {
@@ -65,7 +65,7 @@ describe("cellAt — the cell a drop point on the pitch stands for", () => {
   });
 });
 
-describe("dropZoneAt — the nearest cell and raw click position", () => {
+describe("dropZoneAt — the nearest cell and the point as a sub-position within it", () => {
   it("finds the nearest cell for a point on the outfield", () => {
     expect(dropZoneAt(10, 74)).toMatchObject({ cell: { row: "D", column: "L" } });
     expect(dropZoneAt(50, 58)).toMatchObject({ cell: { row: "DM", column: "C" } });
@@ -73,5 +73,39 @@ describe("dropZoneAt — the nearest cell and raw click position", () => {
 
   it("returns null in the keeper's end", () => {
     expect(dropZoneAt(50, 85)).toBeNull();
+  });
+});
+describe("sub-positions — 0-1 fractions within the cell, as the Tactic stores them", () => {
+  it("reads a cell's centre as 0.5 on both axes", () => {
+    expect(dropZoneAt(50, 41)).toEqual({ cell: { row: "M", column: "C" }, subRow: 0.5, subCol: 0.5 });
+    expect(dropZoneAt(11, 13)).toEqual({ cell: { row: "F", column: "L" }, subRow: 0.5, subCol: 0.5 });
+  });
+
+  it("keeps every sub-position inside 0-1, which the server's validation requires", () => {
+    for (let x = -5; x <= 105; x += 2.5) {
+      for (let y = -5; y <= 83; y += 2.5) {
+        const zone = dropZoneAt(x, y)!;
+        expect(zone.subRow).toBeGreaterThanOrEqual(0);
+        expect(zone.subRow).toBeLessThanOrEqual(1);
+        expect(zone.subCol).toBeGreaterThanOrEqual(0);
+        expect(zone.subCol).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it("draws a drop back where it was released, anywhere on the outfield", () => {
+    for (let x = 4; x <= 96; x += 3.7) {
+      for (let y = 3; y <= 83; y += 3.1) {
+        const zone = dropZoneAt(x, y)!;
+        const spot = spotOf(zone.cell, zone.subRow, zone.subCol);
+        expect(spot.x).toBeCloseTo(x, 1);
+        expect(spot.y).toBeCloseTo(y, 1);
+      }
+    }
+  });
+
+  it("meets the neighbouring cell at its edge, so no offset reaches into another cell", () => {
+    expect(spotOf({ row: "M", column: "L" }, 0.5, 1).x).toBe(spotOf({ row: "M", column: "LC" }, 0.5, 0).x);
+    expect(spotOf({ row: "AM", column: "C" }, 1, 0.5).y).toBe(spotOf({ row: "M", column: "C" }, 0, 0.5).y);
   });
 });

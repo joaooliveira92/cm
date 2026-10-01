@@ -146,6 +146,7 @@ export interface SquadPlayerWire {
   readonly positionOrder: number;
   readonly overallRating: number;
   readonly positionRatings: Record<string, number>;
+  readonly cellRatings: Readonly<Record<string, number>>;
   readonly suitability: Record<string, number>;
   readonly retrainingTarget: string | null;
   readonly condition: number;
@@ -185,6 +186,7 @@ export const squadPlayer = (
   ...positionSummaryFor(goalkeeper ? "GK" : "DC"),
   overallRating: 70,
   positionRatings: goalkeeper ? { GK: 70 } : { DC: 70 },
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition: 100,

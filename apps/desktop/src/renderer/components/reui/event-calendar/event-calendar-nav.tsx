@@ -423,7 +423,7 @@ interface EventCalendarDatePickerProps extends Omit<
 }
 
 /** Views whose period reads better as a highlighted range. */
-const RANGE_VIEWS: CalendarView[] = ["week", "days", "agenda"]
+const RANGE_VIEWS: ReadonlySet<CalendarView> = new Set<CalendarView>(["week", "days", "agenda"])
 
 /**
  * Optional go-to-date picker (shadcn Calendar in a popover), view-aware:
@@ -451,7 +451,7 @@ function EventCalendarDatePicker({
   const configured = mode ?? "auto"
   const resolved =
     configured === "auto"
-      ? RANGE_VIEWS.includes(view)
+      ? RANGE_VIEWS.has(view)
         ? "range"
         : "single"
       : configured

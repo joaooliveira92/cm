@@ -48,7 +48,7 @@ recorded as a permanent ruling.
   from `out-of-scope` to `deferred`, anchored to Group F Screen 86, and Group F's remainder is
   unblocked. Nomination inherits group-f ticket 01's revision-bound idempotent save rather than adding
   a write path. Whether the match engine *uses* a nomination is deliberately still open. Note:
-  [set pieces ship, as a Tactic field](../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
+  [set pieces ship, as a Tactic field](../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md) (superseded by that note).
   Owed before Screen 86 builds: a schema addition and migration, with existing Saves reading `"none"`.
 - **Per-player statistics are deferred, not ruled out.** Group D Screen 54 moves from `out-of-scope` to
   `deferred`; Group L Screen 166 was already right. Group P owns the store, and Screens 54, 166, 167

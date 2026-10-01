@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng, regimenDecayModifier, regimenRecoveryModifier } from "@cm-clone/shared";
 import { resolveSeverity } from "../../src/match/injury.js";
-import { START_CONDITION } from "../../src/match/condition.js";
 
 describe("regimen recovery modifier", () => {
   it("is neutral at regimen 3", () => {

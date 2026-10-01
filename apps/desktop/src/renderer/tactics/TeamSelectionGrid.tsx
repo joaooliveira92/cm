@@ -1,12 +1,12 @@
 /**
  * The CM 03/04-style Team Selection list: a simple HTML table showing all 11 starters, 7 substitutes,
  * and reserves. Columns: shirt number, name (with Capt badge), compact position label, slot label and
- * fit tier, condition. Click to select a slot — the selected player highlights on the pitch.
+ * fit tier, condition. Click to select a slot — the selected player highlights on the pitch — then
+ * click a substitute or a reserve to bring him into it; an empty slot fills the same way.
  */
-import { useMemo } from "react";
+import { useMemo, type KeyboardEvent } from "react";
 import type { PlayerId, SquadPlayerView, Tactic } from "@cm-clone/contracts";
 import { familiarityOf, slotLabel, STARTER_COUNT } from "@cm-clone/shared";
-import { FOCUS_RING } from "../focus.js";
 
 interface SelectionRow {
   readonly kind: "starter" | "substitute" | "reserve";
@@ -19,6 +19,13 @@ interface SelectionRow {
   readonly isCaptain: boolean;
   readonly id: string;
 }
+
+/** Enter or Space on a focused row does what a click does. */
+const activateOnKey = (activate: () => void) => (event: KeyboardEvent) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  event.preventDefault();
+  activate();
+};
 
 const emptySuitabilityRecord: Record<string, number> = {};
 
@@ -51,11 +58,17 @@ export const TeamSelectionGrid = ({
   squad,
   selectedSlot,
   onSelectSlot,
+  onSwap,
+  onAssign,
 }: {
   readonly tactic: Tactic;
   readonly squad: ReadonlyArray<SquadPlayerView>;
   readonly selectedSlot: number | null;
   readonly onSelectSlot: (slotIndex: number | null) => void;
+  /** Swap two lineup orders (0-10 starters, 11-17 bench); the first must name a player. */
+  readonly onSwap: (from: number, to: number) => void;
+  /** Put a reserve into a starter slot; whoever stood there drops to the reserves. */
+  readonly onAssign: (slotIndex: number, playerId: PlayerId) => void;
 }) => {
   const squadById = useMemo(
     () => new Map(squad.map((player) => [player.id, player])),
@@ -122,12 +135,12 @@ export const TeamSelectionGrid = ({
       }));
   }, [squad, startersSet, tactic.bench, captainIds]);
 
-  const allRows = useMemo(() => [...starters, ...bench, ...reserves], [starters, bench, reserves]);
-
-  const colorClass = "text-text-highlight";
-
-  const CMD = "text-body text-text-secondary";
-  const CTR = "px-2 py-1 text-left text-body truncate";
+  /** A substitute or reserve clicked while a starter slot is selected comes into that slot. */
+  const bringIn = (row: SelectionRow) => {
+    if (selectedSlot === null || row.player === undefined) return;
+    if (row.kind === "substitute") onSwap(STARTER_COUNT + bench.indexOf(row), selectedSlot);
+    else onAssign(selectedSlot, row.player.id);
+  };
 
   return (
     <table data-testid="team-selection-grid" className="w-full text-left" role="grid" aria-label="Team Selection">
@@ -148,8 +161,10 @@ export const TeamSelectionGrid = ({
             <tr
               key={row.id}
               data-player-id={row.playerId}
+              data-kind={row.kind}
               data-selected={isSelected || undefined}
               onClick={() => onSelectSlot(row.slotIndex)}
+              onKeyDown={activateOnKey(() => onSelectSlot(row.slotIndex))}
               className={`cursor-pointer border-b border-border-subtle transition-colors ${
                 isSelected ? "bg-text-highlight/15" : "hover:bg-row-hover"
               }`}
@@ -208,20 +223,9 @@ export const TeamSelectionGrid = ({
           <tr
             key={row.id}
             data-player-id={row.playerId}
-            onClick={() => {
-              if (row.player && selectedSlot !== null) {
-                // Swap selected starter with this substitute
-                const from = selectedSlot;
-                const slotPlayer = tactic.assignments[from];
-                if (slotPlayer && row.player) {
-                  window.dispatchEvent(
-                    new CustomEvent("cm-tactic-swap", {
-                      detail: { from: from, to: STARTER_COUNT + bench.indexOf(row) },
-                    }),
-                  );
-                }
-              }
-            }}
+            data-kind={row.kind}
+            onClick={() => bringIn(row)}
+            onKeyDown={activateOnKey(() => bringIn(row))}
             className={`cursor-pointer border-b border-border-subtle transition-colors hover:bg-row-hover ${
               selectedSlot !== null ? "text-text-primary" : "text-text-secondary"
             }`}
@@ -268,7 +272,13 @@ export const TeamSelectionGrid = ({
           <tr
             key={row.id}
             data-player-id={row.playerId}
-            className="border-b border-border-subtle text-text-muted"
+            data-kind={row.kind}
+            onClick={() => bringIn(row)}
+            onKeyDown={activateOnKey(() => bringIn(row))}
+            className={`border-b border-border-subtle transition-colors ${
+              selectedSlot !== null ? "cursor-pointer text-text-primary hover:bg-row-hover" : "text-text-muted"
+            }`}
+            tabIndex={0}
             role="row"
           >
             <td className="px-2 py-1">

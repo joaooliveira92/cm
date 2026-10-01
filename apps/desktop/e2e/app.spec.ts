@@ -216,7 +216,7 @@ test("Tactics opens on the read-only overview; the editor is one step away and t
 
   // The editor is one step from the overview; the assignment round-trips through the save.
   await openTacticsEditor(window);
-  await expect(window.locator("tbody tr")).toHaveCount(11);
+  await expect(window.getByRole("grid", { name: "Team Selection" }).locator('tr[data-kind="starter"]')).toHaveCount(11);
   await assignFullTactic(window);
 
   // Returning to the overview reads the saved snapshot: the formation is named, the starters are

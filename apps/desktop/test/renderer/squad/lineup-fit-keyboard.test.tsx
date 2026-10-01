@@ -26,7 +26,7 @@ import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { resetTableSessions } from "../../../src/renderer/table/tableState.js";
 import { resetAnnouncements } from "../../../src/renderer/table/announcement.js";
 import { renderInRouter } from "../../setup/renderInRouter.js";
-import { positionSummaryFor, suitabilityFor } from "../../setup/positionFixtures.js";
+import { cellSuitabilityFor, positionSummaryFor } from "../../setup/positionFixtures.js";
 
 const rid = (s: string) => SaveId.make(s);
 const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
@@ -49,7 +49,7 @@ const player = (id: string, lastName: string, position: string, familiarity: Fam
   overallRating: 80,
   positionRatings: { [position]: 74 },
   cellRatings: {},
-  suitability: suitabilityFor(position, familiarity),
+  suitability: cellSuitabilityFor(position, familiarity),
   retrainingTarget: null,
   condition: 100,
   trainingFocus: null,
@@ -83,6 +83,8 @@ const TACTIC = {
   slots: fourFourTwoTemplate.slots.map((slot) => ({
     cell: slot.cell,
     run: slot.run,
+    subRow: slot.subRow,
+    subCol: slot.subCol,
     instructions: {
       passing: "team" as const, closingDown: "team" as const, tackling: "team" as const, marking: "team" as const, mentality: "team" as const,
       distribution: "default" as const, crossFrom: "default" as const, crossAim: "default" as const,

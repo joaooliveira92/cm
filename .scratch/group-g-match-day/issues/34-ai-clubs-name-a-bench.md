@@ -11,7 +11,7 @@ highest-rated remaining players by the same rating the best-XI selection uses, t
 id, up to `BENCH_SIZE`. A squad too small to fill it leaves the trailing entries `null`.
 
 **Decisions:** [decision request 04](../decision-request-04-who-may-come-on-as-a-substitute.md), Option A,
-and [the team sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md):
+and [the team sheet is the Tactic](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note):
 substitutes are the players named on the active Tactic's bench. Bench composition (spare keeper first,
 then by rating) is an orchestrator call, recorded here; it is not a balance constant.
 

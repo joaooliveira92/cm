@@ -11,7 +11,7 @@ import {
   resolveShootout,
   resultsStrength,
   scheduleRecoveryModifier,
-  type TrainingSession,
+  type PositionalRatings,
   type TrainingSessionType,
   type TrainingIntensity,
   type PlayerAttributes,
@@ -311,7 +311,7 @@ export const resolveFixtureScore = (
     const awayPosRows = yield* loadPositionalRatings(awayClubId);
     const homePosMap = new Map(homePosRows.map((r) => [r.id, positionalRatingsOf(r)]));
     const awayPosMap = new Map(awayPosRows.map((r) => [r.id, positionalRatingsOf(r)]));
-    const toMatchInput = (player: SquadPlayerView, posMap: Map<PlayerId, import("@cm-clone/shared").PositionalRatings>): MatchPlayerInput => ({
+    const toMatchInput = (player: SquadPlayerView, posMap: Map<PlayerId, PositionalRatings>): MatchPlayerInput => ({
       id: player.id,
       attributes: player.attributes as PlayerAttributes,
       startingCondition: player.condition,

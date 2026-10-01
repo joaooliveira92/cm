@@ -2,6 +2,7 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   InvalidTacticError,
+  PlayerId,
   Tactic,
   TacticLibraryNameTakenError,
   TacticLibraryNotFoundError,
@@ -9,11 +10,13 @@ import {
   TacticLibraryRevisionConflictError,
   TacticLibraryView,
   TacticTemplateSummary,
+  WriteRequestId,
   type SaveId,
 } from "@cm-clone/contracts";
 import {
   BUILT_IN_TEMPLATE_NAMES,
   describeTacticProblem,
+  EMPTY_TAKERS,
   PLAYER_OVERRIDE_VALUES,
   PLAYER_STANDALONE_VALUES,
   PLAYER_SWITCHES,
@@ -23,11 +26,9 @@ import {
   TEAM_SET_PIECE_VALUES,
   TEAM_SWITCHES,
   validateTactic as validateTacticRules,
-  type Slot,
   type TacticSlot,
-  type TakerList,
 } from "@cm-clone/shared";
-import { Data, Effect, Schema } from "effect";
+import { Effect, Schema } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
 import { loadSquadPlayers, loadUserClub } from "./squad.js";
@@ -238,7 +239,7 @@ const insertTemplate = (name: string, tactic: Tactic, requestId: string | null) 
       ...TEAM_SET_PIECE_FIELDS.map((name) => tactic.teamSetPieces[name as keyof typeof tactic.teamSetPieces]),
     ];
 
-    const insertColumns = [...ALL_TEAM_COLUMNS.map(snakeCase)];
+    const insertColumns = ALL_TEAM_COLUMNS.map(snakeCase);
     const insertPlaceholders = placeholders(ALL_TEAM_COLUMNS.length);
 
     const result = yield* sql.unsafe<Row>(
@@ -540,8 +541,6 @@ export const quickLoadTactic = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const sql = yield* SqlClient;
-
       // Load the template content
       const content = yield* loadTemplateContent(id);
       if (content === null) {
@@ -562,23 +561,22 @@ export const quickLoadTactic = (
         if (slotIndex < squad.length) {
           return squad[slotIndex]!.id;
         }
-        return "" as any;
+        return PlayerId.make("");
       });
 
       // Keep the existing bench
-      const bench = currentTactic !== null ? [...currentTactic.bench] : [];
-      const takerLists: ReadonlyArray<TakerList> = ["captain", "penalties", "freeKicksLeft", "freeKicksRight", "cornersLeft", "cornersRight", "throwInsLeft", "throwInsRight"];
+      const bench = currentTactic?.bench ?? [];
 
       const newTactic = new Tactic({
         sourceTemplate: content.sourceTemplate,
         slots: content.slots,
         team: content.team,
         teamSetPieces: content.teamSetPieces,
-        assignments: assignments as any,
-        bench: bench as any,
-        takers: Object.fromEntries(takerLists.map((list) => [list, []])) as any,
+        assignments,
+        bench,
+        takers: EMPTY_TAKERS,
       });
 
-      return yield* changeTactics(savesDir, saveId, newTactic, 0, requestId as any);
+      return yield* changeTactics(savesDir, saveId, newTactic, 0, WriteRequestId.make(requestId));
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );

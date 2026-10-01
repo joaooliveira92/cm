@@ -1,7 +1,5 @@
 import type { ClubSelectionRow } from "@cm-clone/contracts";
-import { Badge } from "../components/ui/badge.js";
 import { ClubBadge } from "../components/shared/ClubBadge.js";
-import { statureLabel } from "./club-profile.js";
 
 export interface ClubHeroProps {
   readonly club: Pick<ClubSelectionRow, "badgeKey" | "clubColours" | "clubName" | "statureTier" | "squadQualityBand">;

@@ -39,7 +39,7 @@ Do not reopen these:
 - **[SPEC-ROADMAP.md](../../.ai/SPEC-ROADMAP.md)** lists Screen 86 in Group F's remainder and quotes
   the Screen 80 snapshot's own promise about it.
 - **The team sheet is the Tactic** —
-  [note](../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md (supersedes)). If set
+  [note](../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note). If set
   pieces are a Tactic field, taker nomination is an edit to the same object Squad's match-day bar and
   the tactics editor already edit, not a new one.
 

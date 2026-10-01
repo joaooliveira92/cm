@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { Effect, Result } from "effect";
-import type { ClubId, InjuryView } from "@cm-clone/contracts";
 import {
   POLL_INTERVAL_MS,
   REVEAL_INTERVAL_MS,

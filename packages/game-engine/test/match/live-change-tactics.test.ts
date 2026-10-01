@@ -5,7 +5,6 @@
  */
 import type { PlayerId } from "@cm-clone/contracts";
 import { describe, expect, it } from "vitest";
-import { DEFAULT_TEAM_INSTRUCTIONS } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
 import type { MatchEvent, RedCardEvent } from "../../src/match/events.js";
 import { simulateMatch, simulateMatchWithCounts } from "../../src/match/simulate/index.js";
@@ -75,7 +74,7 @@ describe("simulateMatch — seeded: a live ChangeTactics after a red card", () =
     for (let seed = 1; seed < 2000; seed++) {
       const home = withNamedBench(buildTeam(HOME, seed).setup);
       const away = withNamedBench(buildTeam(AWAY, seed + 1000).setup);
-      const { events, counts } = simulateMatchWithCounts({ seed, home, away });
+      const { events } = simulateMatchWithCounts({ seed, home, away });
       const redCards = events.filter((e): e is RedCardEvent => e._tag === "RedCard" && e.teamClubId === HOME);
       if (redCards.length === 1 && redCards[0]!.half === 1 && redCards[0]!.minute <= 20) {
         const homeChanges = events.filter(

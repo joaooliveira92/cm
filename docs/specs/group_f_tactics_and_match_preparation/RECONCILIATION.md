@@ -72,7 +72,7 @@ building to several named sections is not the same as having checked them all.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| Set-piece status | `deferred` | The overview summarises the club's configured set pieces. | The panel ships and can only read *"No set pieces configured"*. `SetPieceStatusView` is hard-coded to `status: "none"`, and the **Tactic** carries no set-piece fields. `packages/contracts/src/schemas/tactics.ts:204` records the intent as "until Screen 86 lands". | Screen 86. Settled 2026-09-19 — [set pieces ship, as a Tactic field](../../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md). The panel is waiting on a value, not on a ruling. |
+| Set-piece status | `deferred` | The overview summarises the club's configured set pieces. | The panel ships and can only read *"No set pieces configured"*. `SetPieceStatusView` is hard-coded to `status: "none"`, and the **Tactic** carries no set-piece fields. `packages/contracts/src/schemas/tactics.ts:204` records the intent as "until Screen 86 lands". | Screen 86. Settled 2026-09-19 — [set pieces ship, as a Tactic field](../../../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md) (superseded by that note). The panel is waiting on a value, not on a ruling. |
 | Selection summary | `renamed` | An explicit starters-and-bench selection model the screen reads. | Starters are exactly the players named in the active tactic's slots; substitutes are the registered players not named. Selection stays distinct from squad membership rather than being modelled separately. | [Human fixture pre-match boundary](../../../.agents/notes/implemented/architecture/2026-08-29-human-fixture-pre-match-boundary.md). An explicit model is Screen 89's, and ticket 02 records the mapping rather than inventing one. |
 | Familiarity summary | `deferred` | Familiarity across formation, instructions and position. | Derived, never assigned: the v1 summary reads each named starter's position-familiarity tier plus the tactic's own usage. Formation- and instruction-level familiarity are not computed. | The training domain — [training focus squad column](../../../.agents/notes/proposed/feature/2026-08-29-training-focus-squad-column.md). Group H owns the deferral. |
 | Permission-limited state | `renamed` | A permission context that limits what the screen may show. | The archived-presentation refusal mapped onto the existing saved-state guard. No permission system was added, because there is one human manager per **Save**. | The multiplayer axis, disposed in the [Group B ledger](../group_b_global_navigation_and_inbox/RECONCILIATION.md). Ticket 03. |
@@ -100,9 +100,9 @@ Every line below is a question to settle, not an answer.
   fields, Screen 75 is `deferred` to this screen, and nomination inherits ticket 01's revision-bound
   idempotent save rather than adding a write path. Whether the match engine *uses* a nomination is
   deliberately still open. See
-  [set pieces ship, as a Tactic field](../../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
+  [set pieces ship, as a Tactic field](../../../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md) (superseded by that note).
 - **82 and 89 are the same object as Screen 69.** Under
-  [the team sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md),
+  [the team sheet is the Tactic](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note),
   Squad's match-day bar and the tactics editor are two editors of one thing, and 89 and 92 are views
   of it. Expect these to reconcile as `renamed` rather than as new surfaces.
 - **89 already has a partial implementation it did not ask for.** Ticket 02 assigned the

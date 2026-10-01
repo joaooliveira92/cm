@@ -201,8 +201,6 @@ const withInstructions = (
   overrides: Partial<TeamInstructions>,
 ): TeamInstructions => ({ ...DEFAULT_TEAM_INSTRUCTIONS, ...overrides });
 
-const runBaseline = (): TeamCounts => runMatches(withInstructions({}));
-
 // ─── Mentality ─────────────────────────────────────────────────────────────
 
 describe("Mentality", () => {

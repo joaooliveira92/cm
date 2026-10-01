@@ -268,7 +268,6 @@ describe("a simulated match's forced substitutions", () => {
 
   const found = findSeedWithTwoForcedSubs();
   const testSeed = found?.seed ?? 437;
-  const testBench = found?.bench ?? [];
   const namedHome = withNamedBench(buildTeam(HOME, testSeed).setup);
   const reversedBench: MatchTeamSetup = {
     ...namedHome,

@@ -58,6 +58,7 @@ const squadPlayer = (id: string, name: string, condition: number) => ({
   ...positionSummaryFor(POSITIONS[2]),
   overallRating: 80,
   positionRatings: { ST: 12 },
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition,

@@ -101,11 +101,10 @@ describe("Manager Profile (Screen 19)", () => {
     expect(screen.getByText("Tenure: 3 seasons")).toBeTruthy();
     expect(screen.getByText("England")).toBeTruthy();
     expect(screen.getByText("1 January 1980")).toBeTruthy();
-    // The stored style and appearance are read back, not write-only: the avatar carries the
-    // manager's name and the tactical identity is shown.
+    // The stored appearance and preferred formation are read back, not write-only: the avatar
+    // carries the manager's name and the formation is shown.
     expect(screen.getByRole("img", { name: "Ada Lovelace" })).toBeTruthy();
     expect(screen.getByText("4-4-2")).toBeTruthy();
-    expect(screen.getByText("Balanced")).toBeTruthy();
 
     for (const pillar of ["Tactical Acumen", "Influence", "Regimen", "Technical Coaching"]) {
       expect(screen.getByText(pillar)).toBeTruthy();

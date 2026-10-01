@@ -85,19 +85,19 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
 };
 
 /**
- * Seed 478: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
+ * Seed 942: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
  * bench in `STAND_IN_BENCH_ORDER`) and a minute-3 bring-off of the only goalkeeper, which drags an
  * outfield player into goal, that stand-in suffers a severe Injury (`STAND_IN_INJURY_LINE`). No
  * substitution is left, so a second outfield player is dragged into goal. Found by enumerating seeds
- * and bench orders over `deriveMatchEvents`: with the bench in its own order no seed up to 100000
- * injures the stand-in the drag picks. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
- * Re-pinned for group-g-match-day ticket 35: seed 26 held this while the three substitutions brought
- * on the first squad players outside the XI; they now come off the named bench, which moves the rolls.
+ * and bench orders over `deriveMatchEvents`; under the orders 0-1-2, 0-2-1, 1-0-2 and 1-2-0 no seed
+ * up to 6000 injures the stand-in the drag picks. Re-pinned for group-g-match-day ticket 35, when the
+ * substitutions began coming off the named bench, and again 2026-10-01 when Regimen started scaling
+ * Condition decay and Injury severity (it had been seed 978 under the order 1-0-2).
  */
-const GOALKEEPER_STAND_IN_SEED = 978;
-const STAND_IN_INJURY_LINE = 29;
-/** Which bench entries come on at minutes 1, 2 and 3; the first is the one later dragged into goal. */
-const STAND_IN_BENCH_ORDER = [1, 0, 2] as const;
+const GOALKEEPER_STAND_IN_SEED = 942;
+const STAND_IN_INJURY_LINE = 76;
+/** Which bench entries come on at minutes 1, 2 and 3. */
+const STAND_IN_BENCH_ORDER = [2, 0, 1] as const;
 
 it.effect(
   "goalkeeper stand-ins spend no substitution, and a severe goalkeeper Injury at the cap reads unreplaced",
@@ -185,13 +185,13 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
 );
 
 /**
- * Seed 134: the human club's only substitution is forced by a severe Injury (`FORCED_SUB_INJURY_LINE`),
- * right after it, and the club also takes a knock in the second half; with the manager's three
- * early substitutions, nothing happens in minute 45 or first-half stoppage. Pinned for ticket 18 and
- * 19 specs. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads.
+ * Seed 70: the human club's only substitution is forced by a severe Injury (`FORCED_SUB_INJURY_LINE`)
+ * in the second half, right after it, and the club also takes a knock in the second half; with the
+ * manager's three early substitutions, no other human substitution comes before half time. Pinned
+ * for ticket 18 and 19 specs. Re-pinned 2026-09-29 when players gained CM line and side ratings. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
-const FORCED_SUB_SEED = 134;
-const FORCED_SUB_INJURY_LINE = 17;
+const FORCED_SUB_SEED = 70;
+const FORCED_SUB_INJURY_LINE = 36;
 
 it.effect("a severe Injury a substitute came on for reads replaced", () =>
   Effect.gen(function* () {
@@ -235,12 +235,11 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
   }),
 );
 
-/** Seed 2023: the human club's only substitution is forced by an Injury in regular minute 45 (the
- *  9th Match Event), before half time. Re-pinned for group-g-match-day ticket 26: seed 1292 held
- *  this until a forced substitution started drawing on the named bench, so the AI club's minute-24
- *  forced substitution brought on someone else and the later rolls changed. */
-const MINUTE_45_FORCED_SUB_SEED = 2023;
-const MINUTE_45_FORCED_SUB_LINE = 8;
+/** Seed 8: the human club's first substitution is forced by an Injury in regular minute 45 (line
+ *  `MINUTE_45_FORCED_SUB_LINE`), before half time. Re-pinned for group-g-match-day ticket 26, when a
+ *  forced substitution started drawing on the named bench. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. */
+const MINUTE_45_FORCED_SUB_SEED = 8;
+const MINUTE_45_FORCED_SUB_LINE = 40;
 
 it.effect("a forced substitution in regular minute 45 spends a window", () =>
   Effect.gen(function* () {
@@ -288,24 +287,28 @@ it.effect("a minute-45 command the window cap refuses leaves a halftime instruct
     strictEqual(humanSubs(halftime, s.match).used, 4);
     strictEqual(humanSubs(halftime, s.match).windowsUsed, 3, "the minute-45 Substitution is the halftime instruction's");
 
-    // Nothing happens in minute 45 or first-half stoppage, so only the journal and the windows can
-    // tell the halftime instruction from a live minute-45 command. It lands after `HalfTimeReached`
-    // (group-g-match-day 20), which is what keeps it from re-simulating minute 45.
+    // The refused minute-45 command plays no Substitution in minute 45 or first-half stoppage; the
+    // halftime instruction lands after `HalfTimeReached` (group-g-match-day 20), which is what keeps
+    // it from re-simulating minute 45.
     const { lines } = yield* drain(s.save.id, s.match.matchId);
     const halfTime = lines.findIndex((line) => line.tag === "HalfTimeReached");
+    ok(
+      !lines.slice(0, halfTime).some((line) => line.tag === "Substitution" && line.minute >= 45),
+      "repin FORCED_SUB_SEED: no Substitution in minute 45 or first-half stoppage",
+    );
     strictEqual(lines[halfTime + 1]?.tag, "Substitution", "repin FORCED_SUB_SEED");
     strictEqual(lines[halfTime + 1]?.minute, 45, "repin FORCED_SUB_SEED: the halftime instruction keeps minute 45");
-    ok(lines[halfTime - 1]!.minute < 45, "repin FORCED_SUB_SEED: minute 45 and stoppage are silent");
   }),
 );
 
 /**
- * Seed 216: the human club's only substitution is forced by an Injury at minute 48 of first-half
- * stoppage (the 8th Match Event). The engine opens a window whenever a substitution's minute differs
- * from the last window's, so manager substitutions at second-half minutes 47 and 48 open two more.
+ * Seed 4381: the human club's only substitution is forced by an Injury at minute 49 of first-half
+ * stoppage (line `STOPPAGE_FORCED_SUB_LINE`). The engine opens a window whenever a substitution's
+ * minute differs from the last window's, so manager substitutions at second-half minutes 48 and 49
+ * open two more. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. No seed up to 6000 forces one at minute 48 any more.
  */
-const STOPPAGE_FORCED_SUB_SEED = 216;
-const STOPPAGE_FORCED_SUB_LINE = 7;
+const STOPPAGE_FORCED_SUB_SEED = 4381;
+const STOPPAGE_FORCED_SUB_LINE = 40;
 
 it.effect("windows follow the engine's last-window minute, not the set of distinct minutes", () =>
   Effect.gen(function* () {
@@ -313,12 +316,12 @@ it.effect("windows follow the engine's last-window minute, not the set of distin
     const repin = `repin STOPPAGE_FORCED_SUB_SEED (${STOPPAGE_FORCED_SUB_SEED})`;
     const before = yield* drain(s.save.id, s.match.matchId);
     strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.tag, "Substitution", repin);
-    strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.minute, 48, repin);
+    strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.minute, 49, repin);
     ok(before.lines.findIndex((line) => line.tag === "HalfTimeReached") > STOPPAGE_FORCED_SUB_LINE, `first-half stoppage — ${repin}`);
     // The forced substitution takes an early bench entry, so the manager's come from the end of it.
     strictEqual(s.bench.length, 7, "the bench is full");
 
-    for (const [minute, index] of [[47, 0], [48, 1]] as const) {
+    for (const [minute, index] of [[48, 0], [49, 1]] as const) {
       const response = yield* s.command(minute, false, s.sub(s.tactic.assignments[index + 1]!, s.bench[index + 4]!));
       strictEqual(response.substitutionApplied, true, repin);
     }

@@ -1,18 +1,14 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { SaveId, PlayerId, Tactic } from "@cm-clone/contracts";
+import { PlayerId, Tactic } from "@cm-clone/contracts";
 import {
   OUTFIELD_ATTRIBUTES,
-  STATURE_TIERS,
   builtInTemplate,
   tacticFromTemplate,
-  slotLabel,
-  STARTER_COUNT,
-  DEFAULT_PLAYER_INSTRUCTIONS,
+  type PlayerInstructions,
 } from "@cm-clone/shared";
 import { SetInstructionsPanel } from "../../../src/renderer/tactics/SetInstructionsPanel.js";
 
-const rid = (id: string) => SaveId.make(id);
 const pid = (id: string) => PlayerId.make(id);
 
 const player = (index: number) => ({
@@ -110,7 +106,7 @@ describe("SetInstructionsPanel — team sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={null}
-        onTacticChange={(t) => { saved = true; }}
+        onTacticChange={() => { saved = true; }}
       />,
     );
 
@@ -166,7 +162,7 @@ describe("SetInstructionsPanel — player sub-mode", () => {
 
   it("shows distribution only for the goalkeeper slot", async () => {
     const tactic = defaultTactic();
-    const { rerender } = render(
+    render(
       <SetInstructionsPanel
         tactic={tactic}
         squadById={squadById}
@@ -214,11 +210,11 @@ describe("SetInstructionsPanel — player sub-mode", () => {
     const instructions = {
       ...tactic.slots[slotIndex]!.instructions,
       runWithBall: "often" as const,
-    } as import("@cm-clone/shared").PlayerInstructions;
+    } as PlayerInstructions;
     const slots = tactic.slots.map((s, i) => i === slotIndex ? { ...s, instructions } : s);
     const mutated = new Tactic({
       ...tactic,
-      slots: slots as any,
+      slots,
     });
 
     render(

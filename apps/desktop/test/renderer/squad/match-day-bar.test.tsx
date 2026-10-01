@@ -103,6 +103,7 @@ const player = (id: string, lastName: string): unknown => ({
   ...positionSummaryFor("DC"),
   overallRating: 80,
   positionRatings: { DC: 74 },
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition: 100,
@@ -452,13 +453,14 @@ describe("the match-day bar", () => {
     expect(screen.getByRole("button", { name: "GK slot" })).toBeTruthy();
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
 
-    const dcLabel = fourFourTwoLabels[1]!;
-    const another = screen.getByRole("button", { name: `${dcLabel} slot, Pep Nistelrooy` });
+    // The seed names Nistelrooy in the third slot (D L in the 4-4-2 template's slot order).
+    const nistelrooyLabel = fourFourTwoLabels[2]!;
+    const another = screen.getByRole("button", { name: `${nistelrooyLabel} slot, Pep Nistelrooy` });
     fireEvent.keyDown(another, { key: "Enter" });
     expect(screen.getByTestId("lineup-carried")).toBeTruthy();
     fireEvent.keyDown(another, { key: "Escape" });
     expect(screen.queryByTestId("lineup-carried")).toBeNull();
-    expect(screen.getByRole("button", { name: `${dcLabel} slot, Pep Nistelrooy` })).toBeTruthy();
+    expect(screen.getByRole("button", { name: `${nistelrooyLabel} slot, Pep Nistelrooy` })).toBeTruthy();
   });
 });
 

@@ -9,8 +9,6 @@
  * between-match Condition recovery.
  */
 
-const CLAMPED_MODIFIER = (raw: number): number => Math.min(Math.max(raw, 0.9), 1.1);
-
 export const TRAINING_SESSION_TYPES = ["tactical", "technical", "physical", "recovery", "rest"] as const;
 export type TrainingSessionType = (typeof TRAINING_SESSION_TYPES)[number];
 

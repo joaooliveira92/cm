@@ -1,8 +1,8 @@
-import { useState, useCallback, useMemo, type DragEvent } from "react";
+import { useId, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
-import { DEFAULT_SUB, familiarityOf, slotLabel, type Slot } from "@cm-clone/shared";
+import { COLUMNS, DEFAULT_SUB, ROWS, familiarityOf, slotLabel, type Slot } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
-import { dropZoneAt, pitchLayout, type CellPosition, type DropZone } from "./pitchLayout.js";
+import { dropZoneAt, pitchLayout, type DropZone } from "./pitchLayout.js";
 
 /** The drag channel a marker's slot index rides in; nothing else is exchanged. */
 const SLOT_DRAG = "application/x-cm-tactic-slot";
@@ -54,12 +54,22 @@ interface PitchPoint {
   readonly height: number;
 }
 
-const pointOnPitch = (event: DragEvent<HTMLElement>): PitchPoint | null => {
+/** Where, in pixels, the pointer held a marker relative to its disc's centre when the drag began.
+ *  Grabbing the caption puts the pointer below the disc; the drop subtracts this so the disc lands
+ *  where it was drawn under the pointer, not with its centre jumping to the pointer. */
+interface GrabOffset {
+  readonly x: number;
+  readonly y: number;
+}
+
+const NO_OFFSET: GrabOffset = { x: 0, y: 0 };
+
+const pointOnPitch = (event: DragEvent<HTMLElement>, grab: GrabOffset): PitchPoint | null => {
   const box = event.currentTarget.getBoundingClientRect();
   if (box.width === 0 || box.height === 0) return null;
   return {
-    x: ((event.clientX - box.left) / box.width) * 100,
-    y: ((event.clientY - box.top) / box.height) * 100,
+    x: ((event.clientX - grab.x - box.left) / box.width) * 100,
+    y: ((event.clientY - grab.y - box.top) / box.height) * 100,
     width: box.width,
     height: box.height,
   };
@@ -69,15 +79,41 @@ const pointOnPitch = (event: DragEvent<HTMLElement>): PitchPoint | null => {
  *  plus a little slack. Past it is grass, so even a crowded line has room to move into. */
 const DISC_REACH = 20;
 
-/** What a drop at a point would do: swap with the marker there, move the dragged slot to that
- *  position on the pitch, or nothing (its own spot, the keeper's end, or off the pitch). */
+/** What a drop at a point would do: swap with the marker there (or with the slot holding the cell
+ *  the point falls in, since a cell holds one slot), move the dragged slot to that position on the
+ *  pitch, or nothing (where it already stands, or the keeper's end). */
 type DropIntent =
   | { readonly kind: "swap"; readonly slotIndex: number }
   | { readonly kind: "move"; readonly zone: DropZone }
   | null;
 
 const intentKey = (intent: DropIntent): string =>
-  intent === null ? "" : intent.kind === "swap" ? `swap ${intent.slotIndex}` : `move ${slotLabel(intent.zone.cell)}`;
+  intent === null ? "" : intent.kind === "swap"
+      ? `swap ${intent.slotIndex}`
+      : `move ${slotLabel(intent.zone.cell)} ${intent.zone.subRow} ${intent.zone.subCol}`;
+
+const sameCell = (a: Slot, b: Slot): boolean => a.row === b.row && a.column === b.column;
+
+/** An arrow key as a step on the grid: `row` +1 is one line forward (up the screen), `column` +1
+ *  one place to the right. */
+const ARROW_STEP: Readonly<Record<string, { readonly row: number; readonly column: number }>> = {
+  ArrowUp: { row: 1, column: 0 },
+  ArrowDown: { row: -1, column: 0 },
+  ArrowLeft: { row: 0, column: -1 },
+  ArrowRight: { row: 0, column: 1 },
+};
+
+/** The outfield cell one step from `cell`, or `null` off the grid or into the keeper's row. */
+const stepCell = (cell: Slot, step: { readonly row: number; readonly column: number }): Slot | null => {
+  const row = ROWS[ROWS.indexOf(cell.row) + step.row];
+  const column = COLUMNS[COLUMNS.indexOf(cell.column) + step.column];
+  return row === undefined || row === "GK" || column === undefined ? null : ({ row, column } as Slot);
+};
+
+/** How far one Alt+arrow nudges a marker within its cell, as a share of the cell. */
+const NUDGE = 0.1;
+
+const clampSub = (sub: number): number => Math.round(Math.min(1, Math.max(0, sub)) * 1000) / 1000;
 
 /** The 31 grid cells, each that is empty of any slot. */
 const ALL_CELLS: ReadonlyArray<Slot> = [
@@ -95,7 +131,8 @@ const ALL_CELLS: ReadonlyArray<Slot> = [
  * - Clicking a marker selects that slot (highlighted with a ring)
  * - Clicking an empty cell moves the selected slot's player there
  * - Runs are shown as dotted lines
- * - Keyboard: Tab/arrows to navigate markers, Enter to select, R for run, Escape to deselect
+ * - Keyboard: arrows pick a marker, Shift+arrows move it a cell (swapping with a slot already
+ *   there, as a drop does), Alt+arrows nudge it within its cell, R sets a run, Escape deselects
  */
 export const FormationPitch = ({
   formation,
@@ -122,6 +159,7 @@ export const FormationPitch = ({
   const [dragging, setDragging] = useState<number | null>(null);
   const [intent, setIntent] = useState<DropIntent>(null);
   const [runMode, setRunMode] = useState(false);
+  const grab = useRef<GrabOffset>(NO_OFFSET);
 
   const hasPlayer = (slotIndex: number) => squadById.has(assignments[slotIndex]!);
 
@@ -145,22 +183,30 @@ export const FormationPitch = ({
 
   const intentAt = (point: PitchPoint | null, from: number | null): DropIntent => {
     if (point === null || from === null) return null;
+    const swapWith = (slotIndex: number): DropIntent =>
+      hasPlayer(from) || hasPlayer(slotIndex) ? { kind: "swap", slotIndex } : null;
     const hit = spots.find(
       (spot) =>
+        spot.slotIndex !== from &&
         Math.hypot(((spot.x - point.x) / 100) * point.width, ((spot.y - point.y) / 100) * point.height) <=
-        DISC_REACH,
+          DISC_REACH,
     );
-    if (hit !== undefined) {
-      return hit.slotIndex !== from && (hasPlayer(from) || hasPlayer(hit.slotIndex))
-        ? { kind: "swap", slotIndex: hit.slotIndex }
-        : null;
-    }
+    if (hit !== undefined) return swapWith(hit.slotIndex);
+    const current = slots[from]!;
+    if (current.cell.row === "GK") return null;
     const zone = dropZoneAt(point.x, point.y);
-    if (zone === null || slots[from]!.cell.row === "GK") return null;
-    return { kind: "move", zone };
+    if (zone === null) return null;
+    // Moving onto grass another slot's cell covers would put two slots in one cell, which the
+    // server refuses; the cell is that slot's, so the drop swaps with it instead.
+    const occupant = slots.findIndex((slot, index) => index !== from && sameCell(slot.cell, zone.cell));
+    if (occupant !== -1) return swapWith(occupant);
+    const unmoved =
+      sameCell(current.cell, zone.cell) && current.subRow === zone.subRow && current.subCol === zone.subCol;
+    return unmoved ? null : { kind: "move", zone };
   };
 
   const endDrag = () => {
+    grab.current = NO_OFFSET;
     setDragging(null);
     setIntent(null);
   };
@@ -177,56 +223,74 @@ export const FormationPitch = ({
         )
       : spots;
 
-  const handleKeyDown = useCallback(
-    (event: React.KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onSelectSlot(null);
+  const keyHintId = useId();
+
+  /** Shift+arrow: the selected slot one cell over, or a swap with the slot that holds that cell. */
+  const stepSlot = (slotIndex: number, step: { readonly row: number; readonly column: number }) => {
+    const slot = slots[slotIndex]!;
+    if (slot.cell.row === "GK") return;
+    const target = stepCell(slot.cell, step);
+    if (target === null) return;
+    const occupant = slots.findIndex((each, index) => index !== slotIndex && sameCell(each.cell, target));
+    if (occupant === -1) onMove(slotIndex, target, DEFAULT_SUB, DEFAULT_SUB);
+    else if (hasPlayer(slotIndex)) onSwap(slotIndex, occupant);
+    else if (hasPlayer(occupant)) onSwap(occupant, slotIndex);
+  };
+
+  /** Alt+arrow: the selected slot nudged within its own cell, stopping at the cell's edge. */
+  const nudgeSlot = (slotIndex: number, step: { readonly row: number; readonly column: number }) => {
+    const slot = slots[slotIndex]!;
+    if (slot.cell.row === "GK") return;
+    const subRow = clampSub(slot.subRow - step.row * NUDGE);
+    const subCol = clampSub(slot.subCol + step.column * NUDGE);
+    if (subRow !== slot.subRow || subCol !== slot.subCol) onMove(slotIndex, slot.cell, subRow, subCol);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      onSelectSlot(null);
+      setRunMode(false);
+      return;
+    }
+    const step = ARROW_STEP[event.key];
+    if (selectedSlot === null) {
+      if (step !== undefined) {
+        event.preventDefault();
+        onSelectSlot(0);
+      }
+      return;
+    }
+    if (event.key === "r" || event.key === "R") {
+      event.preventDefault();
+      if (slots[selectedSlot]!.run !== null) {
+        onToggleRun(selectedSlot, null);
         setRunMode(false);
-        return;
+      } else {
+        setRunMode(!runMode);
       }
-      if (selectedSlot === null) return;
-      if (event.key === "r" || event.key === "R") {
-        event.preventDefault();
-        const slot = slots[selectedSlot]!;
-        if (slot.run !== null) {
-          // Clear the run
-          onToggleRun(selectedSlot, null);
-          setRunMode(false);
-        } else {
-          setRunMode(!runMode);
-        }
-        return;
-      }
-      // Arrow keys: navigate between markers
-      const slotCount = slots.length;
-      let next = selectedSlot;
-      if (event.key === "ArrowRight" || event.key === "ArrowDown") {
-        event.preventDefault();
-        next = (selectedSlot + 1) % slotCount;
-      } else if (event.key === "ArrowLeft" || event.key === "ArrowUp") {
-        event.preventDefault();
-        next = (selectedSlot - 1 + slotCount) % slotCount;
-      } else if (event.key === "Enter") {
-        event.preventDefault();
-        // Toggle selection (Enter on the already-selected slot deselects)
-        onSelectSlot(null);
-        return;
-      }
-      if (next !== selectedSlot) {
-        onSelectSlot(next);
-      }
-    },
-    [selectedSlot, slots, onSelectSlot, onToggleRun, runMode],
-  );
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onSelectSlot(null);
+      return;
+    }
+    if (step === undefined) return;
+    event.preventDefault();
+    if (event.shiftKey) stepSlot(selectedSlot, step);
+    else if (event.altKey) nudgeSlot(selectedSlot, step);
+    else onSelectSlot((selectedSlot + (step.row < 0 || step.column > 0 ? 1 : -1) + slots.length) % slots.length);
+  };
 
   return (
     <div
       data-testid="formation-pitch"
       className="pitch-grass relative mx-auto aspect-[68/100] h-full max-h-[640px] w-full max-w-[440px] overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
       tabIndex={0}
+      aria-describedby={keyHintId}
       onKeyDown={handleKeyDown}
       onDragOver={(event) => {
-        const next = intentAt(pointOnPitch(event), dragging);
+        const next = intentAt(pointOnPitch(event, grab.current), dragging);
         if (next !== null) {
           event.preventDefault();
           event.dataTransfer.dropEffect = "move";
@@ -238,8 +302,8 @@ export const FormationPitch = ({
       }}
       onDrop={(event) => {
         event.preventDefault();
-        const from = draggedSlotOf(event);
-        const drop = intentAt(pointOnPitch(event), from);
+        const from = draggedSlotOf(event) ?? dragging;
+        const drop = intentAt(pointOnPitch(event, grab.current), from);
         endDrag();
         if (from === null || drop === null) return;
         if (drop.kind === "swap") {
@@ -327,8 +391,8 @@ export const FormationPitch = ({
                 className={`absolute flex size-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 ${
                   alreadyOccupied
                     ? "border-text-highlight bg-text-highlight/10 text-text-highlight"
-                    : "border-dashed border-orange-400/70 bg-orange-400/10 text-orange-300"
-                } text-caption font-bold transition-colors hover:border-orange-300 hover:text-orange-200 ${FOCUS_RING.join(" ")}`}
+                    : "border-dashed border-text-warning/70 bg-text-warning/10 text-text-warning"
+                } text-caption font-bold transition-colors hover:border-text-warning hover:bg-text-warning/20 ${FOCUS_RING.join(" ")}`}
                 style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
               >
                 {slotLabel(cell)}
@@ -357,7 +421,10 @@ export const FormationPitch = ({
               key={slotIndex}
               data-landing={landing || undefined}
               data-selected={isSelected || undefined}
-              className="absolute w-24 -translate-x-1/2 transition-[left,top] duration-200 ease-out motion-reduce:transition-none"
+              className={`absolute w-24 -translate-x-1/2 ${
+                // The landing preview tracks the pointer, so it must not ease behind it.
+                isDragged ? "" : "transition-[left,top] duration-200 ease-out motion-reduce:transition-none"
+              }`}
               style={{ left: `${x}%`, top: `calc(${y}% - 0.875rem)` }}
             >
               <button
@@ -376,6 +443,14 @@ export const FormationPitch = ({
                   onSelectSlot(slotIndex);
                 }}
                 onDragStart={(event) => {
+                  const disc = event.currentTarget.querySelector("[data-disc]")?.getBoundingClientRect();
+                  grab.current =
+                    disc === undefined || disc.width === 0
+                      ? NO_OFFSET
+                      : {
+                          x: event.clientX - (disc.left + disc.width / 2),
+                          y: event.clientY - (disc.top + disc.height / 2),
+                        };
                   event.dataTransfer.effectAllowed = "move";
                   event.dataTransfer.setData(SLOT_DRAG, String(slotIndex));
                   setDragging(slotIndex);
@@ -385,6 +460,7 @@ export const FormationPitch = ({
                 {/* Numbered disc */}
                 <span
                   aria-hidden="true"
+                  data-disc
                   className={`flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
                     landing
                       ? "border-dashed border-text-bright bg-pitch-marker/60"
@@ -419,19 +495,21 @@ export const FormationPitch = ({
         })}
       </ol>
 
-      {/* Mode indicator */}
-      <div className="pointer-events-none absolute bottom-2 left-2 flex gap-2">
-        {runMode && (
-          <span className="rounded-sm bg-orange-600/80 px-2 py-0.5 text-caption font-bold text-white">
-            Run mode — click a cell to set run target
-          </span>
+      {/* Mode indicator; also the pitch's keyboard description for a screen reader */}
+      <p
+        id={keyHintId}
+        className={`pointer-events-none absolute inset-x-2 bottom-2 w-fit rounded-control bg-black/60 px-2 py-0.5 text-caption text-text-bright ${
+          selectedSlot === null && !runMode ? "sr-only" : ""
+        }`}
+      >
+        {runMode ? (
+          <span className="font-bold text-text-warning">Run mode: click a cell to set the run, Esc to cancel</span>
+        ) : selectedSlot !== null ? (
+          "Shift+arrows move a cell, Alt+arrows nudge, R sets a run, click a free cell to move there"
+        ) : (
+          "Arrow keys pick a player on the pitch"
         )}
-        {selectedSlot !== null && !runMode && (
-          <span className="rounded-sm bg-sky-700/80 px-2 py-0.5 text-caption text-white">
-            Player selected — R for run, click empty cell to move
-          </span>
-        )}
-      </div>
+      </p>
     </div>
   );
 };

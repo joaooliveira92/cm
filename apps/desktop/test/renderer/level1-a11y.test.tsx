@@ -53,6 +53,7 @@ const playerRow = (id: string, name: string) => ({
   ...positionSummaryFor(POSITIONS[2]),
   overallRating: 80,
   positionRatings: { ST: 12 },
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition: 100,

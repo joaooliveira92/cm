@@ -26,9 +26,7 @@ import {
 } from "./stream.js";
 import { substitutionApplied, substitutionLedger } from "./substitutions.js";
 import { buildResumeSimulationView } from "./view.js";
-import { readGenerationManifest } from "../world/worldGeneration.js";
-import { aiTacticPreferences } from "@cm-clone/shared";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { matchAiPreferences } from "./aiPreferences.js";
 
 type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload | ForceOffCommandPayload;
 
@@ -79,13 +77,7 @@ export const submitMatchCommand = (
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
       // Load AI preferences for non-user clubs for in-match AI adjustments
-      const manifest = yield* readGenerationManifest;
-      const started = stream[0]!.payload as import("./stream.js").PersistedMatchStarted;
-      const aiPrefs = yield* loadAiPrefsForMatch(
-        manifest.worldSeed,
-        started.homeClubId,
-        started.awayClubId,
-      );
+      const aiPrefs = yield* matchAiPreferences(stream);
 
       // A halftime command is applied at the break itself, which is its own guarantee.
       const minute =
@@ -131,24 +123,3 @@ export const submitMatchCommand = (
       });
     }).pipe(Effect.provide(SqliteClient.layer({ filename })), Effect.scoped),
   );
-
-/**
- * Load AI tactical preferences for clubs in a match. Only non-user clubs get preferences.
- * Reused in both submitMatchCommand and resumeSimulation.
- */
-const loadAiPrefsForMatch = (
-  worldSeed: number,
-  homeClubId: import("@cm-clone/contracts").ClubId,
-  awayClubId: import("@cm-clone/contracts").ClubId,
-) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const rows = yield* sql<{ readonly id: import("@cm-clone/contracts").ClubId; readonly isUserClub: number; readonly statureTier: import("@cm-clone/shared").StatureTier }>`
-      SELECT id, is_user_club as "isUserClub", stature_tier as "statureTier" FROM clubs WHERE id IN (${homeClubId}, ${awayClubId})`;
-    const prefs = new Map<import("@cm-clone/contracts").ClubId, import("@cm-clone/shared").AiTacticalPreferences>();
-    for (const row of rows) {
-      if (row.isUserClub === 1) continue;
-      prefs.set(row.id, aiTacticPreferences(worldSeed, row.id, row.statureTier));
-    }
-    return prefs;
-  });

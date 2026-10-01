@@ -16,7 +16,7 @@ import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchEvent } from "@cm-clone/game-engine";
 import { Effect, Schema } from "effect";
 import type { StreamEvent } from "../season/decider.js";
-import { deriveMatchEvents } from "./stream.js";
+import { deriveStreamEvents } from "./aiPreferences.js";
 
 export const MATCH_TIMELINE_TAG = "MatchTimelineRecorded";
 
@@ -99,7 +99,7 @@ export const timelineRecorded = (events: ReadonlyArray<MatchEvent>) => ({
 export const matchEventsOf = (stream: ReadonlyArray<StreamEvent>) =>
   Effect.gen(function* () {
     const recorded = stream.find((row) => row.tag === MATCH_TIMELINE_TAG);
-    if (recorded === undefined) return (yield* Effect.sync(() => deriveMatchEvents(stream))).events;
+    if (recorded === undefined) return (yield* deriveStreamEvents(stream)).events;
     const timeline = yield* Schema.decodeUnknownEffect(StoredTimeline)(recorded.payload).pipe(Effect.orDie);
     return timeline.events;
   });

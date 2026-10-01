@@ -17,12 +17,14 @@ const sessions = TRAINING_SCHEDULE_TEMPLATES.balanced.map((s) => ({ type: s.type
 describe("the training schedule wire", () => {
   it("round-trips the screen view, with and without a next Fixture", () => {
     const fixture = { fixtureId: 7, date: "2026-10-17", opponentClubName: "Eastfield", isHome: true };
-    const who = { delegated: false, assistantName: "Ana Sousa", assistantReason: null };
+    const projectedConditions = [{ firstName: "Rui", lastName: "Costa", projectedCondition: 87 }];
+    const who = { delegated: false, assistantName: "Ana Sousa", assistantReason: null, projectedConditions };
     roundTrip(TrainingScheduleView, { sessions, template: "balanced", revision: 3, nextFixture: fixture, ...who });
     roundTrip(TrainingScheduleView, { sessions, template: null, revision: 0, nextFixture: null, ...who });
     roundTrip(TrainingScheduleView, {
       sessions, template: "recovery", revision: 2, nextFixture: null,
       delegated: true, assistantName: "Ana Sousa", assistantReason: "the squad is tired",
+      projectedConditions: [],
     });
   });
 

@@ -7,17 +7,15 @@
  * accepts a result through `commitMatchday`, so no durable state depends on polling cadence.
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FixtureId, FixtureNotPendingError, MatchNotFoundError, type ClubId, type MatchId, type SaveId } from "@cm-clone/contracts";
+import { FixtureId, FixtureNotPendingError, MatchNotFoundError, type MatchId, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { loadSeasonRow } from "../season/currentSeason.js";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { loadFixtureSides, matchSummaryOf } from "./start.js";
-import { deriveMatchEvents, MATCH_STREAM_TYPE } from "./stream.js";
+import { deriveStreamEvents } from "./aiPreferences.js";
+import { MATCH_STREAM_TYPE } from "./stream.js";
 import { substitutionLedger } from "./substitutions.js";
 import { buildResumeSimulationView } from "./view.js";
-import { readGenerationManifest } from "../world/worldGeneration.js";
-import { aiTacticPreferences } from "@cm-clone/shared";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
 
 /**
  * `ResumeSimulation` (ticket 13, extended by ticket 14): re-derives the full event timeline from
@@ -38,15 +36,7 @@ export const resumeSimulation = (
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      // Derive AI preferences for AI clubs (non-user clubs)
-      const manifest = yield* readGenerationManifest;
-      const started = stream[0]!.payload as import("./stream.js").PersistedMatchStarted;
-      const aiPreferences = yield* loadAiPreferencesForClubs(
-        manifest.worldSeed,
-        [started.homeClubId, started.awayClubId],
-      );
-
-      const derived = yield* Effect.sync(() => deriveMatchEvents(stream, aiPreferences));
+      const derived = yield* deriveStreamEvents(stream);
       return yield* buildResumeSimulationView(
         matchId,
         stream,
@@ -57,25 +47,6 @@ export const resumeSimulation = (
       );
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
-
-/**
- * Load AI tactical preferences for clubs in a match. Only non-user clubs get preferences.
- */
-const loadAiPreferencesForClubs = (
-  worldSeed: number,
-  clubIds: ReadonlyArray<ClubId>,
-) =>
-  Effect.gen(function* () {
-    const sql = yield* SqlClient;
-    const rows = yield* sql<{ readonly id: ClubId; readonly isUserClub: number; readonly statureTier: import("@cm-clone/shared").StatureTier }>`
-      SELECT id, is_user_club as "isUserClub", stature_tier as "statureTier" FROM clubs WHERE id IN (${clubIds[0]!}, ${clubIds[1]!})`;
-    const prefs = new Map<ClubId, import("@cm-clone/shared").AiTacticalPreferences>();
-    for (const row of rows) {
-      if (row.isUserClub === 1) continue;
-      prefs.set(row.id, aiTacticPreferences(worldSeed, row.id, row.statureTier));
-    }
-    return prefs;
-  });
 
 /**
  * The `MatchSummary` of `matchId` while it is the save's awaiting match: started and its result not

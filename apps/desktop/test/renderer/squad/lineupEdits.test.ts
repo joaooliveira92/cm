@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { PlayerId, Tactic } from "@cm-clone/contracts";
-import { BUILT_IN_TEMPLATES, slotLabel, type BenchCandidate, type CellRatingsLike } from "@cm-clone/shared";
+import { BUILT_IN_TEMPLATES, SLOTS, slotLabel, type BenchCandidate, type CellRatingsLike } from "@cm-clone/shared";
 import {
   assistantLineupOf,
   clearLineupSlot,
@@ -209,17 +209,25 @@ describe("unselectedPlayerIds", () => {
 });
 
 describe("assistantLineupOf", () => {
-  const player = (id: string, cellLabel: string, rating: number, keeper = false) => ({
+  /** A keeper rates `rating` in goal and 1 elsewhere; an outfielder rates `rating` in every outfield
+   *  cell, or only in `onlyCell` when given, and 1 in goal. */
+  const player = (id: string, rating: number, keeper = false, onlyCell?: string) => ({
     id: pid(id),
     positions: keeper ? [{ position: "GK" as const, familiarity: "natural" as const }] : [{ position: "DC" as const, familiarity: "natural" as const }],
     positionRatings: keeper ? { GK: rating } : { DC: rating, GK: 1 },
-    cellRatings: {} as Readonly<Record<string, number>>,
+    cellRatings: Object.fromEntries(
+      SLOTS.map((cell) => {
+        const label = slotLabel(cell);
+        const rates = keeper ? label === "GK" : label !== "GK" && (onlyCell === undefined || label === onlyCell);
+        return [label, rates ? rating : 1];
+      }),
+    ),
   }) as BenchCandidate<PlayerId> & CellRatingsLike<PlayerId>;
   const squad = [
-    player("gk1", "GK", 80, true),
-    player("gk2", "GK", 70, true),
-    ...fourFourTwoCells.slice(1).map((_cell, index) => player(`s${index}`, "DC", 90 - index)),
-    ...Array.from({ length: 8 }, (_, index) => player(`r${index}`, "DC", 40 - index)),
+    player("gk1", 80, true),
+    player("gk2", 70, true),
+    ...fourFourTwoCells.slice(1).map((_cell, index) => player(`s${index}`, 90 - index)),
+    ...Array.from({ length: 8 }, (_, index) => player(`r${index}`, 40 - index)),
   ];
 
   it("fills every starter slot and the bench in the Tactic's own Formation, keeping its instructions", () => {
@@ -239,8 +247,11 @@ describe("assistantLineupOf", () => {
         ...base.slots.slice(6),
       ],
     });
-    const next = assistantLineupOf(custom, squad)!;
-    expect(String(next.assignments[5])).toBe("s0");
+    // The specialist rates only at D C, which the 4-4-2 template has no slot for: he starts only
+    // because slot 5 now stands there.
+    const withSpecialist = [...squad, player("dc", 99, false, "D C")];
+    expect(assistantLineupOf(base, withSpecialist)!.assignments).not.toContain(pid("dc"));
+    expect(String(assistantLineupOf(custom, withSpecialist)!.assignments[5])).toBe("dc");
   });
 
   it("puts the spare keeper first on the bench, then the best of the rest", () => {

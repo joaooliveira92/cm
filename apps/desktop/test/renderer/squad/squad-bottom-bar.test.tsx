@@ -8,8 +8,9 @@ import {
   useSquadBottomBar,
 } from "../../../src/renderer/squad/squadBottomBar.js";
 
+/** A Tactic whose eleven names `count` nobody: an empty id is a starter still to pick. */
 const tacticMissing = (count: number): Tactic =>
-  ({ slots: Array.from({ length: count }, () => ({ playerId: null })) }) as unknown as Tactic;
+  ({ assignments: Array.from({ length: 11 }, (_, index) => (index < count ? "" : `p${index}`)) }) as unknown as Tactic;
 
 const FULL = tacticMissing(0);
 

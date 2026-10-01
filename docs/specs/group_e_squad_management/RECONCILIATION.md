@@ -85,7 +85,7 @@ matched features against the import's titles, not against its sections.
 | 71 Selection Filters, attribute half | Any number of Attributes, each at a minimum from 1–20 ("Pace 15+, Finishing 14+"), on the owned Squad, from any key in `ALL_ATTRIBUTES` whatever columns are visible. A player must meet every threshold. One clause per Attribute, set together from a dialog that shows a live match count and applies the whole set at once; it clears without touching Position or Status and round-trips through the URL as one `attr:<key>:<min>` part per Attribute. Only an exact figure matches, so it cannot read through a band. Rival rosters and transfer tables do not offer it. | [group-e issue 04](../../../.scratch/group-e-squad-management/issues/04-attribute-threshold-filter.md), [issue 05](../../../.scratch/group-e-squad-management/issues/05-multi-attribute-filter-dialog.md), `matchesAttribute` and `replaceAttributeFilters` in `table/features/filtering.ts`, `squad/AttributeFilterDialog.tsx` |
 
 **Screen 69 carries one standing design decision** worth reading before touching it: under
-[the team sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md),
+[the team sheet is the Tactic](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note),
 Squad's match-day bar and the tactics editor are two editors of the same thing. Screens 82, 89 and 92
 follow from the same note. The effort's survey did not cite it, and no row here claims a divergence
 from the import on that basis; it is flagged because a future audit of Screen 69 will need it.
@@ -128,7 +128,7 @@ group-e ticket 01 wrote.
 
 | Sections | Kind | What the spec asks | Disposition | Anchor |
 |---|---|---|---|---|
-| [75_set_piece_takers.md](75_set_piece_takers.md), whole file | `deferred` | Nominating takers for corners, free kicks and penalties. | Not built. `SetPieceStatusView` is hard-coded to `status: "none"` and the **Tactic** carries no set-piece fields yet. Takers become Tactic fields, so nomination is an edit to the object Squad's match-day bar and the tactics editor already edit. | [Group F Screen 86](../group_f_tactics_and_match_preparation/86_set_pieces.md), via [set pieces ship, as a Tactic field](../../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md). |
+| [75_set_piece_takers.md](75_set_piece_takers.md), whole file | `deferred` | Nominating takers for corners, free kicks and penalties. | Not built. `SetPieceStatusView` is hard-coded to `status: "none"` and the **Tactic** carries no set-piece fields yet. Takers become Tactic fields, so nomination is an edit to the object Squad's match-day bar and the tactics editor already edit. | [Group F Screen 86](../group_f_tactics_and_match_preparation/86_set_pieces.md), via [set pieces ship, as a Tactic field](../../../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md) (superseded by that note). |
 
 **What group-e ticket 01 originally ruled**, kept because a ledger records what was decided as well as
 what holds: `out-of-scope`, on the correct finding that no set-piece model exists. The finding was right

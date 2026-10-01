@@ -28,12 +28,12 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * `RED_CARD_LINE` opens with the human club's red card to an outfielder and holds the match's two
  * Injuries. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. A score or head-count read from the end
  * of the chunk would show each before its line. The tests re-check the property from the Commentary
- * Lines and name this constant when it no longer holds.
+ * Lines and name this constant when it no longer holds. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
-const SEED = 1050;
-const GOAL_LINE = 1;
-const HALF_TIME_LINE = 10;
-const RED_CARD_LINE = 13;
+const SEED = 1301;
+const GOAL_LINE = 3;
+const HALF_TIME_LINE = 26;
+const RED_CARD_LINE = 29;
 
 const repin = `repin SEED (${SEED})`;
 

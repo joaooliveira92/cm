@@ -321,10 +321,8 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
       "apply-live-tactics",
       "make-substitution",
       "set-live-mentality",
-      "set-live-pressing",
       "set-live-substitute-in",
       "set-live-substitute-off",
-      "set-live-tempo",
       "toggle-control-panel",
     ];
     expect(new Set(ids)).toEqual(new Set(expected));

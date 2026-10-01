@@ -37,6 +37,7 @@ const squadView = (saveId: string, clubName: string) => ({
       ...positionSummaryFor(POSITIONS[2]),
       overallRating: 90,
       positionRatings: { WB: 12 },
+      cellRatings: {},
       suitability: {},
       retrainingTarget: null,
       condition: 100,
@@ -105,6 +106,8 @@ describe("career screens go through the seam and render typed errors (AC-01, AC-
               slots: BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => ({
                 cell: slot.cell,
                 run: null,
+                subRow: slot.subRow,
+                subCol: slot.subCol,
                 instructions: slot.instructions,
                 setPieceRoles: slot.setPieceRoles,
               })),

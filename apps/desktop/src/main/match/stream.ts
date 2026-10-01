@@ -8,8 +8,8 @@
 import type { ClubId, PlayerId, Tactic } from "@cm-clone/contracts";
 import {
   aiInMatchController,
-  aiTacticPreferences,
   type AiTacticalPreferences,
+  type PillarDistribution,
   type TeamInstructions,
 } from "@cm-clone/shared";
 import {
@@ -22,7 +22,6 @@ import {
   type MatchPlayerCountEntry,
   type MatchTeamSetup,
 } from "@cm-clone/game-engine";
-import type { PillarDistribution } from "@cm-clone/shared";
 import { type StreamEvent } from "../season/decider.js";
 
 /**
@@ -191,7 +190,7 @@ export const deriveMatchEvents = (
 export const aiControllerFor = (
   preferences: AiTacticalPreferences,
   homeClubId: ClubId,
-  awayClubId: ClubId,
+  _awayClubId: ClubId,
 ): AiTacticalController => {
   return (state) => {
     const isHome = state.aiClubId === homeClubId;

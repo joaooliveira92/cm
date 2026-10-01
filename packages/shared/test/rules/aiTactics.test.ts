@@ -12,8 +12,7 @@ import {
 import { DEFAULT_TEAM_INSTRUCTIONS, type TeamInstructions } from "../../src/rules/tacticModel.js";
 import { STARTER_COUNT, BENCH_SIZE } from "../../src/rules/tactics.js";
 import { slotLabel } from "../../src/rules/slots.js";
-import type { Position } from "../../src/rules/positions.js";
-import type { FamiliarityTier } from "../../src/rules/positions.js";
+import type { Position, FamiliarityTier } from "../../src/rules/positions.js";
 import type { PlayerPosition } from "../../src/rules/ratings.js";
 
 // ---------------------------------------------------------------------------

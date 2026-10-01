@@ -5,8 +5,9 @@ import type {
   ManagerProfileScreenView,
   TacticsOverviewView,
 } from "@cm-clone/contracts";
-import { BUILT_IN_TEMPLATES } from "@cm-clone/shared";
+import { BUILT_IN_TEMPLATES, type Slot } from "@cm-clone/shared";
 import { TacticsOverviewScreen } from "../../../src/renderer/tactics/TacticsOverviewScreen.js";
+import { OverviewPitch } from "../../../src/renderer/tactics/OverviewPitch.js";
 import {
   RegistryProvider,
   tacticsOverviewAtom,
@@ -20,7 +21,7 @@ const pid = (id: string) => PlayerId.make(id);
 const FOUR_FOUR_TWO_CELLS = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((s) => s.cell);
 const FOUR_THREE_THREE_CELLS = BUILT_IN_TEMPLATES.find((t) => t.name === "4-3-3")!.slots.map((s) => s.cell);
 const FIVE_THREE_TWO_CELLS = BUILT_IN_TEMPLATES.find((t) => t.name === "5-3-2")!.slots.map((s) => s.cell);
-const SLOT_WITH_DEFAULT_SUB = (cell: any) => ({ cell, run: null, subRow: 0.5, subCol: 0.5 });
+const SLOT_WITH_DEFAULT_SUB = (cell: Slot) => ({ cell, run: null, subRow: 0.5, subCol: 0.5 });
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
@@ -481,5 +482,26 @@ describe("Tactics Overview accessibility", () => {
 
     expect(document.querySelector('ul[aria-label="Formation slots"]')).not.toBeNull();
     expect(screen.getByText("Requires action")).toBeDefined();
+  });
+});
+describe("the overview pitch draws each marker where the editor placed it", () => {
+  const markerLeft = (index: number): number =>
+    Number.parseFloat(
+      screen.getByRole("list", { name: "Formation slots" }).querySelectorAll("li")[index]!.style.left,
+    );
+
+  it("offsets a slot within its cell by its sub-position, and centres the rest", () => {
+    const slots = FOUR_FOUR_TWO_CELLS.map((cell, index) =>
+      index === 2 ? { ...SLOT_WITH_DEFAULT_SUB(cell), subCol: 0 } : SLOT_WITH_DEFAULT_SUB(cell),
+    );
+    render(<OverviewPitch assignments={assignments as never} slots={slots as never} />);
+    // Slot 2 is D L, centred at 11%; its cell's left edge is the touchline at 3%.
+    expect(markerLeft(2)).toBe(3);
+    expect(markerLeft(1)).toBe(89);
+  });
+
+  it("draws every marker at its cell's centre when no slots are given", () => {
+    render(<OverviewPitch assignments={assignments as never} />);
+    expect(markerLeft(2)).toBe(11);
   });
 });

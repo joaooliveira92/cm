@@ -5,7 +5,6 @@ import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
-import { Card } from "../components/ui/card.js";
 import { FOCUS_RING } from "../focus.js";
 import {
   BUILT_IN_TEMPLATE_NAMES,
@@ -105,6 +104,18 @@ const changeSlotPlayer = (tactic: Tactic, slotIndex: number, playerId: PlayerId)
     assignments: tactic.assignments.map((assigned, index) => (index === slotIndex ? playerId : assigned)),
   });
 
+/** The next starter slot after `from` that still names nobody, wrapping round; `null` once the
+ *  eleven is full. Filling an empty slot moves the selection here, so an eleven is picked by
+ *  clicking players in turn. */
+const nextEmptySlot = (tactic: Tactic, from: number): number | null => {
+  const count = tactic.assignments.length;
+  for (let step = 1; step <= count; step++) {
+    const index = (from + step) % count;
+    if (tactic.assignments[index] === NO_PLAYER) return index;
+  }
+  return null;
+};
+
 /** The one conflict sentence, rendered as the `role="alert"` span beside the Refresh button. */
 const CONFLICT_MESSAGE =
   "A newer tactic was saved since you loaded this page. Your draft is kept — refresh to load the current version.";
@@ -180,8 +191,6 @@ const MenuButton = ({
   );
 };
 
-const STARTER_COUNT = 11;
-
 /** Configuration for in-match mode. When provided, the Tactics screen renders as a standalone
  *  editor inside a `LiveCommandFrame`, receiving all data from the match context instead of loading
  *  it from the server. The outer `<main>` tag is left to `LiveCommandFrame`. */
@@ -256,18 +265,6 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
       squadByIdRef.current = new Map(viewResult.value.squad.map((p) => [p.id, p]));
     }
   }, [viewResult]);
-
-  // Custom event listener for bench swap (dispatched by TeamSelectionGrid)
-  useEffect(() => {
-    const handler = (event: Event) => {
-      const detail = (event as CustomEvent).detail as { from: number; to: number } | undefined;
-      if (detail) {
-        setTactic(swapLineupSlots(tactic, detail.from, detail.to));
-      }
-    };
-    window.addEventListener("cm-tactic-swap", handler);
-    return () => window.removeEventListener("cm-tactic-swap", handler);
-  }, [tactic, setTactic]);
 
   // Register action handlers
   useEffect(() => {
@@ -415,6 +412,26 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
     [tactic, setTactic],
   );
 
+  /** A substitute or reserve brought into the selected slot. A slot that was empty hands the
+   *  selection on to the next empty one; replacing a starter keeps it where it is. */
+  const bringIntoSelected = useCallback(
+    (slotIndex: number, next: Tactic) => {
+      setTactic(next);
+      if (tactic.assignments[slotIndex] === NO_PLAYER) setSelectedSlot(nextEmptySlot(next, slotIndex));
+    },
+    [tactic, setTactic],
+  );
+
+  const handleBringIn = useCallback(
+    (from: number, to: number) => bringIntoSelected(to, swapLineupSlots(tactic, from, to)),
+    [tactic, bringIntoSelected],
+  );
+
+  const handleAssign = useCallback(
+    (slotIndex: number, playerId: PlayerId) => bringIntoSelected(slotIndex, changeSlotPlayer(tactic, slotIndex, playerId)),
+    [tactic, bringIntoSelected],
+  );
+
   const handleToggleRun = useCallback(
     (slotIndex: number, target: Slot | null) => {
       setTactic(toggleRun(tactic, slotIndex, target));
@@ -484,13 +501,11 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
         {isInMatch ? (
           <MenuButton
             label="File"
-            items={[
-              ...modifiedTemplates.map((t) => ({
-                label: `${t.current ? "✓ " : ""}Quick Load: ${t.name}`,
-                onSelect: () => void dispatchAction("set-formation", { formation: t.name }),
-                current: t.current,
-              })),
-            ]}
+            items={modifiedTemplates.map((t) => ({
+              label: `${t.current ? "✓ " : ""}Quick Load: ${t.name}`,
+              onSelect: () => void dispatchAction("set-formation", { formation: t.name }),
+              current: t.current,
+            }))}
           />
         ) : (
           <MenuButton
@@ -573,10 +588,12 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
               squad={squad}
               selectedSlot={selectedSlot}
               onSelectSlot={handleSelectSlot}
+              onSwap={handleBringIn}
+              onAssign={handleAssign}
             />
           </div>
           <p className="px-3 py-2 text-caption text-text-muted">
-            Click a starter to select; then click a substitute to swap, or an empty cell on the pitch to move.
+            Click a starter to select; then click a substitute or reserve to bring him in, or an empty cell on the pitch to move.
           </p>
         </section>
 

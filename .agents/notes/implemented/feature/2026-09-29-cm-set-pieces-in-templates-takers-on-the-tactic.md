@@ -4,7 +4,7 @@ Status: implemented
 
 ## Problem
 
-[Set pieces ship, as a Tactic field](../../implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md (this note supersedes it)) put set-piece
+*Set pieces ship, as a Tactic field*, the note this one supersedes, put set-piece
 takers on the Tactic and left open whether the match engine uses a nomination. Championship Manager
 03/04 had a fuller model (see the
 [instructions research](../../../../docs/research/formations-and-instructions-cm0304-team-and-player-instructions.md)):
@@ -45,8 +45,8 @@ engine needs set-piece events to act on.
 ## Relationship to existing notes
 
 Answers the open question of
-[Set pieces ship, as a Tactic field](../../implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md (this note supersedes it)) and extends
-it; that note stands.
+*Set pieces ship, as a Tactic field* and extends
+it.
 
 ## Alternatives considered
 

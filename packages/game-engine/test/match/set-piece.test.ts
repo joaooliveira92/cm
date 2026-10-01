@@ -1,17 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
-  builtInTemplate,
-  DEFAULT_TEAM_INSTRUCTIONS,
-  DEFAULT_PLAYER_INSTRUCTIONS,
-  DEFAULT_TEAM_SET_PIECES,
   EMPTY_TAKERS,
   type PlayerAttributes,
 } from "@cm-clone/shared";
 import { simulateMatch, type SimulateMatchInput } from "../../src/match/simulate/index.js";
-import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
+import type { MatchPlayerInput } from "../../src/match/types.js";
 import type { CornerEvent, FreeKickEvent, PenaltyEvent } from "../../src/match/events.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId, withNamedBench } from "./fixtures.js";
-import type { PlayerId, ClubId } from "@cm-clone/contracts";
+import type { PlayerId } from "@cm-clone/contracts";
 
 // ─── Fixture helpers ─────────────────────────────────────────────────────────
 
@@ -45,10 +41,10 @@ describe("pickTaker", () => {
       makePlayerId("p3"),
     ] as PlayerId[]);
     const playersById = new Map([
-      [makePlayerId("p1"), { id: makePlayerId("p1"), attributes: craftAttributes({ finishing: 15 }), positionalRatings: {} as any } as MatchPlayerInput],
-      [makePlayerId("p2"), { id: makePlayerId("p2"), attributes: craftAttributes({ finishing: 12 }), positionalRatings: {} as any } as MatchPlayerInput],
-      [makePlayerId("p3"), { id: makePlayerId("p3"), attributes: craftAttributes({ finishing: 8 }), positionalRatings: {} as any } as MatchPlayerInput],
-      [makePlayerId("off"), { id: makePlayerId("off"), attributes: craftAttributes({ finishing: 20 }), positionalRatings: {} as any } as MatchPlayerInput],
+      [makePlayerId("p1"), { id: makePlayerId("p1"), attributes: craftAttributes({ finishing: 15 }), positionalRatings: {} } as MatchPlayerInput],
+      [makePlayerId("p2"), { id: makePlayerId("p2"), attributes: craftAttributes({ finishing: 12 }), positionalRatings: {} } as MatchPlayerInput],
+      [makePlayerId("p3"), { id: makePlayerId("p3"), attributes: craftAttributes({ finishing: 8 }), positionalRatings: {} } as MatchPlayerInput],
+      [makePlayerId("off"), { id: makePlayerId("off"), attributes: craftAttributes({ finishing: 20 }), positionalRatings: {} } as MatchPlayerInput],
     ] as [PlayerId, MatchPlayerInput][]);
     const takerList = [makePlayerId("off"), makePlayerId("p2"), makePlayerId("p1")];
 

@@ -2,7 +2,7 @@
  * Tests for the SetPrioritiesPanel: team set-piece dropdowns, taker-list CRUD,
  * reordering, keyboard shortcuts, and the Capt badge at the head of the captains list.
  */
-import { cleanup, fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayerId, Tactic } from "@cm-clone/contracts";
 import {
@@ -12,6 +12,7 @@ import {
   builtInTemplate,
   emptyBench,
   tacticFromTemplate,
+  type TakerList,
 } from "@cm-clone/shared";
 import { SetPrioritiesPanel } from "../../../src/renderer/tactics/SetPrioritiesPanel.js";
 
@@ -79,7 +80,7 @@ const mountPanel = (tactic: Tactic = defaultTactic()): { readonly onTacticChange
 
 /** Create a tactic with specific taker assignments without mutating the immutable takers. */
 const tacticWithTakers = (
-  overrides: Partial<Record<import("@cm-clone/shared").TakerList, ReadonlyArray<PlayerId>>>,
+  overrides: Partial<Record<TakerList, ReadonlyArray<PlayerId>>>,
 ): Tactic => {
   const base = defaultTactic();
   return new Tactic({

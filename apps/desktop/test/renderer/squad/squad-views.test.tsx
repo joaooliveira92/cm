@@ -132,6 +132,7 @@ const player = (id: string, firstName: string, lastName: string) => ({
   positionOrder: 8,
   overallRating: 80,
   positionRatings: { DC: 74, DL: 61 },
+  cellRatings: {},
   suitability: {},
   retrainingTarget: null,
   condition: 100,

@@ -20,7 +20,7 @@ written: **satisfied-inline, or a defined remainder?**
   chose exactly the retro chrome-blue frame, Trebuchet MS, dense 12px tables, and CM-style
   three-letter status abbreviations the instruction describes. The instruction predates it.
 - **The match-day bar is a shared team-sheet editor** ([the team-sheet is the
-  Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md)),
+  Tactic](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note)),
   so the instruction's lineup-slot panel is not Squad-only surface.
 - **Group D owes no screen here.** 51 Attributes and 52 Positions are `renamed` onto the Squad
   table; the rest of D is `out-of-scope` or `deferred` on absent models (see the [Group D
@@ -103,7 +103,7 @@ Only the rows marked **build** become tickets.
 | §7.2 / §10.3 Sort control for the position view | **build: [04](04-sort-control-for-the-position-list.md)** | The list sorts through the shared table state, but only the palette can change it; the list has no header to click. |
 | §7.1 / §19.3 Team: first team, reserves, youth | **deferred** | No reserves or youth-squad model (Group E ledger). |
 | §7.4 Show Filters | **satisfied** | Filters sit in the toolbar and are always shown. There is no extended filter panel to toggle. |
-| §11 Position selector: lineup slots GK…SB | **satisfied** | `MatchDayBar` is the shared team-sheet editor ([the team-sheet is the Tactic](../../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md)): the formation's eleven plus a seven-slot bench, not SB1–SB12. Whether a slot should also filter the roster is left as an open question below, not a ticket. |
+| §11 Position selector: lineup slots GK…SB | **satisfied** | `MatchDayBar` is the shared team-sheet editor ([the team-sheet is the Tactic](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md) (superseded by that note)): the formation's eleven plus a seven-slot bench, not SB1–SB12. Whether a slot should also filter the roster is left as an open question below, not a ticket. |
 | §20 accessibility, §22 quality | **standing** | Already the repo's level-1 contract. |
 | Screen 71 attribute filter | **group-e** | Ruled in [group-e 03](../../group-e-squad-management/issues/03-attribute-filters.md), built as group-e 04. |
 

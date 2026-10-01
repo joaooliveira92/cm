@@ -40,7 +40,8 @@ import { planDelegatedSchedule } from "../club/trainingSchedule.js";
 import { advanceRetraining } from "../club/retraining.js";
 import { accrueScoutingProgress } from "../club/scouting.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
-import { MATCH_STREAM_TYPE, deriveMatchEvents } from "../match/stream.js";
+import { deriveStreamEvents } from "../match/aiPreferences.js";
+import { MATCH_STREAM_TYPE } from "../match/stream.js";
 import { timelineRecorded } from "../match/timeline.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import { withAdvanceLock } from "./advanceLock.js";
@@ -135,7 +136,7 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
     // The human result is *derived from the persisted stream*, never re-simulated from scratch:
     // re-running would discard the command journal the player built during the match and could
     // produce a different score from the one they watched.
-    const derived = yield* Effect.sync(() => deriveMatchEvents(stream));
+    const derived = yield* deriveStreamEvents(stream);
     const fullTime = derived.events.find((event) => event._tag === "FullTimeWhistle");
     if (fullTime === undefined || fullTime._tag !== "FullTimeWhistle") {
       return yield* new MatchNotCompleteError({ matchId });

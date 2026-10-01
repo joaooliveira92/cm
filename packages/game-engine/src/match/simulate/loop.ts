@@ -1,4 +1,4 @@
-import { createSeededRng, regimenDecayModifier, type RandomSource, type TeamInstructions } from "@cm-clone/shared";
+import { createSeededRng, type RandomSource, type TeamInstructions } from "@cm-clone/shared";
 import type { MatchCommand } from "../commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "../events.js";
 import type { MatchTeamSetup } from "../types.js";

@@ -28,14 +28,14 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * Seed 32: the human club's only goalkeeper is sent off at minute `RED_CARD_MINUTE` (line
+ * Seed 645: the human club's only goalkeeper is sent off at minute `RED_CARD_MINUTE` (line
  * `RED_CARD_LINE`), and the engine drags an outfield player into goal as the very next event. Found by
  * enumerating seeds over `deriveMatchEvents` with the kickoff setups; the first such seed for the
- * human club. Re-pinned 2026-09-29 when players gained CM line and side ratings.
+ * human club. Re-pinned 2026-09-29 when players gained CM line and side ratings. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
-const KEEPER_SENT_OFF_SEED = 532;
-const RED_CARD_LINE = 7;
-const RED_CARD_MINUTE = 33;
+const KEEPER_SENT_OFF_SEED = 645;
+const RED_CARD_LINE = 46;
+const RED_CARD_MINUTE = 56;
 const repin = `repin KEEPER_SENT_OFF_SEED (${KEEPER_SENT_OFF_SEED})`;
 
 const drainLines = (saveId: SaveId, matchId: MatchId) =>

@@ -8,7 +8,6 @@ import type {
 import { getActiveMatch, notify } from "./activeMatch.js";
 import type {
   LastRevealedInjury,
-  MatchPhase,
   RevealedFeed,
   RevealedInjury,
   RevealedScore,

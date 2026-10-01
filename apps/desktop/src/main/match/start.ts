@@ -21,6 +21,7 @@ import {
   type ClubId,
   type FixtureId,
   type MatchMode,
+  type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
 import { deriveSeed, type PlayerAttributes } from "@cm-clone/shared";
@@ -45,7 +46,7 @@ import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "./stream.js";
 const loadPlayerPositionalRatings = (clubId: ClubId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
-    return yield* sql<PositionalRatingRow & { readonly id: import("@cm-clone/contracts").PlayerId }>`
+    return yield* sql<PositionalRatingRow & { readonly id: PlayerId }>`
       SELECT p.id, ${sql.unsafe(positionalRatingSelectList("p."))}
       FROM players p WHERE p.club_id = ${clubId}`;
   });

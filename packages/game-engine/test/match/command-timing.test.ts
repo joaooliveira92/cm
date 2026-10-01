@@ -4,7 +4,6 @@
  * revealed Match Events leaves every one of those events exactly as it was.
  */
 import { describe, expect, it } from "vitest";
-import { DEFAULT_TEAM_INSTRUCTIONS } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
 import { nextCommandMinute } from "../../src/match/commandTiming.js";
 import type { MatchEvent } from "../../src/match/events.js";

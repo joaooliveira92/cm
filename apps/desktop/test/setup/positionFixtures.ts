@@ -7,6 +7,7 @@ import {
   POSITION_SLOT,
   familiarityOf,
   positionSummaryOf,
+  suitabilityByCellOf,
   type FamiliarityTier,
   type PositionalRatings,
   type Position,
@@ -31,3 +32,9 @@ export const suitabilityFor = (position: string, familiarity: string = "natural"
   const level = LEVEL[familiarityOf(LEVEL[familiarity as FamiliarityTier] ?? 19)];
   return { [position]: level };
 };
+
+/** A squad row's Suitability as the server sends it: keyed by each of the 31 cells' labels and
+ *  derived from the same ratings `positionSummaryFor` uses, so a DC fixture fits D LC, D C and D RC
+ *  at `familiarity` and nothing else. */
+export const cellSuitabilityFor = (position: string, familiarity: FamiliarityTier = "natural"): Record<string, number> =>
+  suitabilityByCellOf(ratingsFor(position, familiarity));

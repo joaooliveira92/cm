@@ -62,9 +62,10 @@ const drain = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
  * seed's property on every run and fail with that instruction, rather than silently asserting
  * against a match that no longer has the shape the test needs.
  */
-/** Produces an Injury, a goal and a card, with every goal before half time: the statistics test
- *  compares its first-chunk cut with that chunk's score, which reads the whole match. */
-const INJURY_SEED = 18;
+/** Produces an Injury, a goal and a card, with every goal in the opening chunk: the statistics test
+ *  compares its first-chunk cut with that chunk's score, which reads the whole match. Re-pinned
+ *  2026-10-01, when every reader of a match began deriving it under the AI clubs' preferences. */
+const INJURY_SEED = 34;
 const INJURY_FREE_SEED = 510;
 const CLEAN_LINEUP_SEED = 510;
 /** For the tests that hold whatever the match happens to produce — they assert on replay equality

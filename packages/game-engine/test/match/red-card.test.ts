@@ -172,7 +172,6 @@ describe("a simulated match's red card", () => {
   it("a keeper sent off with a second keeper on the pitch brings no one into goal", () => {
     // Build a setup with two keepers
     const home = withSecondKeeper(buildTeam(HOME, 284).setup);
-    const keepers = new Set(home.tactic.slots.filter((slot) => slot.cell.row === "GK").map((slot) => slot.playerId));
     // Scan for a seed where a keeper gets a red card
     const { events } = seeded(284, home);
     // The test passes if the match completes (the pipeline changed, so older seeds may differ)

@@ -398,7 +398,7 @@ export const continueSeededCareer = async (page: Page, name: string): Promise<vo
  */
 export const openTacticsEditor = async (page: Page): Promise<void> => {
   await page.getByRole("button", { name: "Open the tactics editor" }).click();
-  await expect(page.getByRole("combobox", { name: "Slot 1 player", exact: true })).toBeVisible();
+  await expect(page.getByRole("grid", { name: "Team Selection" })).toBeVisible();
 };
 
 /**
@@ -428,25 +428,25 @@ export const openLivePanel = async (page: Page, via: "click" | "keyboard" = "cli
 };
 
 /**
- * Assign a distinct real player to each of the 11 tactic slots and save — the minimum valid Tactic
- * (11 unique players), required before the Match Day control panel will render.
+ * Fill each of the 11 tactic slots from the reserves and save — the minimum valid Tactic (11 unique
+ * players), required before the Match Day control panel will render.
  *
- * Every slot picks the *first* real option rather than the i-th: `TacticsScreen` filters players
- * already assigned elsewhere out of each slot's list, so "first available" is a different player
- * each time round and the 11 are distinct by construction. That is also why the loop cannot be
- * parallelised — slot i's options depend on slots 0..i-1.
+ * Each pass selects a starter row in Team Selection and clicks the first reserve, which comes into
+ * that slot; whoever stood there drops back to the reserves. The reserves never hold a starter, so
+ * the eleven are distinct by construction — and the loop cannot be parallelised, since each pass
+ * changes who the first reserve is.
  */
 export const assignFullTactic = async (page: Page) => {
-  const rows = page.locator("tbody tr");
-  await expect(rows).toHaveCount(11);
+  const grid = page.getByRole("grid", { name: "Team Selection" });
+  const starters = grid.locator('tr[data-kind="starter"]');
+  await expect(starters).toHaveCount(11);
   /* oxlint-disable no-await-in-loop */
   for (let i = 0; i < 11; i++) {
-    const combobox = page.getByRole("combobox", { name: `Slot ${i + 1} player`, exact: true });
-    await combobox.click();
-    const listbox = page.getByRole("listbox");
-    // Option 0 is "Unassigned"; option 1 is the first player not yet spoken for.
-    await listbox.getByRole("option").nth(1).click();
-    await expect(listbox).toHaveCount(0);
+    await starters.nth(i).click();
+    const reserve = grid.locator('tr[data-kind="reserve"]').first();
+    const incoming = await reserve.getAttribute("data-player-id");
+    await reserve.click();
+    await expect(starters.nth(i)).toHaveAttribute("data-player-id", incoming!);
   }
   /* oxlint-enable no-await-in-loop */
   await page.getByRole("button", { name: "Save Tactic" }).click();

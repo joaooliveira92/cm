@@ -1,5 +1,4 @@
 import type { ClubSelectionRow } from "@cm-clone/contracts";
-import { Separator } from "../components/ui/separator.js";
 import { BoardObjectiveCard } from "./BoardObjectiveCard.js";
 import { ClubHero } from "./ClubHero.js";
 import { FinancesCard } from "./FinancesCard.js";
