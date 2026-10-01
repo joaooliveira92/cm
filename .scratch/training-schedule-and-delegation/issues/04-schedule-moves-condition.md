@@ -19,7 +19,7 @@ the screen and the advance cannot disagree.
 
 **Blocked by:** None. 03 is resolved, and the human club's recovery step it multiplies landed in `923ec6d1` ([human-club-recovery 01](../../human-club-recovery/issues/01-human-club-recovers-before-each-kickoff.md)).
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The schedule's recovery modifier is a pure function in the shared rules package: Balanced gives exactly 1, and every schedule's modifier lies within 0.9 to 1.1.
 - [ ] Between-match recovery multiplies the existing seven-day step's gain by the human club's modifier; AI clubs recover at a modifier of 1.

@@ -4,10 +4,12 @@
  * to that gap rather than to dates, and every gap is planned in the same fixed number of slots.
  * See `.agents/notes/proposed/architecture/2026-09-28-training-schedule-attaches-to-the-microcycle.md`.
  *
- * This module is the vocabulary only: session types, intensities, the named templates, and how a
- * schedule is recognised as one of them. What a schedule does to Condition is a separate function
- * (training-schedule-and-delegation 04).
+ * This module is the vocabulary only: session types, intensities, the named templates, how a
+ * schedule is recognised as one of them, and the recovery modifier a schedule applies to
+ * between-match Condition recovery.
  */
+
+const CLAMPED_MODIFIER = (raw: number): number => Math.min(Math.max(raw, 0.9), 1.1);
 
 export const TRAINING_SESSION_TYPES = ["tactical", "technical", "physical", "recovery", "rest"] as const;
 export type TrainingSessionType = (typeof TRAINING_SESSION_TYPES)[number];
@@ -83,3 +85,53 @@ export const trainingTemplateOf = (
 ): TrainingTemplateName | null =>
   TRAINING_TEMPLATE_NAMES.find((name) => sameTrainingSessions(TRAINING_SCHEDULE_TEMPLATES[name], sessions)) ??
   null;
+
+/**
+ * Per-session recovery contribution weight.
+ * A higher weight means more recovery (lighter session).
+ * Weights are chosen so Balanced's sum scales to a 1.0 modifier.
+ */
+const SESSION_RECOVERY_WEIGHT: Record<TrainingSessionType, Record<TrainingIntensity, number>> = {
+  rest: { low: 0.250, medium: 0.220, high: 0.180 },
+  recovery: { low: 0.200, medium: 0.170, high: 0.130 },
+  technical: { low: 0.150, medium: 0.100, high: 0.080 },
+  tactical: { low: 0.130, medium: 0.080, high: 0.050 },
+  physical: { low: 0.100, medium: 0.050, high: 0.020 },
+};
+
+const balancedSum = TRAINING_SCHEDULE_TEMPLATES.balanced.reduce(
+  (total, s) => total + SESSION_RECOVERY_WEIGHT[s.type][s.intensity],
+  0,
+);
+
+/** Pre-computed modifier for each named template, clamped to the spec's band. */
+const clamped = (raw: number): number => Math.min(Math.max(raw, 0.9), 1.1);
+export const TRAINING_TEMPLATE_RECOVERY_MODIFIERS: Record<TrainingTemplateName, number> = {
+  balanced: 1.0,
+  matchPreparation: clamped(TRAINING_SCHEDULE_TEMPLATES.matchPreparation.reduce(
+    (t, s) => t + SESSION_RECOVERY_WEIGHT[s.type][s.intensity], 0,
+  ) / balancedSum),
+  recovery: clamped(TRAINING_SCHEDULE_TEMPLATES.recovery.reduce(
+    (t, s) => t + SESSION_RECOVERY_WEIGHT[s.type][s.intensity], 0,
+  ) / balancedSum),
+  heavy: clamped(TRAINING_SCHEDULE_TEMPLATES.heavy.reduce(
+    (t, s) => t + SESSION_RECOVERY_WEIGHT[s.type][s.intensity], 0,
+  ) / balancedSum),
+};
+
+/**
+ * The recovery modifier a schedule applies to between-match Condition recovery.
+ * Balanced gives exactly 1. Every schedule's modifier lies within 0.9 to 1.1,
+ * inside Regimen's 0.8 to 1.2 range.
+ */
+export const scheduleRecoveryModifier = (
+  sessions: ReadonlyArray<TrainingSession>,
+): number => {
+  const template = trainingTemplateOf(sessions);
+  if (template !== null) return TRAINING_TEMPLATE_RECOVERY_MODIFIERS[template];
+  const raw = sessions.reduce(
+    (total, s) => total + SESSION_RECOVERY_WEIGHT[s.type][s.intensity],
+    0,
+  ) / balancedSum;
+  return clamped(raw);
+};

@@ -6,7 +6,9 @@ import {
   TRAINING_SCHEDULE_TEMPLATES,
   TRAINING_SESSION_TYPES,
   TRAINING_TEMPLATE_NAMES,
+  TRAINING_TEMPLATE_RECOVERY_MODIFIERS,
   sameTrainingSessions,
+  scheduleRecoveryModifier,
   trainingTemplateOf,
   type TrainingSession,
 } from "../../src/rules/trainingSchedule.js";
@@ -48,5 +50,53 @@ describe("the training schedule model", () => {
     expect(sameTrainingSessions(balanced, [...balanced])).toBe(true);
     expect(sameTrainingSessions(balanced, TRAINING_SCHEDULE_TEMPLATES.heavy)).toBe(false);
     expect(sameTrainingSessions(balanced, balanced.slice(0, 4))).toBe(false);
+  });
+});
+
+describe("scheduleRecoveryModifier", () => {
+  it("gives Balanced exactly 1.0", () => {
+    expect(scheduleRecoveryModifier(TRAINING_SCHEDULE_TEMPLATES.balanced)).toBe(1.0);
+  });
+
+  it("gives Recovery a higher modifier than Balanced", () => {
+    expect(TRAINING_TEMPLATE_RECOVERY_MODIFIERS.recovery).toBeGreaterThan(1.0);
+  });
+
+  it("gives Heavy a lower modifier than Balanced", () => {
+    expect(TRAINING_TEMPLATE_RECOVERY_MODIFIERS.heavy).toBeLessThan(1.0);
+  });
+
+  it("keeps every template's modifier within 0.9 to 1.1", () => {
+    for (const name of TRAINING_TEMPLATE_NAMES) {
+      const mod = TRAINING_TEMPLATE_RECOVERY_MODIFIERS[name];
+      expect(mod).toBeGreaterThanOrEqual(0.9);
+      expect(mod).toBeLessThanOrEqual(1.1);
+    }
+  });
+
+  it("clamps a custom schedule's modifier to the band", () => {
+    const allRest: TrainingSession[] = [
+      { type: "rest", intensity: "low" },
+      { type: "rest", intensity: "low" },
+      { type: "rest", intensity: "low" },
+      { type: "rest", intensity: "low" },
+      { type: "rest", intensity: "low" },
+    ];
+    expect(scheduleRecoveryModifier(allRest)).toBeLessThanOrEqual(1.1);
+
+    const allPhysicalHigh: TrainingSession[] = [
+      { type: "physical", intensity: "high" },
+      { type: "physical", intensity: "high" },
+      { type: "physical", intensity: "high" },
+      { type: "physical", intensity: "high" },
+      { type: "physical", intensity: "high" },
+    ];
+    expect(scheduleRecoveryModifier(allPhysicalHigh)).toBeGreaterThanOrEqual(0.9);
+  });
+
+  it("gives a Recovery schedule a higher modifier than a Heavy one from the same start", () => {
+    const recovery = scheduleRecoveryModifier(TRAINING_SCHEDULE_TEMPLATES.recovery);
+    const heavy = scheduleRecoveryModifier(TRAINING_SCHEDULE_TEMPLATES.heavy);
+    expect(recovery).toBeGreaterThan(heavy);
   });
 });

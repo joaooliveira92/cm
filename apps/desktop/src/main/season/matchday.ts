@@ -9,6 +9,10 @@ import {
   resolveByStrength,
   resolveShootout,
   resultsStrength,
+  scheduleRecoveryModifier,
+  type TrainingSession,
+  type TrainingSessionType,
+  type TrainingIntensity,
   type PlayerAttributes,
   type StatureTier,
 } from "@cm-clone/shared";
@@ -76,6 +80,25 @@ const RECOVERY_DAYS_PER_MATCHDAY = 7;
 export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
+
+    // Read the club's training schedule to derive the recovery modifier.
+    // AI clubs have no schedule row; a missing row defaults to Balanced (modifier 1.0).
+    const scheduleSessions = yield* sql<{
+      sessionType: string;
+      intensity: string;
+    }>`SELECT session_type as "sessionType", intensity
+       FROM training_schedule_sessions
+       WHERE club_id = ${clubId}
+       ORDER BY slot_index`;
+    const modifier = scheduleSessions.length > 0
+      ? scheduleRecoveryModifier(
+        scheduleSessions.map((s) => ({
+          type: s.sessionType as TrainingSessionType,
+          intensity: s.intensity as TrainingIntensity,
+        })),
+      )
+      : 1.0;
+
     const rows = yield* sql<{
       playerId: PlayerId;
       condition: number;
@@ -88,17 +111,20 @@ export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
        WHERE p.club_id = ${clubId} AND pf.season_number = ${seasonNumber}`;
     if (rows.length === 0) return;
 
-    const recovered = rows.map((row) => ({
-      player_id: row.playerId,
-      season_number: seasonNumber,
-      condition: conditionAfterDays(
+    const recovered = rows.map((row) => {
+      const baseCondition = conditionAfterDays(
         row.condition,
         RECOVERY_DAYS_PER_MATCHDAY,
         row.naturalFitness,
         row.lastInjurySeverity,
-      ),
-      last_injury_severity: row.lastInjurySeverity,
-    }));
+      );
+      return {
+        player_id: row.playerId,
+        season_number: seasonNumber,
+        condition: Math.min(100, Math.max(0, row.condition + (baseCondition - row.condition) * modifier)),
+        last_injury_severity: row.lastInjurySeverity,
+      };
+    });
     yield* sql`
       INSERT INTO player_fitness ${sql.insert(recovered)}
       ON CONFLICT(player_id) DO UPDATE SET condition = excluded.condition, last_injury_severity = excluded.last_injury_severity
