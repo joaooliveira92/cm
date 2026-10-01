@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { SaveSummary } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
-import { listSaves } from "../rpc.js";
+import { describeRpcError, listSaves, loadSave } from "../rpc.js";
 import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
-import { navigate } from "../navigation/adapter.js";
+import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { Header } from "../chrome/header/index.js";
 import { ShellBottomBar, EMPTY_BOTTOM_BAR } from "../chrome/bottom-bar/index.js";
@@ -26,23 +27,82 @@ const PRODUCT_SUBTITLE = "Career Simulation";
  *  case either navigates or opens a local layer. */
 type MenuCommand =
   | "start_new_career"
+  | "resume_last_career"
   | "open_load_game"
   | "open_preferences"
   | "open_credits"
   | "request_application_exit";
 
-/** The vertical menu, in display order (spec §3.4). */
-const MENU_ITEMS: ReadonlyArray<{
+type MenuItem = {
   readonly key: string;
   readonly label: string;
   readonly command: MenuCommand;
-}> = [
-  { key: "menu-start", label: "Start New Career", command: "start_new_career" },
-  { key: "menu-load", label: "Load Career", command: "open_load_game" },
-  { key: "menu-preferences", label: "Preferences", command: "open_preferences" },
-  { key: "menu-credits", label: "Credits", command: "open_credits" },
-  { key: "menu-exit", label: "Exit", command: "request_application_exit" },
+  /** The sentence beside the button. It describes the button rather than
+   *  naming it, so it is wired through `aria-describedby`. */
+  readonly description: string;
+};
+
+const START_ITEM: MenuItem = {
+  key: "menu-start",
+  label: "Start New Career",
+  command: "start_new_career",
+  description: "Choose this option to pick your leagues, create your manager, and take charge of a club.",
+};
+
+/** The remaining items, in display order (spec §3.4). `Resume Last Career`
+ *  slots in after `Start New Career` when there is a live save to resume. */
+const FIXED_ITEMS: ReadonlyArray<MenuItem> = [
+  {
+    key: "menu-load",
+    label: "Load Career",
+    command: "open_load_game",
+    description: "Choose this option to open any saved career, or delete the ones you no longer need.",
+  },
+  {
+    key: "menu-preferences",
+    label: "Preferences",
+    command: "open_preferences",
+    description: "Choose this option to change how the game looks and behaves.",
+  },
+  {
+    key: "menu-credits",
+    label: "Credits",
+    command: "open_credits",
+    description: "Choose this option to see who made this game and what it is built with.",
+  },
+  {
+    key: "menu-exit",
+    label: "Exit",
+    command: "request_application_exit",
+    description: "Choose this option to close the game and return to the real world.",
+  },
 ];
+
+/** The live save the player touched last, or `null`. Archived saves are a
+ *  finished career, so there is nothing to resume in them. ISO timestamps
+ *  order correctly as plain strings. */
+const latestLiveSave = (saves: ReadonlyArray<SaveSummary>): SaveSummary | null => {
+  let latest: SaveSummary | null = null;
+  for (const save of saves) {
+    if (save.archivedCause !== null) continue;
+    if (latest === null || save.lastModifiedAt > latest.lastModifiedAt) latest = save;
+  }
+  return latest;
+};
+
+const menuItems = (resumable: SaveSummary | null): ReadonlyArray<MenuItem> =>
+  resumable === null
+    ? [START_ITEM, ...FIXED_ITEMS]
+    : [
+        START_ITEM,
+        {
+          key: "menu-resume",
+          label: "Resume Last Career",
+          command: "resume_last_career",
+          description: `Choose this option to resume the career you played most recently ('${resumable.name}', ${resumable.userClubName}).`,
+        },
+        ...FIXED_ITEMS,
+      ];
 
 /**
  * How the save repository answered the menu's probe (spec §8 `hasSavedGames`,
@@ -51,7 +111,11 @@ const MENU_ITEMS: ReadonlyArray<{
  */
 type SaveRepositoryState =
   | { readonly status: "probing" }
-  | { readonly status: "ready"; readonly hasSavedGames: boolean }
+  | {
+      readonly status: "ready";
+      readonly hasSavedGames: boolean;
+      readonly resumable: SaveSummary | null;
+    }
   | { readonly status: "unavailable" };
 
 /**
@@ -72,6 +136,7 @@ export const MainMenuScreen = () => {
   const [openPreferences, setOpenPreferences] = useState(false);
   const [openCredits, setOpenCredits] = useState(false);
   const [openExit, setOpenExit] = useState(false);
+  const [resumeFailure, setResumeFailure] = useState<string | null>(null);
   const menuRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
   const probeSaveRepository = useCallback(async () => {
@@ -80,7 +145,11 @@ export const MainMenuScreen = () => {
     setRepository(
       Result.isFailure(outcome)
         ? { status: "unavailable" }
-        : { status: "ready", hasSavedGames: outcome.success.length > 0 },
+        : {
+            status: "ready",
+            hasSavedGames: outcome.success.length > 0,
+            resumable: latestLiveSave(outcome.success),
+          },
     );
   }, []);
 
@@ -96,6 +165,9 @@ export const MainMenuScreen = () => {
     probeSaveRepository,
   ]);
 
+  const resumable = repository.status === "ready" ? repository.resumable : null;
+  const items = menuItems(resumable);
+
   // Roving tabindex: exactly one menu item is the tab stop (spec §4.1).
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -105,7 +177,7 @@ export const MainMenuScreen = () => {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent) => {
-    const last = MENU_ITEMS.length - 1;
+    const last = items.length - 1;
     if (event.key === "ArrowDown") {
       event.preventDefault();
       focusItem(Math.min(activeIndex + 1, last));
@@ -121,10 +193,24 @@ export const MainMenuScreen = () => {
     }
   };
 
+  /** Opens the save the same way the Load screen's Continue does. */
+  const resumeLastCareer = async (save: SaveSummary): Promise<void> => {
+    setResumeFailure(null);
+    const outcome = await Effect.runPromise(loadSave(save.id).pipe(Effect.result));
+    if (Result.isFailure(outcome)) {
+      setResumeFailure(describeRpcError(outcome.failure));
+      return;
+    }
+    navigateCareer({ type: "squad", saveId: save.id }, "pointer");
+  };
+
   const runCommand = (command: MenuCommand): void => {
     switch (command) {
       case "start_new_career":
         navigate({ type: "createLeagues" });
+        break;
+      case "resume_last_career":
+        if (resumable !== null) void resumeLastCareer(resumable);
         break;
       case "open_load_game":
         navigate({ type: "loadCareer" });
@@ -169,7 +255,7 @@ export const MainMenuScreen = () => {
         <Header.Shell title={PRODUCT_TITLE} titleAsHeading={false} state={{ view: "menu" }} />
 
         <div
-          className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-y-auto px-6 lg:px-12"
+          className="mx-auto flex min-h-0 w-full max-w-4xl flex-1 flex-col overflow-y-auto px-6 lg:px-12"
           onKeyDown={handleKeyDown}
           data-focus-id="mainMenu.menu"
         >
@@ -180,58 +266,77 @@ export const MainMenuScreen = () => {
               {PRODUCT_SUBTITLE}
             </p>
             <p className="mt-1 text-data text-text-muted">{DATABASE_EDITION}</p>
+            <p className="mt-6 text-title text-text-highlight">
+              Please choose from the following options
+            </p>
           </header>
 
-          {/* Primary menu group (spec §3.4) — vertical, each row a large target. */}
-          <nav aria-label="Main menu" className={`mx-auto w-full max-w-sm ${PANEL_STRONG}`}>
-            <ul className="flex flex-col gap-1">
-              {MENU_ITEMS.map((item, index) => (
-                <li
-                  key={item.key}
-                  style={{ animationDelay: `${index * 0.08}s` }}
-                  className="motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both]"
-                >
-                  <Button
-                    ref={(node) => {
-                      menuRefs.current[index] = node;
-                    }}
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    tabIndex={index === activeIndex ? 0 : -1}
-                    data-focus-id={`mainMenu.${item.key}`}
-                    aria-describedby={
-                      item.command === "open_load_game" && loadHint !== null
-                        ? "menu-load-hint"
-                        : undefined
-                    }
-                    className="w-full justify-start active:bg-surface"
-                    onFocus={() => setActiveIndex(index)}
-                    onClick={() => {
-                      setActiveIndex(index);
-                      runCommand(item.command);
-                    }}
+          {/* Primary menu group (spec §3.4) — vertical, each row a large target
+              with a sentence beside it saying what it does. Exit stands apart
+              at the foot of the list. */}
+          <nav aria-label="Main menu" className={`w-full ${PANEL_STRONG}`}>
+            <ul className="flex flex-col gap-3">
+              {items.map((item, index) => {
+                const descriptionId = `${item.key}-description`;
+                const describedBy =
+                  item.command === "open_load_game" && loadHint !== null
+                    ? `${descriptionId} menu-load-hint`
+                    : descriptionId;
+                return (
+                  <li
+                    key={item.key}
+                    style={{ animationDelay: `${index * 0.08}s` }}
+                    className={`grid grid-cols-[minmax(10rem,14rem)_1fr] items-center gap-6 motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both] ${
+                      item.command === "request_application_exit" ? "mt-8" : ""
+                    }`}
                   >
-                    {item.label}
-                  </Button>
-                </li>
-              ))}
+                    <Button
+                      ref={(node) => {
+                        menuRefs.current[index] = node;
+                      }}
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      tabIndex={index === activeIndex ? 0 : -1}
+                      data-focus-id={`mainMenu.${item.key}`}
+                      aria-describedby={describedBy}
+                      className="w-full active:bg-surface"
+                      onFocus={() => setActiveIndex(index)}
+                      onClick={() => {
+                        setActiveIndex(index);
+                        runCommand(item.command);
+                      }}
+                    >
+                      {item.label}
+                    </Button>
+                    <div className="text-body text-text-secondary">
+                      <p id={descriptionId}>{item.description}</p>
+                      {/* The hint sits outside the control so it describes
+                          `Load Career` without becoming part of its accessible name. */}
+                      {item.command === "open_load_game" && loadHint !== null && (
+                        <p id="menu-load-hint" className="mt-1 text-caption text-text-muted">
+                          {loadHint}
+                        </p>
+                      )}
+                    </div>
+                  </li>
+                );
+              })}
             </ul>
-            {/* The hint sits outside the control so it describes `Load Career`
-                without becoming part of its accessible name. */}
-            {loadHint !== null && (
-              <p id="menu-load-hint" className="mt-2 px-3 text-caption text-text-muted">
-                {loadHint}
-              </p>
-            )}
           </nav>
+
+          {resumeFailure !== null && (
+            <p role="alert" className={`mt-4 w-full ${PANEL} text-data text-destructive`}>
+              The last career could not be opened: {resumeFailure}
+            </p>
+          )}
 
           {/* Save repository unavailable (spec §10.1): explained, retryable, and
               nonblocking — every menu item above stays usable. */}
           {repository.status === "unavailable" && (
             <div
               role="status"
-              className={`mx-auto mt-4 w-full max-w-sm ${PANEL} flex items-center justify-between gap-3`}
+              className={`mt-4 w-full ${PANEL} flex items-center justify-between gap-3`}
             >
               <p className="text-data text-destructive">
                 Saved careers could not be read. Starting a new career still works.

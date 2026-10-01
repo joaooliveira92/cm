@@ -1,15 +1,31 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MainMenuScreen } from "../../../src/renderer/router/mainMenu.js";
-import { navigate } from "../../../src/renderer/navigation/adapter.js";
+import { navigate, navigateCareer } from "../../../src/renderer/navigation/adapter.js";
 import { ALL_ACTIONS } from "../../../src/renderer/actions/allActions.js";
 import { hasActionHandler, resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 
 vi.mock("../../../src/renderer/navigation/adapter.js", () => ({
   navigate: vi.fn(),
+  navigateCareer: vi.fn(),
 }));
 
 const mountedNavigate = vi.mocked(navigate);
+const mountedNavigateCareer = vi.mocked(navigateCareer);
+
+/** A save summary as `listSaves` returns it. */
+const save = (overrides: Record<string, unknown>) => ({
+  id: "a",
+  name: "A",
+  createdAt: "2026-01-01T00:00:00.000Z",
+  archivedCause: null,
+  managerName: "Manager",
+  userClubName: "Club",
+  seasonNumber: 1,
+  gameDate: "2003-07-01",
+  lastModifiedAt: "2026-01-01T00:00:00.000Z",
+  ...overrides,
+});
 
 /** The menu probes the save repository on mount (spec §8). */
 const mount = (saves: ReadonlyArray<unknown> = []) => {
@@ -43,6 +59,7 @@ const MENU_BUTTONS = () =>
 
 beforeEach(() => {
   mountedNavigate.mockClear();
+  mountedNavigateCareer.mockClear();
   resetActionHandlers();
   // The non-macOS quit path calls `window.close()`. Under jsdom that tears the
   // whole window down -- `document` goes undefined -- so one test reaching the
@@ -89,6 +106,63 @@ describe("Main Menu — structure", () => {
   });
 });
 
+describe("Main Menu — descriptions", () => {
+  it("describes every item beside it without changing its accessible name", async () => {
+    mount();
+
+    for (const button of MENU_BUTTONS()) {
+      const description = document.getElementById(button.getAttribute("aria-describedby")!);
+      expect(description?.textContent).toMatch(/^Choose this option to /);
+    }
+  });
+});
+
+describe("Main Menu — Resume Last Career", () => {
+  it("offers the most recently modified live save, after Start New Career", async () => {
+    mount([
+      save({ id: "old", name: "Old", lastModifiedAt: "2026-01-01T00:00:00.000Z" }),
+      save({ id: "new", name: "New", userClubName: "Rovers", lastModifiedAt: "2026-03-01T00:00:00.000Z" }),
+      save({ id: "gone", name: "Gone", archivedCause: "sacked", lastModifiedAt: "2026-05-01T00:00:00.000Z" }),
+    ]);
+
+    const resume = await screen.findByRole("button", { name: "Resume Last Career" });
+    expect(MENU_BUTTONS().map((button) => button.textContent)).toEqual([
+      "Start New Career",
+      "Resume Last Career",
+      ...MENU_LABELS.slice(1),
+    ]);
+    expect(document.getElementById(resume.getAttribute("aria-describedby")!)?.textContent).toContain(
+      "('New', Rovers)",
+    );
+  });
+
+  it("is absent when every save is archived", async () => {
+    mount([save({ archivedCause: "retired" })]);
+
+    await screen.findByRole("button", { name: "Load Career" });
+    await Promise.resolve();
+    expect(screen.queryByRole("button", { name: "Resume Last Career" })).toBeNull();
+  });
+
+  it("loads the save and enters the career", async () => {
+    const calls: Array<string> = [];
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string) => {
+        calls.push(method);
+        const value = save({ id: "s1" });
+        return { _tag: "Success", value: method === "listSaves" ? [value] : value };
+      },
+    };
+    render(<MainMenuScreen />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "Resume Last Career" }));
+    await vi.waitFor(() =>
+      expect(mountedNavigateCareer).toHaveBeenCalledWith({ type: "squad", saveId: "s1" }, "pointer"),
+    );
+    expect(calls).toContain("loadSave");
+  });
+});
+
 describe("Main Menu — save repository state", () => {
   it("hints that no saved careers exist without disabling Load Career", async () => {
     mount([]);
@@ -96,11 +170,11 @@ describe("Main Menu — save repository state", () => {
     await screen.findByText("No saved careers yet");
     const load = screen.getByRole("button", { name: "Load Career" });
     expect((load as HTMLButtonElement).disabled).toBe(false);
-    expect(load.getAttribute("aria-describedby")).toBe("menu-load-hint");
+    expect(load.getAttribute("aria-describedby")).toBe("menu-load-description menu-load-hint");
   });
 
   it("shows no hint when saves exist", async () => {
-    mount([{ id: "a", name: "A", createdAt: "2026-01-01T00:00:00.000Z", archivedCause: null }]);
+    mount([save({})]);
 
     await screen.findByRole("button", { name: "Load Career" });
     expect(screen.queryByText("No saved careers yet")).toBeNull();
