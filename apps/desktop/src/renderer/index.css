@@ -523,3 +523,12 @@
     transition: none !important;
   }
 }
+
+/* Main menu entrance: items fade and glide upward in sequence. The component
+   sets each item's animation delay from its index. */
+@keyframes menu-fade-in {
+  from {
+    opacity: 0;
+    translate: 0 0.375rem;
+  }
+}

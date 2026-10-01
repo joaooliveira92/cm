@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Button } from "../components/ui/button.js";
+import { Dialog } from "../components/shared/Dialog.js";
 import { cn } from "../lib/utils.js";
-import { MODAL_BODY, MODAL_COMPACT, MODAL_SCRIM, MODAL_TITLE_BAND } from "../theme.js";
 import {
   applyAppearance,
   BASE_COLORS,
@@ -31,50 +31,27 @@ export const PreferencesDialog = ({ onClose }: PreferencesDialogProps) => {
   };
 
   return (
-    <div
-      className={MODAL_SCRIM}
-      onMouseDown={(event) => {
-        if (event.target === event.currentTarget) onClose();
-      }}
-    >
-      <div
-        role="dialog"
-        aria-modal="true"
-        aria-label="Preferences"
-        className={cn(MODAL_COMPACT, "max-w-md")}
-        onKeyDown={(event) => {
-          if (event.key === "Escape") {
-            event.preventDefault();
-            onClose();
-          }
-        }}
-      >
-        <div className={MODAL_TITLE_BAND}>
-          <h2 className="text-heading">Preferences</h2>
-        </div>
-        <div className={cn(MODAL_BODY, "flex flex-col gap-4")}>
-          <SwatchGroup
-            legend="Base color"
-            name="base-color"
-            options={BASE_COLORS}
-            value={appearance.baseColor}
-            onChange={(baseColor) => choose({ ...appearance, baseColor })}
-          />
-          <SwatchGroup
-            legend="Theme color"
-            name="theme-color"
-            options={THEME_COLORS}
-            value={appearance.themeColor}
-            onChange={(themeColor) => choose({ ...appearance, themeColor })}
-          />
-          <div className="flex justify-end">
-            <Button type="button" onClick={onClose}>
-              Done
-            </Button>
-          </div>
-        </div>
+    <Dialog title="Preferences" onClose={onClose} dialogClassName="max-w-md" bodyClassName="flex flex-col gap-4">
+      <SwatchGroup
+        legend="Base color"
+        name="base-color"
+        options={BASE_COLORS}
+        value={appearance.baseColor}
+        onChange={(baseColor) => choose({ ...appearance, baseColor })}
+      />
+      <SwatchGroup
+        legend="Theme color"
+        name="theme-color"
+        options={THEME_COLORS}
+        value={appearance.themeColor}
+        onChange={(themeColor) => choose({ ...appearance, themeColor })}
+      />
+      <div className="flex justify-end">
+        <Button type="button" onClick={onClose}>
+          Done
+        </Button>
       </div>
-    </div>
+    </Dialog>
   );
 };
 

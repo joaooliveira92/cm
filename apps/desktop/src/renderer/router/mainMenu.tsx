@@ -9,14 +9,11 @@ import { ShellBottomBar, EMPTY_BOTTOM_BAR } from "../chrome/bottom-bar/index.js"
 import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { Button } from "../components/ui/button.js";
 import {
-  MODAL_BODY,
-  MODAL_COMPACT,
-  MODAL_SCRIM,
-  MODAL_TITLE_BAND,
   PANEL,
   PANEL_STRONG,
 } from "../theme.js";
 import { Backdrop } from "../backdrop/Backdrop.js";
+import { Dialog } from "../components/shared/Dialog.js";
 import { MENU_BACKDROP } from "../backdrop/backdrops.js";
 import { APP_VERSION, DATABASE_EDITION } from "../appInfo.js";
 
@@ -177,7 +174,7 @@ export const MainMenuScreen = () => {
           data-focus-id="mainMenu.menu"
         >
           {/* Product identity area (spec §3.3) — decorative, not interactive. */}
-          <header className="flex flex-col items-center justify-end pt-16 pb-10 text-center">
+          <header className="flex flex-col items-center justify-end pt-12 pb-6 text-center">
             <h1 className="text-display text-text-primary">{PRODUCT_TITLE}</h1>
             <p className="mt-2 text-body tracking-widest text-text-muted uppercase">
               {PRODUCT_SUBTITLE}
@@ -186,16 +183,20 @@ export const MainMenuScreen = () => {
           </header>
 
           {/* Primary menu group (spec §3.4) — vertical, each row a large target. */}
-          <nav aria-label="Main menu" className={`mx-auto w-full max-w-xs ${PANEL_STRONG}`}>
+          <nav aria-label="Main menu" className={`mx-auto w-full max-w-sm ${PANEL_STRONG}`}>
             <ul className="flex flex-col gap-1">
               {MENU_ITEMS.map((item, index) => (
-                <li key={item.key}>
+                <li
+                  key={item.key}
+                  style={{ animationDelay: `${index * 0.08}s` }}
+                  className="motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both]"
+                >
                   <Button
                     ref={(node) => {
                       menuRefs.current[index] = node;
                     }}
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="lg"
                     tabIndex={index === activeIndex ? 0 : -1}
                     data-focus-id={`mainMenu.${item.key}`}
@@ -230,7 +231,7 @@ export const MainMenuScreen = () => {
           {repository.status === "unavailable" && (
             <div
               role="status"
-              className={`mx-auto mt-4 w-full max-w-xs ${PANEL} flex items-center justify-between gap-3`}
+              className={`mx-auto mt-4 w-full max-w-sm ${PANEL} flex items-center justify-between gap-3`}
             >
               <p className="text-data text-destructive">
                 Saved careers could not be read. Starting a new career still works.
@@ -265,91 +266,45 @@ export const MainMenuScreen = () => {
 
         {/* Credits (spec §5.4): informational, scrollable, with a Back action. */}
         {openCredits && (
-          <div
-            className={MODAL_SCRIM}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setOpenCredits(false);
-            }}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Credits"
-              className={MODAL_COMPACT}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  setOpenCredits(false);
-                }
-              }}
-            >
-              <div className={MODAL_TITLE_BAND}>
-                <h2 className="text-heading">Credits</h2>
-              </div>
-              <div className={MODAL_BODY}>
-                <div className="max-h-64 overflow-y-auto text-body text-text-secondary">
-                  <p>{PRODUCT_TITLE} — an original football management simulation.</p>
-                  <p className="mt-2">
-                    Every club, competition, and person in this game is fictional. No licensed
-                    imagery, database, or interface text from any other game is used.
-                  </p>
-                  <p className="mt-2">Built with Electron, React, and Effect.</p>
-                </div>
-                <div className="mt-4 flex items-center justify-end">
-                  <Button
-                    type="button"
-                    variant="secondary"
-                    autoFocus
-                    onClick={() => setOpenCredits(false)}
-                  >
-                    Back
-                  </Button>
-                </div>
-              </div>
+          <Dialog title="Credits" onClose={() => setOpenCredits(false)}>
+            <div className="max-h-64 overflow-y-auto text-body text-text-secondary">
+              <p>{PRODUCT_TITLE} — an original football management simulation.</p>
+              <p className="mt-2">
+                Every club, competition, and person in this game is fictional. No licensed
+                imagery, database, or interface text from any other game is used.
+              </p>
+              <p className="mt-2">Built with Electron, React, and Effect.</p>
             </div>
-          </div>
+            <div className="mt-4 flex items-center justify-end">
+              <Button
+                type="button"
+                variant="secondary"
+                autoFocus
+                onClick={() => setOpenCredits(false)}
+              >
+                Back
+              </Button>
+            </div>
+          </Dialog>
         )}
 
         {/* Exit confirmation (spec §7): modal, default focus on Cancel, the
             destructive action styled distinctly, Escape cancels. No career is
             loaded here, so it must not warn about losing career progress. */}
         {openExit && (
-          <div
-            className={MODAL_SCRIM}
-            onMouseDown={(event) => {
-              if (event.target === event.currentTarget) setOpenExit(false);
-            }}
-          >
-            <div
-              role="dialog"
-              aria-modal="true"
-              aria-label="Exit application?"
-              className={MODAL_COMPACT}
-              onKeyDown={(event) => {
-                if (event.key === "Escape") {
-                  event.preventDefault();
-                  setOpenExit(false);
-                }
-              }}
-            >
-              <div className={MODAL_TITLE_BAND}>
-                <h2 className="text-heading">Exit application?</h2>
-              </div>
-              <div className={MODAL_BODY}>
-                <p className="text-body text-text-secondary">
-                  No career is loaded, so nothing will be lost.
-                </p>
-                <div className="mt-4 flex items-center justify-end gap-2">
-                  <Button type="button" variant="secondary" autoFocus onClick={() => setOpenExit(false)}>
-                    Cancel
-                  </Button>
-                  <Button type="button" variant="destructive" onClick={handleQuitConfirmed}>
-                    Exit
-                  </Button>
-                </div>
-              </div>
+          <Dialog title="Exit application?" onClose={() => setOpenExit(false)}>
+            <p className="text-body text-text-secondary">
+              No career is loaded, so nothing will be lost.
+            </p>
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <Button type="button" variant="secondary" autoFocus onClick={() => setOpenExit(false)}>
+                Cancel
+              </Button>
+              <Button type="button" variant="destructive" onClick={handleQuitConfirmed}>
+                Exit
+              </Button>
             </div>
-          </div>
+          </Dialog>
         )}
       </div>
     </RouteView>
