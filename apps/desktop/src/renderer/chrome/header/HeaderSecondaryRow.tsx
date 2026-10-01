@@ -9,9 +9,11 @@ import {
   Coins,
   FileText,
   HeartPulse,
+  LayersIcon,
   ListOrdered,
   Star,
   Trophy,
+  UsersIcon,
   Wallet,
 } from "lucide-react";
 import { Separator } from "../../components/ui/separator.js";
@@ -34,6 +36,8 @@ const METRIC_ICONS: Record<MetricIcon, typeof CalendarDays> = {
   wage: Wallet,
   contract: FileText,
   injury: HeartPulse,
+  clubs: UsersIcon,
+  remaining: LayersIcon,
 };
 
 export interface HeaderSecondaryRowProps {

@@ -3,11 +3,14 @@ import { BUILT_IN_TEMPLATES } from "@cm-clone/shared";
 import { cellAt, dropZoneAt, pitchLayout } from "../../../src/renderer/tactics/pitchLayout.js";
 
 describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () => {
+  const toPositions = (template: { readonly slots: ReadonlyArray<{ readonly cell: any; readonly subRow: number; readonly subCol: number }> }) =>
+    template.slots.map((s) => ({ cell: s.cell, subRow: s.subRow, subCol: s.subCol }));
+
   it("places every slot of every built-in template once, inside the pitch, in slot order", () => {
     for (const template of BUILT_IN_TEMPLATES) {
-      const cells = template.slots.map((slot) => slot.cell);
-      const spots = pitchLayout(cells);
-      expect(spots.map((spot) => spot.slotIndex)).toEqual([...cells.keys()]);
+      const positions = toPositions(template);
+      const spots = pitchLayout(positions);
+      expect(spots.map((spot) => spot.slotIndex)).toEqual([...positions.keys()]);
       for (const { x, y } of spots) {
         expect(x).toBeGreaterThan(0);
         expect(x).toBeLessThan(100);
@@ -19,8 +22,8 @@ describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () 
   });
 
   it("lays a line out left flank, centre, right flank, whatever the slot order", () => {
-    const cells = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => slot.cell);
-    const spots = pitchLayout(cells);
+    const positions = toPositions(BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!);
+    const spots = pitchLayout(positions);
     const [dcA, dcB, dl, dr] = [1, 2, 3, 4].map((slot) => spots[slot]!);
     expect(dl!.x).toBeLessThan(dcA!.x);
     expect(dcA!.x).toBeLessThan(dcB!.x);
@@ -29,8 +32,8 @@ describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () 
   });
 
   it("puts the keeper deepest and the strikers highest", () => {
-    const cells = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => slot.cell);
-    const spots = pitchLayout(cells);
+    const positions = toPositions(BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!);
+    const spots = pitchLayout(positions);
     const ys = spots.map((spot) => spot.y);
     expect(spots[0]!.y).toBe(Math.max(...ys));
     expect(spots[9]!.y).toBe(Math.min(...ys));

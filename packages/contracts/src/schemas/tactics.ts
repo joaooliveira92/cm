@@ -56,13 +56,16 @@ export const TeamSetPiecesSchema = Schema.Struct(literalFields(TEAM_SET_PIECE_VA
 /** The ordered taker lists and the captain, each best nominee first. */
 export const TakersSchema = Schema.Struct(switchFields(TAKER_LISTS, Schema.Array(PlayerId)));
 
-/** One slot of the Tactic: a grid cell, an optional run target, and the slot's own instructions and
- *  set-piece roles. */
+/** One slot of the Tactic: a grid cell, an optional run target, the slot's own instructions and
+ *  set-piece roles, and the visual offset within the cell. `subRow`/`subCol` default to 0.5
+ *  (centre) and are 0-1 fractions. Phase 1 is visual only. */
 export class TacticSlot extends Schema.Class<TacticSlot>("TacticSlot")({
   cell: CellSchema,
   run: Schema.NullOr(CellSchema),
   instructions: PlayerInstructionsSchema,
   setPieceRoles: SetPieceRolesSchema,
+  subRow: Schema.Finite,
+  subCol: Schema.Finite,
 }) {}
 
 /**
@@ -100,6 +103,7 @@ export const TacticProblemSchema = Schema.Union([
   Schema.TaggedStruct("PlayerNotInSquad", { playerId: Schema.String }),
   Schema.TaggedStruct("DuplicateTaker", { list: Schema.String, playerId: Schema.String }),
   Schema.TaggedStruct("UnknownTakerList", { list: Schema.String }),
+  Schema.TaggedStruct("SubPositionOutOfRange", { slot: Schema.Finite, field: Schema.String, value: Schema.Finite }),
 ]);
 
 /** A Tactic the rules refuse. `problems` are the rules' named problems, every one found; `reason`
@@ -276,11 +280,13 @@ export class TacticLibraryReadOnlyError extends Schema.TaggedError<TacticLibrary
 // Tactics Overview snapshot (Screen 80 / ticket 02)
 // ---------------------------------------------------------------------------
 
-/** One slot of the formation preview — the cell the Tactic's shape fills and where it runs to, in
- *  slot order. */
+/** One slot of the formation preview — the cell the Tactic's shape fills, where it runs to, and
+ *  the visual offset within the cell. */
 export class FormationSlotView extends Schema.Class<FormationSlotView>("FormationSlotView")({
   cell: CellSchema,
   run: Schema.NullOr(CellSchema),
+  subRow: Schema.Finite,
+  subCol: Schema.Finite,
 }) {}
 
 /** The formation summary: the template the Tactic came from, whether it has moved off it, the

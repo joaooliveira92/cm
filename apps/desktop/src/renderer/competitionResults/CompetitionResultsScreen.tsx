@@ -21,7 +21,14 @@ import type { ReactNode } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { CompetitionFixtureTable } from "../competitionFixturesDetail/CompetitionFixtureTable.js";
 import { FOCUS_RING } from "../focus.js";
-import { competitionFixturesAtom, describeRpcError, typedError, useAtomValue } from "../rpc.js";
+import {
+  competitionFixturesAtom,
+  competitionOverviewAtom,
+  describeRpcError,
+  typedError,
+  useAtomValue,
+} from "../rpc.js";
+import { useCompetitionIdentity } from "../screenIdentity.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 
@@ -47,6 +54,13 @@ export const CompetitionResultsScreen = ({
 }) => {
   const result = useAtomValue(competitionFixturesAtom(saveId, competitionId));
   const error = typedError(result);
+  const overviewResult = useAtomValue(competitionOverviewAtom(saveId, competitionId));
+  useCompetitionIdentity(
+    overviewResult._tag === "Success" ? overviewResult.value.competitionName : null,
+    overviewResult._tag === "Success"
+      ? { clubCount: overviewResult.value.clubCount, playedCount: overviewResult.value.playedCount, remainingCount: overviewResult.value.remainingCount }
+      : null,
+  );
 
   if (error)
     return (

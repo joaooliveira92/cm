@@ -97,7 +97,7 @@ const CareerChromeInner = ({
           ) : (
             <header
               className="club-header flex h-(--header-height) w-full shrink-0 flex-col text-header-fg"
-              style={clubHeaderStyle(clubColours)}
+              style={clubHeaderStyle(identity?.kind === "club" ? identity.colours : clubColours)}
             >
               <AppTitleBar
                 title={identity?.name ?? clubName ?? ""}
@@ -135,6 +135,7 @@ const CareerChromeInner = ({
                     view: "career",
                     career,
                     player: identity?.kind === "player" ? identity.player : null,
+                    competition: identity?.kind === "competition" ? identity.competition : null,
                   }}
                 />
               </div>

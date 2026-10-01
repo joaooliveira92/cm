@@ -25,6 +25,7 @@ import {
   typedError,
   useAtomValue,
 } from "../rpc.js";
+import { useCompetitionIdentity } from "../screenIdentity.js";
 import { PANEL } from "../theme.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
@@ -65,6 +66,12 @@ export const CompetitionOverviewScreen = ({
 }) => {
   const result = useAtomValue(competitionOverviewAtom(saveId, competitionId));
   const error = typedError(result);
+  useCompetitionIdentity(
+    result._tag === "Success" ? result.value.competitionName : null,
+    result._tag === "Success"
+      ? { clubCount: result.value.clubCount, playedCount: result.value.playedCount, remainingCount: result.value.remainingCount }
+      : null,
+  );
 
   if (error)
     return (

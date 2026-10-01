@@ -50,8 +50,8 @@ const changeTemplate = (tactic: Tactic, name: string): Tactic => {
 };
 
 /** One slot moved to another outfield cell: the template's shape becomes a modified one. A run that
- *  would end where the slot now stands is dropped. */
-const moveSlot = (tactic: Tactic, slotIndex: number, cell: Slot): Tactic =>
+ *  would end where the slot now stands is dropped. `subRow`/`subCol` default to centre (0.5). */
+const moveSlot = (tactic: Tactic, slotIndex: number, cell: Slot, subRow: number = 0.5, subCol: number = 0.5): Tactic =>
   new Tactic({
     ...tactic,
     slots: tactic.slots.map((slot, index) =>
@@ -59,6 +59,8 @@ const moveSlot = (tactic: Tactic, slotIndex: number, cell: Slot): Tactic =>
         ? {
             ...slot,
             cell,
+            subRow,
+            subCol,
             run: slot.run !== null && slot.run.row === cell.row && slot.run.column === cell.column ? null : slot.run,
           }
         : slot,
@@ -308,8 +310,8 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
         setTactic(swapLineupSlots(tactic, p.from, p.to));
       }),
       registerActionHandler("set-slot-cell", (params) => {
-        const p = params as { index: number; cell: Slot };
-        setTactic(moveSlot(tactic, p.index, p.cell));
+        const p = params as { index: number; cell: Slot; subRow?: number; subCol?: number };
+        setTactic(moveSlot(tactic, p.index, p.cell, p.subRow, p.subCol));
       }),
       registerActionHandler("toggle-slot-run", (params) => {
         const p = params as { index: number; target: Slot | null };
@@ -400,8 +402,8 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
 
   // Callbacks for pitch interactions — defined before early returns so hook order is stable
   const handleMove = useCallback(
-    (index: number, cell: Slot) => {
-      setTactic(moveSlot(tactic, index, cell));
+    (index: number, cell: Slot, subRow?: number, subCol?: number) => {
+      setTactic(moveSlot(tactic, index, cell, subRow, subCol));
     },
     [tactic, setTactic],
   );

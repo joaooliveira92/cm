@@ -3,12 +3,14 @@ import type { ReactNode } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
 import {
+  competitionOverviewAtom,
   competitionTableAtom,
   describeRpcError,
   typedError,
   useAtomValue,
 } from "../rpc.js";
 import { FOCUS_RING } from "../focus.js";
+import { useCompetitionIdentity } from "../screenIdentity.js";
 import { StandingsGrid, type ClubCellProps } from "../leagueTable/StandingsGrid.js";
 
 const COMPETITION_TABLE_PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
@@ -69,6 +71,13 @@ export const CompetitionTableScreen = ({
 }) => {
   const tableResult = useAtomValue(competitionTableAtom(saveId, competitionId));
   const tableError = typedError(tableResult);
+  const overviewResult = useAtomValue(competitionOverviewAtom(saveId, competitionId));
+  useCompetitionIdentity(
+    overviewResult._tag === "Success" ? overviewResult.value.competitionName : null,
+    overviewResult._tag === "Success"
+      ? { clubCount: overviewResult.value.clubCount, playedCount: overviewResult.value.playedCount, remainingCount: overviewResult.value.remainingCount }
+      : null,
+  );
 
   if (tableError)
     return (

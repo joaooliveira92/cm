@@ -1,5 +1,5 @@
 import { emptyBench } from "./tactics.js";
-import { GOALKEEPER_SLOT, widthOf, type Column, type OutfieldRow, type Slot } from "./slots.js";
+import { DEFAULT_SUB, GOALKEEPER_SLOT, widthOf, type Column, type OutfieldRow, type Slot } from "./slots.js";
 import {
   DEFAULT_PLAYER_INSTRUCTIONS,
   DEFAULT_SET_PIECE_ROLES,
@@ -182,6 +182,8 @@ const presetSlot = (text: string): TacticSlot => {
     run: run === undefined ? null : parseCell(run),
     instructions: seededInstructions(cell),
     setPieceRoles: DEFAULT_SET_PIECE_ROLES,
+    subRow: DEFAULT_SUB,
+    subCol: DEFAULT_SUB,
   };
 };
 
@@ -189,7 +191,7 @@ const presetSlot = (text: string): TacticSlot => {
 export const BUILT_IN_TEMPLATES: ReadonlyArray<TacticTemplate> = PRESET_CELLS.map(([name, cells]) => ({
   name,
   slots: [
-    { cell: GOALKEEPER_SLOT, run: null, instructions: seededInstructions(GOALKEEPER_SLOT), setPieceRoles: DEFAULT_SET_PIECE_ROLES },
+    { cell: GOALKEEPER_SLOT, run: null, instructions: seededInstructions(GOALKEEPER_SLOT), setPieceRoles: DEFAULT_SET_PIECE_ROLES, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB },
     ...cells.split(",").map(presetSlot),
   ],
   team: DEFAULT_TEAM_INSTRUCTIONS,

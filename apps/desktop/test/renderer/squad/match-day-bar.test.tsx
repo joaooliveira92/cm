@@ -128,6 +128,8 @@ const seededTactic = () => ({
   slots: fourFourTwoCells.map((cell) => ({
     cell,
     run: null,
+    subRow: 0.5,
+    subCol: 0.5,
     instructions: slotInstructions,
     setPieceRoles: slotRoles,
   })),

@@ -32,7 +32,7 @@ describe("literals and enums", () => {
     expect(Object.keys(wire).sort()).toEqual(
       ["assignments", "bench", "slots", "sourceTemplate", "takers", "team", "teamSetPieces"].sort(),
     );
-    expect(Object.keys(wire.slots[0]).sort()).toEqual(["cell", "instructions", "run", "setPieceRoles"]);
+    expect(Object.keys(wire.slots[0]).sort()).toEqual(["cell", "instructions", "run", "setPieceRoles", "subCol", "subRow"]);
     expect(Object.keys(wire.team)).not.toContain("tempo");
     expect(Object.keys(wire.team)).not.toContain("pressing");
   });
@@ -76,7 +76,7 @@ describe("the changeTactics command", () => {
 });
 
 describe("tactics overview snapshot (Screen 80)", () => {
-  const fourFourTwoSlots = builtInTemplate("4-4-2")!.slots.map((slot) => ({ cell: slot.cell, run: slot.run }));
+  const fourFourTwoSlots = builtInTemplate("4-4-2")!.slots.map((slot) => ({ cell: slot.cell, run: slot.run, subRow: slot.subRow, subCol: slot.subCol }));
 
   const snapshot = {
     club,

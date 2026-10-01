@@ -7,17 +7,18 @@
  * Module-level for the same reason as `screenToolbarControls`: the navbar sits above the route
  * outlet, so a screen cannot hand it props.
  *
- * One publisher serves both noun kinds the identity slot can hold. A player screen sets the player
- * variant, which also replaces the career band with the player's metrics. A club-scoped screen
- * sets the club variant when it is showing a club that is not the manager's own, painting that
- * club's badge and colours in place of the manager's crest while the band keeps the manager's own
- * calendar and standing.
+ * One publisher serves all three noun kinds the identity slot can hold. A player screen sets the
+ * player variant, which also replaces the career band with the player's metrics. A club-scoped
+ * screen sets the club variant when it is showing a club that is not the manager's own, painting
+ * that club's badge and colours in place of the manager's crest while the band keeps the manager's
+ * own calendar and standing. A competition screen sets the competition variant, showing the
+ * competition name and a qualifier line (kind · nation · season) in the identity slot.
  */
 import type { ClubColoursView } from "@cm-clone/contracts";
 import { useEffect } from "react";
-import type { HeaderPlayer } from "./chrome/header/career-header-state.js";
+import type { HeaderCompetition, HeaderPlayer } from "./chrome/header/career-header-state.js";
 
-export type ScreenIdentity = PlayerScreenIdentity | ClubScreenIdentity;
+export type ScreenIdentity = PlayerScreenIdentity | ClubScreenIdentity | CompetitionScreenIdentity;
 
 /** A player in the identity slot: name, club and the facts line beneath, plus the band's player
  *  metrics in the secondary row. */
@@ -36,6 +37,15 @@ export interface ClubScreenIdentity {
   readonly name: string;
   readonly qualifier: string;
   readonly colours: ClubColoursView;
+}
+
+/** A competition in the identity slot: the competition name shown in place of the club name
+ *  while on a competition screen, with the competition's fixture progress (clubs, played,
+ *  remaining) replacing the calendar and standing metrics in the secondary row. */
+export interface CompetitionScreenIdentity {
+  readonly kind: "competition";
+  readonly name: string;
+  readonly competition: HeaderCompetition;
 }
 
 type Listener = () => void;
@@ -62,6 +72,25 @@ export interface ClubIdentityView {
   readonly clubColours: ClubColoursView;
   readonly isUserClub: boolean;
 }
+
+/**
+ * Publish the competition name in the identity slot while a competition screen is mounted,
+ * so the navbar reads that competition's name in place of the club's until the screen unmounts.
+ */
+export const useCompetitionIdentity = (
+  competitionName: string | null,
+  competitionMetrics: HeaderCompetition | null,
+): void => {
+  useEffect(() => {
+    if (competitionName === null || competitionMetrics === null) return;
+    setScreenIdentity({
+      kind: "competition",
+      name: competitionName,
+      competition: competitionMetrics,
+    });
+    return () => setScreenIdentity(null);
+  }, [competitionName, competitionMetrics]);
+};
 
 /**
  * Publish the club a club-scoped screen is showing when it is not the manager's own, so the navbar

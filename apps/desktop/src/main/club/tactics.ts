@@ -99,6 +99,7 @@ export const loadPersistedTactic = (clubId: ClubId) =>
     const slotRows = yield* sql.unsafe<Row>(
       `SELECT player_id AS "playerId", cell_row AS "cellRow", cell_column AS "cellColumn",
               run_row AS "runRow", run_column AS "runColumn",
+              sub_row AS "subRow", sub_col AS "subCol",
               ${selectList([...INSTRUCTION_FIELDS, ...SET_PIECE_ROLE_FIELDS])}
        FROM tactic_slots WHERE club_id = ? ORDER BY slot_index`,
       [clubId],
@@ -122,6 +123,8 @@ export const loadPersistedTactic = (clubId: ClubId) =>
         run: cellOrNull(row["runRow"] as string | null, row["runColumn"] as string | null),
         instructions: pick(row, INSTRUCTION_FIELDS),
         setPieceRoles: pick(row, SET_PIECE_ROLE_FIELDS),
+        subRow: row["subRow"] as number,
+        subCol: row["subCol"] as number,
       })),
       assignments: slotRows.map((row) => row["playerId"]),
       bench: benchRows.map((row) => row.playerId),
@@ -198,9 +201,9 @@ export const persistTactic = (clubId: ClubId, tactic: Tactic, revision: number) 
         ...SET_PIECE_ROLE_FIELDS.map((name) => slot.setPieceRoles[name as keyof typeof slot.setPieceRoles]),
       ];
       yield* sql.unsafe(
-        `INSERT INTO tactic_slots (club_id, slot_index, cell_row, cell_column, run_row, run_column, player_id, ${slotColumns.map(snakeCase).join(", ")})
-         VALUES (${placeholders(7 + slotColumns.length)})`,
-        [clubId, index, slot.cell.row, slot.cell.column, slot.run?.row ?? null, slot.run?.column ?? null, tactic.assignments[index]!, ...values],
+        `INSERT INTO tactic_slots (club_id, slot_index, cell_row, cell_column, run_row, run_column, sub_row, sub_col, player_id, ${slotColumns.map(snakeCase).join(", ")})
+         VALUES (${placeholders(9 + slotColumns.length)})`,
+        [clubId, index, slot.cell.row, slot.cell.column, slot.run?.row ?? null, slot.run?.column ?? null, slot.subRow, slot.subCol, tactic.assignments[index]!, ...values],
       );
     }
     for (const [index, playerId] of tactic.bench.entries()) {

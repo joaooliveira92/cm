@@ -1,5 +1,5 @@
 import type { PlayerAssignmentView } from "@cm-clone/contracts";
-import { slotLabel } from "@cm-clone/shared";
+import { DEFAULT_SUB, slotLabel } from "@cm-clone/shared";
 import { PitchMarkings } from "./FormationPitch.js";
 import { pitchLayout } from "./pitchLayout.js";
 import { ratingBorder } from "./overviewFormat.js";
@@ -22,13 +22,18 @@ const spokenSlot = (assignment: PlayerAssignmentView): string => {
  * his cell, tinted by how well it fits, over their surname and cell. The editor's `FormationPitch`
  * is the interactive twin; this one has no controls, so its list is the whole accessible surface
  * and each slot speaks one sentence.
+ *
+ * Note: the overview snapshot does not yet carry sub-positions; markers are shown at cell centre.
+ * Sub-position rendering will be added once the overview snapshot schema includes them.
  */
 export const OverviewPitch = ({
   assignments,
 }: {
   readonly assignments: ReadonlyArray<PlayerAssignmentView>;
 }) => {
-  const spots = pitchLayout(assignments.map((assignment) => assignment.cell));
+  const spots = pitchLayout(
+    assignments.map((a) => ({ cell: a.cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB })),
+  );
   return (
     <div
       data-testid="overview-pitch"

@@ -35,7 +35,8 @@ export type TacticProblem =
   | { readonly _tag: "PlayerTwice"; readonly playerId: string }
   | { readonly _tag: "PlayerNotInSquad"; readonly playerId: string }
   | { readonly _tag: "DuplicateTaker"; readonly list: string; readonly playerId: string }
-  | { readonly _tag: "UnknownTakerList"; readonly list: string };
+  | { readonly _tag: "UnknownTakerList"; readonly list: string }
+  | { readonly _tag: "SubPositionOutOfRange"; readonly slot: number; readonly field: string; readonly value: number };
 
 export const STARTERS = 11;
 
@@ -64,6 +65,8 @@ const slotProblems = (slot: TacticSlot, index: number): ReadonlyArray<TacticProb
   if (slot.cell.row !== "GK" && slot.instructions.distribution !== "default") {
     problems.push({ _tag: "DistributionOffGoalkeeper", slot: index });
   }
+  if (slot.subRow < 0 || slot.subRow > 1) problems.push({ _tag: "SubPositionOutOfRange", slot: index, field: "subRow", value: slot.subRow });
+  if (slot.subCol < 0 || slot.subCol > 1) problems.push({ _tag: "SubPositionOutOfRange", slot: index, field: "subCol", value: slot.subCol });
   problems.push(
     ...checkValues(where, slot.instructions, {
       ...PLAYER_OVERRIDE_VALUES,
@@ -176,5 +179,7 @@ export const describeTacticProblem = (problem: TacticProblem): string => {
       return `player ${problem.playerId} is on the ${problem.list} list twice`;
     case "UnknownTakerList":
       return `${problem.list} is not a taker list`;
+    case "SubPositionOutOfRange":
+      return `slot ${problem.slot} ${problem.field} is ${problem.value}, expected 0-1`;
   }
 };

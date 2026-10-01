@@ -127,7 +127,7 @@ export const getTacticsOverview = (savesDir: string, saveId: SaveId) =>
                   // the library ships; a built-in one is compared with the template it names.
                   modified: isModifiedFromBuiltIn(tactic),
                   shape: rowCountLabel(tactic.slots),
-                  slots: tactic.slots.map((slot) => new FormationSlotView({ cell: slot.cell, run: slot.run })),
+                  slots: tactic.slots.map((slot) => new FormationSlotView({ cell: slot.cell, run: slot.run, subRow: slot.subRow, subCol: slot.subCol })),
                 }),
           instructions: tactic === null ? null : tactic.team,
           assignments,

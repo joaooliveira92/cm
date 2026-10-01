@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo, type DragEvent } from "react";
 import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
-import { familiarityOf, slotLabel, type Slot } from "@cm-clone/shared";
+import { DEFAULT_SUB, familiarityOf, slotLabel, type Slot } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
-import { dropZoneAt, pitchLayout, type DropZone } from "./pitchLayout.js";
+import { dropZoneAt, pitchLayout, type CellPosition, type DropZone } from "./pitchLayout.js";
 
 /** The drag channel a marker's slot index rides in; nothing else is exchanged. */
 const SLOT_DRAG = "application/x-cm-tactic-slot";
@@ -70,8 +70,8 @@ const pointOnPitch = (event: DragEvent<HTMLElement>): PitchPoint | null => {
 const DISC_REACH = 20;
 
 /** What a drop at a point would do: swap with the marker there, move the dragged slot to the
- *  cell whose zone it is, or nothing (its own spot, an occupied cell, the keeper's end, or off the
- *  pitch). */
+ *  cell and sub-position whose zone it is, or nothing (its own spot, an occupied cell, the
+ *  keeper's end, or off the pitch). */
 type DropIntent =
   | { readonly kind: "swap"; readonly slotIndex: number }
   | { readonly kind: "move"; readonly zone: DropZone }
@@ -116,11 +116,10 @@ export const FormationPitch = ({
   readonly selectedSlot: number | null;
   readonly onSelectSlot: (slotIndex: number | null) => void;
   readonly onSwap: (from: number, to: number) => void;
-  readonly onMove: (slotIndex: number, cell: Slot) => void;
+  readonly onMove: (slotIndex: number, cell: Slot, subRow?: number, subCol?: number) => void;
   readonly onToggleRun: (slotIndex: number, target: Slot | null) => void;
 }) => {
-  const cells = slots.map((slot) => slot.cell);
-  const spots = pitchLayout(cells);
+  const spots = pitchLayout(slots);
   const [dragging, setDragging] = useState<number | null>(null);
   const [intent, setIntent] = useState<DropIntent>(null);
   const [runMode, setRunMode] = useState(false);
@@ -158,9 +157,10 @@ export const FormationPitch = ({
         : null;
     }
     const zone = dropZoneAt(point.x, point.y);
-    if (zone === null || cells[from]!.row === "GK") return null;
+    if (zone === null || slots[from]!.cell.row === "GK") return null;
     const label = slotLabel(zone.cell);
-    return cells.some((cell) => slotLabel(cell) === label) ? null : { kind: "move", zone };
+    if (slots.some((slot) => slotLabel(slot.cell) === label)) return null;
+    return { kind: "move", zone };
   };
 
   const endDrag = () => {
@@ -171,7 +171,13 @@ export const FormationPitch = ({
   // While a move is previewed the dragged marker is drawn where it would land.
   const shown =
     dragging !== null && intent?.kind === "move"
-      ? pitchLayout(cells.map((cell, index) => (index === dragging ? intent.zone.cell : cell)))
+      ? pitchLayout(
+          slots.map((slot, index) =>
+            index === dragging
+              ? { cell: intent.zone.cell, subRow: intent.zone.subRow, subCol: intent.zone.subCol }
+              : slot,
+          ),
+        )
       : spots;
 
   const handleKeyDown = useCallback(
@@ -243,7 +249,7 @@ export const FormationPitch = ({
           if (hasPlayer(from)) onSwap(from, drop.slotIndex);
           else onSwap(drop.slotIndex, from);
         } else {
-          onMove(from, drop.zone.cell);
+          onMove(from, drop.zone.cell, drop.zone.subRow, drop.zone.subCol);
         }
       }}
     >
@@ -259,7 +265,7 @@ export const FormationPitch = ({
         {slots.map((slot, index) => {
           if (slot.run === null) return null;
           const from = spots[index]!;
-          const to = pitchLayout([slot.run])[0];
+          const to = pitchLayout([{ cell: slot.run, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
           if (to === undefined) return null;
           return (
             <line
@@ -281,7 +287,7 @@ export const FormationPitch = ({
       {selectedSlot !== null && !runMode && (
         <>
           {eligibleCells.map((cell) => {
-            const spot = pitchLayout([cell])[0];
+            const spot = pitchLayout([{ cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
             if (spot === undefined) return null;
             return (
               <button
@@ -289,7 +295,7 @@ export const FormationPitch = ({
                 type="button"
                 aria-label={`Move to ${slotLabel(cell)}`}
                 tabIndex={-1}
-                onClick={() => onMove(selectedSlot, cell)}
+                onClick={() => onMove(selectedSlot, cell, DEFAULT_SUB, DEFAULT_SUB)}
                 className={`absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-text-bright/50 bg-transparent text-caption font-bold text-text-muted transition-colors hover:border-text-bright hover:text-text-bright ${FOCUS_RING.join(" ")}`}
                 style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
               >
@@ -308,7 +314,7 @@ export const FormationPitch = ({
             const current = slotLabel(slots[selectedSlot]!.cell);
             return label !== current;
           }).map((cell) => {
-            const spot = pitchLayout([cell])[0];
+            const spot = pitchLayout([{ cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
             if (spot === undefined) return null;
             const alreadyOccupied = occupiedLabels.has(slotLabel(cell));
             return (
@@ -335,23 +341,6 @@ export const FormationPitch = ({
         </>
       )}
 
-      {intent?.kind === "move" && (
-        <div
-          aria-hidden="true"
-          data-testid="pitch-drop-zone"
-          className="pointer-events-none absolute rounded-control border border-dashed border-text-bright/50 bg-text-bright/10"
-          style={{
-            left: `${intent.zone.left}%`,
-            top: `${intent.zone.top}%`,
-            width: `${intent.zone.right - intent.zone.left}%`,
-            height: `${intent.zone.bottom - intent.zone.top}%`,
-          }}
-        >
-          <span className="absolute left-1 top-0.5 text-caption font-bold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
-            {slotLabel(intent.zone.cell)}
-          </span>
-        </div>
-      )}
       <ol aria-label={`${formation} on the pitch`} className="absolute inset-0">
         {shown.map(({ slotIndex, x, y }) => {
           const slot = slots[slotIndex]!;

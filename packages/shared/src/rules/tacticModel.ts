@@ -8,6 +8,8 @@ import type { Slot } from "./slots.js";
  * `.agents/notes/proposed/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md`,
  * `.agents/notes/proposed/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md`
  * and `.agents/notes/proposed/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md`.
+ * Sub-row and sub-column (subRow, subCol) are visual offsets within the cell, 0-1, defaulting to
+ * centre. Phase 2 wires them into the engine; Phase 1 is purely visual.
  */
 
 type ValuesOf<T extends Record<string, ReadonlyArray<string>>> = { readonly [K in keyof T]: T[K][number] };
@@ -86,12 +88,16 @@ export type TeamSetPieces = ValuesOf<typeof TEAM_SET_PIECE_VALUES>;
 export const TAKER_LISTS = ["captain", "penalties", "freeKicksLeft", "freeKicksRight", "cornersLeft", "cornersRight", "throwInsLeft", "throwInsRight"] as const;
 export type TakerList = (typeof TAKER_LISTS)[number];
 
-/** One slot of a Formation: a grid cell, an optional run, and the slot's instructions and roles. */
+/** One slot of a Formation: a grid cell, an optional run, the slot's instructions and roles, and
+ *  the visual offset within the cell. `subRow`/`subCol` are 0-1 fractions defaulting to centre
+ *  (0.5). Phase 1 uses them for render position only; Phase 2 wires them into engine resolution. */
 export interface TacticSlot {
   readonly cell: Slot;
   readonly run: Slot | null;
   readonly instructions: PlayerInstructions;
   readonly setPieceRoles: SetPieceRoles;
+  readonly subRow: number;
+  readonly subCol: number;
 }
 
 /** A built-in preset or a saved tactic: everything a Tactic has except players. */

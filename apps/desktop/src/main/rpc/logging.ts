@@ -1,4 +1,4 @@
-import { Effect, Exit, Layer, Logger, Option, References, type LogLevel } from "effect";
+import { Effect, Exit, Formatter, Layer, Logger, Option, References, type LogLevel } from "effect";
 
 const VALID_LEVELS: ReadonlySet<string> = new Set([
   "All",
@@ -16,12 +16,62 @@ const minimumLogLevel = (): LogLevel.LogLevel => {
   return raw && VALID_LEVELS.has(raw) ? (raw as LogLevel.LogLevel) : "Debug";
 };
 
+/**
+ * Flattens `formatStructured` output for LLM-friendly JSON: promotes single-object
+ * `message` fields to the top level (dropping nulls), uses shorter keys (`ts` for
+ * `timestamp`), and omits empty `annotations`, `spans`, `fiberId`, and undefined
+ * `cause`.
+ *
+ * These are wide-event logs, one line per RPC call — every token counts when the
+ * recipient is an LLM context window.
+ */
+const flattenStructured = (structured: {
+  readonly level: string;
+  readonly fiberId: string;
+  readonly timestamp: string;
+  readonly message: unknown;
+  readonly cause: string | undefined;
+  readonly annotations: Record<string, unknown>;
+  readonly spans: Record<string, number>;
+}): Record<string, unknown> => {
+  const output: Record<string, unknown> = {
+    ts: structured.timestamp,
+    level: structured.level,
+  };
+
+  if (typeof structured.message === "object" && structured.message !== null && !Array.isArray(structured.message)) {
+    const msg = structured.message as Record<string, unknown>;
+    for (const key of Object.keys(msg)) {
+      const v = msg[key];
+      if (v !== null) output[key] = v;
+    }
+  } else {
+    output.message = structured.message;
+  }
+
+  if (structured.cause !== undefined) output.cause = structured.cause;
+
+  if (Object.keys(structured.annotations).length > 0) {
+    output.annotations = structured.annotations;
+  }
+
+  return output;
+};
+
+/** JSON-logger that emits LLM-friendly flattened lines. Replaces `Logger.consoleJson`. */
+const flattenedConsoleJson: Logger.Logger<unknown, void> = Logger.withConsoleLog(
+  Logger.map(
+    Logger.map(Logger.formatStructured, flattenStructured),
+    Formatter.formatJson,
+  ),
+);
+
 /** Installs the single JSON logger (wide events to stdout) with the startup
  *  minimum level (default Debug; override via CMC_LOG_LEVEL). One logger,
  *  provided at the run edge and imported everywhere, per the repo's wide-event
  *  logging convention. */
 export const LoggerLayer: Layer.Layer<never> = Layer.merge(
-  Logger.layer([Logger.consoleJson]),
+  Logger.layer([flattenedConsoleJson]),
   Layer.succeed(References.MinimumLogLevel, minimumLogLevel()),
 );
 

@@ -34,6 +34,8 @@ export type HeaderState =
       readonly career: HeaderCareer;
       /** Set while a player screen is open; its facts replace the calendar and standing. */
       readonly player?: HeaderPlayer | null;
+      /** Set while a competition screen is open; its facts replace the calendar and standing. */
+      readonly competition?: HeaderCompetition | null;
     };
 
 /**
@@ -99,6 +101,14 @@ export interface HeaderPlayer {
   readonly injury: string;
 }
 
+/** The competition a competition screen is showing, as the band reports it. Clubs is null for a
+ *  competition whose field is a function of its sources — a cup drawn from other competitions. */
+export interface HeaderCompetition {
+  readonly clubCount: number | null;
+  readonly playedCount: number;
+  readonly remainingCount: number;
+}
+
 export type MetricIcon =
   | "season"
   | "position"
@@ -108,7 +118,9 @@ export type MetricIcon =
   | "value"
   | "wage"
   | "contract"
-  | "injury";
+  | "injury"
+  | "clubs"
+  | "remaining";
 
 export interface HeaderMetric {
   readonly icon: MetricIcon;
@@ -144,10 +156,14 @@ export const formatPosition = (position: number): string => {
 export function describeSecondaryRow(state: HeaderState): SecondaryRow {
   switch (state.view) {
     case "career": {
-      const { career, player = null } = state;
+      const { career, player = null, competition = null } = state;
+      const metrics =
+        player === null
+          ? competition === null ? careerMetrics(career) : competitionMetrics(competition)
+          : playerMetrics(player);
       return {
         kind: "career",
-        metrics: player === null ? careerMetrics(career) : playerMetrics(player),
+        metrics,
         status:
           career.liveMatch === null ? (career.saveName ?? NO_VALUE) : matchReadout(career.liveMatch),
       };
@@ -222,5 +238,29 @@ function playerMetrics(player: HeaderPlayer): readonly HeaderMetric[] {
     },
     { icon: "contract", label: "Contract", value: player.contractExpiry, placeholder: false },
     { icon: "injury", label: "Injury", value: player.injury, placeholder: false },
+  ];
+}
+
+/** A competition screen's band: the competition's club count and fixture progress. */
+function competitionMetrics(competition: HeaderCompetition): readonly HeaderMetric[] {
+  return [
+    {
+      icon: "clubs",
+      label: "Clubs",
+      value: competition.clubCount === null ? NO_VALUE : String(competition.clubCount),
+      placeholder: competition.clubCount === null,
+    },
+    {
+      icon: "played",
+      label: "Played",
+      value: String(competition.playedCount),
+      placeholder: false,
+    },
+    {
+      icon: "remaining",
+      label: "Remaining",
+      value: String(competition.remainingCount),
+      placeholder: false,
+    },
   ];
 }

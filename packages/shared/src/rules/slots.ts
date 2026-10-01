@@ -14,6 +14,9 @@ export type Row = (typeof ROWS)[number];
 export const COLUMNS = ["L", "LC", "C", "RC", "R"] as const;
 export type Column = (typeof COLUMNS)[number];
 
+/** The default sub-position within a cell — centre. */
+export const DEFAULT_SUB = 0.5;
+
 /**
  * One cell of the tactics grid. A slot is its own type, not a Position: two centre-backs are
  * `D LC` and `D RC`, not two copies of one Position. The goalkeeper cell has no column in CM; it is

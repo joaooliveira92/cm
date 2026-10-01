@@ -763,6 +763,8 @@ export const tacticLibrarySlots = sqliteTable(
     cellColumn: text("cell_column").notNull(),
     runRow: text("run_row"),
     runColumn: text("run_column"),
+    subRow: real("sub_row").notNull().default(0.5),
+    subCol: real("sub_col").notNull().default(0.5),
     ...textColumns(Object.keys(PLAYER_OVERRIDE_VALUES)),
     ...textColumns(Object.keys(PLAYER_STANDALONE_VALUES)),
     ...textColumns(PLAYER_SWITCHES),
@@ -808,6 +810,8 @@ export const tacticSlots = sqliteTable(
     cellColumn: text("cell_column").notNull(),
     runRow: text("run_row"),
     runColumn: text("run_column"),
+    subRow: real("sub_row").notNull().default(0.5),
+    subCol: real("sub_col").notNull().default(0.5),
     playerId: text("player_id")
       .notNull()
       .references(() => players.id),

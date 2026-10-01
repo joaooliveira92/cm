@@ -20,6 +20,7 @@ const pid = (id: string) => PlayerId.make(id);
 const FOUR_FOUR_TWO_CELLS = BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((s) => s.cell);
 const FOUR_THREE_THREE_CELLS = BUILT_IN_TEMPLATES.find((t) => t.name === "4-3-3")!.slots.map((s) => s.cell);
 const FIVE_THREE_TWO_CELLS = BUILT_IN_TEMPLATES.find((t) => t.name === "5-3-2")!.slots.map((s) => s.cell);
+const SLOT_WITH_DEFAULT_SUB = (cell: any) => ({ cell, run: null, subRow: 0.5, subCol: 0.5 });
 
 const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
@@ -128,7 +129,7 @@ const overviewView = (
       template: "4-4-2",
       modified: false,
       shape: "4-4-2",
-      slots: FOUR_FOUR_TWO_CELLS.map((cell) => ({ cell, run: null })),
+      slots: FOUR_FOUR_TWO_CELLS.map((cell) => SLOT_WITH_DEFAULT_SUB(cell)),
     },
     instructions: defaultInstructions,
     assignments,
@@ -286,7 +287,7 @@ describe("Tactics Overview conflicted and stale-discard rules", () => {
               template: revision === 3 ? "4-3-3" : "4-4-2",
               modified: revision === 3,
               shape: revision === 3 ? "4-3-3" : "4-4-2",
-              slots: (revision === 3 ? FOUR_THREE_THREE_CELLS : FOUR_FOUR_TWO_CELLS).map((cell) => ({ cell, run: null })),
+              slots: (revision === 3 ? FOUR_THREE_THREE_CELLS : FOUR_FOUR_TWO_CELLS).map((cell) => SLOT_WITH_DEFAULT_SUB(cell)),
             },
           }),
         } as never;
@@ -329,7 +330,7 @@ describe("Tactics Overview conflicted and stale-discard rules", () => {
               template: revision === 2 ? "5-3-2" : "4-4-2",
               modified: revision === 2,
               shape: revision === 2 ? "5-3-2" : "4-4-2",
-              slots: (revision === 2 ? FIVE_THREE_TWO_CELLS : FOUR_FOUR_TWO_CELLS).map((cell) => ({ cell, run: null })),
+              slots: (revision === 2 ? FIVE_THREE_TWO_CELLS : FOUR_FOUR_TWO_CELLS).map((cell) => SLOT_WITH_DEFAULT_SUB(cell)),
             },
           }),
         } as never;

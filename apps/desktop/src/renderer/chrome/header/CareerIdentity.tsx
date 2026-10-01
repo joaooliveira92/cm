@@ -35,15 +35,18 @@ export const CareerIdentity = ({
   }
   if (identity.kind === "club") {
     // A foreign club's screen: the badge shield in that club's own colours — no badge key rides the
-    // club reads, so `ClubBadge` paints the initials-holding shield — followed by its name and the
-    // foreign marker, exactly the pair the page's own header draws.
+    // club reads, so `ClubBadge` paints the initials-holding shield — followed by its name.
     return (
       <span className="flex min-w-0 items-center gap-2 truncate text-title">
         <ClubBadge badgeKey={null} colours={identity.colours} clubName={identity.name} size={24} />
-        <span className="truncate">
-          {identity.name}{" "}
-          <span className="font-semibold opacity-80">({identity.qualifier})</span>
-        </span>
+        <span className="truncate">{identity.name}</span>
+      </span>
+    );
+  }
+  if (identity.kind === "competition") {
+    return (
+      <span className="flex min-w-0 items-center gap-2 truncate text-title">
+        <span className="truncate">{identity.name}</span>
       </span>
     );
   }

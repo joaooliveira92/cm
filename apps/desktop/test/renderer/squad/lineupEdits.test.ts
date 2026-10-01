@@ -24,6 +24,8 @@ const baseTactic = (): Tactic =>
     slots: fourFourTwoCells.map((cell) => ({
       cell,
       run: null,
+      subRow: 0.5,
+      subCol: 0.5,
       instructions: {
         passing: "team" as const,
         closingDown: "team" as const,

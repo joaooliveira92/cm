@@ -9,23 +9,22 @@ import {
   TacticLibraryRevisionConflictError,
   TacticLibraryView,
   TacticTemplateSummary,
-  TacticsScreenView,
   type SaveId,
 } from "@cm-clone/contracts";
 import {
   BUILT_IN_TEMPLATE_NAMES,
+  describeTacticProblem,
   PLAYER_OVERRIDE_VALUES,
   PLAYER_STANDALONE_VALUES,
   PLAYER_SWITCHES,
+  rowCountLabel,
   SET_PIECE_ROLE_VALUES,
   TEAM_INSTRUCTION_VALUES,
   TEAM_SET_PIECE_VALUES,
   TEAM_SWITCHES,
-  rowCountLabel,
   validateTactic as validateTacticRules,
-  describeTacticProblem,
-  type TacticSlot,
   type Slot,
+  type TacticSlot,
   type TakerList,
 } from "@cm-clone/shared";
 import { Data, Effect, Schema } from "effect";
@@ -142,6 +141,7 @@ const loadTemplateContent = (id: number) =>
     const slotRows = yield* sql.unsafe<Row>(
       `SELECT cell_row AS "cellRow", cell_column AS "cellColumn",
               run_row AS "runRow", run_column AS "runColumn",
+              sub_row AS "subRow", sub_col AS "subCol",
               ${selectList([...SLOT_INSTRUCTION_FIELDS, ...SLOT_SET_PIECE_ROLE_FIELDS])}
        FROM tactic_library_slots WHERE library_id = ? ORDER BY slot_index`,
       [id],
@@ -162,6 +162,8 @@ const loadTemplateContent = (id: number) =>
             : { row: row["runRow"], column: row["runColumn"] },
         instructions: pick(row, SLOT_INSTRUCTION_FIELDS),
         setPieceRoles: pick(row, SLOT_SET_PIECE_ROLE_FIELDS),
+        subRow: row["subRow"] as number,
+        subCol: row["subCol"] as number,
       })),
       // A template has no player assignments, bench, or takers — these are filled in on quick load
       assignments: [],
@@ -216,9 +218,9 @@ const persistTemplateSlots = (libraryId: number, tactic: Tactic) =>
         ...SLOT_SET_PIECE_ROLE_FIELDS.map((name) => slot.setPieceRoles[name as keyof typeof slot.setPieceRoles]),
       ];
       yield* sql.unsafe(
-        `INSERT INTO tactic_library_slots (library_id, slot_index, cell_row, cell_column, run_row, run_column, ${slotColumns.map(snakeCase).join(", ")})
-         VALUES (${placeholders(6 + slotColumns.length)})`,
-        [libraryId, index, slot.cell.row, slot.cell.column, slot.run?.row ?? null, slot.run?.column ?? null, ...values],
+        `INSERT INTO tactic_library_slots (library_id, slot_index, cell_row, cell_column, run_row, run_column, sub_row, sub_col, ${slotColumns.map(snakeCase).join(", ")})
+         VALUES (${placeholders(8 + slotColumns.length)})`,
+        [libraryId, index, slot.cell.row, slot.cell.column, slot.run?.row ?? null, slot.run?.column ?? null, slot.subRow, slot.subCol, ...values],
       );
     }
   });
