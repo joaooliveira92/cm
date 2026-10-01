@@ -1,7 +1,7 @@
 # 20: Playwright can run a stale `dist/` and report green
 
 Type: bug
-Status: ready-for-agent
+Status: resolved
 
 **Blocked by:** none.
 

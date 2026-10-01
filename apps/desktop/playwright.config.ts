@@ -1,6 +1,12 @@
 import { defineConfig } from "@playwright/test";
 
 /**
+ * The e2e suite runs `dist/main/index.js` via `e2e/launchApp.ts`.
+ * Only `pnpm --filter @cm-clone/desktop test:e2e` builds first — `pretest:e2e` fires for the script
+ * name, not the binary, so invoking `playwright` directly tests the last build. A mutation that was
+ * never compiled passes green. `e2e/globalSetup.ts` checks staleness and fails with a message naming
+ * the correct command when sources are newer.
+ *
  * Timeout budget for the Electron e2e suite.
  *
  * Every wait here has an explicit ceiling, because the failure mode this suite
