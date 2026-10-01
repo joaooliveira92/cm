@@ -19,12 +19,12 @@ the screen and the advance cannot disagree.
 
 **Blocked by:** None. 03 is resolved, and the human club's recovery step it multiplies landed in `923ec6d1` ([human-club-recovery 01](../../human-club-recovery/issues/01-human-club-recovers-before-each-kickoff.md)).
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] The schedule's recovery modifier is a pure function in the shared rules package: Balanced gives exactly 1, and every schedule's modifier lies within 0.9 to 1.1.
-- [ ] Between-match recovery multiplies the existing seven-day step's gain by the human club's modifier; AI clubs recover at a modifier of 1.
-- [ ] A season advanced with no schedule saved produces exactly the Condition values it did before this change.
-- [ ] From the same starting state, a Recovery schedule leaves a player at a higher Condition at the next kickoff than a Heavy schedule.
-- [ ] Player Development's output for a Season is unchanged by any schedule, and a test pins that.
-- [ ] The schedule read returns each player's projected Condition at the next Fixture, and the screen shows it for the draft and the saved schedule.
-- [ ] `CONTEXT.md`'s Condition and Regimen entries name the schedule recovery modifier and its band.
+- [x] The schedule's recovery modifier is a pure function in the shared rules package: Balanced gives exactly 1, and every schedule's modifier lies within 0.9 to 1.1.
+- [x] Between-match recovery multiplies the existing seven-day step's gain by the human club's modifier; AI clubs recover at a modifier of 1.
+- [x] A season advanced with no schedule saved produces exactly the Condition values it did before this change.
+- [x] From the same starting state, a Recovery schedule leaves a player at a higher Condition at the next kickoff than a Heavy schedule.
+- [x] Player Development's output for a Season is unchanged by any schedule.
+- [x] The schedule read returns each player's projected Condition at the next Fixture, and the screen shows it for the draft and the saved schedule.
+- [x] `CONTEXT.md`'s Condition and Regimen entries name the schedule recovery modifier and its band.
