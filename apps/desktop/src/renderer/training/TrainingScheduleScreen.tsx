@@ -273,6 +273,33 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
           {status !== null && <span className="text-body text-text-bright">{status}</span>}
         </section>
       )}
+
+      {view.projectedConditions !== undefined && view.projectedConditions.length > 0 && (
+        <section aria-label="Projected Condition at next kickoff">
+          <h2 className="text-heading text-text-highlight">Projected Condition</h2>
+          <p className="text-body text-text-secondary">
+            Showing each player's forecast Condition at their next kickoff under the current schedule.
+          </p>
+          <div className="overflow-x-auto mt-2">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="text-body text-text-secondary text-sm">
+                  <th className="px-2 py-1">Player</th>
+                  <th className="px-2 py-1 text-right">Projected</th>
+                </tr>
+              </thead>
+              <tbody>
+                {view.projectedConditions.map((pc) => (
+                  <tr key={`${pc.firstName}-${pc.lastName}`} className="text-body text-sm border-b border-border-subtle">
+                    <td className="px-2 py-1">{pc.lastName}, {pc.firstName}</td>
+                    <td className="px-2 py-1 text-right">{Math.round(pc.projectedCondition)}%</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </main>
   );
 };

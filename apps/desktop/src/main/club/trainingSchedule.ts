@@ -29,11 +29,13 @@ import {
   TRAINING_SCHEDULE_SLOTS,
   TRAINING_SCHEDULE_TEMPLATES,
   bestPracticeSchedule,
+  scheduleRecoveryModifier,
   trainingTemplateOf,
   type TrainingIntensity,
   type TrainingSession,
   type TrainingSessionType,
 } from "@cm-clone/shared";
+import { conditionAfterDays } from "@cm-clone/game-engine";
 import { Effect, Semaphore } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
@@ -125,6 +127,40 @@ const readScheduleView = (clubId: ClubId) =>
   Effect.gen(function* () {
     const { sessions, revision, delegated } = yield* loadSchedule(clubId);
     const [nextFixture] = yield* loadUpcomingFixtures(clubId);
+    const modifier = scheduleRecoveryModifier(sessions);
+
+    // Compute each player's projected Condition at the next Fixture.
+    const sql = yield* SqlClient;
+    const fitnessRows = yield* sql<{
+      playerId: string;
+      firstName: string;
+      lastName: string;
+      condition: number;
+      naturalFitness: number;
+      lastInjurySeverity: string;
+    }>`SELECT pf.player_id as "playerId", p.first_name as "firstName", p.last_name as "lastName",
+              pf.condition, p.natural_fitness as "naturalFitness",
+              pf.last_injury_severity as "lastInjurySeverity"
+       FROM player_fitness pf
+       JOIN players p ON p.id = pf.player_id
+       WHERE p.club_id = ${clubId} AND pf.season_number = (SELECT season_number FROM season LIMIT 1)
+       ORDER BY p.last_name, p.first_name`;
+
+    const projectedConditions = fitnessRows.map((row) => {
+      const base = conditionAfterDays(
+        row.condition,
+        7,
+        row.naturalFitness,
+        row.lastInjurySeverity as "none" | "light" | "medium" | "severe",
+      );
+      const rawGain = base - row.condition;
+      return {
+        firstName: row.firstName,
+        lastName: row.lastName,
+        projectedCondition: Math.min(100, Math.max(0, Math.round(row.condition + rawGain * modifier))),
+      };
+    });
+
     return new TrainingScheduleView({
       sessions,
       template: trainingTemplateOf(sessions),
@@ -133,6 +169,7 @@ const readScheduleView = (clubId: ClubId) =>
       delegated,
       assistantName: yield* loadAssistantName(clubId),
       assistantReason: delegated ? yield* loadAssistantReason(clubId) : null,
+      projectedConditions,
     });
   });
 

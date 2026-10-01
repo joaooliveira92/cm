@@ -34,6 +34,13 @@ export class TrainingScheduleFixtureView extends Schema.Class<TrainingScheduleFi
   isHome: Schema.Boolean,
 }) {}
 
+/** One player's projected Condition at the next Fixture */
+export const PlayerProjectedConditionSchema = Schema.Struct({
+  firstName: Schema.String,
+  lastName: Schema.String,
+  projectedCondition: Schema.Finite,
+});
+
 /**
  * The Training Schedule screen's read: the saved sessions in slot order, the template they match
  * (derived on read; `null` is "Custom"), the revision a write must name, and the Fixture the
@@ -50,6 +57,8 @@ export class TrainingScheduleView extends Schema.Class<TrainingScheduleView>("Tr
   assistantName: Schema.String,
   /** Why the assistant chose the current sessions, when the assistant wrote them; else `null`. */
   assistantReason: Schema.NullOr(Schema.String),
+  /** Each player's projected Condition at the next Fixture under the current schedule. */
+  projectedConditions: Schema.Array(PlayerProjectedConditionSchema),
 }) {}
 
 /**

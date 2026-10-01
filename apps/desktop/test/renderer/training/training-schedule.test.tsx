@@ -22,6 +22,7 @@ const view = (sessions: unknown, revision: number, delegated = false) => ({
   delegated,
   assistantName: "Ana Sousa",
   assistantReason: delegated ? "the squad has not recovered from the last match" : null,
+  projectedConditions: [],
 });
 
 const CONFLICT = { _tag: "TrainingScheduleRevisionConflictError", saveId: "s1", currentRevision: 4 };
