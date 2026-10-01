@@ -94,15 +94,15 @@ const menuItems = (resumable: SaveSummary | null): ReadonlyArray<MenuItem> =>
   resumable === null
     ? [START_ITEM, ...FIXED_ITEMS]
     : [
-        START_ITEM,
-        {
-          key: "menu-resume",
-          label: "Resume Last Career",
-          command: "resume_last_career",
-          description: `Choose this option to resume the career you played most recently ('${resumable.name}', ${resumable.userClubName}).`,
-        },
-        ...FIXED_ITEMS,
-      ];
+      START_ITEM,
+      {
+        key: "menu-resume",
+        label: "Resume Last Career",
+        command: "resume_last_career",
+        description: `Choose this option to resume the career you played most recently ('${resumable.name}', ${resumable.userClubName}).`,
+      },
+      ...FIXED_ITEMS,
+    ];
 
 /**
  * How the save repository answered the menu's probe (spec §8 `hasSavedGames`,
@@ -112,10 +112,10 @@ const menuItems = (resumable: SaveSummary | null): ReadonlyArray<MenuItem> =>
 type SaveRepositoryState =
   | { readonly status: "probing" }
   | {
-      readonly status: "ready";
-      readonly hasSavedGames: boolean;
-      readonly resumable: SaveSummary | null;
-    }
+    readonly status: "ready";
+    readonly hasSavedGames: boolean;
+    readonly resumable: SaveSummary | null;
+  }
   | { readonly status: "unavailable" };
 
 /**
@@ -146,10 +146,10 @@ export const MainMenuScreen = () => {
       Result.isFailure(outcome)
         ? { status: "unavailable" }
         : {
-            status: "ready",
-            hasSavedGames: outcome.success.length > 0,
-            resumable: latestLiveSave(outcome.success),
-          },
+          status: "ready",
+          hasSavedGames: outcome.success.length > 0,
+          resumable: latestLiveSave(outcome.success),
+        },
     );
   }, []);
 
@@ -265,10 +265,7 @@ export const MainMenuScreen = () => {
             <p className="mt-2 text-body tracking-widest text-text-muted uppercase">
               {PRODUCT_SUBTITLE}
             </p>
-            <p className="mt-1 text-data text-text-muted">{DATABASE_EDITION}</p>
-            <p className="mt-6 text-title text-text-highlight">
-              Please choose from the following options
-            </p>
+
           </header>
 
           {/* Primary menu group (spec §3.4) — vertical, each row a large target
@@ -286,9 +283,8 @@ export const MainMenuScreen = () => {
                   <li
                     key={item.key}
                     style={{ animationDelay: `${index * 0.08}s` }}
-                    className={`grid grid-cols-[minmax(10rem,14rem)_1fr] items-center gap-6 motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both] ${
-                      item.command === "request_application_exit" ? "mt-8" : ""
-                    }`}
+                    className={`grid grid-cols-[minmax(10rem,14rem)_1fr] items-center gap-6 motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both] ${item.command === "request_application_exit" ? "mt-8" : ""
+                      }`}
                   >
                     <Button
                       ref={(node) => {
