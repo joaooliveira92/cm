@@ -280,6 +280,9 @@ export const TrainingScheduleScreen = ({ saveId }: { readonly saveId: SaveId }) 
           <h2 className="text-heading text-text-highlight">Projected Condition</h2>
           <p className="text-body text-text-secondary">
             Showing each player's forecast Condition at their next kickoff under the current schedule.
+            {dirty && (
+              <span> Draft modifier: {scheduleRecoveryModifier(sessions).toFixed(2)} ({templateLabel(sessions)})</span>
+            )}
           </p>
           <div className="overflow-x-auto mt-2">
             <table className="w-full text-left">
