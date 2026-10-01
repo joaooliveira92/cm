@@ -16,6 +16,14 @@ const draggedSlotOf = (event: DragEvent): number | null => {
 const markerName = (player: SquadPlayerView): string =>
   `${player.lastName}, ${player.firstName.slice(0, 1)}`;
 
+/**
+ * How far a marker's caption moves so it stays on the pitch. The caption is the marker's 6rem width,
+ * centred on `x` (percent of the pitch width, which is the `@container` the units read): past the
+ * left touchline it moves right by the overhang, past the right one left by it, and otherwise not.
+ */
+const captionShift = (x: number): string =>
+  `max(calc(3rem - ${x}cqw), min(0px, calc(${100 - x}cqw - 3rem)))`;
+
 /** The fit tier word for a player in their slot. */
 const fitTierWord = (player: SquadPlayerView, cell: Slot): string => {
   const t = familiarityOf(player.suitability[slotLabel(cell)] ?? 1);
@@ -285,7 +293,7 @@ export const FormationPitch = ({
   return (
     <div
       data-testid="formation-pitch"
-      className="pitch-grass relative mx-auto aspect-[68/100] w-[min(100cqw,68cqh)] shrink-0 overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
+      className="pitch-grass @container relative mx-auto aspect-[68/100] w-[min(100cqw,68cqh)] shrink-0 overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
       tabIndex={0}
       aria-describedby={keyHintId}
       onKeyDown={handleKeyDown}
@@ -335,10 +343,12 @@ export const FormationPitch = ({
               y1={from.y}
               x2={to.x}
               y2={to.y}
-              stroke="var(--color-text-highlight)"
+              stroke="var(--color-pitch-line)"
               strokeWidth="1.5"
-              strokeDasharray="2 3"
-              opacity={0.8}
+              strokeDasharray="5 4"
+              strokeLinecap="round"
+              // The box is stretched to the pitch, so the stroke is kept in screen pixels or each dash smears.
+              vectorEffect="non-scaling-stroke"
             />
           );
         })}
@@ -461,7 +471,7 @@ export const FormationPitch = ({
                 <span
                   aria-hidden="true"
                   data-disc
-                  className={`flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
+                  className={`relative flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
                     landing
                       ? "border-dashed border-text-bright bg-pitch-marker/60"
                       : player === undefined
@@ -473,22 +483,19 @@ export const FormationPitch = ({
                 >
                   {slotIndex + 1}
                 </span>
-                {/* Surname, First initial caption */}
-                <span
-                  aria-hidden="true"
-                  className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
-                >
-                  {player === undefined ? slotLabel(slot.cell) : markerName(player)}
-                </span>
-                {/* Fit word as non-colour indicator */}
-                {fitWord !== null && (
-                  <span
-                    aria-hidden="true"
-                    className="text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
-                  >
-                    {fitWord}
+                {/* Caption, pulled inward by however much of it would hang past a touchline */}
+                <span aria-hidden="true" className="flex w-full flex-col items-center" style={{ transform: `translateX(${captionShift(x)})` }}>
+                  {/* Surname, First initial */}
+                  <span className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
+                    {player === undefined ? slotLabel(slot.cell) : markerName(player)}
                   </span>
-                )}
+                  {/* Fit word as non-colour indicator */}
+                  {fitWord !== null && (
+                    <span className="text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
+                      {fitWord}
+                    </span>
+                  )}
+                </span>
               </button>
             </li>
           );

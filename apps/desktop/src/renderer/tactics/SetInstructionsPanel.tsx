@@ -37,7 +37,6 @@ import {
   displayValue,
   Panel,
   RowGroup,
-  SetPieceRoleRow,
   TickChoiceRow,
   TickFlagRow,
 } from "./instructionRows.js";
@@ -55,15 +54,6 @@ const SWITCH_HINTS: Record<PlayerSwitch, string> = {
   tryThroughBalls: "Encourage more through balls",
   freeRole: "Player will roam around the pitch",
   holdUpBall: "Player will hold up ball more",
-};
-
-/** The team-level "unticked" placeholder for each choice-valued team instruction. */
-const TEAM_PLACEHOLDER: Record<keyof typeof TEAM_INSTRUCTION_VALUES, string> = {
-  passing: "(mixed)",
-  focusPassing: "(mixed)",
-  tackling: "(normal)",
-  closingDown: "(default)",
-  mentality: "(default)",
 };
 
 /** The team-level "tick box hint" for each choice-valued team instruction. */
@@ -139,7 +129,7 @@ const TeamInstructionRows = ({
           tickHint={TEAM_TICK_HINT[key]}
           values={TEAM_INSTRUCTION_VALUES[key]}
           offValue={TEAM_INSTRUCTION_VALUES[key][0]}
-          placeholder={TEAM_PLACEHOLDER[key]}
+          placeholder={displayValue(TEAM_INSTRUCTION_VALUES[key][0])}
           currentValue={team[key]}
           onChange={(value) => onTeamChange({ [key]: value } as Partial<TeamInstructions>)}
           disabled={disabled}
@@ -179,7 +169,7 @@ const TeamSetPieceRows = ({
         tickHint={`Tick to set ${TEAM_SET_PIECE_LABELS[key].toLowerCase()}`}
         values={TEAM_SET_PIECE_VALUES[key]}
         offValue="default"
-        placeholder="(default)"
+        placeholder="Default"
         currentValue={teamSetPieces[key]}
         onChange={(value) => onTeamSetPieceChange({ [key]: value } as Partial<TeamSetPieces>)}
         disabled={disabled}
@@ -235,7 +225,7 @@ const PlayerInstructionRows = ({
             tickHint="Tick to override normal setting"
             values={PLAYER_STANDALONE_VALUES[key]}
             offValue="default"
-            placeholder="(default)"
+            placeholder="Default"
             currentValue={instructions[key]}
             onChange={(value) => onInstructionsChange({ [key]: value } as Partial<PlayerInstructions>)}
             disabled={disabled}
@@ -269,10 +259,13 @@ const SetPieceRoleRows = ({
 }) => (
   <RowGroup name="Set Piece Roles">
     {keysOf(SET_PIECE_ROLE_LABELS).map((key) => (
-      <SetPieceRoleRow
+      <TickChoiceRow
         key={key}
         label={SET_PIECE_ROLE_LABELS[key]}
+        tickHint={`Tick to set ${SET_PIECE_ROLE_LABELS[key].toLowerCase()}`}
         values={SET_PIECE_ROLE_VALUES[key]}
+        offValue="default"
+        placeholder="Default"
         currentValue={setPieceRoles[key]}
         onChange={(value) => onSetPieceRoleChange({ [key]: value } as Partial<SetPieceRoles>)}
         disabled={disabled}

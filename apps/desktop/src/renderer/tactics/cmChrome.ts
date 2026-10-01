@@ -7,9 +7,10 @@ import { FOCUS_RING } from "../focus.js";
 
 const FOCUS = FOCUS_RING.join(" ");
 
-/** A panel: the backdrop shows through, framed by a thin light border. */
+/** A panel: the backdrop shows through, framed by a thin light border. Its scrollers inherit a blue
+ *  thumb on a clear track instead of the platform's white one. */
 export const CM_PANEL_CLASS =
-  "flex min-h-0 flex-col overflow-hidden rounded-panel border border-white/20 bg-black/45 shadow-panel";
+  "flex min-h-0 flex-col overflow-hidden rounded-panel border border-white/20 bg-black/45 shadow-panel [scrollbar-color:var(--color-cm-band)_transparent]";
 
 /** A panel's yellow title, top left. */
 export const CM_PANEL_TITLE_CLASS =

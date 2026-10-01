@@ -573,6 +573,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
               onSelectSlot={handleSelectSlot}
               onSwap={handleBringIn}
               onAssign={handleAssign}
+              columns={columns}
             />
           </div>
           <p className="shrink-0 border-t border-white/10 px-3 py-1.5 text-caption text-text-secondary">

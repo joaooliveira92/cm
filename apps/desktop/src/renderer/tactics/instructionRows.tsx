@@ -1,6 +1,6 @@
 /**
  * The rows and panels Set Instructions is built from, in CM 03/04's look: a tick box enabling a
- * dropdown, an on/off tick with its yellow hint, a plain set-piece dropdown, and the titled panel
+ * dropdown, an on/off tick with its yellow hint, and the titled panel
  * they sit in.
  */
 import { useId, type ReactNode } from "react";
@@ -135,39 +135,6 @@ export const TickFlagRow = ({
     </div>
   );
 };
-
-/** A set-piece role: a plain dropdown whose first entry is "(default)", in the tick rows' columns. */
-export const SetPieceRoleRow = ({
-  label,
-  values,
-  currentValue,
-  onChange,
-  disabled,
-}: {
-  readonly label: string;
-  readonly values: ReadonlyArray<string>;
-  readonly currentValue: string;
-  readonly onChange: (value: string) => void;
-  readonly disabled?: boolean | undefined;
-}) => (
-  <div className={ROW_CLASS}>
-    <span />
-    <span className="text-label font-semibold text-text-bright">{label}</span>
-    <select
-      value={currentValue}
-      onChange={(e) => onChange(e.target.value)}
-      className={`${CM_SELECT_CLASS} w-full ${currentValue === "default" ? "opacity-60" : ""}`}
-      disabled={disabled}
-      aria-label={label}
-    >
-      {values.map((v) => (
-        <option key={v} value={v}>
-          {v === "default" ? "(default)" : displayValue(v)}
-        </option>
-      ))}
-    </select>
-  </div>
-);
 
 /** A run of rows, ruled off from the next as CM's list ran on without headings. The name is for
  *  assistive technology only. */

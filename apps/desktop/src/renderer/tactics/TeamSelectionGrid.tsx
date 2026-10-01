@@ -33,9 +33,15 @@ const activateOnKey = (activate: () => void) => (event: KeyboardEvent) => {
   activate();
 };
 
-const COND_COLUMN = "@max-[32rem]:hidden";
-const POS_COLUMN = "@max-[27rem]:hidden";
-const FIT_WORD = "@max-[22rem]:hidden";
+/** Which optional columns the View menu shows. */
+export interface TeamSelectionColumns {
+  readonly pos: boolean;
+  readonly fit: boolean;
+  readonly condition: boolean;
+}
+
+/** A column the View menu hides is gone; a shown one still drops out once the panel is too narrow. */
+const columnClass = (shown: boolean, narrowest: string): string => (shown ? narrowest : "hidden");
 
 const emptySuitabilityRecord: Record<string, number> = {};
 
@@ -70,6 +76,7 @@ export const TeamSelectionGrid = ({
   onSelectSlot,
   onSwap,
   onAssign,
+  columns,
 }: {
   readonly tactic: Tactic;
   readonly squad: ReadonlyArray<SquadPlayerView>;
@@ -79,7 +86,12 @@ export const TeamSelectionGrid = ({
   readonly onSwap: (from: number, to: number) => void;
   /** Put a reserve into a starter slot; whoever stood there drops to the reserves. */
   readonly onAssign: (slotIndex: number, playerId: PlayerId) => void;
+  readonly columns: TeamSelectionColumns;
 }) => {
+  const COND_COLUMN = columnClass(columns.condition, "@max-[32rem]:hidden");
+  const POS_COLUMN = columnClass(columns.pos, "@max-[27rem]:hidden");
+  const FIT_WORD = columnClass(columns.fit, "@max-[22rem]:hidden");
+
   const squadById = useMemo(
     () => new Map(squad.map((player) => [player.id, player])),
     [squad],
