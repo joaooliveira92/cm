@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
-import { RESTARTED_FROM_KICKOFF } from "../../../src/renderer/match/MatchDayScreen.js";
+import { RESTARTED_FROM_KICKOFF } from "../../../src/renderer/match/components/MatchDayLayout.js";
 import { clearActiveMatch, getActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetActionHandlers } from "../../../src/renderer/actions/dispatch.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";

@@ -21,14 +21,20 @@ describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () 
     }
   });
 
-  it("lays a line out left flank, centre, right flank, whatever the slot order", () => {
+  it("lays each slot at its cell's centre on the pitch", () => {
     const positions = toPositions(BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!);
     const spots = pitchLayout(positions);
-    const [dcA, dcB, dl, dr] = [1, 2, 3, 4].map((slot) => spots[slot]!);
-    expect(dl!.x).toBeLessThan(dcA!.x);
-    expect(dcA!.x).toBeLessThan(dcB!.x);
-    expect(dcB!.x).toBeLessThan(dr!.x);
-    expect(new Set([dcA, dcB, dl, dr].map((spot) => spot!.y)).size).toBe(1);
+    const [gk, dR, dL, dRC, dLC] = [0, 1, 2, 3, 4].map((slot) => spots[slot]!);
+    expect(gk!.x).toBe(50);
+    expect(gk!.y).toBe(88);
+    expect(dR!.x).toBe(89);
+    expect(dR!.y).toBe(69);
+    expect(dL!.x).toBe(11);
+    expect(dL!.y).toBe(69);
+    expect(dRC!.x).toBe(70);
+    expect(dRC!.y).toBe(69);
+    expect(dLC!.x).toBe(30);
+    expect(dLC!.y).toBe(69);
   });
 
   it("puts the keeper deepest and the strikers highest", () => {
@@ -59,17 +65,13 @@ describe("cellAt — the cell a drop point on the pitch stands for", () => {
   });
 });
 
-describe("dropZoneAt — the patch of grass a cell's drop covers", () => {
-  it("cuts a flanked line into thirds and spans a centre-only line across the pitch", () => {
-    expect(dropZoneAt(10, 74)).toMatchObject({ cell: { row: "D", column: "L" }, left: 0 });
-    expect(dropZoneAt(50, 58)).toMatchObject({ cell: { row: "DM", column: "C" }, left: 0, right: 100 });
+describe("dropZoneAt — the nearest cell and raw click position", () => {
+  it("finds the nearest cell for a point on the outfield", () => {
+    expect(dropZoneAt(10, 74)).toMatchObject({ cell: { row: "D", column: "L" } });
+    expect(dropZoneAt(50, 58)).toMatchObject({ cell: { row: "DM", column: "C" } });
   });
 
-  it("tiles the outfield: each zone ends where the next line's begins", () => {
-    const bands = [10, 28, 42, 58, 74].map((y) => dropZoneAt(50, y)!);
-    for (const [index, band] of bands.slice(1).entries()) {
-      expect(band.top).toBe(bands[index]!.bottom);
-    }
-    expect(bands[0]!.top).toBe(0);
+  it("returns null in the keeper's end", () => {
+    expect(dropZoneAt(50, 85)).toBeNull();
   });
 });

@@ -78,7 +78,7 @@ describe("ticket 12 — the panel commands the controlled club, and records only
     act(() => void dispatchAction("make-substitution"));
 
     await waitFor(() => expect(getLiveTactic(rid("s1"))?.assignments[2]).toBe("bench-2"));
-    expect(getLiveTactic(rid("s1"))?.team.mentality).toBe("balanced");
+    expect(getLiveTactic(rid("s1"))?.team.mentality).toBe("normal");
   });
 
   it("a refused substitution after earlier ones is not read as applied", async () => {

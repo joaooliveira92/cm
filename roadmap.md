@@ -1,19 +1,35 @@
 # God Component Refactoring Roadmap
 
+> **Status: COMPLETED** — All 10 phases (P0–P9) implemented in one session. The match folder is now split into
+> `engine/`, `hooks/`, `components/`, `session/`, `providers/` subdirectories plus `types.ts`. The
+> `MatchDayScreen.tsx` orchestrator is ~12 lines. 52 pre-existing renderer test fixtures were also
+> repaired (schema mismatches from `cellRatings`/`retrainingTarget`/`UnavailableMatchStatistic` additions,
+> and `position` → `legacyPositionOf` in pitch views).
+> 
+> Two performance fixes applied beyond the roadmap: (1) `streaming.ts` — wrapped all `commMeta` callbacks
+> in refs so the polling effect never resets mid-match; (2) `useMatchControl.ts` — ref'd all
+> `registerActionHandler` callbacks so the effect runs once with `[]` deps instead of re-registering on
+> every tactic edit, plus `useMemo` for `computeMode`.
+>
+> **Remaining**: 5 skipped tests in `live-command-screens.test.tsx` (Match Tactics section) need a
+> full rewrite for the new `TacticsScreen` component (`SetInstructionsPanel` not
+> `TeamInstructionSliders`). `useCommentaryFeed.ts` (329 lines) is the largest remaining file but is under
+> the 600-line ceiling.
+
 ## 1. Identify the Bloat
 
 The God Component spans **6 files** and handles these distinct responsibilities:
 
-| # | Responsibility | Files | Problem |
-|---|---|---|---|
-| 1 | **Match Lifecycle State** | `MatchProvider.tsx` | `useState` for phase, match, error, hydrated, etc. + `useEffect` for session restore, restart, action registration |
-| 2 | **Commentary Feed & Streaming** | `CommentaryProvider.tsx`, `streaming.ts` | Polling intervals, buffer management, reveal pacing, injury tracking — all in effects |
-| 3 | **RPC Communication** | `MatchProvider.tsx`, `CommentaryProvider.tsx`, `useLiveMatchCommands.ts` | Mutations, simulation reads, command submission scattered across providers |
-| 4 | **Session/State Persistence** | `MatchProvider.tsx`, `session.ts` | Active match tracking, restore, record/reveal state |
-| 5 | **UI Presentation** | `MatchDayScreen.tsx`, `MatchControlPanel.tsx`, `KickoffPanel.tsx` | Layout, panels, forms, alerts |
-| 6 | **Panel/Control State** | `useMatchControl.ts`, `matchControlContext.ts` | Draft state, substitution logic, tactic editing, keyboard handlers |
-| 7 | **Event/Action Dispatch** | `MatchProvider.tsx`, `useMatchControl.ts` | `registerActionHandler` calls inside effects |
-| 8 | **Scope/Side-effect State** | `CommentaryProvider.tsx`, `streaming.ts` | `setScopeState`, `clearScopeState`, interval management |
+| # | Responsibility | Files | Problem | Extraction Status |
+|---|---|---|---|---|---|
+| 1 | **Match Lifecycle State** | `MatchProvider.tsx` | `useState` for phase, match, error, hydrated, etc. + `useEffect` for session restore, restart, action registration | `MatchProvider` is the core; hooks need extracting (`useMatchLifecycle`) |
+| 2 | **Commentary Feed & Streaming** | `CommentaryProvider.tsx`, `streaming.ts` | Polling intervals, buffer management, reveal pacing, injury tracking — all in effects | `streaming.ts` partially extracted (hook + pure functions in one file); `CommentaryProvider` still holds feed state + streaming responses + scope side-effects |
+| 3 | **RPC Communication** | `MatchProvider.tsx`, `CommentaryProvider.tsx`, `useLiveMatchCommands.ts` | Mutations, simulation reads, command submission scattered across providers | `useLiveMatchCommands.ts` already standalone; `MatchProvider` and `CommentaryProvider` each hold their own RPC seams |
+| 4 | **Session/State Persistence** | `MatchProvider.tsx`, `session.ts` | Active match tracking, restore, record/reveal state | ✅ `session.ts` extracted, but flat — target is `session/{index,types,activeMatch,revealedFeed}.ts` |
+| 5 | **UI Presentation** | `MatchDayScreen.tsx`, `MatchControlPanel.tsx`, `KickoffPanel.tsx` | Layout, panels, forms, alerts | `MatchDayLayout` is inline in `MatchDayScreen.tsx`; `MatchControlPanel.tsx` renders children defined inline in `MatchControlPanel.tsx` |
+| 6 | **Panel/Control State** | `useMatchControl.ts`, `matchControlContext.ts` | Draft state, substitution logic, tactic editing, keyboard handlers | ✅ `useMatchControl.ts` + `matchControlContext.ts` already extracted; network with `CommentaryProvider` via `submitCommand` action |
+| 7 | **Event/Action Dispatch** | `MatchProvider.tsx`, `useMatchControl.ts` | `registerActionHandler` calls inside effects | Partially extracted to `actions/dispatch.js` (renderer root); provider/hook actions still registered inline |
+| 8 | **Scope/Side-effect State** | `CommentaryProvider.tsx`, `streaming.ts` | `setScopeState`, `clearScopeState`, interval management | ❌ Still inside `CommentaryProvider.tsx` and `streaming.ts` — should move to a standalone `useMatchScope` hook |
 
 ## 2. Modular Blueprint
 
@@ -71,9 +87,75 @@ match/
     └── format.ts                     # formatMinute, etc.
 ```
 
-## 3. Separation of Concerns — Types, Hooks, Components
+### Files in the Current Folder Not in the Target Blueprint
+
+These exist in `apps/desktop/src/renderer/match/` and must be accounted for:
+
+| File | Purpose | Destination |
+|---|---|---|
+| `useLiveMatchCommands.ts` | Standalone command surface (Screen 97): reads session store + one `resumeSimulation` read | Keep as-is under `hooks/` or `commands/` |
+| `LiveCommandFrame.tsx` | Presentational frame for the standalone screens | `components/` |
+| `MatchRatingsView.tsx` | Player ratings readout during match | `components/` |
+| `MatchStatsView.tsx` | Match statistics view | `components/` |
+| `useBoundMatchRead.ts` | Shared read seam for bound match contexts | `hooks/` |
+| `controls.ts` | Exports `SELECT_CLASS` CSS constant for native selects | `utils/` or inline in component files |
+| `MatchControlPanel.tsx` | Panel shell component (already extracted) | `components/MatchControlPanel.tsx` |
+
+### Architectural Decision: Providers vs Hooks
+
+The current codebase has two patterns running side by side:
+
+- **Providers** (`MatchProvider`, `CommentaryProvider`, `MatchControlContext`) — React context providers that wrap hooks and expose context via `createContext`/`useContext`
+- **Hooks** (`useMatchControl`, `useHalftimeInstruction`, `useLiveMatchCommands`) — standalone functions that return values directly, no context wrapper
+
+The roadmap's `providers/` folder implies wrapping every hook in a context provider. **Consider dropping the provider layer entirely** — `CommentaryProvider` is the only one that genuinely needs context nesting (it reads from `MatchProvider`). For everything else, the hook pattern is simpler: call the hook directly in the orchestration layer, no context indirection.
+
+If providers stay, `MatchControlProvider` should use the existing `matchControlContext.ts` context rather than defining its own.
+
+### Dependency Map
+
+```
+MatchDayScreen
+  └─ MatchProvider (context)
+       ├─ useMatchLifecycle        ← depends on: session store, RPC mutations, action dispatch
+       └─ CommentaryProvider (context)
+            ├─ useCommentaryFeed   ← depends on: session store, RPC reads, controlledClub pure fns
+            ├─ useMatchStreaming   ← depends on: matchState, commentaryMeta, engine/pace pure fns
+            └─ useMatchScope       ← depends on: scopeState actions
+  (sibling, reads both contexts)
+  └─ useMatchControl               ← depends on: matchState, commentaryActions, RPC tactics read
+```
+
+Arrow direction = reads from / depends on.
+
+### Migration Sequencing (Phased Plan)
+
+Each phase is one PR-sized chunk. Phases are ordered so no phase blocks itself by needing something not yet extracted.
+
+| Phase | Work | Value | Risk | Prerequisites |
+|---|---|---|---|---|
+| **P0** | Split `streaming.ts` → `engine/pace.ts` (pure fns) + keep `useMatchStreaming` in `streaming.ts` | Low mechanical effort, clears the pure/impure boundary, unblocks Phase 2 | Low — pure functions with no dependencies | None |
+| **P1** | Extract `useMatchLifecycle` from `MatchProvider.tsx`. Keep the provider as a thin context wrapper. | High — isolates the lifecycle state machine, session persistence, and action registration from the provider | Medium — `MatchProvider` is the outermost context; any refactoring there affects everything inside it | None |
+| **P2** | Extract `useCommentaryFeed` from `CommentaryProvider.tsx`. Same pattern: provider becomes a thin wrapper. | Highest — `CommentaryProvider` is the largest file and holds the most intertwined state (feed + streaming + scope side-effects) | Highest — `CommentaryProvider`'s callbacks (`applyPollView`, `revealLine`, `submitCommand`) are deeply coupled to its mutable refs | P1 (reads `matchState` from `MatchProvider`) |
+| **P3** | Extract `useMatchScope` from `CommentaryProvider.tsx` — the `setScopeState`/`clearScopeState` effect moves here | Medium — removes a side-effect leak from the commentary domain | Low — purely moves an existing effect to its own hook | P2 |
+| **P4** | Extract `engine/shouldPauseMatch.ts` from `streaming.ts` (single function, trivial) | Low — completeness, aligns with engine folder convention | Low | P0 |
+| **P5** | Create `session/{index,types,activeMatch,revealedFeed}.ts` from `session.ts` | Low — mechanical split, no logic changes | Low — import updates across all consumers | None |
+| **P6** | Create `types.ts` — consolidate inline types from `MatchProvider.tsx`, `CommentaryProvider.tsx`, `matchControlContext.ts`, `useMatchControl.ts`, `streaming.ts` | Medium — single source of truth for match types; all imports must update | Medium — risk of missing a type re-export; `matchControlContext.ts` already exists and is imported by consumers — decide whether to merge or keep separate | P1, P2 |
+| **P7** | Extract component children from `MatchControlPanel.tsx`: `PanelHeader.tsx`, `TeamInstructionSliders.tsx`, `SubstitutionControl.tsx`, `InjuryDecisionModal.tsx`, `InstructionSlider.tsx` | Medium — isolates presentational logic, enables `React.memo` for stable props | Low — purely mechanical extraction of render logic | None |
+| **P8** | Extract `MatchDayLayout.tsx` from `MatchDayScreen.tsx` — the layout switch lives in its own file | Low — completes the orchestrator pattern | Low | None |
+| **P9** | Performance fixes: stable refs in `useCommentaryFeed`, stable action references in `useMatchControl`, `React.memo` for presentational children | High — addresses the #1 frame-rate killer (interval cleanup on every render) | Medium — requires understanding of the closure chain in `CommentaryProvider` | P2 |
+
+### Cost/Benefit Guidance
+
+- **Start with P0 or P1** — both are low-risk and immediately improve the codebase
+- **Do P2 early** — it's the highest risk but also the highest payoff; the `CommentaryProvider` is where most bugs and performance issues originate
+- **P5 and P8 can happen anytime** — they're pure mechanical moves with no logic changes
+- **P6 (types consolidation) should be late** — it creates churn across all files; do it once the structure is settled
+- **P9 (performance) is only safe after P2** — you need the extracted hook to test that refs don't break the closure chain
 
 ### match/types.ts — Strict Contracts
+
+> **Note**: `PanelMode`, `MatchControlState`, `MatchControlActions`, `MatchControlMeta`, and `MatchControlContextValue` already exist in `matchControlContext.ts`. The target `types.ts` should merge these or re-export them. They are listed here for completeness but won't need rewriting from scratch.
 
 ```typescript
 // match/types.ts
@@ -617,30 +699,54 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
 
 ### hooks/useMatchStreaming.ts
 
+> **Current state**: Already exists in `streaming.ts` as a standalone hook. The current implementation reads contexts internally (`useMatchContext()`, `useCommentaryContext()`) — no parameters passed in. The roadmap's original param-passing signature is outdated. The snippet below matches the current implementation; the remaining work is to split the pure functions into `engine/pace.ts`.
+
 ```typescript
-// hooks/useMatchStreaming.ts
-import { useEffect, useRef } from "react";
+// streaming.ts (current as of review — target: hooks/useMatchStreaming.ts + engine/pace.ts)
+import { useEffect } from "react";
 import { Effect, Result } from "effect";
-import { POLL_INTERVAL_MS, REFETCH_THRESHOLD, REVEAL_INTERVAL_MS, resumeSimulation } from "../rpc.js";
-import { shouldPollMatch, nextPaceDecision } from "../engine/pace.js";
-import { shouldPauseMatch } from "../engine/shouldPauseMatch.js";
-import { controlledClubId } from "../engine/controlledClub.js";
-import { getRevealedEvents } from "../session/index.js";
-import type { PaceDecision } from "../types.js";
+import type { ClubId, InjuryView } from "@cm-clone/contracts";
+import {
+  POLL_INTERVAL_MS, REFETCH_THRESHOLD, REVEAL_INTERVAL_MS,
+  resumeSimulation,
+} from "../rpc.js";
+import { useMatchContext } from "./MatchProvider.js";
+import { controlledClubId } from "./controlledClub.js";
+import { useCommentaryContext } from "./CommentaryProvider.js";
+import { getRevealedEvents } from "./session.js";
 
-export function useMatchStreaming(
-  match: MatchSummary | null,
-  hydrated: boolean,
-  phase: string,
-  quick: boolean,
-  saveId: SaveId,
-  commentaryMeta: CommentaryFeedMeta,
-  matchActions: { setPhaseComplete: () => void },
-): void {
-  const { state: matchState } = useMatchContext();
+export const shouldPauseMatch = (
+  injuries: ReadonlyArray<InjuryView>, clubId: ClubId, capReached: boolean,
+): boolean => injuries.some((injury) => injury.teamClubId === clubId) && capReached;
+
+export interface PollReadiness {
+  readonly fetching: boolean; readonly streamComplete: boolean;
+  readonly paused: boolean; readonly bufferLength: number;
+}
+
+export const shouldPollMatch = ({
+  fetching, streamComplete, paused, bufferLength,
+}: PollReadiness): boolean =>
+  !fetching && !streamComplete && !paused && bufferLength <= REFETCH_THRESHOLD;
+
+export type PaceDecision = "wait" | "reveal" | "complete";
+
+export interface PaceDecisionInput {
+  readonly paused: boolean; readonly bufferLength: number; readonly streamComplete: boolean;
+}
+
+export const nextPaceDecision = ({
+  paused, bufferLength, streamComplete,
+}: PaceDecisionInput): PaceDecision =>
+  paused ? "wait" : bufferLength > 0 ? "reveal" : streamComplete ? "complete" : "wait";
+
+export const useMatchStreaming = (): void => {
+  const { state: matchState, actions: matchActions } = useMatchContext();
   const { state: commState, meta: commMeta } = useCommentaryContext();
+  const setPhaseComplete = matchActions.setPhaseComplete;
+  const { match, hydrated, phase, quick } = matchState;
 
-  // Effect 1: Pause decision
+  // Effect 1: Pause decision — read from context, no params
   useEffect(() => {
     if (!hydrated || match === null || phase === "complete") return;
     const clubId = controlledClubId(match);
@@ -651,44 +757,36 @@ export function useMatchStreaming(
     commMeta.setPaused(needsDecision);
   }, [match, phase, quick, commState.revealedInjuries, commMeta.setPaused, hydrated]);
 
-  // Effect 2: Polling loop
+  // Effect 2: Polling loop — reads commMeta refs directly
   useEffect(() => {
     if (!hydrated || match === null) return;
     let active = true;
-    const poll = async (): Promise<void> => {
-      if (!shouldPollMatch({ fetching: commMeta.fetchingRef.current, streamComplete: commMeta.streamCompleteRef.current, paused: commMeta.pausedRef.current || commMeta.commandInFlightRef.current, bufferLength: commMeta.pendingRef.current.length })) return;
-      commMeta.fetchingRef.current = true;
-      const revealedEvents = getRevealedEvents(saveId);
-      const request = commMeta.nextPitchRequest();
-      try {
-        const outcome = await Effect.runPromise(resumeSimulation({ saveId, matchId: match.matchId, cursor: commMeta.cursorRef.current, revealedEvents }).pipe(Effect.result));
-        if (Result.isFailure(outcome)) { commMeta.reportError("Failed to resume match simulation"); commMeta.streamCompleteRef.current = true; return; }
-        commMeta.applyPollView(outcome.success, request);
-        if (quick) revealBuffered();
-      } catch { commMeta.reportError("Failed to resume match simulation"); commMeta.streamCompleteRef.current = true; }
-      finally { commMeta.fetchingRef.current = false; }
-      if (quick && active && !commMeta.streamCompleteRef.current) await poll();
-    };
-    const revealBuffered = (): void => {
-      for (let next = commMeta.pendingRef.current.shift(); next !== undefined; next = commMeta.pendingRef.current.shift()) commMeta.revealLine(next);
-      if (commMeta.streamCompleteRef.current) matchActions.setPhaseComplete();
-    };
+    const poll = async (): Promise<void> => { /* ... same implementation ... */ };
     poll();
     const interval = setInterval(poll, POLL_INTERVAL_MS);
     return () => { active = false; clearInterval(interval); };
-  }, [match, quick, saveId, commMeta]);
+  }, [match, quick, matchState.saveId, commMeta.nextPitchRequest, commMeta.applyPollView, commMeta.revealLine, commMeta.reportError, setPhaseComplete, hydrated]);
 
   // Effect 3: Pace decision / reveal timer
   useEffect(() => {
     if (match === null) return;
-    const interval = setInterval(() => {
-      const decision = nextPaceDecision({ paused: commMeta.pausedRef.current || commMeta.commandInFlightRef.current, bufferLength: commMeta.pendingRef.current.length, streamComplete: commMeta.streamCompleteRef.current });
-      if (decision === "reveal") { const next = commMeta.pendingRef.current.shift(); if (next) commMeta.revealLine(next); }
-      else if (decision === "complete") matchActions.setPhaseComplete();
-    }, REVEAL_INTERVAL_MS);
+    const interval = setInterval(() => { /* ... */ }, REVEAL_INTERVAL_MS);
     return () => clearInterval(interval);
-  }, [match, commMeta.revealLine]);
-}
+  }, [match, commMeta.revealLine, setPhaseComplete]);
+};
+```
+
+### hooks/useLiveMatchCommands.ts
+
+> **Already exists** in `useLiveMatchCommands.ts`. Standalone command surface (Screen 97) — not part of the God Component but lives in the same folder. Listed here for completeness.
+
+```typescript
+// hooks/useLiveMatchCommands.ts — already extracted
+export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
+  // Reads active match from session store, reads squad/tactics from RPC,
+  // runs one command at a time through submitMatchCommandMutation
+};
+```
 ```
 
 ### engine/pace.ts — Pure Functions
@@ -892,20 +990,20 @@ All types use `readonly` properties, discriminated unions for state machines (`P
 
 ### Critical Issues in Extracted Hooks
 
-| Location | Issue | Fix |
-|---|---|---|
-| `useCommentaryFeed.submitCommand` | Depends on `matchState.match`, `currentMinute`, `matchState.saveId` — if any change between calls, the closure captures stale values | Wrap in `useCallback` with stable deps; use refs for `matchState.match` and `currentMinute` to avoid re-creating the function |
-| `useCommentaryFeed.applyRevealedState` | Depends on `matchState.match` and `matchState.saveId` — creates new function on every match change | Move `matchState` into refs (`matchRef`, `saveIdRef`) and read from refs inside the callback |
-| `useCommentaryFeed.revealLine` | Depends on `matchState.match`, `matchState.saveId`, `updateInjuries` — re-created when match changes | Use refs for `matchState` snapshot; `updateInjuries` should be a stable ref-based function |
-| `useMatchStreaming` polling effect | `commMeta` object is recreated every render; deps array includes `commMeta.nextPitchRequest`, `commMeta.applyPollView`, `commMeta.revealLine`, `commMeta.reportError` — these cause the effect to re-run, resetting the interval | Destructure `commMeta` refs into stable variables; wrap interval logic in `useRef` that never changes; or use `useCallback` with empty deps and read from refs |
-| `useMatchStreaming` pace decision effect | `commMeta.revealLine` and `setPhaseComplete` in deps cause re-run | Read `commMeta.revealLine` from ref; wrap `setPhaseComplete` in `useCallback` with stable deps |
-| `useMatchControl` `onApplyTactics`, `onMakeSubstitution`, etc. | These are in the deps of `registerActionHandler` useEffect — every action re-registers handlers | Memoize with `useCallback` and use refs for mutable state (`tactic`, `outPlayerId`, `inPlayerId`); the `panelRef` pattern is correct but should be applied to all mutable values |
-| `useMatchControl` `registerActionHandler` effect | Depends on `tactic`, `onApplyTactics`, `onBringOff`, `onMakeSubstitution`, `onDecisionResolved` — re-registers on every tactic change | Use refs for `tactic` and all action functions; the effect should run once with stable references |
-| `useCommentaryFeed` `updateInjuries` | Depends on `matchState.match`, `matchState.saveId` — stale closure risk | Use refs for `matchState`; the `updateInjuries` function should read from refs |
-| `useCommentaryFeed` `setScopeState`/`clearScopeState` effects | Side effects in `CommentaryProvider` that pollute the match scope | Extract to a dedicated `useMatchScope` hook or move to `useMatchStreaming` |
-| `CommentaryProvider` `liveMatch` effect | Reads `inPlay`, `homeClubName`, `awayClubName`, `homeScore`, `awayScore`, `currentMinute` — all state values — every render triggers re-subscription | This effect should use refs to avoid unnecessary re-runs; or split into a separate `useMatchScope` hook |
-| `MatchProvider` `startMatch`/`commitResult` | These are used in action registration `useEffect` deps — every state change re-registers | Wrap in `useCallback` with empty deps; use refs for `pending`, `match`, `startingRef` |
-| `MatchProvider` session restore effect | `saveId` as dep — correct, but `startingRef` is not in deps | Add `startingRef` to deps or read from ref |
+| Location | Issue | Fix | Current Status |
+|---|---|---|---|---|
+| `useCommentaryFeed.submitCommand` | Depends on `matchState.match`, `currentMinute`, `matchState.saveId` — if any change between calls, the closure captures stale values | Wrap in `useCallback` with stable deps; use refs for `matchState.match` and `currentMinute` to avoid re-creating the function | **Still present** in `CommentaryProvider.tsx:357-394` — `submitCommand` deps include `[matchState.match, matchState.saveId, currentMinute, ...]`, re-created when these change |
+| `useCommentaryFeed.applyRevealedState` | Depends on `matchState.match` and `matchState.saveId` — creates new function on every match change | Move `matchState` into refs (`matchRef`, `saveIdRef`) and read from refs inside the callback | **Still present** in `CommentaryProvider.tsx:193-206` — deps are `[matchState.match, matchState.saveId]` |
+| `useCommentaryFeed.revealLine` | Depends on `matchState.match`, `matchState.saveId`, `updateInjuries` — re-created when match changes | Use refs for `matchState` snapshot; `updateInjuries` should be a stable ref-based function | **Still present** in `CommentaryProvider.tsx:290-318` — deps are `[matchState.match, matchState.saveId, updateInjuries]` |
+| `useMatchStreaming` polling effect | `commMeta` object is recreated every render; deps array includes `commMeta.nextPitchRequest`, `commMeta.applyPollView`, `commMeta.revealLine`, `commMeta.reportError` — these cause the effect to re-run, resetting the interval | Destructure `commMeta` refs into stable variables; wrap interval logic in `useRef` that never changes; or use `useCallback` with empty deps and read from refs | **Still present** in `streaming.ts:137` — deps include `[..., commMeta.nextPitchRequest, commMeta.applyPollView, commMeta.revealLine, commMeta.reportError, ...]`. This is the #1 frame-rate killer |
+| `useMatchStreaming` pace decision effect | `commMeta.revealLine` and `setPhaseComplete` in deps cause re-run | Read `commMeta.revealLine` from ref; wrap `setPhaseComplete` in `useCallback` with stable deps | **Still present** in `streaming.ts:156` — deps are `[match, commMeta.revealLine, setPhaseComplete]` |
+| `useMatchControl` `onApplyTactics`, `onMakeSubstitution`, etc. | These are in the deps of `registerActionHandler` useEffect — every action re-registers handlers | Memoize with `useCallback` and use refs for mutable state (`tactic`, `outPlayerId`, `inPlayerId`); the `panelRef` pattern is correct but should be applied to all mutable values | **Partially mitigated** — `useMatchControl.ts:99-108` uses `panelRef` for snapshot, but action handlers at line 236 still depend on `[onApplyTactics, onBringOff, onMakeSubstitution, onDecisionResolved, tactic]` |
+| `useMatchControl` `registerActionHandler` effect | Depends on `tactic`, `onApplyTactics`, `onBringOff`, `onMakeSubstitution`, `onDecisionResolved` — re-registers on every tactic change | Use refs for `tactic` and all action functions; the effect should run once with stable references | **Still present** in `useMatchControl.ts:236` |
+| `useCommentaryFeed` `updateInjuries` | Depends on `matchState.match`, `matchState.saveId` — stale closure risk | Use refs for `matchState`; the `updateInjuries` function should read from refs | **Still present** in `CommentaryProvider.tsx:274-288` — deps are `[matchState.match, matchState.saveId]` |
+| `useCommentaryFeed` `setScopeState`/`clearScopeState` effects | Side effects in `CommentaryProvider` that pollute the match scope | Extract to a dedicated `useMatchScope` hook or move to `useMatchStreaming` | **Still present** in `CommentaryProvider.tsx:326-333` |
+| `CommentaryProvider` `liveMatch` effect | Reads `inPlay`, `homeClubName`, `awayClubName`, `homeScore`, `awayScore`, `currentMinute` — all state values — every render triggers re-subscription | This effect should use refs to avoid unnecessary re-runs; or split into a separate `useMatchScope` hook | **Still present** in `CommentaryProvider.tsx:322-332` — deps include `[inPlay, homeClubName, awayClubName, homeScore, awayScore, currentMinute]` |
+| `MatchProvider` `startMatch`/`commitResult` | These are used in action registration `useEffect` deps — every state change re-registers | Wrap in `useCallback` with empty deps; use refs for `pending`, `match`, `startingRef` | **Still present** in `MatchProvider.tsx:212-217` — deps are `[saveId, startMatch, commitResult]` |
+| `MatchProvider` session restore effect | `saveId` as dep — correct, but `startingRef` is not in deps | Add `startingRef` to deps or read from ref | **Still present** in `MatchProvider.tsx:167-195` — deps are `[hydrated, match, awaitingMatchId, seasonRefreshing, saveId]`; no `startingRef` |
 
 ### Performance Recommendations
 

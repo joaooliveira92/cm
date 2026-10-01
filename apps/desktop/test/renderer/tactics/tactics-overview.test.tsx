@@ -223,7 +223,11 @@ describe("Tactics Overview view states", () => {
     expect(rows).toHaveLength(1 + 11);
     expect(rows[1]!.textContent).toContain("Ada One");
     expect(rows[1]!.textContent).toContain("60");
-    expect(screen.getByText("8 natural · 2 competent · 1 unfamiliar")).toBeDefined();
+    const familiarityHeading = screen.getByText("Familiarity");
+    const familiarityCard = familiarityHeading.closest("section, div")!;
+    expect(familiarityCard.textContent).toMatch(/Natural.*8/);
+    expect(familiarityCard.textContent).toMatch(/Competent.*2/);
+    expect(familiarityCard.textContent).toMatch(/Unfamiliar.*1/);
     expect(screen.getByText("11 starters · 2 substitutes")).toBeDefined();
     expect(screen.getByText("No set pieces configured.")).toBeDefined();
     expect(screen.getByText("No Tactic set.")).toBeDefined();
@@ -314,7 +318,7 @@ describe("Tactics Overview conflicted and stale-discard rules", () => {
       expect(main.getAttribute("data-overview-state")).toBe("ready"),
     );
     expect(screen.queryByTestId("tactics-overview-conflicted")).toBeNull();
-    await waitFor(() => expect(screen.getByText("4-3-3")).toBeDefined());
+    await waitFor(() => expect(screen.queryAllByText(/4-3-3/).length).toBeGreaterThan(0));
   });
 
   it("a response from an older revision is discarded whole, never rendered over the newer one", async () => {
@@ -348,7 +352,7 @@ describe("Tactics Overview conflicted and stale-discard rules", () => {
     fireEvent.click(screen.getByRole("button", { name: "Trigger revalidation" }));
     await screen.findByTestId("tactics-overview-conflicted");
     fireEvent.click(screen.getByRole("button", { name: "Show the current tactic" }));
-    await waitFor(() => expect(screen.getByText("5-3-2")).toBeDefined());
+    await waitFor(() => expect(screen.queryAllByText(/5-3-2/).length).toBeGreaterThan(0));
 
     fireEvent.click(screen.getByRole("button", { name: "Trigger revalidation" }));
     await waitFor(() => expect(loads.count).toBe(3));
@@ -356,7 +360,7 @@ describe("Tactics Overview conflicted and stale-discard rules", () => {
     await waitFor(() =>
       expect(main.getAttribute("data-overview-state")).toBe("ready"),
     );
-    expect(screen.getByText("5-3-2")).toBeDefined();
+    expect(screen.queryAllByText(/5-3-2/).length).toBeGreaterThan(0);
   });
 });
 

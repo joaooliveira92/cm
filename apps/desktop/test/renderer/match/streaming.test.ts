@@ -5,7 +5,7 @@ import {
   nextPaceDecision,
   shouldPauseMatch,
   shouldPollMatch,
-} from "../../../src/renderer/match/streaming.js";
+} from "../../../src/renderer/match/engine/pace.js";
 
 const cid = (id: string) => ClubId.make(id);
 const pid = (id: string) => PlayerId.make(id);

@@ -7,7 +7,7 @@
  * until then, and every hook above has already run, so hook order never depends
  * on the load.
  */
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
   PlayerId,
   Tactic,
@@ -56,6 +56,7 @@ export const useMatchControl = ({
   const [open, setOpen] = useState(false);
   const [squad, setSquad] = useState<ReadonlyArray<SquadPlayerView>>([]);
   const [tactic, setTactic] = useState<Tactic | null>(null);
+  const tacticRef = useRef<Tactic | null>(null);
   const [outPlayerId, setOutPlayerId] = useState(PlayerId.make(""));
   const [inPlayerId, setInPlayerId] = useState(PlayerId.make(""));
   const { atHalftime, isHalftime, setIsHalftime } = useHalftimeInstruction(saveId);
@@ -82,7 +83,7 @@ export const useMatchControl = ({
 
   // Derived panel mode: one of closed, open, injury-prompt, injury-decision,
   // or sub-draft. Makes illegal state combinations unrepresentable.
-  const computeMode = (): PanelMode => {
+  const mode = useMemo((): PanelMode => {
     if (!open) return { _tag: "closed" };
     if (orangeInjury !== undefined && subsStatus.capReached && !isShorthanded)
       return { _tag: "injury-decision" };
@@ -91,8 +92,7 @@ export const useMatchControl = ({
     if (hasRedInjury) return { _tag: "injury-prompt", severity: "red" };
     if (injuryPrompt) return { _tag: "injury-prompt", severity: "orange" };
     return { _tag: "open" };
-  };
-  const mode = computeMode();
+  }, [open, orangeInjury, subsStatus.capReached, isShorthanded, outPlayerId, inPlayerId, hasRedInjury, injuryPrompt]);
 
   // The panel-scoped key handlers read a fresh snapshot each keystroke (the
   // seam keeps the functions themselves stable — no re-subscription churn).
@@ -132,6 +132,8 @@ export const useMatchControl = ({
     }
   }, [tacticsResult, saveId]);
 
+  useEffect(() => { tacticRef.current = tactic; }, [tactic]);
+
   // The shared submission path: run the command through the provider's mutation seam and show its
   // status in the same words the standalone screens use. A transport failure is a rejection too.
   const runSubmission = async (command: MatchCommand): Promise<CommandStatus | null> => {
@@ -154,28 +156,24 @@ export const useMatchControl = ({
     if (matchState.match !== null) recordLiveTactic(saveId, matchState.match.matchId, applied);
   };
 
-  const onApplyTactics = async (): Promise<void> => {
-    if (!tactic) return;
-    const outcome = await runSubmission({ _tag: "ChangeTactics", clubId, tactic });
-    if (outcome !== null && outcome._tag !== "rejected") recordApplied(tactic);
-  };
+  const onApplyTactics = useCallback(async (): Promise<void> => {
+    if (!tacticRef.current) return;
+    const outcome = await runSubmission({ _tag: "ChangeTactics", clubId, tactic: tacticRef.current });
+    if (outcome !== null && outcome._tag !== "rejected") recordApplied(tacticRef.current);
+  }, [clubId, runSubmission, recordApplied]);
 
   // Ticket 11 orange no-subs bring-off: the manager drags the injured player off to 10 men.
-  const onBringOff = (): void => {
+  const onBringOff = useCallback((): void => {
     if (!orangeInjury) return;
     void runSubmission({ _tag: "ForceOff", clubId, playerId: orangeInjury.playerId });
-  };
+  }, [clubId, orangeInjury, runSubmission]);
 
-  const onMakeSubstitution = async (): Promise<void> => {
-    if (!tactic) return;
+  const onMakeSubstitution = useCallback(async (): Promise<void> => {
+    if (!tacticRef.current) return;
     if (!subsKnown) {
       setSubAlert("Waiting for the match to report substitutions.");
       return;
     }
-    // Validate the draft against the server-reported caps and the no-subs /
-    // same-player rules before submitting — the disabled guard on the button is
-    // the primary gate; this rejects with a visible reason instead of a silent
-    // no-op (the backend still enforces caps authoritatively).
     const validation = validateLiveSubstitution(subsStatus, String(outPlayerId), String(inPlayerId));
     if (!validation.ok) {
       setSubAlert(substitutionErrorLabel(validation.error!));
@@ -184,22 +182,32 @@ export const useMatchControl = ({
     setSubAlert(null);
     const outcome = await runSubmission({ _tag: "MakeSubstitution", clubId, outPlayerId, inPlayerId });
     if (outcome === null || outcome._tag !== "applied") return;
-    // The match took it: swap the player in both the draft (keeping its unapplied instruction edits)
-    // and the applied tactic, and record only the applied one for the standalone screens.
     const swap = (from: Tactic): Tactic =>
       new Tactic({
         ...from,
         assignments: from.assignments.map((playerId) => (playerId === outPlayerId ? inPlayerId : playerId)),
       });
     setTactic((current) => (current === null ? current : swap(current)));
-    recordApplied(swap(appliedTacticRef.current ?? tactic));
+    recordApplied(swap(appliedTacticRef.current ?? tacticRef.current));
     setOutPlayerId(PlayerId.make(""));
     setInPlayerId(PlayerId.make(""));
-  };
+  }, [clubId, subsKnown, subsStatus, outPlayerId, inPlayerId, runSubmission, recordApplied]);
 
-  const onDecisionResolved = (): void => {
+  const onDecisionResolved = useCallback((): void => {
     commentaryActions.resume();
-  };
+  }, [commentaryActions]);
+
+  // Stable refs for action callbacks so the registerActionHandler effect
+  // never re-runs when the callbacks change (which happens on every tactic
+  // edit). The effect reads the latest callback from each ref.
+  const onApplyTacticsRef = useRef(onApplyTactics);
+  onApplyTacticsRef.current = onApplyTactics;
+  const onBringOffRef = useRef(onBringOff);
+  onBringOffRef.current = onBringOff;
+  const onMakeSubstitutionRef = useRef(onMakeSubstitution);
+  onMakeSubstitutionRef.current = onMakeSubstitution;
+  const onDecisionResolvedRef = useRef(onDecisionResolved);
+  onDecisionResolvedRef.current = onDecisionResolved;
 
   // Register the panel Actions so buttons and the key map dispatch the same registered handlers
   // (ADR-0012). Decided before the early return so hook order never depends on tactic load.
@@ -207,21 +215,22 @@ export const useMatchControl = ({
     const unregisters = [
       registerActionHandler("toggle-control-panel", () => setOpen((v) => !v)),
       registerActionHandler("apply-live-tactics", () => {
-        void onApplyTactics();
+        void onApplyTacticsRef.current();
       }),
       registerActionHandler("make-substitution", () => {
-        void onMakeSubstitution();
+        void onMakeSubstitutionRef.current();
       }),
       registerActionHandler("play-on", () => {
         setStatus("Play on — they stay, crippled, with escalation risk.");
-        onDecisionResolved();
+        onDecisionResolvedRef.current();
       }),
       registerActionHandler("bring-off", () => {
-        onBringOff();
+        onBringOffRef.current();
       }),
       registerActionHandler("set-live-mentality", (params) => {
-        if (!tactic) return;
-        setTactic(new Tactic({ ...tactic, team: { ...tactic.team, mentality: (params as { value: Mentality }).value } }));
+        const t = tacticRef.current;
+        if (!t) return;
+        setTactic(new Tactic({ ...t, team: { ...t.team, mentality: (params as { value: Mentality }).value } }));
       }),
       registerActionHandler("set-live-substitute-off", (params) =>
         setOutPlayerId((params as { playerId: PlayerId }).playerId),
@@ -233,7 +242,7 @@ export const useMatchControl = ({
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [onApplyTactics, onBringOff, onMakeSubstitution, onDecisionResolved, tactic]);
+  }, []);
 
   // Publish the panel's open/closed state to the spine (match-day keyboard
   // note): while open it is a soft overlay layer — bare keys beneath it are

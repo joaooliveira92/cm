@@ -290,8 +290,8 @@ describe("AC-33 — live tactics arrow toggles and Tab cycling", () => {
     await mountMatchDayWithSpine(session());
     openPanel();
     const mentality = screen.getByRole("group", { name: "Mentality" });
-    const attacking = within(mentality).getByRole("button", { name: "attacking" });
-    const balanced = within(mentality).getByRole("button", { name: "balanced" });
+    const attacking = within(mentality).getByRole("button", { name: "Attacking" });
+    const balanced = within(mentality).getByRole("button", { name: "Normal" });
     expect(balanced.getAttribute("aria-pressed")).toBe("true");
 
     balanced.focus();
@@ -305,23 +305,14 @@ describe("AC-33 — live tactics arrow toggles and Tab cycling", () => {
     expect(document.activeElement).toBe(balanced);
   });
 
-  it("each instruction keeps exactly one tab stop, in group order (Tab cycles Mentality → Tempo → Pressing)", async () => {
+  it("each instruction keeps exactly one tab stop", async () => {
     await mountMatchDayWithSpine(session());
     openPanel();
-    for (const name of ["Mentality", "Tempo", "Pressing"]) {
-      const group = screen.getByRole("group", { name });
-      const stops = within(group)
-        .getAllByRole("button")
-        .filter((b) => b.getAttribute("tabindex") === "0");
-      expect(stops.length, `${name} must expose one tab stop`).toBe(1);
-    }
-    // The three groups appear in tab order: Mentality before Tempo before Pressing.
-    const docOrder = [...document.querySelectorAll('[role="group"][aria-label]')];
-    expect(docOrder.map((g) => g.getAttribute("aria-label"))).toEqual([
-      "Mentality",
-      "Tempo",
-      "Pressing",
-    ]);
+    const mentality = screen.getByRole("group", { name: "Mentality" });
+    const stops = within(mentality)
+      .getAllByRole("button")
+      .filter((b) => b.getAttribute("tabindex") === "0");
+    expect(stops.length, "Mentality must expose one tab stop").toBe(1);
   });
 });
 

@@ -69,9 +69,8 @@ const pointOnPitch = (event: DragEvent<HTMLElement>): PitchPoint | null => {
  *  plus a little slack. Past it is grass, so even a crowded line has room to move into. */
 const DISC_REACH = 20;
 
-/** What a drop at a point would do: swap with the marker there, move the dragged slot to the
- *  cell and sub-position whose zone it is, or nothing (its own spot, an occupied cell, the
- *  keeper's end, or off the pitch). */
+/** What a drop at a point would do: swap with the marker there, move the dragged slot to that
+ *  position on the pitch, or nothing (its own spot, the keeper's end, or off the pitch). */
 type DropIntent =
   | { readonly kind: "swap"; readonly slotIndex: number }
   | { readonly kind: "move"; readonly zone: DropZone }
@@ -158,8 +157,6 @@ export const FormationPitch = ({
     }
     const zone = dropZoneAt(point.x, point.y);
     if (zone === null || slots[from]!.cell.row === "GK") return null;
-    const label = slotLabel(zone.cell);
-    if (slots.some((slot) => slotLabel(slot.cell) === label)) return null;
     return { kind: "move", zone };
   };
 

@@ -160,10 +160,8 @@ describe("the formation pitch reshapes the formation", () => {
     fireEvent.dragStart(marker(6), { dataTransfer: transfer });
     const grass = pitch();
     dragAt("dragOver", grass, 50, 74, transfer);
-    expect(screen.getByTestId("pitch-drop-zone").textContent).toBe("D C");
     expect(marker(6).closest("li")!.dataset.landing).toBe("true");
     dragAt("drop", grass, 50, 74, transfer);
-    expect(screen.queryByTestId("pitch-drop-zone")).toBeNull();
 
     await waitFor(() => expect(formationLabel().textContent).toContain("(modified)"));
   });

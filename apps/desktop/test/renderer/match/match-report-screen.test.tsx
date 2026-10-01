@@ -53,7 +53,10 @@ const report = (overrides: Record<string, unknown> = {}) => ({
     awayClubName: "Away FC",
     throughMinute: null,
     rows: [{ key: "goals", home: 2, away: 1 }],
-    unavailable: ["possession", "corners", "fouls", "offsides"],
+    unavailable: ["possession", "corners"],
+    homePossession: null,
+    awayPossession: null,
+    chancesByType: null,
   },
   ...overrides,
 });

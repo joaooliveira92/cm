@@ -16,7 +16,7 @@ import {
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
   STATURE_TIERS,
-  slotLabel,
+  legacyPositionOf,
   tacticFromTemplate,
 } from "@cm-clone/shared";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
@@ -63,7 +63,7 @@ export const tacticView = (tactic = fullTactic()) => {
     ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((a) => [a, 12])),
     ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((a) => [a, 12])),
   });
-  const player = (id: string, firstName: string) => ({
+const player = (id: string, firstName: string) => ({
     id,
     firstName,
     lastName: "Player",
@@ -74,12 +74,13 @@ export const tacticView = (tactic = fullTactic()) => {
     positionLabel: "",
     canPlay: [],
     positionOrder: 0,
+    cellRatings: {},
     overallRating: 80,
     positionRatings: {},
     suitability: {},
-    retrainingTarget: null,
     condition: 90,
     trainingFocus: null,
+    retrainingTarget: null,
     nationality: "England",
     birthplace: "London",
     foreign: false,
@@ -120,7 +121,7 @@ export const pitchView = (swaps: Record<string, string> = {}, substitutes: Reado
   return {
     onPitch: tactic.assignments.map((playerId, index) => ({
       playerId: swaps[String(playerId)] ?? playerId,
-      position: slotLabel(tactic.slots[index]!.cell),
+      position: legacyPositionOf(tactic.slots[index]!.cell),
     })),
     substitutes,
   };
