@@ -17,6 +17,7 @@ import {
   TRAINING_SESSION_TYPES,
   TRAINING_TEMPLATE_NAMES,
   sameTrainingSessions,
+  scheduleRecoveryModifier,
   type TrainingIntensity,
   type TrainingSession,
   type TrainingSessionType,
