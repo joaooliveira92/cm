@@ -1,4 +1,4 @@
-import { pickRandom, type RandomSource } from "@cm-clone/shared";
+import { pickRandom, regimenDecayModifier, type RandomSource } from "@cm-clone/shared";
 import type { InjurySeverity, InjuryTier, InjuryTrigger, InjuryType } from "./events.js";
 
 /**
@@ -29,13 +29,17 @@ export const PENALTY_SLASH_FACTOR = 0.5;
 /** Injury Proneness (1-20) nudges the severity matrix: more prone -> more severe on the same roll. */
 const pronenessAdjustment = (injuryProneness: number): number => clamp((injuryProneness - 10) * 0.01, -0.15, 0.15);
 
+/** Regimen shifts severity cutoffs: higher regimen raises both thresholds (fewer severe injuries). */
+const regimenSeverityAdjustment = (regimen: number): number => (regimen - 3) * 0.03;
+
 export const resolveSeverity = (
   trigger: InjuryTrigger,
   injuryProneness: number,
   random: RandomSource,
+  regimen: number,
 ): InjurySeverity => {
   const roll = random.next();
-  const adjustment = pronenessAdjustment(injuryProneness);
+  const adjustment = pronenessAdjustment(injuryProneness) + regimenSeverityAdjustment(regimen);
   const cutoffs = SEVERITY_CUTOFFS[trigger];
   if (roll < cutoffs.light + adjustment) return "light";
   if (roll < cutoffs.medium + adjustment) return "medium";
@@ -60,7 +64,8 @@ export const rollInjury = (
   trigger: InjuryTrigger,
   injuryProneness: number,
   random: RandomSource,
+  regimen: number,
 ): ResolvedInjury => {
-  const severity = resolveSeverity(trigger, injuryProneness, random);
+  const severity = resolveSeverity(trigger, injuryProneness, random, regimen);
   return { severity, type: resolveType(trigger, random), tier: tierForSeverity(severity) };
 };

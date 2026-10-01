@@ -1,4 +1,4 @@
-import { pickRandom, type RandomSource, type TeamInstructions, type TeamSetPieces, type TakerList } from "@cm-clone/shared";
+import { pickRandom, regimenDecayModifier, type RandomSource, type TeamInstructions, type TeamSetPieces, type TakerList } from "@cm-clone/shared";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM, type MatchCommand } from "../commands.js";
 import { START_CONDITION, conditionDecayPerMinute, newConditionLedger } from "../condition.js";
 import type { MatchEvent, MatchHalf } from "../events.js";
@@ -59,6 +59,9 @@ export interface TeamRuntimeState {
    * as finisher. Set via a live ChangeTactics command, dropped at full time.
    */
   activeSpecificMarkings: Map<PlayerId, PlayerId>;
+  /** The manager's Regimen pillar value (1-5), snapshotted at kickoff. Affects Condition decay and
+   *  injury severity. AI clubs use 3 (neutral). */
+  readonly regimen: number;
 }
 
 /** The point a substitution window opens at: a half and a minute within it. */
@@ -67,7 +70,7 @@ export interface SubstitutionWindowKey {
   readonly minute: number;
 }
 
-export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
+export const initTeamState = (setup: MatchTeamSetup, regimen: number): TeamRuntimeState => ({
   clubId: setup.clubId,
   playersById: new Map(setup.squad.map((player) => [player.id, player])),
   resolved: resolveTeamTactics(setup.tactic, new Map(setup.squad.map((player) => [player.id, player]))),
@@ -83,6 +86,7 @@ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
   bench: setup.tactic.bench,
   beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
   activeSpecificMarkings: new Map(setup.tactic.specificMarkings ?? []),
+  regimen,
 });
 
 /** Applies one `MatchCommand` to team state. A `ChangeTactics` is always live (the kickoff Tactic
@@ -233,15 +237,17 @@ export const conditionStaminaEquivalent = (team: TeamRuntimeState): number => {
 const RUNNER_EXTRA_DECAY = 0.06;
 
 /** Decays each on-pitch player's Condition for one minute, driven by Stamina. Runners (slots with a
- *  run target) tire slightly faster. */
+ *  run target) tire slightly faster. The manager's Regimen pillar modifies total decay: higher
+ *  regimen = less decay (regimenDecayModifier < 1), lower = more (regimenDecayModifier > 1). */
 export const decayConditions = (team: TeamRuntimeState): void => {
+  const regimenMod = regimenDecayModifier(team.regimen);
   for (const slot of team.resolved.slots) {
     const player = team.playersById.get(slot.playerId);
     if (!player) continue;
     const current = team.conds.get(slot.playerId) ?? START_CONDITION;
     const baseDecay = conditionDecayPerMinute(player.attributes.stamina);
     const extra = slot.runPhase !== null ? RUNNER_EXTRA_DECAY : 0;
-    const next = current - baseDecay - extra;
+    const next = current - (baseDecay + extra) * regimenMod;
     team.conds.set(slot.playerId, clamp(next, 0, START_CONDITION));
   }
 };

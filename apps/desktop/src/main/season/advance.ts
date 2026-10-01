@@ -20,6 +20,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { runAiTransferWindow } from "../club/aiClubs.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { assertSaveNotArchived, releaseClubStaff } from "../career/managerStatus.js";
+import { loadManagerProfile } from "../career/managerProfile.js";
 import { accrueScoutingProgress } from "../club/scouting.js";
 import { loadUserClub } from "../club/squad.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
@@ -318,8 +319,15 @@ const runAdvance = (saveId: SaveId) =>
         // runs exactly once per Fixture because a second Continue at a standing boundary returns
         // early, above, before reaching here; and it precedes `MatchStarted`, which records the
         // recovered values, so every replay starts from them.
-        yield* recoverClubFitness(humanFixture.homeClubId, row.seasonNumber);
-        yield* recoverClubFitness(humanFixture.awayClubId, row.seasonNumber);
+        // The human club's recovery is multiplied by the manager's Regimen recovery modifier;
+        // the opponent (AI) uses neutral (3).
+        const userClub = yield* loadUserClub;
+        const profile = yield* loadManagerProfile;
+        const regimen = profile?.pillars.regimen ?? 3;
+        const homeRegimen = humanFixture.homeClubId === userClub.id ? regimen : 3;
+        const awayRegimen = humanFixture.awayClubId === userClub.id ? regimen : 3;
+        yield* recoverClubFitness(humanFixture.homeClubId, row.seasonNumber, homeRegimen);
+        yield* recoverClubFitness(humanFixture.awayClubId, row.seasonNumber, awayRegimen);
         yield* sql`UPDATE season SET phase = ${phaseAt(boundary.date)},
             awaiting_fixture_id = ${humanFixture.id}
           WHERE season_number = ${row.seasonNumber}`;

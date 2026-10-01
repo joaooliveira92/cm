@@ -212,6 +212,10 @@ export const startMatch = (savesDir: string, saveId: SaveId, fixtureId: FixtureI
             ? profile.pillars
             : { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
 
+          // Per-side regimen: the human's club uses their profile value; the opponent uses neutral 3.
+          const homeRegimen = sides.homeIsUser === 1 ? pillars.regimen : 3;
+          const awayRegimen = sides.homeIsUser === 1 ? 3 : pillars.regimen;
+
           const manifest = yield* readGenerationManifest;
           const matchId = MatchId.make(String(fixtureId));
           const seedFor = yield* MatchSeedSource;
@@ -222,6 +226,8 @@ export const startMatch = (savesDir: string, saveId: SaveId, fixtureId: FixtureI
             homeSetup,
             awaySetup,
             pillars,
+            homeRegimen,
+            awayRegimen,
           };
 
           const startSeq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);

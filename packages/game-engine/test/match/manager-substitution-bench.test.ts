@@ -43,25 +43,25 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
   });
 
   it("accepts a bench player who has never been on", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(5), bench[0]!)).toEqual({ accepted: true });
     expect(team.resolved.slots.map((slot) => slot.playerId)).toContain(bench[0]);
   });
 
   it("refuses a squad player not named on the bench, with a reason", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(5), offBench)).toEqual({ accepted: false, reason: `${offBench} is not named on the bench` });
   });
 
   it("refuses a bench player substituted off earlier", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(5), bench[0]!).accepted).toBe(true);
     expect(substitute(team, bench[0]!, bench[1]!).accepted).toBe(true);
     expect(substitute(team, starter(6), bench[0]!)).toEqual({ accepted: false, reason: `${bench[0]} has already been on the pitch` });
   });
 
   it("refuses a bench player who came on and was sent off", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(5), bench[0]!).accepted).toBe(true);
     // A red card removes the slot outright (`resolveCards`).
     team.resolved.slots = team.resolved.slots.filter((slot) => slot.playerId !== bench[0]);
@@ -69,7 +69,7 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
   });
 
   it("refuses a bench player who came on and was injured off", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(5), bench[0]!).accepted).toBe(true);
     const events: Array<MatchEvent> = [];
     forcePlayerOff(team, bench[0]!, 30, 1, events);
@@ -82,13 +82,13 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
       ...setup,
       tactic: { ...setup.tactic, bench: [starter(5), ...setup.tactic.bench.slice(1)] },
     };
-    const team = initTeamState(withStarterOnBench);
+    const team = initTeamState(withStarterOnBench, 3);
     expect(substitute(team, starter(5), bench[1]!).accepted).toBe(true);
     expect(substitute(team, starter(6), starter(5))).toEqual({ accepted: false, reason: `${starter(5)} has already been on the pitch` });
   });
 
   it("a refused command spends no substitution and opens no window", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(1), bench[0]!, 10).accepted).toBe(true);
     expect(substitute(team, starter(2), bench[1]!, 20).accepted).toBe(true);
     expect(substitute(team, bench[0]!, bench[2]!, 20).accepted).toBe(true);
@@ -105,7 +105,7 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
   });
 
   it("the bench is fixed at kickoff: a mid-match ChangeTactics naming another does not change who may come on", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const newBench = [offBench, null, null, null, null, null, null];
     expect(applyCommand(team, { _tag: "ChangeTactics", clubId: HOME, tactic: { ...setup.tactic, bench: newBench } }, 50, 2, false)).toEqual({
       accepted: true,

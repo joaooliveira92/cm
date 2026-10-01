@@ -6,6 +6,7 @@ import {
   deriveSeed,
   computeSquadQuality,
   nationCodeFromId,
+  regimenRecoveryModifier,
   resolveByStrength,
   resolveShootout,
   resultsStrength,
@@ -77,7 +78,7 @@ const RECOVERY_DAYS_PER_MATCHDAY = 7;
  * most recent injury's Severity (a knock recovers faster than a severe). Deterministic — the
  * Calendar has no dates (ADR-0004), so a fixed per-Matchday recovery step stands in for elapsed days.
  */
-export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
+export const recoverClubFitness = (clubId: ClubId, seasonNumber: number, regimen = 3) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
 
@@ -90,7 +91,7 @@ export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
        FROM training_schedule_sessions
        WHERE club_id = ${clubId}
        ORDER BY slot_index`;
-    const modifier = scheduleSessions.length > 0
+    const scheduleMod = scheduleSessions.length > 0
       ? scheduleRecoveryModifier(
         scheduleSessions.map((s) => ({
           type: s.sessionType as TrainingSessionType,
@@ -98,6 +99,8 @@ export const recoverClubFitness = (clubId: ClubId, seasonNumber: number) =>
         })),
       )
       : 1.0;
+    const regimenMod = regimenRecoveryModifier(regimen);
+    const modifier = scheduleMod * regimenMod;
 
     const rows = yield* sql<{
       playerId: PlayerId;
@@ -330,7 +333,7 @@ export const resolveFixtureScore = (
       tactic: toMatchTactic(awayTactic),
     };
 
-    const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed: matchSeed, home, away }));
+    const { events, conditions } = yield* Effect.sync(() => simulateMatchWithCondition({ seed: matchSeed, home, away, homeRegimen: 3, awayRegimen: 3 }));
     const fullTime = events.find((event) => event._tag === "FullTimeWhistle");
     if (!fullTime || fullTime._tag !== "FullTimeWhistle") {
       return yield* new FullTimeWhistleMissingError();

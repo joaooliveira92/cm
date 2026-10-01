@@ -16,7 +16,7 @@ const teamWithBench = (seed: number) => {
   const setup = withNamedBench(buildTeam(home, seed).setup);
   const starters = setup.tactic.slots.map((slot) => slot.playerId);
   const bench = setup.tactic.bench.filter((id) => id !== null);
-  return { team: initTeamState(setup), starters, bench };
+  return { team: initTeamState(setup, 3), starters, bench };
 };
 
 describe("applyCommand — substitution windows by half and minute", () => {

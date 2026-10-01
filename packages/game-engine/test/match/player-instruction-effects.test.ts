@@ -383,7 +383,7 @@ describe("specific marking (integration)", () => {
       clubId: ClubId.make("home"),
       squad: squad.map((p) => ({ ...p })) as unknown as ReadonlyArray<MatchPlayerInput>,
       tactic,
-    } as MatchTeamSetup);
+    } as MatchTeamSetup, 3);
 
   const changeTactic = (team: TeamRuntimeState, tactic: MatchTactic) =>
     applyCommand(team, {

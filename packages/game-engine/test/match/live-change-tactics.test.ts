@@ -28,7 +28,7 @@ const attacking: MatchTactic = { ...setup.tactic, team: { ...setup.tactic.team, 
 
 describe("applyCommand's live ChangeTactics", () => {
   it("after a red card leaves the team with 10 and changes its Team Instructions", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const sentOff = setup.tactic.slots[5]!.playerId;
     applyForcedOff(team, sentOff, 25, 1, []);
     const tenMen = onPitch(team);
@@ -45,7 +45,7 @@ describe("applyCommand's live ChangeTactics", () => {
   });
 
   it("naming a different XI changes no slot, and the substitutions the engine accepts follow the kickoff XI", () => {
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const kickoff = onPitch(team);
     const starter = setup.tactic.slots[5]!.playerId;
     const redrafted: MatchTactic = {

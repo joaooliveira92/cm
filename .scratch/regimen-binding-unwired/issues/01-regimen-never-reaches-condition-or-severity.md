@@ -1,6 +1,6 @@
 # 01: The Regimen Pillar never reaches Condition or injury severity
 
-**Status:** needs-triage
+**Status:** resolved
 
 **Type:** bug
 

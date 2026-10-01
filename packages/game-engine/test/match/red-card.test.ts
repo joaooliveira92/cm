@@ -49,7 +49,7 @@ const redCardDraws = (slotIndex: number, slotCount: number): RandomSource => {
 };
 
 const sendOff = (setup: MatchTeamSetup, slotIndex: number) => {
-  const team = initTeamState(setup);
+  const team = initTeamState(setup, 3);
   const before = onPitch(team);
   const events: Array<MatchEvent> = [];
   resolveCards(team, 30, 1, redCardDraws(slotIndex, before.length), events);

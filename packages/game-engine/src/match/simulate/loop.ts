@@ -1,4 +1,4 @@
-import { createSeededRng, type RandomSource, type TeamInstructions } from "@cm-clone/shared";
+import { createSeededRng, regimenDecayModifier, type RandomSource, type TeamInstructions } from "@cm-clone/shared";
 import type { MatchCommand } from "../commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "../events.js";
 import type { MatchTeamSetup } from "../types.js";
@@ -63,6 +63,10 @@ export interface SimulateMatchInput {
   readonly seed: number;
   readonly home: MatchTeamSetup;
   readonly away: MatchTeamSetup;
+  /** The home club's Regimen pillar value (1-5). Defaults to 3 (neutral). */
+  readonly homeRegimen?: number;
+  /** The away club's Regimen pillar value (1-5). Defaults to 3 (neutral). */
+  readonly awayRegimen?: number;
   /** Commands applied at the start of the given absolute minute (1-90), before that minute's Minute-Slice resolves. */
   readonly commandsByMinute?: ReadonlyMap<number, ReadonlyArray<MatchCommand>>;
   /** Commands applied at halftime — doesn't consume a substitution window (ticket 12). */
@@ -264,8 +268,8 @@ const runSimulation = (
 ): { readonly events: ReadonlyArray<MatchEvent>; readonly home: TeamRuntimeState; readonly away: TeamRuntimeState; readonly counts: ReadonlyArray<MatchPlayerCountEntry> } => {
   const random = createSeededRng(input.seed);
   const events: Array<MatchEvent> = [];
-  const home = initTeamState(input.home);
-  const away = initTeamState(input.away);
+  const home = initTeamState(input.home, input.homeRegimen ?? 3);
+  const away = initTeamState(input.away, input.awayRegimen ?? 3);
   const score = { home: 0, away: 0 };
   const counts: Array<MatchPlayerCountEntry> = [];
   let lastAiMinute = 0;

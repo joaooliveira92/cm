@@ -591,7 +591,7 @@ const applyInjury = (
   const proneness = attributeValue(player, "injuryProneness");
   const resolved: ResolvedInjury = forcedSevere
     ? { severity: "severe", type: resolveType(trigger, random), tier: "red" }
-    : rollInjury(trigger, proneness, random);
+    : rollInjury(trigger, proneness, random, team.regimen);
 
   if (resolved.tier === "red") {
     team.conds.set(playerId, RED_CONDITION_FLOOR);

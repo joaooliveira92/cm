@@ -53,7 +53,7 @@ it("seeds players at their carried-over startingCondition", () => {
 describe("injury severity pipeline", () => {
   it("resolves a severity from every trigger", () => {
     for (const trigger of ["contact", "non-contact"] as const) {
-      expect(["light", "medium", "severe"]).toContain(resolveSeverity(trigger, 10, createSeededRng(1)));
+      expect(["light", "medium", "severe"]).toContain(resolveSeverity(trigger, 10, createSeededRng(1), 3));
     }
   });
 
@@ -71,15 +71,15 @@ describe("injury severity pipeline", () => {
   });
 
   it("rolls a full injury with severity, type, and tier together", () => {
-    const injury = rollInjury("non-contact", 15, createSeededRng(2));
+    const injury = rollInjury("non-contact", 15, createSeededRng(2), 3);
     expect(["light", "medium", "severe"]).toContain(injury.severity);
     expect(injury.tier).toBe(tierForSeverity(injury.severity));
     expect(injury.type).toBeTruthy();
   });
 
   it("is deterministic from the seed", () => {
-    const a = rollInjury("contact", 12, createSeededRng(5));
-    const b = rollInjury("contact", 12, createSeededRng(5));
+    const a = rollInjury("contact", 12, createSeededRng(5), 3);
+    const b = rollInjury("contact", 12, createSeededRng(5), 3);
     expect(a).toEqual(b);
   });
 });

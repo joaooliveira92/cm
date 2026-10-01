@@ -60,7 +60,7 @@ describe("forcePlayerOff's replacement", () => {
   it("is the first named bench entry, in bench order, not the first by squad order or id", () => {
     // Bench order runs against squad order, so squad order would pick reserves[0] and bench order reserves[4].
     const setup = setupWithBench([reserves[4]!, reserves[2]!, reserves[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, 5), 30, 1, events);
@@ -72,7 +72,7 @@ describe("forcePlayerOff's replacement", () => {
   it("skips a bench player who has already been on and gone off again", () => {
     // The starter cannot come back on for reserves[0] (ticket 35), so a third bench player replaces him.
     const setup = setupWithBench([benchOutfielders[0]!, benchOutfielders[1]!, benchOutfielders[2]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     expect(substitute(team, starter(setup, 5), benchOutfielders[0]!, 20).accepted).toBe(true);
     expect(substitute(team, benchOutfielders[0]!, benchOutfielders[2]!, 20).accepted).toBe(true);
     const events: Array<MatchEvent> = [];
@@ -85,7 +85,7 @@ describe("forcePlayerOff's replacement", () => {
   it("never brings back a player who was sent off or injured off, even when the bench names him", () => {
     // The bench names a starter who is then sent off, and the injured player's replacement is sent off too.
     const setup = setupWithBench([starter(base, 4), reserves[0]!, reserves[1]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
     sendOff(team, starter(setup, 4));
 
@@ -104,7 +104,7 @@ describe("forcePlayerOff's replacement", () => {
 
   it("leaves the team with 10 once the bench is exhausted, spending no substitution", () => {
     const setup = setupWithBench([reserves[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const first: Array<MatchEvent> = [];
     forcePlayerOff(team, starter(setup, 5), 30, 1, first);
     expect(forcedIns(first)).toEqual([reserves[0]]);
@@ -120,7 +120,7 @@ describe("forcePlayerOff's replacement", () => {
 
   it("never chooses a squad player off the named bench, nor a bench entry outside the match squad", () => {
     const setup = setupWithBench([makePlayerId("not-in-the-squad"), null]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, 5), 30, 1, events);
@@ -138,7 +138,7 @@ describe("forcePlayerOff's replacement", () => {
     const rotated: MatchTeamSetup = { ...setup, squad: [...setup.squad.slice(7), ...setup.squad.slice(0, 7)] };
 
     const replacements = [setup, reversed, rotated].map((variant) => {
-      const team = initTeamState(variant);
+      const team = initTeamState(variant, 3);
       const events: Array<MatchEvent> = [];
       forcePlayerOff(team, starter(variant, 5), 30, 1, events);
       forcePlayerOff(team, starter(variant, 6), 40, 1, events);
@@ -154,7 +154,7 @@ describe("forcePlayerOff's replacement", () => {
 
   it("keeps the kickoff bench through a mid-match ChangeTactics that names another", () => {
     const setup = setupWithBench([reserves[0]!, reserves[1]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const newBench = [reserves[5]!, reserves[6]!, null, null, null, null, null];
     expect(applyCommand(team, { _tag: "ChangeTactics", clubId: HOME, tactic: { ...setup.tactic, bench: newBench } }, 20, 1, false).accepted).toBe(true);
     const events: Array<MatchEvent> = [];
@@ -166,7 +166,7 @@ describe("forcePlayerOff's replacement", () => {
 
   it("still brings on a bench player a live ChangeTactics named in its XI: the command put no one on (ticket 40)", () => {
     const setup = setupWithBench([reserves[0]!, reserves[1]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const withReserveOn = {
       ...setup.tactic,
       slots: setup.tactic.slots.map((slot, index) => (index === 5 ? { ...slot, playerId: reserves[0]! } : slot)),
@@ -192,7 +192,7 @@ describe("forcePlayerOff's replacement, like for like", () => {
 
   it("an outfield injury skips a bench keeper listed first and brings on the first outfield bench player", () => {
     const setup = setupWithBench([benchKeepers[0]!, benchOutfielders[1]!, benchOutfielders[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, OUTFIELD_SLOT), 30, 1, events);
@@ -206,7 +206,7 @@ describe("forcePlayerOff's replacement, like for like", () => {
   it("flagging an outfielder as a stand-in moves no strength: a missing Goalkeeping attribute already rates 1", () => {
     // Why restricting stand-ins to the goalkeeper slot (ticket 36) replays every seed unchanged.
     const setup = setupWithBench([benchOutfielders[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     forcePlayerOff(team, starter(setup, OUTFIELD_SLOT), 30, 1, []);
     const unflagged = computeTeamStrengths(team);
     team.gkStandIns.add(benchOutfielders[0]!);
@@ -216,7 +216,7 @@ describe("forcePlayerOff's replacement, like for like", () => {
 
   it("a keeper injury brings on the bench keeper even when he is listed after outfielders", () => {
     const setup = setupWithBench([benchOutfielders[0]!, benchOutfielders[1]!, benchKeepers[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, KEEPER_SLOT), 30, 1, events);
@@ -228,7 +228,7 @@ describe("forcePlayerOff's replacement, like for like", () => {
 
   it("an outfield injury with only a keeper left on the bench brings the keeper on", () => {
     const setup = setupWithBench([benchOutfielders[0]!, benchKeepers[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, OUTFIELD_SLOT), 30, 1, events);
@@ -240,7 +240,7 @@ describe("forcePlayerOff's replacement, like for like", () => {
 
   it("a keeper injury with no bench keeper brings on the first outfielder, as a stand-in", () => {
     const setup = setupWithBench([benchOutfielders[1]!, benchOutfielders[0]!]);
-    const team = initTeamState(setup);
+    const team = initTeamState(setup, 3);
     const events: Array<MatchEvent> = [];
 
     forcePlayerOff(team, starter(setup, KEEPER_SLOT), 30, 1, events);

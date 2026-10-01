@@ -48,6 +48,10 @@ export interface PersistedMatchStarted {
   readonly homeSetup: MatchTeamSetup;
   readonly awaySetup: MatchTeamSetup;
   readonly pillars: PillarDistribution;
+  /** The human club's Regimen pillar at kickoff (1-5). AI clubs use 3 (neutral). */
+  readonly homeRegimen: number;
+  /** The opponent club's Regimen pillar at kickoff (1-5). AI clubs use 3 (neutral). */
+  readonly awayRegimen: number;
 }
 
 /** Ticket 14 mid-match command journal entries — one per accepted `SubmitMatchCommand` call,
@@ -169,6 +173,8 @@ export const deriveMatchEvents = (
     seed: started.seed,
     home: started.homeSetup,
     away: started.awaySetup,
+    homeRegimen: started.homeRegimen,
+    awayRegimen: started.awayRegimen,
     commandsByMinute,
     halftimeCommands,
     aiController,
