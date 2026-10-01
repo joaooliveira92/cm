@@ -74,6 +74,7 @@ const StoredMatchEvent = Schema.Union([
   }),
   Schema.TaggedStruct("HalfTimeReached", scoreAt),
   Schema.TaggedStruct("FullTimeWhistle", scoreAt),
+  Schema.TaggedStruct("TacticsChanged", { minute: Schema.Finite, half: Half, teamClubId: ClubId, fromFormationLabel: Schema.String, toFormationLabel: Schema.String }),
 ]);
 
 const StoredTimeline = Schema.Struct({ events: Schema.Array(StoredMatchEvent) });

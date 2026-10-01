@@ -135,7 +135,7 @@ describe("describeCreationBottomBar", () => {
     expect(plan.reason).toBe("Spend all 12 pillar points to continue.");
   });
 
-  it("blocks the club step until a formation and style are chosen", () => {
+  it("blocks the club step until a formation is chosen", () => {
     const plan = describeCreationBottomBar(
       creationInput({
         managerStep: 3,
@@ -146,7 +146,7 @@ describe("describeCreationBottomBar", () => {
 
     expect(plan.primary?.id).toBe("next-club");
     expect(plan.primary?.disabled).toBe(true);
-    expect(plan.reason).toBe("Choose a formation and a tactical style to continue.");
+    expect(plan.reason).toBe("Choose a formation to continue.");
   });
 
   it("says nothing once the forward verb is pressable", () => {

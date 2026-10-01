@@ -61,6 +61,7 @@ const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
     case "MatchStarted":
     case "HalfTimeReached":
     case "FullTimeWhistle":
+    case "TacticsChanged":
       return [];
   }
 };

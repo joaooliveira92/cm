@@ -167,6 +167,14 @@ export interface FullTimeWhistleEvent extends BaseMatchEvent {
   readonly awayScore: number;
 }
 
+export interface TacticsChangedEvent extends BaseMatchEvent {
+  readonly _tag: "TacticsChanged";
+  readonly half: MatchHalf;
+  readonly teamClubId: ClubId;
+  readonly fromFormationLabel: string;
+  readonly toFormationLabel: string;
+}
+
 /** Full v1 Match Event vocabulary (ticket 02/12) — the persisted, replayable timeline of a match. */
 export type MatchEvent =
   | MatchStartedEvent
@@ -191,7 +199,8 @@ export type MatchEvent =
   | FullTimeWhistleEvent
   | CornerEvent
   | FreeKickEvent
-  | PenaltyEvent;
+  | PenaltyEvent
+  | TacticsChangedEvent;
 
 export const STOPPAGE_CAUSING_TAGS: ReadonlySet<MatchEvent["_tag"]> = new Set([
   "Goal",

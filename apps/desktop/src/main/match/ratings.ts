@@ -63,6 +63,7 @@ const ownCount = (event: MatchEvent): keyof Counted | null => {
     case "Corner":
     case "FreeKick":
     case "Penalty":
+    case "TacticsChanged":
       return null;
   }
 };
@@ -135,7 +136,7 @@ export const rateSide = (
     if (event._tag === "RedCard") sentOff.add(event.playerId);
     if (event._tag === "Injury") injured.add(event.playerId);
     const key = ownCount(event);
-    if (key !== null) {
+    if (key !== null && "playerId" in event) {
       const current = counts.get(event.playerId) ?? NO_EVENTS;
       counts.set(event.playerId, { ...current, [key]: current[key] + 1 });
     }

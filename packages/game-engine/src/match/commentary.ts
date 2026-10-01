@@ -172,6 +172,12 @@ export const COMMENTARY_TEMPLATES: Record<CommentaryTemplateKey, ReadonlyArray<s
     "That's the final whistle — {score} the score at the end of ninety.",
     "It's all over — the match ends {score}.",
   ],
+  TacticsChanged: [
+    "{team} have changed formation — they're now in a {toLabel}.",
+    "{team} switch things up — a tactical change from the manager.",
+    "A tactical reshuffle from {team}, now playing a {toLabel}.",
+    "{team} adjust their approach, shifting to a {toLabel}.",
+  ],
 };
 
 /** The human body-part word for each injury type, for the `{bodyPart}` commentary token. */
@@ -247,6 +253,8 @@ const tokensFor = (event: MatchEvent, names: CommentaryNameResolver): Record<str
     case "HalfTimeReached":
     case "FullTimeWhistle":
       return { score: `${event.homeScore}-${event.awayScore}` };
+    case "TacticsChanged":
+      return { team: names.clubName(event.teamClubId), toLabel: event.toFormationLabel };
   }
 };
 

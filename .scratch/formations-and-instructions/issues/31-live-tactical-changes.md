@@ -16,9 +16,9 @@ failures are the invalid-Tactic error and the existing live-command refusals.
 
 **Blocked by:** 23, 26
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] A confirmed change takes effect at M+1, and replay reproduces it.
-- [ ] A change naming a sent-off player is refused.
-- [ ] Undo Last and Cancel behave as CM's.
-- [ ] Main match and renderer tests pass.
+- [x] A confirmed change takes effect at M+1, and replay reproduces it.
+- [x] A change naming a sent-off player is refused.
+- [x] Undo Last and Cancel behave as CM's.
+- [x] Main match and renderer tests pass.

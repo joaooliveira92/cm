@@ -12,8 +12,8 @@ Seam: resolution and engine; no new failure channel.
 
 **Blocked by:** 26
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] A directional test per instruction value, over many seeded matches.
-- [ ] Calibration stays inside its targets.
-- [ ] Engine and shared tests pass.
+- [x] A directional test per instruction value, over many seeded matches.
+- [x] Calibration stays inside its targets.
+- [x] Engine and shared tests pass.

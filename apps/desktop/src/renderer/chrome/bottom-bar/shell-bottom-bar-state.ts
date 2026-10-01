@@ -96,7 +96,7 @@ export interface CreationBottomBarInput {
   readonly personalDetailsComplete: boolean;
   /** True once the manager's four Pillars sum to the full budget — the gate from sub-panel 2 to 3. */
   readonly pillarsComplete: boolean;
-  /** True once the manager's formation and Tactical Style are chosen — the gate from sub-panel 3 on. */
+  /** True once the manager's formation is chosen — the gate from sub-panel 3 on. */
   readonly managerStyleComplete: boolean;
   /** Which sub-panel of the Manager step is showing: 1 = personal details, 2 = manager identity,
    *  3 = style & appearance. */
@@ -194,7 +194,7 @@ export function describeCreationBottomBar(input: CreationBottomBarInput): Bottom
             ? null
             : input.managerStyleComplete
               ? "Complete your personal details and spend all 12 pillar points."
-              : "Choose a formation and a tactical style to continue."),
+              : "Choose a formation to continue."),
         status: [],
       };
     }

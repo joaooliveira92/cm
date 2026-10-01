@@ -16,9 +16,9 @@ set their Tactic; deterministic, no failure channel.
 
 **Blocked by:** 26
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Two AI clubs with different seeds field different templates or instructions across a season.
-- [ ] A squad unsuited to its preferred template gets the fallback.
-- [ ] No hidden opponent data is read.
-- [ ] Shared and main tests pass.
+- [x] Two AI clubs with different seeds field different templates or instructions across a season.
+- [x] A squad unsuited to its preferred template gets the fallback.
+- [x] No hidden opponent data is read.
+- [x] Shared and main tests pass.

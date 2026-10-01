@@ -17,10 +17,10 @@ Seam: resolution and engine; the captain handover is also read by the match repo
 
 **Blocked by:** 26
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] Changing the penalty taker changes who takes penalties; conversion follows his attributes.
-- [ ] A directional test per team set-piece instruction and role family.
-- [ ] Set-piece goals are a quarter to a third of all goals in calibration.
-- [ ] A substituted captain passes the armband to the next nominee on the pitch.
-- [ ] Engine and main match tests pass.
+- [x] Changing the penalty taker changes who takes penalties; conversion follows his attributes.
+- [x] A directional test per team set-piece instruction and role family.
+- [x] Set-piece goals are a quarter to a third of all goals in calibration.
+- [x] A substituted captain passes the armband to the next nominee on the pitch.
+- [x] Engine and main match tests pass.
