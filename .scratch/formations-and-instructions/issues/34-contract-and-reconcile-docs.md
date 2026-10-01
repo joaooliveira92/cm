@@ -16,9 +16,9 @@ Seam: a deletion with no behaviour change.
 
 **Blocked by:** 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, and player-positional-model 19
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] No source file references `Position`, Role, Tempo, Pressing or Tactical Style.
-- [ ] `CONTEXT.md` defines the new terms and none of the removed ones.
-- [ ] Superseded notes carry their blocks; this effort's notes are under `implemented/`.
-- [ ] The full gate and the e2e suite pass.
+- [x] No source file references `Position`, Role, Tempo, Pressing or Tactical Style.
+- [x] `CONTEXT.md` defines the new terms and none of the removed ones.
+- [x] Superseded notes carry their blocks; this effort's notes are under `implemented/`.
+- [x] The full gate and the e2e suite pass.

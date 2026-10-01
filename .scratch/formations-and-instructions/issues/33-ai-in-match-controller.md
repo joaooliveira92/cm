@@ -17,8 +17,8 @@ journaling.
 
 **Blocked by:** 31, 32
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A losing AI side changes Mentality at the stated minutes, visible in commentary.
-- [ ] Replaying a human match reproduces the opponent's changes exactly.
-- [ ] Engine and main match tests pass.
+- [x] A losing AI side changes Mentality at the stated minutes, visible in commentary.
+- [x] Replaying a human match reproduces the opponent's changes exactly.
+- [x] Engine and main match tests pass.

@@ -16,8 +16,8 @@ to their contract.
 
 **Blocked by:** 26
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Directional tests for runs and for playing a player out of position.
-- [ ] The new statistics reconcile with the timeline.
-- [ ] Each new event has commentary; engine, main and renderer tests pass.
+- [x] Directional tests for runs and for playing a player out of position.
+- [x] The new statistics reconcile with the timeline.
+- [x] Each new event has commentary; engine, main and renderer tests pass.
