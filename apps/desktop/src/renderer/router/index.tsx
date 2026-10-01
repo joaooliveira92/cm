@@ -302,7 +302,8 @@ const tacticsIndexRoute = createRoute({
 const tacticsEditorRoute = createRoute({
   getParentRoute: () => tacticsRoute,
   path: "editor",
-  component: () => <CareerChildView screenId="tactics" Screen={TacticsScreen} />,
+  // Window height: Team Selection and the mode panels scroll inside it, as CM's screen did.
+  component: () => <CareerChildView screenId="tactics" Screen={TacticsScreen} fitHeight />,
 });
 
 /**

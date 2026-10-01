@@ -285,7 +285,7 @@ export const FormationPitch = ({
   return (
     <div
       data-testid="formation-pitch"
-      className="pitch-grass relative mx-auto aspect-[68/100] h-full max-h-[640px] w-full max-w-[440px] overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
+      className="pitch-grass relative mx-auto aspect-[68/100] w-[min(100cqw,68cqh)] shrink-0 overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
       tabIndex={0}
       aria-describedby={keyHintId}
       onKeyDown={handleKeyDown}
@@ -466,7 +466,7 @@ export const FormationPitch = ({
                       ? "border-dashed border-text-bright bg-pitch-marker/60"
                       : player === undefined
                       ? "border-dashed border-text-bright/70 bg-transparent"
-                      : `border-text-highlight ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
+                      : `border-cm-title ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
                   } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""} ${
                     isSelected ? "ring-2 ring-focus-ring ring-offset-2 ring-offset-bg-base scale-110" : ""
                   } ${hasRun && !isSelected ? "after:absolute after:bottom-0 after:right-0 after:h-2 after:w-2 after:rounded-full after:bg-text-highlight" : ""}`}

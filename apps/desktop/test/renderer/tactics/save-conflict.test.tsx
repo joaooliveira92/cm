@@ -47,9 +47,9 @@ const tacticsView = (tactic: unknown, revision: number) => ({
   revision,
 });
 
-/** The formation name shown in the menu bar's right-hand label. */
+/** The formation name shown in the menu bar's template label. */
 const formationLabel = (): string | null =>
-  document.querySelector<HTMLElement>(".ml-auto")?.textContent ?? null;
+  document.querySelector<HTMLElement>("[data-testid=\"tactic-template-label\"]")?.textContent ?? null;
 
 const CONFLICT = {
   _tag: "TacticRevisionConflictError",

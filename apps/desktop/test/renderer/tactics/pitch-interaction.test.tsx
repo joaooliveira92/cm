@@ -70,9 +70,9 @@ const mountTactics = async (view: ReturnType<typeof tacticsView> = tacticsView()
   await screen.findByRole("list", { name: "4-4-2 on the pitch" });
 };
 
-/** The text showing the formation name and (modified) status, now in the menu bar area. */
+/** The text showing the formation name and (modified) status, in the menu bar. */
 const formationLabel = (): HTMLElement =>
-  document.querySelector('.ml-auto') as HTMLElement;
+  screen.getByTestId("tactic-template-label");
 
 const marker = (slot: number): HTMLElement =>
   document.querySelector<HTMLElement>(`button[data-slot-index="${slot - 1}"]`)!;

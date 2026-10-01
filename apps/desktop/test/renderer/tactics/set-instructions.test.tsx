@@ -69,6 +69,7 @@ describe("SetInstructionsPanel — team sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={null}
+        onSelectSlot={() => {}}
         onTacticChange={onChange}
       />,
     );
@@ -78,7 +79,7 @@ describe("SetInstructionsPanel — team sub-mode", () => {
     await screen.findByText("Team Instructions");
     expect(screen.getByText("Passing")).toBeTruthy();
     expect(screen.getByText("Offside Trap")).toBeTruthy();
-    expect(screen.getByText("Set Pieces")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Set Pieces" })).toBeTruthy();
   });
 
   it("shows unticked placeholder for choice-valued team instructions", async () => {
@@ -88,6 +89,7 @@ describe("SetInstructionsPanel — team sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={null}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
@@ -106,6 +108,7 @@ describe("SetInstructionsPanel — team sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={null}
+        onSelectSlot={() => {}}
         onTacticChange={() => { saved = true; }}
       />,
     );
@@ -133,12 +136,14 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={0}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
 
-    // Player mode is default — the panel shows overrides as the first section
-    expect(screen.getByText("Overrides")).toBeTruthy();
+    // Player mode is default — the panel is titled for the selected player, overrides first
+    expect(screen.getByRole("region", { name: "Player Instructions" }).textContent).toContain("Instructions for");
+    expect(screen.getByRole("group", { name: "Overrides" })).toBeTruthy();
     // The slot selector shows the player name
     const selectEl = screen.getByLabelText("Select player slot") as HTMLSelectElement;
     expect(selectEl.value).toBe("0");
@@ -151,11 +156,12 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={1}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
 
-    expect(screen.getByText("Overrides")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Overrides" })).toBeTruthy();
     expect(screen.getByText("Passing")).toBeTruthy();
     expect(screen.getByText("Closing Down")).toBeTruthy();
   });
@@ -167,6 +173,7 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={0}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
@@ -181,6 +188,7 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={1}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
@@ -194,12 +202,13 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={1}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
 
-    expect(screen.getByText("Settings")).toBeTruthy();
-    expect(screen.getByText("More Often")).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Settings" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "More Often" })).toBeTruthy();
     expect(screen.getByText("Cross Ball")).toBeTruthy();
   });
 
@@ -222,6 +231,7 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={mutated}
         squadById={squadById}
         selectedSlot={slotIndex}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
@@ -237,49 +247,50 @@ describe("SetInstructionsPanel — player sub-mode", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={1}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
 
-    expect(screen.getByText(/Set Piece Instructions for/)).toBeTruthy();
+    expect(screen.getByRole("region", { name: "Set Piece Instructions" })).toBeTruthy();
+    expect(screen.getByRole("group", { name: "Set Piece Roles" })).toBeTruthy();
     expect(screen.getByText("Defend Free Kicks")).toBeTruthy();
     expect(screen.getByText("Attack Free Kicks")).toBeTruthy();
   });
 });
 
 describe("SetInstructionsPanel — Set To Preset", () => {
-  it("renders the Set To Preset button row with all 7 templates", async () => {
-    const tactic = defaultTactic();
+  it("offers all 7 templates in the Set To Preset list", () => {
     render(
       <SetInstructionsPanel
-        tactic={tactic}
+        tactic={defaultTactic()}
         squadById={squadById}
         selectedSlot={1}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
 
-    const templates = ["Goalkeeper", "Central Defender", "Full Back", "Defensive Midfielder",
-      "Attacking Midfielder", "Winger", "Striker"];
-    for (const name of templates) {
-      expect(screen.getByText(name)).toBeTruthy();
-    }
+    const preset = screen.getByLabelText("Set to preset") as HTMLSelectElement;
+    const labels = Array.from(preset.options).map((o) => o.textContent);
+    expect(labels).toEqual(["Set To Preset", "Goalkeeper", "Central Defender", "Full Back",
+      "Defensive Midfielder", "Attacking Midfielder", "Winger", "Striker"]);
   });
 
-  it("applying a template changes the slot's instructions", async () => {
+  it("choosing a template changes the slot's instructions", () => {
     let saved: Tactic | null = null;
-    const tactic = defaultTactic();
     render(
       <SetInstructionsPanel
-        tactic={tactic}
+        tactic={defaultTactic()}
         squadById={squadById}
         selectedSlot={1}
+        onSelectSlot={() => {}}
         onTacticChange={(t) => { saved = t; }}
       />,
     );
 
-    // Click "Central Defender" template for slot 1 (a full-back position in 4-4-2)
-    fireEvent.click(screen.getByRole("button", { name: "Apply Central Defender template" }));
+    // Slot 1 is a full back in 4-4-2; the Central Defender preset makes him defensive
+    fireEvent.change(screen.getByLabelText("Set to preset"), { target: { value: "centralDefender" } });
     expect(saved).not.toBeNull();
     expect((saved as unknown as Tactic).slots[1]!.instructions.mentality).toBe("defensive");
   });
@@ -293,6 +304,7 @@ describe("SetInstructionsPanel — slot selector", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={0}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );
@@ -304,6 +316,42 @@ describe("SetInstructionsPanel — slot selector", () => {
   });
 });
 
+describe("SetInstructionsPanel — player selection", () => {
+  it("the slot selector and the step buttons select through the screen", () => {
+    const selected: Array<number> = [];
+    render(
+      <SetInstructionsPanel
+        tactic={defaultTactic()}
+        squadById={squadById}
+        selectedSlot={3}
+        onSelectSlot={(index) => selected.push(index)}
+        onTacticChange={() => {}}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("Select player slot"), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: "Previous player" }));
+    fireEvent.click(screen.getByRole("button", { name: "Next player" }));
+    expect(selected).toEqual([7, 2, 4]);
+  });
+
+  it("clicking a row's label ticks its box", () => {
+    let saved: Tactic | null = null;
+    render(
+      <SetInstructionsPanel
+        tactic={defaultTactic()}
+        squadById={squadById}
+        selectedSlot={1}
+        onSelectSlot={() => {}}
+        onTacticChange={(t) => { saved = t; }}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("Long Shots"));
+    expect((saved as unknown as Tactic).slots[1]!.instructions.longShots).toBe("often");
+  });
+});
+
 describe("SetInstructionsPanel — keyboard reachability", () => {
   it("all controls are native buttons, checkboxes or selects", async () => {
     const tactic = defaultTactic();
@@ -312,6 +360,7 @@ describe("SetInstructionsPanel — keyboard reachability", () => {
         tactic={tactic}
         squadById={squadById}
         selectedSlot={0}
+        onSelectSlot={() => {}}
         onTacticChange={() => {}}
       />,
     );

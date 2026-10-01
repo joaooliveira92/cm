@@ -16,8 +16,7 @@ import {
   type TeamInstructions,
 } from "@cm-clone/shared";
 import { swapLineupSlots } from "../squad/lineupEdits.js";
-import { ACTIONS_ROW_BUTTON_CLASS } from "../squad/actionsRowClasses.js";
-import { clearToolbarControls, setToolbarControls } from "../screenToolbarControls.js";
+import { CM_BUTTON_CLASS, CM_PANEL_CLASS, CM_PANEL_TITLE_CLASS } from "./cmChrome.js";
 import { FormationPitch } from "./FormationPitch.js";
 import { SetPrioritiesPanel } from "./SetPrioritiesPanel.js";
 import { SetInstructionsPanel } from "./SetInstructionsPanel.js";
@@ -122,8 +121,6 @@ const CONFLICT_MESSAGE =
 
 type Mode = "positions" | "instructions" | "priorities";
 
-const MENU_BUTTON_CLASS = `${ACTIONS_ROW_BUTTON_CLASS} text-body`;
-const MENU_BUTTON_ACTIVE_CLASS = `${MENU_BUTTON_CLASS} bg-surface-raised text-text-primary`;
 
 /** A CM-style dropdown menu: a button that opens a list of actions in a floating panel. */
 const MenuButton = ({
@@ -158,9 +155,9 @@ const MenuButton = ({
         aria-haspopup="menu"
         aria-expanded={open}
         onClick={() => setOpen(!open)}
-        className={`${MENU_BUTTON_CLASS} ${open ? "bg-surface-raised" : ""}`}
+        className={CM_BUTTON_CLASS}
       >
-        {label} ▾
+        {label} <span aria-hidden="true">▼</span>
       </button>
       {open && (
         <ul
@@ -348,25 +345,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
     useScreenBottomBarActions(viewResult._tag === "Success" ? bottomBarActions : null);
   }
 
-  // Toolbar controls
-  const loaded = viewResult._tag === "Success";
   const modified = isModifiedFromTemplate(tactic);
-  const toolbarControls = useMemo(
-    () =>
-      loaded ? (
-        <>
-          <span className="ml-3 text-body font-semibold text-text-highlight">
-            {tactic.sourceTemplate}
-            {modified ? " (modified)" : ""}
-          </span>
-        </>
-      ) : null,
-    [loaded, modified, tactic.sourceTemplate],
-  );
-  useEffect(() => {
-    setToolbarControls(toolbarControls);
-    return () => clearToolbarControls();
-  }, [toolbarControls]);
 
   // Keyboard handling: global shortcuts
   useEffect(() => {
@@ -497,7 +476,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
       <h1 className="sr-only">{clubName} Tactics</h1>
 
       {/* Menu bar */}
-      <nav aria-label="Tactics menu" className="flex items-center gap-2 border-b border-border-subtle pb-2">
+      <nav aria-label="Tactics menu" className="flex shrink-0 items-center gap-2 pb-2">
         {isInMatch ? (
           <MenuButton
             label="File"
@@ -540,12 +519,19 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
             },
           ]}
         />
-        <div className="ml-2 flex items-center gap-2 border-l border-border-subtle pl-2">
+        <span
+          data-testid="tactic-template-label"
+          className="ml-2 text-label font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+        >
+          {tactic.sourceTemplate}
+          {modified ? " (modified)" : ""}
+        </span>
+        <div className="ml-auto flex items-center gap-2">
           <button
             type="button"
             aria-pressed={mode === "positions"}
             onClick={() => setMode("positions")}
-            className={mode === "positions" ? MENU_BUTTON_ACTIVE_CLASS : MENU_BUTTON_CLASS}
+            className={CM_BUTTON_CLASS}
           >
             Set Positions
           </button>
@@ -553,7 +539,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
             type="button"
             aria-pressed={mode === "instructions"}
             onClick={() => setMode("instructions")}
-            className={mode === "instructions" ? MENU_BUTTON_ACTIVE_CLASS : MENU_BUTTON_CLASS}
+            className={CM_BUTTON_CLASS}
           >
             Set Instructions
           </button>
@@ -561,28 +547,25 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
             type="button"
             aria-pressed={mode === "priorities"}
             onClick={() => setMode("priorities")}
-            className={mode === "priorities" ? MENU_BUTTON_ACTIVE_CLASS : MENU_BUTTON_CLASS}
+            className={CM_BUTTON_CLASS}
           >
             Set Priorities
           </button>
         </div>
-        <span className="ml-auto text-label text-text-muted">
-          {tactic.sourceTemplate}
-          {modified ? " (modified)" : ""}
-        </span>
       </nav>
 
       {/* Main content: left column (Team Selection) + right area (pitch) */}
-      <div className="mt-2 flex flex-1 gap-4">
+      {/* A size container, so the pitch panel can take the width a 68:100 pitch of this height needs.
+          Size containment ignores content height, so in a match, where nothing above bounds it, it
+          gets a fixed one. */}
+      <div className={`flex min-h-0 flex-1 gap-3 [container-type:size] ${isInMatch ? "h-[40rem] flex-none" : ""}`}>
         {/* Left column: Team Selection */}
         <section
           aria-label="Team Selection"
-          className="w-[34rem] shrink-0 overflow-y-auto rounded-panel border border-border bg-card/80"
+          className={`${CM_PANEL_CLASS} @container min-w-0 ${mode === "positions" ? "flex-1" : "shrink basis-[34rem]"}`}
         >
-          <h2 className="sticky top-0 z-10 rounded-t-panel bg-sky-900/70 px-3 py-1 text-heading text-yellow-300">
-            Team Selection
-          </h2>
-          <div className="p-1">
+          <h2 className={CM_PANEL_TITLE_CLASS}>Team Selection</h2>
+          <div className="min-h-0 flex-1 overflow-y-auto px-1">
             <TeamSelectionGrid
               tactic={tactic}
               squad={squad}
@@ -592,14 +575,24 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
               onAssign={handleAssign}
             />
           </div>
-          <p className="px-3 py-2 text-caption text-text-muted">
+          <p className="shrink-0 border-t border-white/10 px-3 py-1.5 text-caption text-text-secondary">
             Click a starter to select; then click a substitute or reserve to bring him in, or an empty cell on the pitch to move.
           </p>
         </section>
 
         {/* Right area: mode-dependent content */}
-        <div className="min-w-0 flex-1">
+        {/* Set Positions: the pitch's width at full height (68% of it, plus the panel's padding and
+            border), capped so Team Selection keeps 40% of the row. The other modes take the rest. */}
+        <div
+          className={`flex min-h-0 flex-col ${
+            mode === "positions" ? "w-[min(calc(68cqh+1.75rem),60cqw)] shrink-0" : "min-w-[28rem] flex-1"
+          }`}
+        >
           {mode === "positions" && (
+            <section
+              aria-label="Positions"
+              className={`${CM_PANEL_CLASS} flex-1 items-center justify-center px-3 [container-type:size]`}
+            >
             <FormationPitch
               formation={tactic.sourceTemplate}
               slots={tactic.slots}
@@ -611,6 +604,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
               onMove={handleMove}
               onToggleRun={handleToggleRun}
             />
+            </section>
           )}
 
           {mode === "instructions" && (
@@ -618,6 +612,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
               tactic={tactic}
               squadById={squadById}
               selectedSlot={selectedSlot}
+              onSelectSlot={handleSelectSlot}
               onTacticChange={setTactic}
             />
           )}
@@ -714,7 +709,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
       tabIndex={-1}
       data-focus-id="tactics"
       aria-label="Tactics"
-      className={`flex flex-col gap-0 p-4 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`flex min-h-0 flex-1 flex-col gap-0 p-3 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       {content}
     </main>

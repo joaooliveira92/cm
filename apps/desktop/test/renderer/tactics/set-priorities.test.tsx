@@ -8,7 +8,6 @@ import { PlayerId, Tactic } from "@cm-clone/contracts";
 import {
   EMPTY_TAKERS,
   OUTFIELD_ATTRIBUTES,
-  TEAM_SET_PIECE_VALUES,
   builtInTemplate,
   emptyBench,
   tacticFromTemplate,
@@ -99,16 +98,6 @@ afterEach(() => cleanup());
 describe("Set Priorities panel", () => {
   // ── Structure ───────────────────────────────────────────────────────────
 
-  it("renders the team set-piece instructions section with all six dropdowns", () => {
-    mountPanel();
-    expect(screen.getByLabelText("Corners (Left)")).toBeDefined();
-    expect(screen.getByLabelText("Corners (Right)")).toBeDefined();
-    expect(screen.getByLabelText("Free Kicks (Left)")).toBeDefined();
-    expect(screen.getByLabelText("Free Kicks (Right)")).toBeDefined();
-    expect(screen.getByLabelText("Throw Ins (Left)")).toBeDefined();
-    expect(screen.getByLabelText("Throw Ins (Right)")).toBeDefined();
-  });
-
   it("renders all eight taker list sections with their labels", () => {
     mountPanel();
     expect(screen.getByRole("group", { name: "Captains" })).toBeDefined();
@@ -127,41 +116,15 @@ describe("Set Priorities panel", () => {
     expect(emptyMessages).toHaveLength(8);
   });
 
-  // ── Set piece dropdown interaction ──────────────────────────────────────
-
-  it("calls onTacticChange when a set-piece instruction is changed", () => {
-    const { onTacticChange } = mountPanel();
-    const select = screen.getByLabelText("Corners (Left)");
-    fireEvent.change(select, { target: { value: "short" } });
-    expect(onTacticChange).toHaveBeenCalledTimes(1);
-  });
-
-  it("set-piece dropdowns show all options from TEAM_SET_PIECE_VALUES", () => {
-    mountPanel();
-    const select = screen.getByLabelText("Corners (Left)");
-    const options = Array.from(select.querySelectorAll("option")).map((o) => o.value);
-    expect(options).toEqual([...TEAM_SET_PIECE_VALUES.cornersLeft]);
-  });
-
   // ── Taker list CRUD ─────────────────────────────────────────────────────
 
   it("can add a player to a taker list", async () => {
     const tactic = defaultTactic();
     const { onTacticChange } = mountPanel(tactic);
 
-    // Open the player picker for Penalty Takers
-    const penaltyPanel = screen.getByRole("group", { name: "Penalty Takers" });
-    const addButton = penaltyPanel.querySelector('button[aria-haspopup="listbox"]');
-    expect(addButton).toBeDefined();
-    fireEvent.click(addButton!);
-
-    // Wait for the picker to open
-    const optionLi = await screen.findByRole("option", { name: /last0/i });
-    expect(optionLi).toBeDefined();
-    // The li's button carries the onClick handler
-    const optionButton = optionLi.querySelector('button');
-    expect(optionButton).toBeDefined();
-    fireEvent.click(optionButton!);
+    // Open the player picker for Penalty Takers and pick from the Starting XI group
+    fireEvent.click(screen.getByRole("button", { name: "Add player to Penalty Takers" }));
+    fireEvent.click(await screen.findByRole("option", { name: /Last0/ }));
 
     expect(onTacticChange).toHaveBeenCalledTimes(1);
     const updatedTactic = onTacticChange.mock.calls[0]![0] as Tactic;

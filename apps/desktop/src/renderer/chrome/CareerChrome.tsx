@@ -147,8 +147,9 @@ const CareerChromeInner = ({
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {contextNav}
+              {/* Hidden when nothing fills it: no screen controls or menu in the span, no readout after the spacer. */}
               <div
-                className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-bg px-3 py-1"
+                className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-bg px-3 py-1 [&:has(>span:empty):not(:has(>:nth-child(3)))]:hidden"
                 style={NO_DRAG}
               >
                 <span className="flex items-center gap-2">

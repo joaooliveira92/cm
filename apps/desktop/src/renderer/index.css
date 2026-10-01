@@ -223,6 +223,17 @@
   --color-pitch-marker: #152a8a;
   --color-pitch-marker-gk: #0f7a36;
 
+  /* --- CM 03/04 tactics chrome -------------------------------------------
+     The Tactics editor's period look: yellow panel titles and hint lines,
+     glossy blue pill buttons and dropdowns, a blue column-heading band, and
+     the blue number chip a non-starter wears beside the starters' green. */
+  --color-cm-title: #ffd23f;
+  --color-cm-button-top: #3a86d4;
+  --color-cm-button-bottom: #0f4688;
+  --color-cm-button-border: rgb(160 205 255 / 0.45);
+  --color-cm-band: #1b5aa3;
+  --color-cm-chip-sub: #1d68b8;
+
   /* --- Shape and depth -------------------------------------------------- */
   --radius-panel: 6px;
   --radius-control: 4px;
@@ -401,6 +412,17 @@
     180deg,
     var(--color-pitch-grass) 0 calc(100% / 12),
     var(--color-pitch-stripe) calc(100% / 12) calc(100% / 6)
+  );
+}
+
+/* The Tactics editor's glossy blue pill: a lit top half over the darker body, as CM drew its buttons. */
+@utility cm-button-gradient {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-cm-button-top) 0%,
+    color-mix(in oklab, var(--color-cm-button-top) 55%, var(--color-cm-button-bottom)) 50%,
+    var(--color-cm-button-bottom) 51%,
+    var(--color-cm-button-bottom) 100%
   );
 }
 

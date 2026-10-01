@@ -17,6 +17,7 @@ export const RouteView = ({
   screenId,
   fill = false,
   fullHeight = false,
+  fitHeight = false,
   children,
 }: {
   screenId: string;
@@ -27,6 +28,9 @@ export const RouteView = ({
    *  the bottom of the window even when its content is short. `fill` needs a flex parent; this does
    *  not, so it suits the career shell's plain scroll region. */
   fullHeight?: boolean;
+  /** Exactly the height of the scroll region, for a workspace whose panels scroll inside it while
+   *  the page stays put. Like `fullHeight`, it needs no flex parent. */
+  fitHeight?: boolean;
   children: ReactNode;
 }) => {
   useEffect(() => {
@@ -40,7 +44,17 @@ export const RouteView = ({
   }, [screenId]);
 
   return (
-    <div className={fill ? "flex min-h-0 flex-1 flex-col" : fullHeight ? "flex min-h-full flex-col" : undefined}>
+    <div
+      className={
+        fill
+          ? "flex min-h-0 flex-1 flex-col"
+          : fitHeight
+            ? "flex h-full flex-col"
+            : fullHeight
+              ? "flex min-h-full flex-col"
+              : undefined
+      }
+    >
       {children}
     </div>
   );

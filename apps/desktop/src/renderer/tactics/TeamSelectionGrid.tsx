@@ -3,10 +3,16 @@
  * and reserves. Columns: shirt number, name (with Capt badge), compact position label, slot label and
  * fit tier, condition. Click to select a slot — the selected player highlights on the pitch — then
  * click a substitute or a reserve to bring him into it; an empty slot fills the same way.
+ *
+ * The list narrows before the pitch beside it does, so it drops columns as its panel (an `@container`)
+ * gets narrower: Condition first, then the position label, then the fit word, which the pitch
+ * markers also show.
  */
 import { useMemo, type KeyboardEvent } from "react";
 import type { PlayerId, SquadPlayerView, Tactic } from "@cm-clone/contracts";
 import { familiarityOf, slotLabel, STARTER_COUNT } from "@cm-clone/shared";
+import { CM_BAND_CLASS } from "./cmChrome.js";
+import { NumberChip } from "./NumberChip.js";
 
 interface SelectionRow {
   readonly kind: "starter" | "substitute" | "reserve";
@@ -26,6 +32,10 @@ const activateOnKey = (activate: () => void) => (event: KeyboardEvent) => {
   event.preventDefault();
   activate();
 };
+
+const COND_COLUMN = "@max-[32rem]:hidden";
+const POS_COLUMN = "@max-[27rem]:hidden";
+const FIT_WORD = "@max-[22rem]:hidden";
 
 const emptySuitabilityRecord: Record<string, number> = {};
 
@@ -75,7 +85,8 @@ export const TeamSelectionGrid = ({
     [squad],
   );
 
-  const captainIds = tactic.takers.captain;
+  // The captains list is an order of succession; only its head wears the armband
+  const captainIds = tactic.takers.captain.slice(0, 1);
   const startersSet = new Set(tactic.assignments.filter((id) => id !== ""));
 
   const starters: ReadonlyArray<SelectionRow> = useMemo(
@@ -145,12 +156,14 @@ export const TeamSelectionGrid = ({
   return (
     <table data-testid="team-selection-grid" className="w-full text-left" role="grid" aria-label="Team Selection">
       <thead>
-        <tr className="border-b border-border-subtle text-label text-text-muted">
+        <tr className={`sticky top-0 z-10 ${CM_BAND_CLASS}`}>
           <th className="px-2 py-1 w-10">No</th>
           <th className="px-2 py-1">Player</th>
-          <th className="px-2 py-1 w-12">Pos</th>
-          <th className="px-2 py-1">Slot · Fit</th>
-          <th className="px-2 py-1 w-14 text-right">Cond</th>
+          <th className={`px-2 py-1 w-12 ${POS_COLUMN}`}>Pos</th>
+          <th className="whitespace-nowrap px-2 py-1">
+            Slot<span className={FIT_WORD}> · Fit</span>
+          </th>
+          <th className={`px-2 py-1 w-14 text-right ${COND_COLUMN}`}>Cond</th>
         </tr>
       </thead>
       <tbody>
@@ -165,19 +178,17 @@ export const TeamSelectionGrid = ({
               data-selected={isSelected || undefined}
               onClick={() => onSelectSlot(row.slotIndex)}
               onKeyDown={activateOnKey(() => onSelectSlot(row.slotIndex))}
-              className={`cursor-pointer border-b border-border-subtle transition-colors ${
-                isSelected ? "bg-text-highlight/15" : "hover:bg-row-hover"
+              className={`cursor-pointer border-b border-white/5 transition-colors even:bg-white/[0.04] ${
+                isSelected ? "bg-text-highlight/20!" : "hover:bg-white/10"
               }`}
               tabIndex={0}
               role="row"
               aria-label={`${row.player?.firstName ?? "Empty"} ${row.player?.lastName ?? ""}`}
             >
-              <td className="px-2 py-1">
-                <span className="inline-flex h-5 min-w-9 items-center justify-center rounded-control bg-pitch-marker-gk px-1 text-caption font-bold tabular-nums text-text-bright">
-                  {row.slotIndex! + 1}
-                </span>
+              <td className="px-2 py-0.5">
+                <NumberChip label={String(row.slotIndex! + 1)} starter />
               </td>
-              <td className="px-2 py-1 text-body">
+              <td className="px-2 py-0.5 text-body">
                 {row.player ? (
                   <>
                     <span className="font-semibold">{row.player.lastName}</span>
@@ -192,30 +203,30 @@ export const TeamSelectionGrid = ({
                   <span className="text-text-muted">—</span>
                 )}
               </td>
-              <td className="px-2 py-1 text-data text-text-secondary">
+              <td className={`whitespace-nowrap px-2 py-0.5 text-data text-text-secondary ${POS_COLUMN}`}>
                 {row.player ? row.player.positionLabel : "-"}
               </td>
-              <td className="px-2 py-1 text-data">
+              <td className="whitespace-nowrap px-2 py-0.5 text-data">
                 {row.cellLabel}
                 {row.fitWord !== null && (
-                  <>
+                  <span className={FIT_WORD}>
                     <span className="mx-1 text-text-muted">·</span>
                     <span className={row.fitWord === "Natural" ? "font-semibold text-text-highlight" : row.fitWord === "Unfamiliar" ? "font-semibold text-text-warning" : "text-text-secondary"}>
                       {row.fitWord}
                     </span>
-                  </>
+                  </span>
                 )}
               </td>
-              <td className="px-2 py-1 text-right text-data tabular-nums">
+              <td className={`px-2 py-0.5 text-right text-data tabular-nums ${COND_COLUMN}`}>
                 {row.condition !== null ? `${row.condition}%` : "-"}
               </td>
             </tr>
           );
         })}
 
-        {/* Substitutes header */}
-        <tr className="border-b border-border-subtle">
-          <td colSpan={5} className="px-2 pt-3 pb-1 text-label font-semibold text-text-secondary">
+        {/* Substitutes header, under CM's dashed line closing the eleven */}
+        <tr className="border-t-2 border-dashed border-white/40">
+          <td colSpan={5} className="px-2 pt-1.5 pb-0.5 text-label font-semibold text-cm-title">
             Substitutes
           </td>
         </tr>
@@ -226,18 +237,16 @@ export const TeamSelectionGrid = ({
             data-kind={row.kind}
             onClick={() => bringIn(row)}
             onKeyDown={activateOnKey(() => bringIn(row))}
-            className={`cursor-pointer border-b border-border-subtle transition-colors hover:bg-row-hover ${
+            className={`cursor-pointer border-b border-white/5 transition-colors even:bg-white/[0.04] hover:bg-white/10 ${
               selectedSlot !== null ? "text-text-primary" : "text-text-secondary"
             }`}
             tabIndex={0}
             role="row"
           >
-            <td className="px-2 py-1">
-              <span className="inline-flex h-5 min-w-9 items-center justify-center rounded-control bg-chrome-mid px-1 text-caption font-bold tabular-nums text-text-bright">
-                SB{bench.indexOf(row) + 1}
-              </span>
+            <td className="px-2 py-0.5">
+              <NumberChip label={`SB${bench.indexOf(row) + 1}`} starter={false} />
             </td>
-            <td className="px-2 py-1 text-body">
+            <td className="px-2 py-0.5 text-body">
               {row.player ? (
                 <>
                   <span className="font-semibold">{row.player.lastName}</span>
@@ -252,19 +261,19 @@ export const TeamSelectionGrid = ({
                 <span className="text-text-muted">—</span>
               )}
             </td>
-            <td className="px-2 py-1 text-data text-text-secondary">
+            <td className={`whitespace-nowrap px-2 py-0.5 text-data text-text-secondary ${POS_COLUMN}`}>
               {row.player ? row.player.positionLabel : "-"}
             </td>
-            <td className="px-2 py-1 text-data text-text-muted">{row.cellLabel}</td>
-            <td className="px-2 py-1 text-right text-data tabular-nums">
+            <td className="whitespace-nowrap px-2 py-0.5 text-data text-text-muted">{row.cellLabel}</td>
+            <td className={`px-2 py-0.5 text-right text-data tabular-nums ${COND_COLUMN}`}>
               {row.condition !== null ? `${row.condition}%` : "-"}
             </td>
           </tr>
         ))}
 
         {/* Reserves header */}
-        <tr className="border-b border-border-subtle">
-          <td colSpan={5} className="px-2 pt-3 pb-1 text-label font-semibold text-text-secondary">
+        <tr className="border-t border-white/20">
+          <td colSpan={5} className="px-2 pt-1.5 pb-0.5 text-label font-semibold text-cm-title">
             Reserves
           </td>
         </tr>
@@ -275,18 +284,16 @@ export const TeamSelectionGrid = ({
             data-kind={row.kind}
             onClick={() => bringIn(row)}
             onKeyDown={activateOnKey(() => bringIn(row))}
-            className={`border-b border-border-subtle transition-colors ${
-              selectedSlot !== null ? "cursor-pointer text-text-primary hover:bg-row-hover" : "text-text-muted"
+            className={`border-b border-white/5 transition-colors even:bg-white/[0.04] ${
+              selectedSlot !== null ? "cursor-pointer text-text-primary hover:bg-white/10" : "text-text-muted"
             }`}
             tabIndex={0}
             role="row"
           >
-            <td className="px-2 py-1">
-              <span className="inline-flex h-5 min-w-9 items-center justify-center rounded-control bg-chrome-mid px-1 text-caption font-bold tabular-nums text-text-bright">
-                -
-              </span>
+            <td className="px-2 py-0.5">
+              <NumberChip label="-" starter={false} />
             </td>
-            <td className="px-2 py-1 text-body">
+            <td className="px-2 py-0.5 text-body">
               {row.player ? (
                 <>
                   <span>{row.player.lastName}</span>
@@ -301,11 +308,11 @@ export const TeamSelectionGrid = ({
                 <span className="text-text-muted">—</span>
               )}
             </td>
-            <td className="px-2 py-1 text-data text-text-muted">
+            <td className={`whitespace-nowrap px-2 py-0.5 text-data text-text-muted ${POS_COLUMN}`}>
               {row.player ? row.player.positionLabel : "-"}
             </td>
-            <td className="px-2 py-1 text-data text-text-muted">{row.cellLabel}</td>
-            <td className="px-2 py-1 text-right text-data tabular-nums">
+            <td className="whitespace-nowrap px-2 py-0.5 text-data text-text-muted">{row.cellLabel}</td>
+            <td className={`px-2 py-0.5 text-right text-data tabular-nums ${COND_COLUMN}`}>
               {row.condition !== null ? `${row.condition}%` : "-"}
             </td>
           </tr>
