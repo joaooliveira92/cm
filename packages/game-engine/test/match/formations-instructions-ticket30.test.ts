@@ -18,6 +18,7 @@ import { aggregatePhaseSlots, resolveTeamTactics } from "../../src/match/tactica
 import type { MatchPlayerInput, MatchTeamSetup, MatchTactic } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
 import { COMMENTARY_TEMPLATES, renderCommentary } from "../../src/match/commentary.js";
+import type { BeatenTrapEvent, MatchEvent } from "../../src/match/events.js";
 
 const AVERAGE_ATTRIBUTES: PlayerAttributes = {
   passing: 11, shooting: 11, tackling: 11, dribbling: 11, heading: 11,
@@ -279,12 +280,12 @@ describe("formations-and-instructions ticket 30", () => {
         clubName: (id: string) => (id === "home" ? "Home" : "Away"),
         playerName: (id: string) => (id === "p1" ? "P One" : "P Two"),
       };
-      const event: import("../../src/match/events.js").MatchEvent = {
+      const event: MatchEvent = {
         _tag: "BeatenTrap",
         minute: 30,
         half: 1,
-        teamClubId: "home" as import("../../src/match/events.js").BeatenTrapEvent["teamClubId"],
-        playerId: "p1" as import("../../src/match/events.js").BeatenTrapEvent["playerId"],
+        teamClubId: "home" as BeatenTrapEvent["teamClubId"],
+        playerId: "p1" as BeatenTrapEvent["playerId"],
       };
       const lines = renderCommentary([event], 1, names);
       expect(lines[0]!.text).toContain("P One");

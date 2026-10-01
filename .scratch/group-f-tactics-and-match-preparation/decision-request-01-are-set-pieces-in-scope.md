@@ -39,7 +39,7 @@ Do not reopen these:
 - **[SPEC-ROADMAP.md](../../.ai/SPEC-ROADMAP.md)** lists Screen 86 in Group F's remainder and quotes
   the Screen 80 snapshot's own promise about it.
 - **The team sheet is the Tactic** —
-  [note](../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md). If set
+  [note](../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md (supersedes)). If set
   pieces are a Tactic field, taker nomination is an edit to the same object Squad's match-day bar and
   the tactics editor already edit, not a new one.
 
@@ -102,7 +102,7 @@ anchored to Group F Screen 86, in the same commit.
 **Set pieces are in scope. Screen 75 is `deferred` to Group F Screen 86, not `out-of-scope`.**
 
 Approved by the human ("approve your recommendations on the blocking decisions"). Recorded as
-[set pieces ship, as a Tactic field](../../.agents/notes/proposed/feature/2026-09-19-set-pieces-ship-as-a-tactic-field.md).
+[set pieces ship, as a Tactic field](../../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md) (supersedes).
 
 Set-piece takers become fields on the **Tactic**, so nomination inherits the revision-bound idempotent
 save from ticket 01 rather than adding a write path, and the takers UI is another editor of the object

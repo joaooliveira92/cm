@@ -90,7 +90,7 @@ follows CM 03/04's own layout, in and out of matches.
   the source of truth; the engine stays non-spatial. **Sibling effort; CM 03/04 as shipped is the
   source; Roles are removed; the engine stays non-spatial; complete Tactics change live; a named
   tactic library; AI runs complete Tactics; old saves are refused.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
 - **Domain model.** Slots are the positional spec's grid cells; a slot may carry a run; instructions
   and set-piece roles belong to the slot; a Tactic Template holds no players; the Tactic adds
   assignments, bench, taker lists and captain. **A slot is a CM grid cell with an optional run target;
@@ -98,7 +98,7 @@ follows CM 03/04's own layout, in and out of matches.
   type with no players; the live Tactic is a template's contents plus assignments and bench, named by
   its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the
   complete Tactic.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
 - **Built-in presets.** The 29 presets of CM 03/04 patch 4.1.3 onward, cells and runs exactly as in the
   shipped files (tables in the formations research), names as the file names;
   `manager_profile.preferred_formation` references one of them and a new manager's first Tactic loads
@@ -106,14 +106,14 @@ follows CM 03/04's own layout, in and out of matches.
 - **Team instructions.** **CM 03/04's nine team instructions, each defaulting to the game's unticked
   state, replace Mentality/Tempo/Pressing; Tactical Style presets are removed and the preferred
   formation is the manager's tactical identity.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).
 - **Player instructions.** **CM 03/04's per-player screen exactly (five overrides with a `team` value,
   three standalone settings, seven normal/often switches), stored per slot; Distribution on the GK
   slot only; specific marking is match-time only; built-in templates seed each slot from CM's
   instruction template for its cell for the non-override instructions only, leaving the five overrides
   at `team`; no fit rating replaces Role Rating, and effects read the executing player's
   attributes.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md).
 - **Instruction template values.** The seven CM templates' values are the table transcribed in ticket
   14 from `tactical_templates.xml`; 0 means `team` on overrides, `default` on standalone settings.
 - **Roles removed.** Roles, Role Weights and Role Rating leave the domain, contracts, storage, UI and
@@ -124,7 +124,7 @@ follows CM 03/04's own layout, in and out of matches.
   consumes as numbers, a suitability cost that scales decision-making and positional attributes, runs
   that count in the target cell in possession, closest-attribute mappings, and a tuning table proved
   by directional tests and a calibration harness.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).
 - **Team instruction effects.** The approved direction-and-size table in ticket 15.
 - **Player instruction effects.** The approved table in ticket 16; "normal" is the engine's baseline
   and "often" roughly doubles that behaviour's weight.
@@ -134,7 +134,7 @@ follows CM 03/04's own layout, in and out of matches.
   stats (fouls, offsides, possession, shots by chance type) and commentary templates (foul, offside,
   beaten trap, chance types, AI tactical and formation changes) on the match and post-match
   screens.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-09-29-phase-strength-scales-with-coverage.md).
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-09-29-phase-strength-scales-with-coverage.md).
   The suitability curve is the one the positional work already ships as `suitabilityFactor`.
 - **Live changes.** The complete Tactic applies at the start of the first unseen minute (M+1), or at
   the break for a half-time change, validated on submit against the revealed pitch; substitutions at
@@ -143,17 +143,17 @@ follows CM 03/04's own layout, in and out of matches.
   the bench; create/rename/overwrite/duplicate/delete with read-only built-ins, unique
   case-insensitive names, no cap, Request Id on every operation and Expected Revision on
   overwrite/rename/delete.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-29-tactic-library-in-the-save-reseats-by-slot.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-29-tactic-library-in-the-save-reseats-by-slot.md).
 - **AI tactics.** **Seeded CM staff preferences per AI club; a preferred template with a best-XI
   fallback and style-mapped instructions before kickoff; a deterministic in-match rule table by score,
   minute and red cards; all run by a tactical controller outside the engine and journaled as
   `ChangeTactics` for the human's opponent.** See
-  [Agent Note](../../.agents/notes/proposed/architecture/2026-09-29-ai-tactics-from-seeded-preferences-via-a-controller.md).
+  [Agent Note](../../.agents/notes/implemented/architecture/2026-09-29-ai-tactics-from-seeded-preferences-via-a-controller.md).
 - **Set pieces.** **Team set-piece instructions and per-slot set-piece roles live in the Tactic
   Template; the captain and ordered taker lists live only on the live Tactic; the engine uses them
   through Corner, Free Kick and Penalty events and long throws in the chance pipeline; absent nominees
   fall back down the list, then to the best relevant attribute; the captain has no match effect.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-29-cm-set-pieces-in-templates-takers-on-the-tactic.md).
   As amended by ticket 19: every set-piece setting has a `default`; the roles are CM's five (attack
   and defend for free kicks and corners, attacking throw-ins per side) with the transcribed values;
   attacking-third throw-ins resolve without a visible event so every throw-in setting has an effect.
@@ -161,7 +161,7 @@ follows CM 03/04's own layout, in and out of matches.
   and View menus, Set Positions / Set Instructions / Set Priorities modes, a Team Selection list
   always on the left, CM's tick-box-plus-dropdown instruction rows, and the same screen in match with
   Confirm, Undo Last and Cancel.** See
-  [Agent Note](../../.agents/notes/proposed/feature/2026-09-30-tactics-screen-follows-cm-0304-layout.md).
+  [Agent Note](../../.agents/notes/implemented/feature/2026-09-30-tactics-screen-follows-cm-0304-layout.md).
   The approved prototype is on branch `prototype/tactics-screen`.
 - **Storage.** `tactics` stores team instructions and team set-piece instructions; `tactic_slots`
   stores row, column, run row and column, the per-slot instructions and set-piece roles; taker lists

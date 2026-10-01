@@ -1,4 +1,4 @@
-import { pickRandom, type RandomSource } from "@cm-clone/shared";
+import { type RandomSource } from "@cm-clone/shared";
 import type { PlayerId } from "@cm-clone/contracts";
 import { NON_CONTACT_CONDITION_THRESHOLD, START_CONDITION } from "../condition.js";
 import type { ChanceType, InjuryTrigger, MatchEvent, MatchHalf } from "../events.js";
@@ -11,7 +11,6 @@ import {
 } from "../injury.js";
 import type { PerSlotBehaviour } from "../resolveBehaviourVectors.js";
 import {
-  ATTRIBUTE_EFFECT_SCALE,
   BASE_COLLISION,
   BASE_FOUL_PROBABILITY,
   BASE_GOAL_PROBABILITY,
@@ -310,7 +309,6 @@ const resolveOutcome = (
   if (roll < goalProb) return "goal";
 
   // Save vs miss
-  const remaining = 1 - goalProb;
   const saveProb = SAVE_SHARE / (SAVE_SHARE + MISS_SHARE);
   return random.next() < saveProb ? "onTarget" : "missed";
 };

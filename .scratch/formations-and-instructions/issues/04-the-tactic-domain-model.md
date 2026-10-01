@@ -34,4 +34,4 @@ Weights**, **Role Rating**.
 built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is
 a template's contents plus assignments and bench, named by its source template, with "modified" and
 the row-count label derived; `ChangeTactics` carries the complete Tactic.** See
-[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
+[Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).

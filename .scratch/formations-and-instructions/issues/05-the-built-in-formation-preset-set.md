@@ -25,4 +25,4 @@ guessed from undecoded bytes. `manager_profile.preferred_formation` becomes a re
 29; a new manager's first Tactic loads it, and an AI club starts from its manager's preferred
 template until ticket 11 decides AI choice. No Agent Note: the list is research data, and the
 reference and defaults are recorded in
-[the team-instructions note](../../../.agents/notes/proposed/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).
+[the team-instructions note](../../../.agents/notes/implemented/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).

@@ -5,12 +5,11 @@ import {
   DEFAULT_PLAYER_INSTRUCTIONS,
   DEFAULT_TEAM_SET_PIECES,
   EMPTY_TAKERS,
-  createSeededRng,
   type PlayerAttributes,
 } from "@cm-clone/shared";
-import { simulateMatch, simulateMatchWithCounts, type SimulateMatchInput } from "../../src/match/simulate/index.js";
+import { simulateMatch, type SimulateMatchInput } from "../../src/match/simulate/index.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
-import type { MatchEvent, CornerEvent, FreeKickEvent, PenaltyEvent } from "../../src/match/events.js";
+import type { CornerEvent, FreeKickEvent, PenaltyEvent } from "../../src/match/events.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId, withNamedBench } from "./fixtures.js";
 import type { PlayerId, ClubId } from "@cm-clone/contracts";
 
@@ -27,31 +26,6 @@ const craftAttributes = (overrides: Partial<Record<keyof PlayerAttributes, numbe
   ];
   for (const key of keys) base[key] = 10;
   return { ...(base as PlayerAttributes), ...overrides };
-};
-
-const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, template = "4-4-2"): MatchTeamSetup => {
-  const cells = builtInTemplate(template)!.slots.map((slot) => slot.cell);
-  const squad: Array<MatchPlayerInput> = cells.map((_, index) => ({
-    id: makePlayerId(`${clubId}-${index}`),
-    attributes: { ...attributes },
-    positionalRatings: {
-      lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 },
-      sides: { R: 10, L: 10, C: 10 },
-      freeRole: 10,
-    },
-  }));
-  const tactic = {
-    slots: cells.map((cell, index) => ({ cell, playerId: makePlayerId(`${clubId}-${index}`), run: null })),
-    bench: [null, null, null, null, null, null, null],
-    team: { ...DEFAULT_TEAM_INSTRUCTIONS },
-    slotInstructions: cells.map((cell) => ({
-      cell,
-      instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
-    })),
-    teamSetPieces: DEFAULT_TEAM_SET_PIECES,
-    takers: EMPTY_TAKERS,
-  };
-  return { clubId, squad, tactic };
 };
 
 const baseInput = (seed: number): SimulateMatchInput => ({
@@ -96,9 +70,9 @@ describe("pickTaker", () => {
       makePlayerId("p3"),
     ] as PlayerId[]);
     const playersById = new Map([
-      [makePlayerId("p1"), { id: makePlayerId("p1"), attributes: craftAttributes({ heading: 8 }), positionalRatings: {} as any } as MatchPlayerInput],
-      [makePlayerId("p2"), { id: makePlayerId("p2"), attributes: craftAttributes({ heading: 18 }), positionalRatings: {} as any } as MatchPlayerInput],
-      [makePlayerId("p3"), { id: makePlayerId("p3"), attributes: craftAttributes({ heading: 12 }), positionalRatings: {} as any } as MatchPlayerInput],
+      [makePlayerId("p1"), { id: makePlayerId("p1"), attributes: craftAttributes({ heading: 8 }), positionalRatings: { lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 }, sides: { R: 10, L: 10, C: 10 }, freeRole: 10 } } as MatchPlayerInput],
+      [makePlayerId("p2"), { id: makePlayerId("p2"), attributes: craftAttributes({ heading: 18 }), positionalRatings: { lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 }, sides: { R: 10, L: 10, C: 10 }, freeRole: 10 } } as MatchPlayerInput],
+      [makePlayerId("p3"), { id: makePlayerId("p3"), attributes: craftAttributes({ heading: 12 }), positionalRatings: { lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 }, sides: { R: 10, L: 10, C: 10 }, freeRole: 10 } } as MatchPlayerInput],
     ] as [PlayerId, MatchPlayerInput][]);
 
     const result = pickTaker(
@@ -179,15 +153,6 @@ describe("penalty taker", () => {
 
     // Run with default takers (empty) — penalties use fallback
     const defaultEvents = simulateMatch(base);
-    const defaultPenalties = defaultEvents.filter((e) => e._tag === "Penalty");
-    const defaultPenaltyGoals = defaultEvents.filter(
-      (e) => e._tag === "Goal" && defaultEvents.some(
-        (p, i) => p._tag === "Penalty" && i < defaultEvents.indexOf(e),
-      ),
-    ).length;
-    const defaultPenaltyGoalCount = defaultEvents.filter((e) => e._tag === "Goal" && defaultPenalties.some(
-      (p) => (p as PenaltyEvent).playerId === (e as any).assistPlayerId || defaultEvents.indexOf(e) > defaultEvents.indexOf(p),
-    )).length;
 
     // Setting a specific penalty taker doesn't crash — validate the teams loaded
     expect(defaultEvents.some((e) => e._tag === "Penalty")).toBe(true);

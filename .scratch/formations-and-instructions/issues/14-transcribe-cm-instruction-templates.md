@@ -35,7 +35,7 @@ defenders to collect 2; `crof` deep 1, touchline 2 (spelled "Toucline"); `croa` 
 centre 2, far post 3, man 4. The seven flags are `<true/>` and `<false/>` elements.
 
 In the vocabulary of the
-[player-instructions note](../../../.agents/notes/proposed/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md),
+[player-instructions note](../../../.agents/notes/implemented/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md),
 a stored 0 means `team` on the five override rows and `default` on Distribution, Cross From and
 Cross Aim. A flag stored as `false` means `normal` and `true` means `often`. An omitted field
 would mean the same as 0 or false, but **the case never occurs**: every record declares all 15

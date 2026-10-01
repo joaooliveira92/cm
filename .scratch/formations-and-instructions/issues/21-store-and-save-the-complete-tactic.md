@@ -20,9 +20,9 @@ idempotent replays are unchanged.
 
 **Decisions:**
 
-- **Sibling effort; CM 03/04 as shipped is the source; Roles are removed; the engine stays non-spatial; complete Tactics change live; a named tactic library; AI runs complete Tactics; old saves are refused.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
-- **A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot; built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is a template's contents plus assignments and bench, named by its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the complete Tactic.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
-- **CM 03/04's nine team instructions, each defaulting to the game's unticked state, replace Mentality/Tempo/Pressing; Tactical Style presets are removed and the preferred formation is the manager's tactical identity.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).
+- **Sibling effort; CM 03/04 as shipped is the source; Roles are removed; the engine stays non-spatial; complete Tactics change live; a named tactic library; AI runs complete Tactics; old saves are refused.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
+- **A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot; built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is a template's contents plus assignments and bench, named by its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the complete Tactic.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
+- **CM 03/04's nine team instructions, each defaulting to the game's unticked state, replace Mentality/Tempo/Pressing; Tactical Style presets are removed and the preferred formation is the manager's tactical identity.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).
 
 **Blocked by:** 20
 

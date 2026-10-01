@@ -12,8 +12,8 @@ built-in template targeted by a write, a stale revision, an unknown template.
 
 **Decisions:**
 
-- **In the save, owned by the manager; quick load keeps players by slot number and leaves the bench; create/rename/overwrite/duplicate/delete with read-only built-ins, unique case-insensitive names, no cap, Request Id on every operation and Expected Revision on overwrite/rename/delete.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-09-29-tactic-library-in-the-save-reseats-by-slot.md).
-- **A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot; built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is a template's contents plus assignments and bench, named by its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the complete Tactic.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
+- **In the save, owned by the manager; quick load keeps players by slot number and leaves the bench; create/rename/overwrite/duplicate/delete with read-only built-ins, unique case-insensitive names, no cap, Request Id on every operation and Expected Revision on overwrite/rename/delete.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-09-29-tactic-library-in-the-save-reseats-by-slot.md).
+- **A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot; built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is a template's contents plus assignments and bench, named by its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the complete Tactic.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
 
 **Blocked by:** 21
 

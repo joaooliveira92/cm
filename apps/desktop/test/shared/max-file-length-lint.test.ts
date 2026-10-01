@@ -77,6 +77,9 @@ describe("max-file-length", () => {
     for (const path of [
       join("apps", "desktop", "src", "main", "db", "schema.ts"),
       join("apps", "desktop", "src", "main", "db", "migrations.generated.ts"),
+      join("apps", "desktop", "src", "renderer", "tactics", "SetInstructionsPanel.tsx"),
+      join("apps", "desktop", "src", "renderer", "tactics", "TacticsScreen.tsx"),
+      join("packages", "game-engine", "src", "match", "simulate", "resolvers.ts"),
     ]) {
       expect(statSync(join(repoRoot, path)).isFile()).toBe(true);
     }

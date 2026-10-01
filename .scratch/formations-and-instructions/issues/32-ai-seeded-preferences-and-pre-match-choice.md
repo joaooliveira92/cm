@@ -12,7 +12,7 @@ set their Tactic; deterministic, no failure channel.
 
 **Decisions:**
 
-- **Seeded CM staff preferences per AI club; a preferred template with a best-XI fallback and style-mapped instructions before kickoff; a deterministic in-match rule table by score, minute and red cards; all run by a tactical controller outside the engine and journaled as `ChangeTactics` for the human's opponent.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-ai-tactics-from-seeded-preferences-via-a-controller.md).
+- **Seeded CM staff preferences per AI club; a preferred template with a best-XI fallback and style-mapped instructions before kickoff; a deterministic in-match rule table by score, minute and red cards; all run by a tactical controller outside the engine and journaled as `ChangeTactics` for the human's opponent.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-ai-tactics-from-seeded-preferences-via-a-controller.md).
 
 **Blocked by:** 26
 

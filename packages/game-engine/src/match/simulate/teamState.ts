@@ -1,5 +1,4 @@
-import { pickRandom, type RandomSource } from "@cm-clone/shared";
-import type { PlayerInstructions, TeamInstructions, TeamSetPieces, TakerList } from "@cm-clone/shared";
+import { pickRandom, type RandomSource, type TeamInstructions, type TeamSetPieces, type TakerList } from "@cm-clone/shared";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM, type MatchCommand } from "../commands.js";
 import { START_CONDITION, conditionDecayPerMinute, newConditionLedger } from "../condition.js";
 import type { MatchEvent, MatchHalf } from "../events.js";
@@ -7,9 +6,7 @@ import { fatigueMultiplier } from "../fatigue.js";
 import { PENALTY_SLASH_FACTOR } from "../injury.js";
 import {
   aggregatePhaseSlots,
-  computePhaseStrengths,
   modifiersOf,
-  resolveTeamInstructions,
   resolveTeamTactics,
   type ResolvedTeamTactics,
   type ResolvedSlot,
@@ -17,8 +14,7 @@ import {
 import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "../types.js";
 import { HOME_ADVANTAGE_MULTIPLIER, clamp } from "./constants.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import { resolveTeamModifiers } from "../resolveBehaviourVectors.js";
-import type { TeamBehaviourModifiers } from "../resolveBehaviourVectors.js";
+
 
 /**
  * Engine-owned per-team runtime state. Tactic-blind (ADR-0002/0003): the Tactic is resolved once at
@@ -120,7 +116,6 @@ export const applyCommand = (
     // (which matches the kickoff slot order). For each currently-on-pitch player, find their
     // behaviour from the appropriate position in the new tactic's slot instructions.
     const currentSlots = team.resolved.slots;
-    const currentById = new Map(currentSlots.map((s, i) => [s.playerId, { slot: s, index: i }]));
 
     // Map each current on-pitch slot to a new behaviour vector.
     // Use the slot's playerId to find the matching position in the new tactic's slot instructions.

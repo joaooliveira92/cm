@@ -20,7 +20,7 @@ import {
   type PositionalRatings,
   type Slot,
 } from "@cm-clone/shared";
-import type { MatchPlayerInput, MatchTactic, PhaseStrengths } from "./types.js";
+import type { MatchPlayerInput, MatchTactic, PhaseStrengths, TacticalModifiers } from "./types.js";
 import type { PlayerId } from "@cm-clone/contracts";
 import {
   resolveSlotBehaviours,
@@ -118,8 +118,8 @@ const MENTALITY_MULTIPLIERS: Record<TeamInstructions["mentality"], { attack: num
  */
 export const resolveTeamInstructions = (
   tactic: Pick<MatchTactic, "team">,
-  playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
-  onPitchPlayerIds?: ReadonlySet<string>,
+  _playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
+  _onPitchPlayerIds?: ReadonlySet<string>,
 ): ResolvedInstructions => {
   const mentality = MENTALITY_MULTIPLIERS[tactic.team.mentality];
   return { attack: mentality.attack, midfield: 1, defense: mentality.defense };
@@ -286,7 +286,7 @@ export const aggregatePhaseSlots = (
 };
 
 /** The flat instruction multipliers as the engine's modifiers. */
-export const modifiersOf = (instructions: ResolvedInstructions): import("./types.js").TacticalModifiers => ({
+export const modifiersOf = (instructions: ResolvedInstructions): TacticalModifiers => ({
   ...instructions,
   eventOddsBias: 0,
 });
@@ -320,7 +320,7 @@ export const resolveTacticalModifiers = (
   tactic: MatchTactic,
   playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
   onPitchPlayerIds?: ReadonlySet<string>,
-): import("./types.js").TacticalModifiers => {
+): TacticalModifiers => {
   const onPitch = resolveOnPitchSlots(tactic, playersById, onPitchPlayerIds);
   return modifiersOf(onPitch.instructions);
 };

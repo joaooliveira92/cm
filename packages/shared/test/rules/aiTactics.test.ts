@@ -8,7 +8,6 @@ import {
 } from "../../src/rules/aiTactics.js";
 import {
   BUILT_IN_TEMPLATES,
-  BUILT_IN_TEMPLATE_NAMES,
 } from "../../src/rules/tacticTemplates.js";
 import { DEFAULT_TEAM_INSTRUCTIONS, type TeamInstructions } from "../../src/rules/tacticModel.js";
 import { STARTER_COUNT, BENCH_SIZE } from "../../src/rules/tactics.js";

@@ -21,7 +21,7 @@ settings, seven normal/often switches), stored per slot; Distribution on the GK 
 marking is match-time only; built-in templates seed each slot from CM's instruction template for its
 cell for the non-override instructions only, leaving the five overrides at `team`; no fit
 rating replaces Role Rating, and effects read the executing player's attributes.** See
-[Agent Note](../../../.agents/notes/proposed/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md).
+[Agent Note](../../../.agents/notes/implemented/feature/2026-09-29-cm-player-instructions-per-slot-without-a-fit-rating.md).
 The template values are transcribed in
 [ticket 14](14-transcribe-cm-instruction-templates.md).
 

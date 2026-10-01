@@ -1,9 +1,8 @@
 import { useCallback, useState } from "react";
-import { Tactic, type SaveId, type PlayerId } from "@cm-clone/contracts";
-import { type MatchPitchView } from "@cm-clone/contracts";
+import type { SaveId, Tactic } from "@cm-clone/contracts";
 import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
 import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
-import { InMatchTactics, TacticsScreen } from "../tactics/TacticsScreen.js";
+import { TacticsScreen } from "../tactics/TacticsScreen.js";
 
 /**
  * Validate a live tactic change against the revealed pitch.

@@ -38,4 +38,4 @@ turns the Tactic into team modifiers and per-slot behaviour vectors the engine c
 a suitability cost that scales decision-making and positional attributes, runs that count in the
 target cell in possession, closest-attribute mappings, and a tuning table proved by directional
 tests and a calibration harness.** The per-setting effect tables are tickets 15, 16 and 17. See
-[Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).
+[Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).

@@ -17,4 +17,4 @@ discrete step or a number.
 **CM 03/04's nine team instructions, each defaulting to the game's unticked state, replace
 Mentality/Tempo/Pressing; Tactical Style presets are removed and the preferred formation is the
 manager's tactical identity.** See
-[Agent Note](../../../.agents/notes/proposed/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).
+[Agent Note](../../../.agents/notes/implemented/feature/2026-09-29-cm-team-instructions-replace-sliders-and-styles.md).

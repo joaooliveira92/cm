@@ -15,7 +15,7 @@ Found in review of [ticket 19](issues/19-substitution-picker-lists-the-tactic-no
 - Ticket 19's `MatchPitchView.substitutes` is "squad minus anyone who has been on", so both pickers
   offer the whole club squad.
 - The contracts package elsewhere (`SelectionSummaryView`) and the proposed note
-  [the team sheet is the Tactic](../../.agents/notes/proposed/architecture/2026-09-13-the-team-sheet-is-the-tactic.md)
+  [the team sheet is the Tactic](../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md (supersedes))
   define substitutes as the players named on the active Tactic's bench.
 
 Guessing wrong either changes the replay of saved matches, or leaves "substitutes" meaning two

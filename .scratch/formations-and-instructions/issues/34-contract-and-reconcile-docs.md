@@ -11,8 +11,8 @@ Seam: a deletion with no behaviour change.
 
 **Decisions:**
 
-- **Sibling effort; CM 03/04 as shipped is the source; Roles are removed; the engine stays non-spatial; complete Tactics change live; a named tactic library; AI runs complete Tactics; old saves are refused.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
-- **A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot; built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is a template's contents plus assignments and bench, named by its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the complete Tactic.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
+- **Sibling effort; CM 03/04 as shipped is the source; Roles are removed; the engine stays non-spatial; complete Tactics change live; a named tactic library; AI runs complete Tactics; old saves are refused.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
+- **A slot is a CM grid cell with an optional run target; Player Instructions belong to the slot; built-in presets and saved tactics are one Tactic Template type with no players; the live Tactic is a template's contents plus assignments and bench, named by its source template, with "modified" and the row-count label derived; `ChangeTactics` carries the complete Tactic.** See [Agent Note](../../../.agents/notes/implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md).
 
 **Blocked by:** 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, and player-positional-model 19
 

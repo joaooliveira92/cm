@@ -1,5 +1,5 @@
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import type { PlayerAttributes, Slot, TeamInstructions, TeamSetPieces, TakerList } from "@cm-clone/shared";
+import type { PlayerAttributes, PlayerInstructions, PositionalRatings, Slot, TeamInstructions, TeamSetPieces, TakerList } from "@cm-clone/shared";
 import { DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS } from "@cm-clone/shared";
 import type { PerSlotBehaviour, TeamBehaviourModifiers } from "./resolveBehaviourVectors.js";
 
@@ -25,7 +25,7 @@ export interface MatchTactic {
   readonly slots: ReadonlyArray<MatchSlot>;
   readonly bench: ReadonlyArray<PlayerId | null>;
   readonly team: TeamInstructions;
-  readonly slotInstructions: ReadonlyArray<{ readonly cell: Slot; readonly instructions: import("@cm-clone/shared").PlayerInstructions }>;
+  readonly slotInstructions: ReadonlyArray<{ readonly cell: Slot; readonly instructions: PlayerInstructions }>;
   /** Team set-piece instructions per side (Corners, Free Kicks, Throw Ins on left and right). */
   readonly teamSetPieces: TeamSetPieces;
   /** Ordered taker lists for each set-piece type. Empty arrays when no taker is nominated. */
@@ -44,7 +44,7 @@ export interface CompleteTacticLike {
   readonly assignments: ReadonlyArray<PlayerId>;
   readonly bench: ReadonlyArray<PlayerId | null>;
   readonly team: TeamInstructions;
-  readonly slotInstructions?: ReadonlyArray<{ readonly cell: Slot; readonly instructions: import("@cm-clone/shared").PlayerInstructions }>;
+  readonly slotInstructions?: ReadonlyArray<{ readonly cell: Slot; readonly instructions: PlayerInstructions }>;
   readonly teamSetPieces?: TeamSetPieces;
   readonly takers?: Takers;
 }
@@ -60,7 +60,7 @@ export const toMatchTactic = (tactic: CompleteTacticLike): MatchTactic => ({
   team: tactic.team,
   slotInstructions: tactic.slotInstructions ?? tactic.slots.map((slot) => ({
     cell: slot.cell,
-    instructions: null as unknown as import("@cm-clone/shared").PlayerInstructions,
+    instructions: null as unknown as PlayerInstructions,
   })),
   teamSetPieces: tactic.teamSetPieces ?? DEFAULT_TEAM_SET_PIECES,
   takers: tactic.takers ?? EMPTY_TAKERS,
@@ -73,7 +73,7 @@ export interface MatchPlayerInput {
    *  recovered player from the previous fixture (ticket 09) start the match below full Condition. */
   readonly startingCondition?: number;
   /** The player's PositionalRatings — read for suitability scoring against the slot (formations-and-instructions). */
-  readonly positionalRatings: import("@cm-clone/shared").PositionalRatings;
+  readonly positionalRatings: PositionalRatings;
 }
 
 export interface MatchTeamSetup {

@@ -17,4 +17,4 @@ delete go through the same revision and idempotency protocol as a Tactic save.
 **In the save, owned by the manager; quick load keeps players by slot number and leaves the bench;
 create/rename/overwrite/duplicate/delete with read-only built-ins, unique case-insensitive names, no
 cap, Request Id on every operation and Expected Revision on overwrite/rename/delete.** See
-[Agent Note](../../../.agents/notes/proposed/feature/2026-09-29-tactic-library-in-the-save-reseats-by-slot.md).
+[Agent Note](../../../.agents/notes/implemented/feature/2026-09-29-tactic-library-in-the-save-reseats-by-slot.md).

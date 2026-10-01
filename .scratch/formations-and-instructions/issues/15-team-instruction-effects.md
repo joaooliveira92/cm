@@ -6,7 +6,7 @@ Status: resolved
 
 ## Question
 
-For each of the nine Team Instructions and each value, fix its effect within [the engine framework note](../../../.agents/notes/proposed/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md): which team
+For each of the nine Team Instructions and each value, fix its effect within [the engine framework note](../../../.agents/notes/implemented/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md): which team
 modifier or per-slot behaviour weight it moves, in which direction, and roughly how far relative to
 the others (the absolute numbers are tuning constants). Include Closing Down's `default`, Men Behind
 The Ball, Counter Attack, Zonal Marking and the Offside Trap's Offside-event and beaten-trap
@@ -17,7 +17,7 @@ drafts the table; the human approves or amends it.
 
 **Approved table.** Directions are fixed; sizes are relative (S/M/L) and the numbers are tuning
 constants set against the calibration targets in
-[the engine framework note](../../../.agents/notes/proposed/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).
+[the engine framework note](../../../.agents/notes/implemented/architecture/2026-09-29-tactics-resolve-to-behaviour-vectors-for-a-chance-pipeline.md).
 Each effect is against the instruction's default.
 
 | Instruction | Value | Effect |

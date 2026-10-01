@@ -1,11 +1,9 @@
 import type { PlayerId, ClubId } from "@cm-clone/contracts";
-import type { TeamSetPieces } from "@cm-clone/shared";
 import type { MatchEvent, MatchHalf } from "../events.js";
 import type { MatchPlayerInput } from "../types.js";
 import type { RandomSource } from "@cm-clone/shared";
 import { type TeamRuntimeState } from "./teamState.js";
 import {
-  ATTRIBUTE_EFFECT_SCALE,
   CORNER_CHANCE,
   CORNER_GOAL_BASE,
   CORNER_MISS_SHARE,
@@ -96,7 +94,6 @@ const resolveSetPieceOutcome = (
 
   if (roll < goalProb) return "goal";
 
-  const remaining = 1 - goalProb;
   const saveProb = saveShare / (saveShare + missShare);
   return random.next() < saveProb ? "onTarget" : "missed";
 };

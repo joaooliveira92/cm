@@ -5,7 +5,7 @@ Status: proposed
 ## Problem
 
 Tactic slots become cells on CM 03/04's tactics grid (see
-[A Tactic is a Tactic Template plus players](2026-09-29-tactic-templates-and-grid-cell-slots.md)).
+[A Tactic is a Tactic Template plus players](../implemented/architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md)).
 The cells need names, and the game-design tables keyed by the old ten Positions (Position Weights,
 phase membership) need a key that covers every cell without authoring 31 tables.
 

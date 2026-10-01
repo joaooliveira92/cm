@@ -12,7 +12,7 @@
 import type { PlayerId } from "@cm-clone/contracts";
 import { GOALKEEPER_SLOT, type RandomSource } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
-import type { MatchEvent, SubstitutionEvent } from "../../src/match/events.js";
+import type { MatchEvent, RedCardEvent } from "../../src/match/events.js";
 import { simulateMatchWithCounts } from "../../src/match/simulate/index.js";
 import { resolveCards } from "../../src/match/simulate/resolvers.js";
 import { initTeamState, type TeamRuntimeState } from "../../src/match/simulate/teamState.js";
@@ -115,10 +115,10 @@ const countsFrom = (counts: ReturnType<typeof seeded>["counts"], clubId: typeof 
  * so previously-pinned seeds (453, 506, 121, 284) may no longer fire the same events.
  * We re-discover seeds that match the expected patterns.
  */
-const findSeedWithRedCard = (teamClubId: string, playerPattern: string, half: number, minuteFloor: number, minuteCeil: number): { seed: number; redCard: import("../../src/match/events.js").RedCardEvent } | undefined => {
+const findSeedWithRedCard = (teamClubId: string, playerPattern: string, half: number, minuteFloor: number, minuteCeil: number): { seed: number; redCard: RedCardEvent } | undefined => {
   for (let seed = 1; seed < 200; seed++) {
     const { events } = seeded(seed);
-    const reds = events.filter((event): event is import("../../src/match/events.js").RedCardEvent => event._tag === "RedCard" && event.teamClubId === teamClubId);
+    const reds = events.filter((event): event is RedCardEvent => event._tag === "RedCard" && event.teamClubId === teamClubId);
     for (const red of reds) {
       if (red.half === half && red.minute >= minuteFloor && red.minute <= minuteCeil && red.playerId.startsWith(playerPattern)) {
         return { seed, redCard: red };
@@ -164,14 +164,9 @@ describe("a simulated match's red card", () => {
       return;
     }
     const { events } = seeded(found.seed);
-    const redIndex = events.findIndex((event) => event._tag === "RedCard" && event.teamClubId === AWAY);
-    if (redIndex >= 0) {
-      const nextEvent = events[redIndex + 1];
-      const hasForcedSub = nextEvent?._tag === "Substitution" && nextEvent.teamClubId === AWAY && nextEvent.forcedByInjury;
-      // Outfield reds don't force a GK substitution (unless it's the last GK)
-      // The test just verifies the match completes
-      expect(events.some((event) => event._tag === "FullTimeWhistle")).toBe(true);
-    }
+    // Outfield reds don't force a GK substitution (unless it's the last GK)
+    // The test just verifies the match completes
+    expect(events.some((event) => event._tag === "FullTimeWhistle")).toBe(true);
   });
 
   it("a keeper sent off with a second keeper on the pitch brings no one into goal", () => {
@@ -180,7 +175,6 @@ describe("a simulated match's red card", () => {
     const keepers = new Set(home.tactic.slots.filter((slot) => slot.cell.row === "GK").map((slot) => slot.playerId));
     // Scan for a seed where a keeper gets a red card
     const { events } = seeded(284, home);
-    const redIndex = events.findIndex((event) => event._tag === "RedCard" && keepers.has(event.playerId));
     // The test passes if the match completes (the pipeline changed, so older seeds may differ)
     expect(events.some((event) => event._tag === "FullTimeWhistle")).toBe(true);
   });

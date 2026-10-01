@@ -19,7 +19,7 @@ whether old saves migrate.
 **Sibling effort; CM 03/04 as shipped is the source; Roles are removed; the engine stays
 non-spatial; complete Tactics change live; a named tactic library; AI runs complete Tactics; old
 saves are refused.** The Role removal is recorded in an Agent Note:
-[Roles give way to CM 03/04 player instructions](../../../.agents/notes/proposed/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
+[Roles give way to CM 03/04 player instructions](../../../.agents/notes/implemented/architecture/2026-09-29-roles-give-way-to-cm-player-instructions.md).
 The rest, each binding on later tickets:
 
 - **Boundary.** This effort owns formation presets, team instructions, player instructions, live
