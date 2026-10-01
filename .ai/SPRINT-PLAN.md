@@ -240,21 +240,28 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**One human decision is now outstanding** (2026-09-26). Every other decision request in `.scratch/`
-has an answer, and the four `ready-for-human` tickets were decided under the human's standing
-delegation. Agent-startable work, in order:
+**Desktop-suite-red 20 resolved 2026-10-01** (`5bf2a2fc`):
+`e2e/globalSetup.ts` checks build staleness (newest src mtime vs oldest dist mtime) and fails with a
+message naming the correct command when sources are newer. Six specs prove both branches.
 
-1. **desktop-suite-red has one new ticket (2026-09-29).** [20](../.scratch/desktop-suite-red/issues/20-playwright-can-run-a-stale-dist.md):
-   **Playwright can run a stale `dist/` and report green.** `pretest:e2e` fires for the *script
-   name*, not the binary, so `pnpm exec playwright test` and `npx playwright test` skip the build
-   and test the last artifact. Found while building squad-instructions 04: a mutation to `cycleSort`
-   passed e2e because it had never been compiled. The fix is a staleness check in `e2e/globalSetup.ts`.
-   **Run e2e only as `pnpm --filter @cm-clone/desktop test:e2e`.** Its queue was otherwise empty —
-   `dev` had gone red overnight, the shared Select is back on Base UI's Select primitive
-   ([19](../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md)), and the rest was
-   fixed in four commits. [18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
-   closed as not reproducible. Before calling a red e2e run a regression, check `pmset -g log` for a
-   sleep inside its window, and remember that e2e is outside `check:all`.
+The plan originally named squad-instructions 05 next, but it carries a stale `claimed` lock — claimed
+2026-09-28 with no Comments, no Answer section, and all acceptance checkboxes still unchecked.
+Its effort issue 03 was named a stale lock on the same pass and was to be resolved when the effort
+closes; 05 is in the same condition. The next open, unblocked, unclaimed build tickets across all
+live efforts are now:
+
+1. [group-j 10](../.scratch/group-j-transfers-contracts-and-negotiations/issues/10-make-offer-from-the-player-profile.md) —
+   **Make offer from the player profile**, ready-for-agent, unblocked.
+2. [training-schedule-and-delegation 04](../.scratch/training-schedule-and-delegation/issues/04-schedule-moves-condition.md) —
+   **Schedule moves condition**, ready-for-agent, unblocked.
+3. [player-positional-model 19](../.scratch/player-positional-model/issues/19-contract-the-legacy-projection-and-reconcile-docs.md) —
+   **Contract the legacy projection**, ready-for-agent, blocked by 14, 15, 16, 17.
+
+`dev` had gone red overnight, the shared Select is back on Base UI's Select primitive
+([19](../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md)), and the rest was
+fixed in four commits. [18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
+closed as not reproducible. Before calling a red e2e run a regression, check `pmset -g log` for a
+sleep inside its window, and remember that e2e is outside `check:all`.
 2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal.
 3. **Queue refilled 2026-09-28 from two human rulings.** In order:
    [group-e 04](../.scratch/group-e-squad-management/issues/04-attribute-threshold-filter.md)
