@@ -154,6 +154,8 @@ test("a match started before an app restart resumes live on Match day, says it r
   // The replay may differ from what the first launch revealed, so Match day says it started over (33).
   await expect(relaunched.getByRole("status").filter({ hasText: RESTARTED_FROM_KICKOFF })).toBeVisible();
 
+  // Played at Fast: a whole match at the Normal pace runs up to two minutes (cm-style-commentary 06).
+  await relaunched.getByRole("group", { name: "Commentary speed" }).getByRole("button", { name: "Fast" }).click();
   const accept = relaunched.getByRole("button", { name: "Accept result" });
   await expect(accept).toBeVisible({ timeout: 90_000 });
   await accept.click();

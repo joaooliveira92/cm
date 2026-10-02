@@ -9,6 +9,9 @@ import { useMatchContext } from "./MatchProvider.js";
 import { controlledClubId } from "./controlledClub.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { getRevealedEvents } from "./session.js";
+import { getCommentarySpeed, speedFactor } from "./commentarySpeed.js";
+import { playbackParts } from "./engine/playback.js";
+import type { PlayingLine } from "./hooks/useCommentaryFeed.js";
 import { nextPaceDecision, shouldPauseMatch, shouldPollMatch } from "./engine/pace.js";
 
 export const useMatchStreaming = (): void => {
@@ -30,6 +33,8 @@ export const useMatchStreaming = (): void => {
   reportErrorRef.current = commMeta.reportError;
   const setPausedRef = useRef(commMeta.setPaused);
   setPausedRef.current = commMeta.setPaused;
+  const setPlayingRef = useRef(commMeta.setPlaying);
+  setPlayingRef.current = commMeta.setPlaying;
 
   useEffect(() => {
     if (!hydrated) return;
@@ -91,6 +96,11 @@ export const useMatchStreaming = (): void => {
     };
 
     const revealBuffered = (): void => {
+      const playing = commMeta.playingRef.current;
+      if (playing !== null) {
+        setPlayingRef.current(null);
+        revealLineRef.current(playing.line);
+      }
       for (let next = commMeta.pendingRef.current.shift(); next !== undefined; next = commMeta.pendingRef.current.shift()) {
         revealLineRef.current(next);
       }
@@ -108,19 +118,53 @@ export const useMatchStreaming = (): void => {
   useEffect(() => {
     if (match === null) return;
 
-    const interval = setInterval(() => {
+    // Championship Manager's pacing: each line holds for its own delay, and a follow-on line plays its
+    // parts in turn. A line is revealed when its last part shows.
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const schedule = (ms: number): void => {
+      timer = setTimeout(tick, ms);
+    };
+
+    const show = (playing: PlayingLine): void => {
+      const part = playing.parts[playing.shown - 1]!;
+      if (playing.shown < playing.parts.length) {
+        setPlayingRef.current(playing);
+      } else {
+        setPlayingRef.current(null);
+        revealLineRef.current(playing.line);
+      }
+      schedule(part.delayMs);
+    };
+
+    const tick = (): void => {
+      const halted = commMeta.pausedRef.current || commMeta.commandInFlightRef.current;
+      const playing = commMeta.playingRef.current;
+      if (playing !== null) {
+        if (halted) schedule(REVEAL_INTERVAL_MS);
+        else show({ ...playing, shown: playing.shown + 1 });
+        return;
+      }
       const decision = nextPaceDecision({
-        paused: commMeta.pausedRef.current || commMeta.commandInFlightRef.current,
+        paused: halted,
         bufferLength: commMeta.pendingRef.current.length,
         streamComplete: commMeta.streamCompleteRef.current,
       });
-      if (decision === "reveal") {
-        const next = commMeta.pendingRef.current.shift();
-        if (next) revealLineRef.current(next);
-      } else if (decision === "complete") {
-        matchActions.setPhaseComplete();
+      const next = decision === "reveal" ? commMeta.pendingRef.current.shift() : undefined;
+      if (next !== undefined && next.quiet === true) {
+        // Lost its display-chance draw: revealed at once, never shown in the bar, and it takes no time.
+        revealLineRef.current(next);
+        tick();
+        return;
       }
-    }, REVEAL_INTERVAL_MS);
-    return () => clearInterval(interval);
+      if (next !== undefined) {
+        show({ line: next, parts: playbackParts(next, speedFactor(getCommentarySpeed())), shown: 1 });
+        return;
+      }
+      if (decision === "complete") matchActions.setPhaseComplete();
+      schedule(REVEAL_INTERVAL_MS);
+    };
+
+    schedule(REVEAL_INTERVAL_MS);
+    return () => clearTimeout(timer);
   }, [match, setPhaseComplete]);
 };

@@ -5,7 +5,9 @@
  * fetch rate to the reveal rate.
  */
 
-/** How often a new Commentary Line is revealed from the paced local queue. */
+/** The reveal loop's idle re-check while it waits on the buffer or a pause, and the pace of a Commentary
+ * Line that carries no playback parts. Lines with parts hold for the delays the commentary file
+ * gives them (`packages/game-engine/data/events.cfg`), scaled by the commentary speed. */
 export const REVEAL_INTERVAL_MS = 350;
 
 /** How often we poll `resumeSimulation` for the next chunk once the buffer runs low. */

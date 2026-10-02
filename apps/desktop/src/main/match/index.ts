@@ -7,10 +7,12 @@
  * `StartMatch` freezes into the stream), `stream` (the persisted shapes and the pure re-derivation
  * over them), `view` (a derived timeline turned into the next chunk after a cursor), `queries`
  * (the awaiting match Match day resumes, and `ResumeSimulation`), and `commands` (the manager's mid-match commands).
+ * `commentaryFile` reads the player-editable commentary file both of the last two render lines from.
  * `seedOverride` sits beside them: the test-only boot-time override the entry module reads.
  */
 
 export { submitMatchCommand } from "./commands.js";
+export { COMMENTARY_FILE, SHIPPED_COMMENTARY, loadCommentaryTable } from "./commentaryFile.js";
 export { getPostMatchSummary } from "./postMatchSummary.js";
 export { getMatchReport, reportEvents } from "./report.js";
 export { aggregateMatchStatistics, getMatchStatistics } from "./statistics.js";

@@ -17,7 +17,9 @@ import { simulateMatch, type SimulateMatchInput } from "../../src/match/simulate
 import { aggregatePhaseSlots, resolveTeamTactics } from "../../src/match/tactical-modifiers.js";
 import type { MatchPlayerInput, MatchTeamSetup, MatchTactic } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
-import { COMMENTARY_TEMPLATES, renderCommentary } from "../../src/match/commentary.js";
+import { SHIPPED, renderShipped as renderCommentary } from "./shippedCommentary.js";
+
+const COMMENTARY_TEMPLATES = SHIPPED.templates;
 import type { BeatenTrapEvent, MatchEvent } from "../../src/match/events.js";
 
 const AVERAGE_ATTRIBUTES: PlayerAttributes = {

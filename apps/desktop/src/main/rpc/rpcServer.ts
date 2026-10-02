@@ -22,7 +22,7 @@ import {
   resetKeyBinding,
   setKeyBindingOverride,
 } from "./keybindings.js";
-import { getAwaitingMatch, getMatchRatings, getMatchReport, getMatchStatistics, getPostMatchSummary, getTeamSheet, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
+import { getAwaitingMatch, getMatchRatings, getMatchReport, getMatchStatistics, getPostMatchSummary, getTeamSheet, loadCommentaryTable, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
 import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
@@ -359,7 +359,7 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { saveId, matchId, cursor, revealedEvents } = yield* Schema.decodeUnknownEffect(
         AppRpcs.resumeSimulation.payload,
       )(payload);
-      return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor, revealedEvents);
+      return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor, revealedEvents, yield* loadCommentaryTable(ctx.userDataDir));
     }),
   getAwaitingMatch: (payload, ctx) =>
     Effect.gen(function* () {
@@ -400,7 +400,17 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { saveId, matchId, cursor, revealedEvents, minute, isHalftime, command } = yield* Schema.decodeUnknownEffect(
         AppRpcs.submitMatchCommand.payload,
       )(payload);
-      return yield* submitMatchCommand(ctx.savesDir, saveId, matchId, cursor, revealedEvents, minute, isHalftime, command);
+      return yield* submitMatchCommand(
+        ctx.savesDir,
+        saveId,
+        matchId,
+        cursor,
+        revealedEvents,
+        minute,
+        isHalftime,
+        command,
+        yield* loadCommentaryTable(ctx.userDataDir),
+      );
     }),
   getTransfersScreen: (payload, ctx) =>
     Effect.gen(function* () {

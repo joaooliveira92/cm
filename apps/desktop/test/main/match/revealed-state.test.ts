@@ -67,7 +67,7 @@ const seededMatch = Effect.gen(function* () {
   strictEqual(lines.filter((line) => line.tag === "Goal").length, 1, repin);
   strictEqual(lines[HALF_TIME_LINE]?.tag, "HalfTimeReached", repin);
   strictEqual(lines[RED_CARD_LINE]?.tag, "RedCard", repin);
-  ok(lines[RED_CARD_LINE]!.text.includes(match.isHome ? match.homeClubName : match.awayClubName), `the red card is the human club's — ${repin}`);
+  strictEqual(lines[RED_CARD_LINE]!.clubId, match.isHome ? match.homeClubId : match.awayClubId, `the red card is the human club's — ${repin}`);
   return { save, match, lines };
 });
 

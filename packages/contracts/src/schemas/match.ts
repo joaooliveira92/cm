@@ -33,11 +33,26 @@ export class MatchSummary extends Schema.Class<MatchSummary>("MatchSummary")({
   isHome: Schema.Boolean,
 }) {}
 
-/** One rendered Commentary Line (ADR-0008) — minute is a separate field, never baked into `text`. */
+/** One follow-on part of a Commentary Line, and how long it holds before the line goes on. */
+export class CommentaryPartView extends Schema.Class<CommentaryPartView>("CommentaryPartView")({
+  text: Schema.String,
+  delayMs: Schema.Finite,
+}) {}
+
+/** One rendered Commentary Line (ADR-0008) — minute is a separate field, never baked into `text`.
+ *  The playback fields are optional: a line without them plays as one part on the renderer's default
+ *  reveal interval, shown in the bar, in neutral colours. See `.scratch/cm-style-commentary/spec.md`. */
 export class CommentaryLineView extends Schema.Class<CommentaryLineView>("CommentaryLineView")({
   minute: Schema.Finite,
   tag: Schema.String,
+  /** Every part joined: what the log shows. */
   text: Schema.String,
+  parts: Schema.optional(Schema.Array(CommentaryPartView)),
+  flash: Schema.optional(Schema.Boolean),
+  /** Revealed, but never shown in the commentary bar (lost its display-chance draw). */
+  quiet: Schema.optional(Schema.Boolean),
+  /** The club the line is about, for the bar's colours. */
+  clubId: Schema.optional(Schema.NullOr(ClubId)),
 }) {}
 
 /** Per-club substitution cap status (ticket 14: 5 subs / 3 windows, halftime doesn't count as a

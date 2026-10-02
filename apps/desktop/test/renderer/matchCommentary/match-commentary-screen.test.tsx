@@ -1,4 +1,4 @@
-import { act, cleanup, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MatchId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
 import { MatchCommentaryScreen } from "../../../src/renderer/matchCommentary/MatchCommentaryScreen.js";
@@ -95,7 +95,11 @@ const liveSession = (phase = "live", matchId = "m1", saveId = s1) =>
     phase,
   } as never);
 
-const shown = () => screen.queryAllByText(/./, { selector: "p > span:last-child" }).map((node) => node.textContent);
+/** The feed's line texts, in order: each row's last child is the line, after its minute. */
+const shown = () => {
+  const log = screen.queryByRole("log");
+  return log === null ? [] : within(log).getAllByRole("listitem").map((row) => row.lastElementChild?.textContent);
+};
 
 beforeEach(() => {
   vi.useFakeTimers();

@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, MatchId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
@@ -72,8 +72,9 @@ describe("MatchDayScreen at full time — the settled feed stays on screen (no l
     await screen.findByText("Full time");
 
     // The settled feed is still readable line by line.
-    expect(screen.getByText("Goal!")).toBeTruthy();
-    expect(screen.getByText("Second!")).toBeTruthy();
+    const log = screen.getByRole("log", { name: "Commentary" });
+    expect(within(log).getByText("Goal!")).toBeTruthy();
+    expect(within(log).getByText("Second!")).toBeTruthy();
 
     // The completed-match row and its reset affordance render below the feed.
     await screen.findByText(/Final score: Home FC 2 - 1 Away FC/);

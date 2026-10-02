@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 import type { MatchEvent } from "../../src/match/events.js";
-import { COMMENTARY_TEMPLATES, renderCommentary } from "../../src/match/commentary.js";
+import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS } from "../../src/match/commentary.js";
+import { SHIPPED, renderShipped as renderCommentary } from "./shippedCommentary.js";
+
+const COMMENTARY_TEMPLATES = SHIPPED.templates;
 
 /** `MatchEvent`'s ids are branded in `@cm-clone/contracts`, which depends on this package — so this
  * package can't import the brands back without a cycle. Fixtures mint them off the event type. */
@@ -83,6 +86,136 @@ describe("injury commentary", () => {
     ];
     for (const line of renderCommentary(events, 5, names)) {
       expect(line.text).not.toMatch(/\{\w+\}/);
+    }
+  });
+});
+describe("commentary reads the events around a line", () => {
+  const home = clubId("home");
+  const away = clubId("away");
+  const started: MatchEvent = { _tag: "MatchStarted", seed: 1, homeClubId: home, awayClubId: away };
+  const goal = (minute: number, team: typeof home, homeScore: number, awayScore: number): MatchEvent => ({
+    _tag: "Goal",
+    minute,
+    half: 1,
+    teamClubId: team,
+    playerId: playerId("p1"),
+    homeScore,
+    awayScore,
+    chanceType: "throughBall",
+  });
+  const textOf = (events: ReadonlyArray<MatchEvent>, seed = 1) => renderCommentary(events, seed, names).map((line) => line.text);
+
+  it("names both sides in every scoreline, and says what the goal did to it", () => {
+    const [, opener, equaliser, lead, extend, reply] = textOf([
+      started,
+      goal(10, home, 1, 0),
+      goal(20, away, 1, 1),
+      goal(30, home, 2, 1),
+      goal(40, home, 3, 1),
+      goal(50, away, 3, 2),
+    ]);
+    expect(opener).toContain("Home 1-0 Away");
+    expect(opener).toMatch(/lead|opener|in front/);
+    expect(equaliser).toMatch(/level|equaliser|square/);
+    expect(lead).toMatch(/ahead|lead/);
+    expect(extend).toMatch(/extend|pulling away|Another/);
+    expect(reply).toMatch(/back|reply/);
+  });
+
+  it("narrates a penalty's shot as a penalty, not as open play", () => {
+    for (const seed of [1, 2, 3, 4, 5]) {
+      const [, , shot] = textOf(
+        [
+          started,
+          { _tag: "Penalty", minute: 60, half: 2, teamClubId: home, playerId: playerId("p1") },
+          { _tag: "ShotMissed", minute: 60, half: 2, teamClubId: home, playerId: playerId("p1"), chanceType: "throughBall" },
+        ],
+        seed,
+      );
+      const penaltyMisses = COMMENTARY_TEMPLATES["ShotMissed:penalty"].map((t) => t.replace("{player}", "P One").replace("|", " "));
+      expect(penaltyMisses).toContain(shot);
+    }
+  });
+
+  it("has the key pass name the finisher the chance event carries", () => {
+    const [, , keyPass] = textOf([
+      started,
+      { _tag: "Cross", minute: 5, half: 1, teamClubId: home, playerId: playerId("p2"), assistPlayerId: playerId("p1") },
+      { _tag: "KeyPass", minute: 5, half: 1, teamClubId: home, playerId: playerId("p1"), chanceType: "cross" },
+    ]);
+    expect(keyPass).toContain("P One");
+    expect(keyPass).toContain("P Two");
+  });
+
+  it("names the winner at full time, and calls a level score a draw", () => {
+    const [, win] = textOf([started, { _tag: "FullTimeWhistle", minute: 90, homeScore: 0, awayScore: 2 }]);
+    expect(win).toContain("Home 0-2 Away");
+    expect(win).toMatch(/Away (take|beat)|for Away/);
+    const [, draw] = textOf([started, { _tag: "FullTimeWhistle", minute: 90, homeScore: 1, awayScore: 1 }]);
+    expect(draw).not.toMatch(/\bwin\b|\bbeat\b/);
+  });
+
+  it("uses no template twice until its pool is spent", () => {
+    const fouls: ReadonlyArray<MatchEvent> = COMMENTARY_TEMPLATES.Foul.map((_, minute) => ({
+      _tag: "Foul",
+      minute,
+      half: 1,
+      teamClubId: home,
+      playerId: playerId("p1"),
+      isYellowCard: false,
+    }));
+    for (const seed of [1, 7, 99]) {
+      const lines = textOf([started, ...fouls], seed).slice(1);
+      expect(new Set(lines).size).toBe(COMMENTARY_TEMPLATES.Foul.length);
+    }
+  });
+
+  it("leaves earlier lines unchanged when the events after them change", () => {
+    const before = textOf([started, goal(10, home, 1, 0), goal(20, home, 2, 0)]);
+    const after = textOf([started, goal(10, home, 1, 0), goal(20, away, 1, 1), goal(30, away, 1, 2)]);
+    expect(after.slice(0, 2)).toEqual(before.slice(0, 2));
+  });
+
+
+});
+
+describe("commentary playback, after Championship Manager's events file", () => {
+  const home = clubId("home");
+  const started: MatchEvent = { _tag: "MatchStarted", seed: 1, homeClubId: home, awayClubId: clubId("away") };
+
+  it("splits a shot into a build-up that holds, and an outcome carrying the scoreline", () => {
+    const [, line] = renderCommentary(
+      [started, { _tag: "Goal", minute: 9, half: 1, teamClubId: home, playerId: playerId("p1"), homeScore: 1, awayScore: 0, chanceType: "cross" }],
+      1,
+      names,
+    );
+    expect(line!.parts).toHaveLength(2);
+    expect(line!.parts[0]!.delayMs).toBe(FOLLOW_ON_DELAY_MS);
+    expect(line!.parts[1]!.text).toMatch(/^GOAL!.*Home 1-0 Away\.$/);
+    expect(line!.parts[1]!.delayMs).toBe(SHIPPED.playback["Goal:header"].delayMs);
+    expect(line!.text).toBe(line!.parts.map((part) => part.text).join(" "));
+    expect(line!.flash).toBe(true);
+    expect(line!.clubId).toBe("home");
+  });
+
+  it("always shows the lines that change the match, and only sometimes the minor ones", () => {
+    const fouls: ReadonlyArray<MatchEvent> = Array.from({ length: 200 }, (_, minute) => ({
+      _tag: "Foul", minute, half: 1, teamClubId: home, playerId: playerId("p1"), isYellowCard: false,
+    }));
+    const quiet = renderCommentary([started, ...fouls], 3, names).filter((line) => line.quiet).length;
+    expect(quiet).toBeGreaterThan(20);
+    expect(quiet).toBeLessThan(110);
+    const goals = renderCommentary(
+      [started, { _tag: "Goal", minute: 9, half: 1, teamClubId: home, playerId: playerId("p1"), homeScore: 1, awayScore: 0, chanceType: "cross" }],
+      3,
+      names,
+    );
+    expect(goals.some((line) => line.quiet)).toBe(false);
+  });
+
+  it("never gives a line that changes the match a display chance", () => {
+    for (const [key, playback] of Object.entries(SHIPPED.playback)) {
+      if (ALWAYS_SHOWN.has(key.split(":")[0] as never)) expect(playback.displayChance, key).toBe(1);
     }
   });
 });

@@ -5,7 +5,9 @@
  * attached.
  */
 import {
+  ClubId,
   CommentaryLineView,
+  CommentaryPartView,
   InjuryView,
   ResumeSimulationView,
   type MatchId,
@@ -14,6 +16,7 @@ import {
 import {
   renderCommentary,
   type CommentaryNameResolver,
+  type CommentaryTable,
   type MatchEvent,
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
@@ -106,6 +109,7 @@ export const buildResumeSimulationView = (
   cursor: number,
   revealedEvents: number | null,
   ledger: SubstitutionLedger,
+  commentary: CommentaryTable,
 ) =>
   Effect.gen(function* () {
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
@@ -132,7 +136,7 @@ export const buildResumeSimulationView = (
     };
 
     const commentarySeed = hashString(matchId);
-    const allLines = renderCommentary(events, commentarySeed, names);
+    const allLines = renderCommentary(events, commentarySeed, names, commentary);
 
     const remaining = events.slice(cursor);
     let chunkLength = 0;
@@ -147,7 +151,18 @@ export const buildResumeSimulationView = (
     const { homeScore, awayScore } = scoreAsOf(events, revealedEvents);
     const lines = allLines
       .slice(cursor, newCursor)
-      .map((line) => new CommentaryLineView({ minute: line.minute, tag: line.tag, text: line.text }));
+      .map(
+        (line) =>
+          new CommentaryLineView({
+            minute: line.minute,
+            tag: line.tag,
+            text: line.text,
+            parts: line.parts.map((part) => new CommentaryPartView(part)),
+            flash: line.flash,
+            quiet: line.quiet,
+            clubId: line.clubId === null ? null : ClubId.make(line.clubId),
+          }),
+      );
 
     const chunkEvents = events.slice(cursor, newCursor);
     const injuredClubIds = [

@@ -262,13 +262,22 @@ the feed's density mirrors the timeline's event density exactly.
 _Avoid_: Commentary (fine as the general feed/feature name; Commentary Line is one entry in it)
 
 **Commentary Template**:
-One fixed phrasing in the pool defined for a Match Event type (e.g. one of several ways to phrase a
-`Goal`), code-defined game-design data living in `packages/shared` alongside Position Weights and Slot
-Weights. A Commentary Line is a Commentary Template with its slots (player name, team name, scoreline)
-filled from the source Match Event's payload; the match engine and game-engine package never assemble
-a Commentary Line themselves — this is display data, not simulation state.
+One phrasing in the pool of a Commentary File section (e.g. one of several ways to phrase a header
+`Goal`), with placeholders: `{player}` and `{team}` for the player and club a moment is about,
+`{player2}` and `{team2}` for the second player and the other club, and `{score}`, `{injury}`,
+`{side}` or `{formation}` where the section offers them. A `|` splits it into follow-on parts. A
+Commentary Line is a Commentary Template with its placeholders filled from the source Match Event and
+the events before it; the match simulation never reads them. This is display data, not simulation
+state.
 _Avoid_: Generator, script (there is no generation/composition step in v1 — see
 [templated match commentary](.agents/notes/implemented/architecture/2026-08-27-templated-match-commentary.md))
+
+**Commentary File**:
+The plain-text, player-editable file every Commentary Template and its playback (delay, flash, display
+chance) comes from, after Championship Manager's `events.cfg`. The game ships one
+(`packages/game-engine/data/events.cfg`) and writes a copy to the user data folder for the player to
+edit; a section the player's copy lacks or breaks falls back to the shipped one.
+_Avoid_: Commentary config, language file
 
 ### Tactics
 

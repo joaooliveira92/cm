@@ -1,321 +1,329 @@
-import type { InjurySeverity, InjuryTrigger, MatchEvent } from "./events.js";
+import type { ChanceType, InjuryType, MatchEvent } from "./events.js";
+import {
+  FOLLOW_ON_DELAY_MS,
+  type ChanceTag,
+  type CommentaryTable,
+  type CommentaryTemplateKey,
+  type GoalSituation,
+  type ShotKind,
+} from "./commentarySections.js";
+
+export {
+  ALWAYS_SHOWN,
+  COMMENTARY_SECTIONS,
+  FOLLOW_ON_DELAY_MS,
+  type CommentaryPlayback,
+  type CommentaryTable,
+  type CommentaryTemplateKey,
+  type Placeholder,
+} from "./commentarySections.js";
+export { parseCommentaryFile, type ParsedCommentaryFile } from "./commentaryFile.js";
+export { SHIPPED_COMMENTARY_TEXT } from "./shippedCommentaryText.generated.js";
 
 /**
- * Match Commentary Templates (ADR-0008 / ticket 08): fixed game-design data, parallel to
- * `POSITION_WEIGHTS` — never event-sourced state, never assembled by the match
- * engine itself. The table is keyed off the real Match Event vocabulary in `./events.js`, which is
- * why it lives beside the engine rather than in `@cm-clone/shared`.
+ * Renders the Match Event timeline into Commentary Lines (see
+ * `.agents/notes/implemented/architecture/2026-08-27-templated-match-commentary.md`) from a commentary
+ * table: the lines and playback of a commentary file (`data/events.cfg`, read by `parseCommentaryFile`).
+ * The file's sections are keyed off the Match Event vocabulary in `./events.js`, which is why it lives
+ * beside the engine rather than in `@cm-clone/shared`.
  */
 export type CommentaryEventTag = MatchEvent["_tag"];
 
-/** Every key `COMMENTARY_TEMPLATES` must carry: each Match Event tag, plus a
- * `Injury:<trigger>:<severity>` pool per trigger × severity (ticket 08/12). Kept a closed union so the
- * record stays exhaustive at compile time. */
-export type CommentaryTemplateKey = CommentaryEventTag | `Injury:${InjuryTrigger}:${InjurySeverity}`;
-
-/**
- * Template pools keyed by the event's template key (`templateKeyFor` below): every Match Event tag,
- * plus a `Injury:<trigger>:<severity>` pool so each trigger (contact vs non-contact) narrates
- * distinctly per severity (ticket 12) while still being non-repeating under the same per-pool rules
- * as every other tag.
- * `{token}` placeholders are filled from the event payload by `renderCommentary` — player/team names
- * always available, `{score}` only for Goal/HalfTimeReached/FullTimeWhistle, `{bodyPart}`/`{severity}`
- * only for Injury. Minute is never baked in here; the UI renders it separately.
- */
-export const COMMENTARY_TEMPLATES: Record<CommentaryTemplateKey, ReadonlyArray<string>> = {
-  MatchStarted: [
-    "Kick off! {home} get us underway against {away}.",
-    "And we're off — {home} host {away} in front of a expectant crowd.",
-    "The referee's whistle sounds and {home} vs {away} is under way.",
-    "Here we go — {home} against {away}.",
-  ],
-  Goal: [
-    "GOAL! {player} finds the net for {team}! It's {score}.",
-    "{player} scores for {team}! {score} now.",
-    "They've done it — {player} puts {team} ahead, {score} on the board.",
-    "What a finish from {player}! {team} score, {score}.",
-    "{team} take the lead through {player}! {score}.",
-  ],
-  ShotOnTarget: [
-    "{player} tests the keeper with a shot on target for {team}.",
-    "A firm effort from {player}, straight at the keeper — {team} will be frustrated.",
-    "{player} forces a save for {team}.",
-    "Good strike from {player}, but it's kept out — {team} denied for now.",
-  ],
-  ShotMissed: [
-    "{player} shoots for {team} — wide of the mark.",
-    "{player} can't keep that one down, {team}'s chance goes begging.",
-    "A speculative effort from {player} drifts well off target for {team}.",
-    "{player} drags it wide for {team} — he'll want that one back.",
-  ],
-  ThroughBall: [
-    "{player} plays a brilliant through ball for {team}, splitting the defence!",
-    "A clever threaded pass from {player} puts {team} in behind!",
-    "{player} slides the ball through the gap — {team} are in!",
-  ],
-  Cross: [
-    "{player} swings in a cross for {team} from the flank.",
-    "A dangerous ball in from {player} — {team} looking for a header.",
-    "{player} whips it into the box for {team}.",
-  ],
-  LongShot: [
-    "{player} lets fly from distance for {team}!",
-    "{player} tries his luck from long range for {team}.",
-    "A speculative effort from {player} — he's decided to shoot from way out!",
-  ],
-  RunWithBall: [
-    "{player} drives forward with the ball for {team}!",
-    "{player} surges into the opposition half with purpose.",
-    "A powerful run from {player} takes {team} up the pitch.",
-  ],
-  HoldUpLayOff: [
-    "{player} holds off the defender and lays it off for {team}.",
-    "Strong play from {player} — he shields the ball and releases a teammate.",
-    "{player} backs into his marker and sets up the chance for {team}.",
-  ],
-  Counter: [
-    "{player} leads the counter-attack for {team}!",
-    "{team} break at speed — {player} bursts forward on the counter!",
-    "A rapid counter from {team} as {player} charges into space!",
-  ],
-  Foul: [
-    "{player} (Home) fouls {team} player — free kick to the other side.",
-    "{player} is penalised for a foul.",
-    "The referee calls a foul — {player} the guilty party.",
-  ],
-  Offside: [
-    "{player} is caught offside for {team}.",
-    "The flag goes up — {player} was in an offside position.",
-    "{player} strayed offside — {team} will be frustrated by the linesman's flag.",
-  ],
-  BeatenTrap: [
-    "The defense steps up but {player} beats the trap — one-on-one!",
-    "{player} times his run perfectly and the offside trap is sprung!",
-    "A well-timed run from {player} catches the defense square — he's through!",
-  ],
-  Corner: [
-    "{player} lines up a corner kick for {team}!",
-    "{player} prepares the corner for {team}.",
-    "{team} win a corner — {player} to take it.",
-  ],
-  FreeKick: [
-    "{player} places the ball for a free kick — {team}'s chance from the set piece.",
-    "Free kick to {team} — {player} stands over it, eyeing the target.",
-    "A free kick opportunity for {team}, {player} to deliver.",
-  ],
-  Penalty: [
-    "Penalty! {player} takes the kick for {team}!",
-    "{team} have a penalty — {player} steps up.",
-    "The referee points to the spot — {player} to strike for {team} from the penalty.",
-  ],
-  KeyPass: [
-    "{player} plays a key pass to set up the attack for {team}.",
-    "Clever vision from {player} — the ball is threaded through for {team}.",
-    "{player} creates the opening for {team}.",
-  ],
-  YellowCard: [
-    "{player} goes into the book for {team}.",
-    "The referee shows {player} a yellow card — {team} down to their last warning for him.",
-    "That's a booking for {player} of {team}.",
-  ],
-  RedCard: [
-    "Red card! {player} is sent off for {team}!",
-    "{player} sees red — {team} down to ten men!",
-    "It's an early bath for {player} of {team} — a straight red card.",
-  ],
-  "Injury:contact:light": [
-    "{player} of {team} takes a heavy knock in the challenge and stays on, but he's favouring the {bodyPart}.",
-    "{player} is up and moving for {team} after that rough tackle — a few heavy touches but he'll carry on.",
-    "A {severity} knock in the challenge for {player}, who carries on for {team}.",
-  ],
-  "Injury:contact:medium": [
-    "{player} of {team} is down clutching his {bodyPart} after that challenge and looks in some discomfort.",
-    "Worrying signs for {team} as {player} receives treatment after the collision — the physio is up on his {bodyPart}.",
-    "{player} is receiving attention on the pitch for {team} after that tackle — that's a {severity} one.",
-  ],
-  "Injury:contact:severe": [
-    "{player} of {team} is down and this doesn't look good after that challenge — the stretcher is on for the {bodyPart}.",
-    "It's a bad one for {player} — the {bodyPart} is gone from that tackle and {team} are going to lose him here.",
-    "{player} can't continue for {team} after that brutal challenge — the physio waves the stretcher on.",
-  ],
-  "Injury:non-contact:light": [
-    "{player} of {team} pulls up and stays on, but he's nursing the {bodyPart} after running himself ragged.",
-    "{player} is up and moving for {team} — a tight {bodyPart} but he'll carry on through the fatigue.",
-    "A {severity} strain for {player}, who carries on for {team}.",
-  ],
-  "Injury:non-contact:medium": [
-    "{player} of {team} pulls up clutching his {bodyPart} and looks in some discomfort, no one near him.",
-    "Worrying signs for {team} as {player} feels his {bodyPart} go — the physio is on to a tired muscle.",
-    "{player} is receiving attention on the pitch for {team} after pulling up — that's a {severity} one.",
-  ],
-  "Injury:non-contact:severe": [
-    "{player} of {team} pulls up sharply and this doesn't look good — the stretcher is on for the {bodyPart}.",
-    "It's a bad one for {player} — the {bodyPart} has gone on an exhausted body and {team} are going to lose him here.",
-    "{player} can't continue for {team} after pulling up — the physio waves the stretcher on.",
-  ],
-  Injury: [
-    "{player} of {team} is down and the physio is on.",
-    "{player} is receiving treatment for {team}.",
-  ],
-  Substitution: [
-    "Substitution for {team}: {inPlayer} replaces {outPlayer}.",
-    "{team} make a change — {outPlayer} makes way for {inPlayer}.",
-    "{inPlayer} is on for {team}, with {outPlayer} making his way off.",
-  ],
-  HalfTimeReached: [
-    "The referee blows for half time — it's {score}.",
-    "That's the end of the first half, {score} at the break.",
-    "Half time, and the score stands at {score}.",
-  ],
-  FullTimeWhistle: [
-    "Full time! The final score is {score}.",
-    "That's the final whistle — {score} the score at the end of ninety.",
-    "It's all over — the match ends {score}.",
-  ],
-  TacticsChanged: [
-    "{team} have changed formation — they're now in a {toLabel}.",
-    "{team} switch things up — a tactical change from the manager.",
-    "A tactical reshuffle from {team}, now playing a {toLabel}.",
-    "{team} adjust their approach, shifting to a {toLabel}.",
-  ],
+/** The noun phrase each injury type reads as, for the `{injury}` token. */
+const INJURY_PHRASES: Record<InjuryType, string> = {
+  brokenToe: "a broken toe",
+  twistedAnkle: "a twisted ankle",
+  deadLeg: "a dead leg",
+  hamstring: "a hamstring problem",
+  calf: "a calf problem",
+  strain: "a muscle strain",
 };
 
-/** The human body-part word for each injury type, for the `{bodyPart}` commentary token. */
-const BODY_PARTS: Record<string, string> = {
-  brokenToe: "toe",
-  twistedAnkle: "ankle",
-  deadLeg: "dead leg",
-  hamstring: "hamstring",
-  calf: "calf",
-  strain: "strain",
-};
+const CHANCE_TYPES: ReadonlySet<string> = new Set<ChanceType>([
+  "throughBall",
+  "cross",
+  "longShot",
+  "runWithBall",
+  "holdUpLayOff",
+  "counter",
+]);
 
-/** Which template pool an event draws from. Injury pools are trigger × severity-keyed (ticket 12). */
-const templateKeyFor = (event: MatchEvent): CommentaryTemplateKey =>
-  event._tag === "Injury" ? `Injury:${event.trigger}:${event.severity}` : event._tag;
+const CHANCE_TAGS: ReadonlySet<string> = new Set<ChanceTag>([
+  "ThroughBall",
+  "Cross",
+  "LongShot",
+  "RunWithBall",
+  "HoldUpLayOff",
+  "Counter",
+]);
 
 export interface CommentaryNameResolver {
   readonly clubName: (clubId: string) => string;
   readonly playerName: (playerId: string) => string;
 }
 
+/** One follow-on part of a line, and how long it holds before the line goes on. */
+export interface CommentaryPart {
+  readonly text: string;
+  readonly delayMs: number;
+}
+
 export interface CommentaryLine {
   readonly minute: number;
   readonly tag: CommentaryEventTag;
+  /** The whole line, every part joined: what the log shows. */
   readonly text: string;
+  readonly parts: ReadonlyArray<CommentaryPart>;
+  readonly flash: boolean;
+  /** Lost its display-chance draw: revealed, but never shown in the commentary bar. */
+  readonly quiet: boolean;
+  /** The club the line is about, for the bar's colours; null for kick-off, half time and full time. */
+  readonly clubId: string | null;
 }
 
-const fillTemplate = (template: string, tokens: Record<string, string>): string =>
-  template.replace(/\{(\w+)\}/g, (match, key: string) => tokens[key] ?? match);
+type ShotEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "ShotOnTarget" | "ShotMissed" }>;
 
-const tokensFor = (event: MatchEvent, names: CommentaryNameResolver): Record<string, string> => {
+/**
+ * How a shot was struck. A set-piece shot follows its Corner/FreeKick/Penalty event directly and
+ * carries a placeholder `chanceType`, so the set piece wins; an open-play shot reads its own.
+ */
+const shotKindFor = (event: ShotEvent, previous: MatchEvent | undefined): ShotKind => {
+  if (previous !== undefined && "playerId" in previous && previous.playerId === event.playerId) {
+    if (previous._tag === "Penalty") return "penalty";
+    if (previous._tag === "FreeKick") return "freeKick";
+    if (previous._tag === "Corner") return "header";
+  }
+  if (event.chanceType === "cross") return "header";
+  if (event.chanceType === "longShot") return "longRange";
+  return "closeRange";
+};
+
+const goalSituationFor = (scorerGoals: number, otherGoals: number): GoalSituation => {
+  if (scorerGoals === 1 && otherGoals === 0) return "opener";
+  if (scorerGoals === otherGoals) return "equaliser";
+  if (scorerGoals === otherGoals + 1) return "lead";
+  if (scorerGoals > otherGoals) return "extend";
+  return "reply";
+};
+
+/** The open-play chance event that set up this key pass, when `previous` is one. */
+const chanceBefore = (previous: MatchEvent | undefined) =>
+  previous !== undefined && CHANCE_TAGS.has(previous._tag) && "assistPlayerId" in previous ? previous : null;
+
+/** The two sides, read once from the timeline's `MatchStarted` event. */
+interface MatchSides {
+  readonly homeClubId: string;
+  readonly homeName: string;
+  readonly awayName: string;
+}
+
+interface Draw {
+  readonly keys: ReadonlyArray<CommentaryTemplateKey>;
+  readonly tokens: Record<string, string>;
+}
+
+/** The pools an event draws from, in sentence order, and the tokens they may use. Context comes only
+ * from the event and the events before it, never after: a resimulated future (after a match command)
+ * must not change a line the player has already read. */
+const drawFor = (event: MatchEvent, previous: MatchEvent | undefined, match: MatchSides, names: CommentaryNameResolver): Draw => {
+  const { homeClubId, homeName, awayName } = match;
+  const score = (homeScore: number, awayScore: number): string => `${homeName} ${homeScore}-${awayScore} ${awayName}`;
+  /** `{team}` is the club a moment is about, `{team2}` always the other one. */
+  const clubs = (clubId: string) =>
+    clubId === homeClubId ? { team: homeName, team2: awayName } : { team: names.clubName(clubId), team2: homeName };
+  const sides = { team: homeName, team2: awayName };
+
   switch (event._tag) {
     case "MatchStarted":
-      return { home: names.clubName(event.homeClubId), away: names.clubName(event.awayClubId) };
-    case "Goal":
-      return {
-        player: names.playerName(event.playerId),
-        team: names.clubName(event.teamClubId),
-        score: `${event.homeScore}-${event.awayScore}`,
-      };
-    case "ShotOnTarget":
-    case "ShotMissed":
+      return { keys: ["MatchStarted"], tokens: sides };
     case "ThroughBall":
     case "Cross":
     case "LongShot":
     case "RunWithBall":
     case "HoldUpLayOff":
     case "Counter":
-    case "YellowCard":
-    case "RedCard":
+      return {
+        keys: [event._tag],
+        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.assistPlayerId ?? event.playerId) },
+      };
+    case "KeyPass": {
+      const chance = chanceBefore(previous);
+      const tokens = { ...clubs(event.teamClubId), player: names.playerName(event.playerId) };
+      if (chance === null || chance.assistPlayerId !== event.playerId || !CHANCE_TYPES.has(event.chanceType)) {
+        return { keys: ["KeyPass"], tokens };
+      }
+      if (chance.playerId === event.playerId) return { keys: ["KeyPass:solo"], tokens };
+      return {
+        keys: [`KeyPass:${event.chanceType as ChanceType}`],
+        tokens: { ...tokens, player2: names.playerName(chance.playerId) },
+      };
+    }
+    case "Goal": {
+      const isHome = event.teamClubId === homeClubId;
+      const scorerGoals = isHome ? event.homeScore : event.awayScore;
+      const otherGoals = isHome ? event.awayScore : event.homeScore;
+      return {
+        keys: [`Goal:${shotKindFor(event, previous)}`, `GoalScore:${goalSituationFor(scorerGoals, otherGoals)}`],
+        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId), score: score(event.homeScore, event.awayScore) },
+      };
+    }
+    case "ShotOnTarget":
+    case "ShotMissed":
+      return {
+        keys: [`${event._tag}:${shotKindFor(event, previous)}`],
+        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId) },
+      };
     case "Corner":
     case "FreeKick":
-    case "Penalty":
-      return { player: names.playerName(event.playerId), team: names.clubName(event.teamClubId) };
+      return {
+        keys: [event._tag],
+        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId), side: event.side },
+      };
     case "Foul":
     case "Offside":
     case "BeatenTrap":
-    case "KeyPass":
-      return { player: names.playerName(event.playerId), team: names.clubName(event.teamClubId) };
+    case "Penalty":
+    case "YellowCard":
+    case "RedCard":
+      return { keys: [event._tag], tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId) } };
     case "Injury":
       return {
-        player: names.playerName(event.playerId),
-        team: names.clubName(event.teamClubId),
-        bodyPart: BODY_PARTS[event.type] ?? "injury",
-        severity: event.severity,
+        keys: [`Injury:${event.trigger}:${event.severity}`],
+        tokens: {
+          ...clubs(event.teamClubId),
+          player: names.playerName(event.playerId),
+          injury: INJURY_PHRASES[event.type] ?? "an injury",
+        },
       };
     case "Substitution":
       return {
-        team: names.clubName(event.teamClubId),
-        outPlayer: names.playerName(event.outPlayerId),
-        inPlayer: names.playerName(event.inPlayerId),
+        keys: [event.forcedByInjury ? "Substitution:forced" : "Substitution"],
+        tokens: {
+          ...clubs(event.teamClubId),
+          player: names.playerName(event.inPlayerId),
+          player2: names.playerName(event.outPlayerId),
+        },
       };
     case "HalfTimeReached":
-    case "FullTimeWhistle":
-      return { score: `${event.homeScore}-${event.awayScore}` };
+      return { keys: ["HalfTimeReached"], tokens: { ...sides, score: score(event.homeScore, event.awayScore) } };
+    case "FullTimeWhistle": {
+      const homeWon = event.homeScore > event.awayScore;
+      const draw = event.homeScore === event.awayScore;
+      return {
+        keys: [draw ? "FullTimeWhistle:draw" : "FullTimeWhistle:win"],
+        tokens: {
+          team: draw || homeWon ? homeName : awayName,
+          team2: draw || homeWon ? awayName : homeName,
+          score: score(event.homeScore, event.awayScore),
+        },
+      };
+    }
     case "TacticsChanged":
-      return { team: names.clubName(event.teamClubId), toLabel: event.toFormationLabel };
+      return {
+        keys: [event.fromFormationLabel === event.toFormationLabel ? "TacticsChanged:instructions" : "TacticsChanged:shape"],
+        tokens: { ...clubs(event.teamClubId), formation: event.toFormationLabel },
+      };
   }
 };
 
-/** Tiny deterministic string hash (FNV-1a) — a self-contained seeded draw source for template
- * selection, kept local rather than pulled from game-engine's `rng.ts` so this module has zero
- * runtime dependency on game-engine (only the type-only import above, erased at compile time). */
+/** A line's follow-on parts. Each drawn template may split on `|`; a later draw (a Goal's scoreline
+ * sentence) continues the last part rather than starting one, so it lands with the outcome. */
+const partsOf = (drawn: ReadonlyArray<string>): ReadonlyArray<string> =>
+  drawn.reduce<ReadonlyArray<string>>((parts, template, index) => {
+    const split = template.split("|");
+    if (index === 0) return split;
+    return [...parts.slice(0, -1), `${parts.at(-1)!} ${split[0]!}`, ...split.slice(1)];
+  }, []);
+
+const fillTemplate = (template: string, tokens: Record<string, string>): string =>
+  template.replace(/\{(\w+)\}/g, (match, key: string) => tokens[key] ?? match);
+
+/** Tiny deterministic string hash (FNV-1a, then murmur3's finalizer): the seeded draw source for
+ * template choice and display chance. The finalizer matters: FNV-1a alone leaves the high bits of
+ * near-identical keys ("show:1", "show:2") correlated, and every draw reads the high bits. */
 const hash = (seed: number, key: string): number => {
   let h = (seed >>> 0) ^ 0x811c9dc5;
   for (let i = 0; i < key.length; i++) {
     h ^= key.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
   return h >>> 0;
 };
 
-/** Picks a template pool index for the `occurrence`-th firing of `tag`, excluding `excludeIndex`
- * (the index used last time this tag fired) — dodges back-to-back repeats per ADR-0008. */
-const pickTemplateIndex = (
+/**
+ * Per-pool shuffle bag: no template repeats until every template in its pool has been used, and a
+ * refilled bag never opens with the template that closed the last one.
+ */
+interface PoolBag {
+  readonly unused: Array<number>;
+  last: number | null;
+  draws: number;
+}
+
+const drawTemplate = (
+  table: CommentaryTable,
+  bags: Map<CommentaryTemplateKey, PoolBag>,
   seed: number,
-  tag: string,
-  occurrence: number,
-  poolSize: number,
-  excludeIndex: number | null,
-): number => {
-  if (poolSize <= 1) return 0;
-  const draw = hash(seed, `${tag}:${occurrence}`) / 0x100000000;
-  if (excludeIndex === null) return Math.floor(draw * poolSize);
-  const choice = Math.floor(draw * (poolSize - 1));
-  return choice >= excludeIndex ? choice + 1 : choice;
+  key: CommentaryTemplateKey,
+): string => {
+  const pool = table.templates[key];
+  // Only a table parsed without a fallback can have an empty section; parseCommentaryFile reports it.
+  if (pool.length === 0) return "";
+  let bag = bags.get(key);
+  if (bag === undefined) {
+    bag = { unused: [], last: null, draws: 0 };
+    bags.set(key, bag);
+  }
+  if (bag.unused.length === 0) {
+    bag.unused.push(...pool.keys());
+    if (bag.last !== null && pool.length > 1) bag.unused.splice(bag.unused.indexOf(bag.last), 1);
+  }
+  const slot = Math.floor((hash(seed, `${key}:${bag.draws}`) / 0x100000000) * bag.unused.length);
+  const index = bag.unused.splice(slot, 1)[0]!;
+  bag.last = index;
+  bag.draws += 1;
+  return pool[index]!;
 };
 
 /**
- * Renders the full ordered event list into Commentary Lines, purely from the events + a seed
- * derived from the match (e.g. the match's `MatchStarted` seed or matchId hash) — no template-
- * choice state is persisted. Since chunked resimulation always replays the identical event list
- * (ADR-0007), callers can safely re-run this over the whole list on every `ResumeSimulation`
- * response and just slice the new lines; the last-used-template exclusion always lands on the same
- * answer for a given event list.
+ * Renders the full ordered event list into Commentary Lines, one per event, purely from the events and
+ * a seed derived from the match. No template-choice state is persisted. A line depends only on the
+ * events up to and including its own, so re-running this over a resimulated list (ADR-0007) leaves
+ * every earlier line unchanged, and callers can slice off just the new ones.
  */
 export const renderCommentary = (
   events: ReadonlyArray<MatchEvent>,
   matchSeed: number,
   names: CommentaryNameResolver,
+  table: CommentaryTable,
 ): ReadonlyArray<CommentaryLine> => {
-  const lastIndexByKey = new Map<CommentaryTemplateKey, number>();
-  const occurrenceByKey = new Map<CommentaryTemplateKey, number>();
+  const bags = new Map<CommentaryTemplateKey, PoolBag>();
+  const started = events.find((event) => event._tag === "MatchStarted");
+  const match: MatchSides = {
+    homeClubId: started?.homeClubId ?? "",
+    homeName: names.clubName(started?.homeClubId ?? ""),
+    awayName: names.clubName(started?.awayClubId ?? ""),
+  };
 
-  return events.map((event): CommentaryLine => {
-    const key = templateKeyFor(event);
-    const pool = COMMENTARY_TEMPLATES[key];
-    const occurrence = occurrenceByKey.get(key) ?? 0;
-    occurrenceByKey.set(key, occurrence + 1);
-
-    const excludeIndex = lastIndexByKey.get(key) ?? null;
-    const index = pickTemplateIndex(matchSeed, key, occurrence, pool.length, excludeIndex);
-    lastIndexByKey.set(key, index);
-
+  return events.map((event, index): CommentaryLine => {
+    const { keys, tokens } = drawFor(event, events[index - 1], match, names);
+    const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key), tokens)));
+    // A line plays by its first section's settings: a Goal's, not its GoalScore sentence's.
+    const playback = table.playback[keys[0]!];
+    const shown = playback.displayChance >= 1 || hash(matchSeed, `show:${index}`) / 0x100000000 < playback.displayChance;
     return {
       minute: "minute" in event ? event.minute : 0,
       tag: event._tag,
-      text: fillTemplate(pool[index]!, tokensFor(event, names)),
+      text: texts.join(" "),
+      parts: texts.map((text, part) => ({ text, delayMs: part === texts.length - 1 ? playback.delayMs : FOLLOW_ON_DELAY_MS })),
+      flash: playback.flash,
+      quiet: !shown,
+      clubId: "teamClubId" in event ? event.teamClubId : null,
     };
   });
 };

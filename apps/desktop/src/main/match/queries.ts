@@ -15,6 +15,8 @@ import { loadFixtureSides, matchSummaryOf } from "./start.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
 import { MATCH_STREAM_TYPE } from "./stream.js";
 import { substitutionLedger } from "./substitutions.js";
+import type { CommentaryTable } from "@cm-clone/game-engine";
+import { SHIPPED_COMMENTARY } from "./commentaryFile.js";
 import { buildResumeSimulationView } from "./view.js";
 
 /**
@@ -30,6 +32,7 @@ export const resumeSimulation = (
   matchId: MatchId,
   cursor: number,
   revealedEvents: number | null,
+  commentary: CommentaryTable = SHIPPED_COMMENTARY,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
@@ -44,6 +47,7 @@ export const resumeSimulation = (
         cursor,
         revealedEvents,
         substitutionLedger(stream, derived.events),
+        commentary,
       );
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

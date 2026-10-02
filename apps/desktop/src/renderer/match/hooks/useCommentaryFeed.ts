@@ -13,6 +13,7 @@ import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 import { resumeSimulation, submitMatchCommandMutation, useAtomSet } from "../../rpc.js";
 import { resolveCommandStatus, type CommandStatus } from "../commandStatus.js";
 import { controlledOnPitchCount, controlledPitch, controlledSubs } from "../controlledClub.js";
+import type { PlaybackPart } from "../engine/playback.js";
 import { useMatchContext, type MatchCommand } from "../MatchProvider.js";
 import {
   HALFTIME_MINUTE,
@@ -46,6 +47,14 @@ const restoreFeed = (saveId: SaveId) => {
   return { phase: session.phase, ...getRevealedFeed(saveId, session.match.matchId) };
 };
 
+/** The line the commentary bar is playing: taken off the buffer, not yet revealed. It is revealed when
+ * its last part shows, so nothing it changes (score, log, injury prompts) runs ahead of the bar. */
+export interface PlayingLine {
+  readonly line: CommentaryLineView;
+  readonly parts: ReadonlyArray<PlaybackPart>;
+  readonly shown: number;
+}
+
 export interface CommentaryContextValue {
   readonly state: CommentaryState;
   readonly actions: CommentaryActions;
@@ -62,6 +71,7 @@ export interface CommentaryState {
   readonly clubPitch: MatchPitchView | null;
   readonly revealedInjuries: ReadonlyArray<RevealedInjury>;
   readonly currentMinute: number;
+  readonly playing: PlayingLine | null;
 }
 
 export interface CommentaryActions {
@@ -76,6 +86,8 @@ export interface CommentaryMeta {
   readonly streamCompleteRef: { current: boolean };
   readonly pausedRef: { current: boolean };
   readonly commandInFlightRef: { current: boolean };
+  readonly playingRef: { current: PlayingLine | null };
+  readonly setPlaying: (playing: PlayingLine | null) => void;
   readonly nextPitchRequest: () => number;
   readonly applyPollView: (view: RpcSuccess<"resumeSimulation">, request: number) => void;
   readonly revealLine: (line: CommentaryLineView) => void;
@@ -112,6 +124,12 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
   const pausedRef = useRef(restored?.phase === "paused");
   const commandInFlightRef = useRef(false);
   const commandRequestRef = useRef(0);
+  const [playing, setPlayingState] = useState<PlayingLine | null>(null);
+  const playingRef = useRef<PlayingLine | null>(null);
+  const setPlaying = useCallback((next: PlayingLine | null): void => {
+    playingRef.current = next;
+    setPlayingState(next);
+  }, []);
 
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
@@ -289,12 +307,15 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
         throw error;
       } finally {
         pendingRef.current = [];
+        // The half-played line is after the revealed position, so the refetch from it sends that event
+        // again, resimulated. Playing on would reveal it twice.
+        setPlaying(null);
         cursorRef.current = revealedEvents;
         streamCompleteRef.current = false;
         commandInFlightRef.current = false;
       }
     },
-    [saveId, currentMinuteRef, runCommand, matchState.match, applyCommandResult, applyRevealedState, nextPitchRequest],
+    [saveId, currentMinuteRef, runCommand, matchState.match, applyCommandResult, applyRevealedState, nextPitchRequest, setPlaying],
   );
 
   const resume = useCallback((): void => updateInjuries(() => []), [updateInjuries]);
@@ -310,6 +331,7 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
       clubPitch,
       revealedInjuries,
       currentMinute,
+      playing,
     },
     actions: { submitCommand, resume },
     meta: {
@@ -319,6 +341,8 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
       streamCompleteRef,
       pausedRef,
       commandInFlightRef,
+      playingRef,
+      setPlaying,
       nextPitchRequest,
       applyPollView,
       revealLine,

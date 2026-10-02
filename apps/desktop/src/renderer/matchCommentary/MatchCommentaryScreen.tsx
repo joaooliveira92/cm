@@ -5,6 +5,7 @@ import { leagueTableAtom, resumeSimulation, useAtomValue, POLL_INTERVAL_MS } fro
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 import { FOCUS_RING } from "../focus.js";
 import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "../match/session.js";
+import { CommentaryFeed } from "../match/CommentaryFeed.js";
 
 /**
  * How many of the match's Commentary Lines this screen may show, or null for all of them. Bound the
@@ -102,16 +103,7 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
             : "No Commentary Lines revealed yet. They appear here as Match day reveals them."}
         </p>
       )}
-      {visible.length > 0 && (
-        <div className="space-y-2">
-          {visible.map((line, i) => (
-            <p key={i} className="text-body border-b border-panel-border-dark pb-2 last:border-b-0">
-              <span className="text-text-tertiary mr-2 font-mono text-data">{line.minute}'</span>
-              <span>{line.text}</span>
-            </p>
-          ))}
-        </div>
-      )}
+      {visible.length > 0 && <CommentaryFeed lines={visible} emptyMessage="" className="max-h-[75vh]" />}
     </main>
   );
 };
