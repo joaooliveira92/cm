@@ -211,7 +211,7 @@ export const FormationPitch = ({
         })}
       </svg>
 
-      {/* Empty cells as clickable circles when a slot is selected */}
+      {/* Empty cells as clickable targets when a slot is selected: unmarked until hovered, so a selection doesn't ring the whole pitch */}
       {selectedSlot !== null && !runMode && (
         <>
           {eligibleCells(selectedCell, occupied).map((cell) => {
@@ -224,7 +224,7 @@ export const FormationPitch = ({
                 aria-label={`Move to ${slotLabel(cell)}`}
                 tabIndex={-1}
                 onClick={() => onMove(selectedSlot, cell, DEFAULT_SUB, DEFAULT_SUB)}
-                className={`absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-text-bright/50 bg-transparent text-caption font-bold text-text-muted transition-colors hover:border-text-bright hover:text-text-bright ${FOCUS_RING.join(" ")}`}
+                className={`absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-transparent bg-transparent text-caption font-bold text-text-muted transition-colors hover:border-text-bright hover:text-text-bright ${FOCUS_RING.join(" ")}`}
                 style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
               >
                 <span className="sr-only">{slotLabel(cell)}</span>
