@@ -1,6 +1,6 @@
 import type { FormationSlotView, PlayerAssignmentView } from "@cm-clone/contracts";
 import { DEFAULT_SUB, slotLabel } from "@cm-clone/shared";
-import { PitchMarkings } from "./FormationPitch.js";
+import { PitchBackground } from "./PitchBackground.js";
 import { pitchLayout } from "./pitchLayout.js";
 import { ratingBorder } from "./overviewFormat.js";
 
@@ -45,7 +45,7 @@ export const OverviewPitch = ({
       data-testid="overview-pitch"
       className="pitch-grass relative mx-auto aspect-[68/100] w-full max-w-[400px] overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
     >
-      <PitchMarkings />
+      <PitchBackground />
       {assignments.length === 0 ? (
         <p className="absolute inset-x-6 top-1/2 -translate-y-1/2 rounded-panel bg-black/55 px-3 py-2 text-center text-body font-semibold text-text-bright">
           No tactic saved — set one to prepare.

@@ -1,11 +1,8 @@
 import { describe, expect, it } from "vitest";
-import {
-  COMMENTARY_SECTIONS,
-  SHIPPED_COMMENTARY_TEXT,
-  parseCommentaryFile,
-  renderCommentary,
-  upgradeCommentaryFile,
-} from "../../src/match/commentary.js";
+import { COMMENTARY_SECTIONS } from "../../src/match/commentarySections.js";
+import { SHIPPED_COMMENTARY_TEXT } from "../../src/match/shippedCommentaryText.generated.js";
+import { parseCommentaryFile, upgradeCommentaryFile } from "../../src/match/commentaryFile.js";
+import { renderCommentary } from "../../src/match/commentary.js";
 import type { MatchEvent } from "../../src/match/events.js";
 import { simulateMatch } from "../../src/match/simulate/index.js";
 import { buildTeam, clubId, playerId } from "./fixtures.js";

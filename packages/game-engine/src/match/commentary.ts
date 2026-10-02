@@ -1,4 +1,3 @@
-import type { ChanceType, MatchEvent } from "./events.js";
 import {
   FOLLOW_ON_DELAY_MS,
   type ChanceTag,
@@ -9,30 +8,7 @@ import {
   type HighlightLevel,
   type ShotKind,
 } from "./commentarySections.js";
-
-export {
-  ALWAYS_SHOWN,
-  COMMENTARY_SECTIONS,
-  FOLLOW_ON_DELAY_MS,
-  HIGHLIGHT_LEVELS,
-  PHRASES,
-  PHRASES_SECTION,
-  type CommentaryPlayback,
-  type PhraseName,
-  type HighlightLevel,
-  type CommentaryTable,
-  type CommentaryTemplateKey,
-  type Placeholder,
-} from "./commentarySections.js";
-export {
-  missingCommentarySections,
-  parseCommentaryFile,
-  upgradeCommentaryFile,
-  type CommentaryFileUpgrade,
-  type CommentarySectionName,
-  type ParsedCommentaryFile,
-} from "./commentaryFile.js";
-export { SHIPPED_COMMENTARY_TEXT } from "./shippedCommentaryText.generated.js";
+import type { ChanceType, MatchEvent } from "./events.js";
 
 /**
  * Renders the Match Event timeline into Commentary Lines (see

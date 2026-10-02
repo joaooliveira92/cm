@@ -22,7 +22,7 @@ const OUTFIELD_ROWS: ReadonlyArray<Exclude<Row, "GK">> = ROWS.filter(
 /** Past this depth is the keeper's end, which no outfield slot may move into. */
 const KEEPER_END = (ROW_Y.SW + ROW_Y.GK) / 2;
 
-/** The pitch lines, in percent: `PitchMarkings` draws the touchlines at 2/68 and the goal lines at
+/** The pitch lines, in percent: `PitchBackground` draws the touchlines at 2/68 and the goal lines at
  *  2/100 in from each edge, so a marker is never placed on the grass outside them. */
 const TOUCHLINE = { min: 3, max: 97 };
 const GOAL_LINE = { min: 2, max: 98 };

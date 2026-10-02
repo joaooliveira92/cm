@@ -1,8 +1,27 @@
-import { useId, useMemo, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
-import { COLUMNS, DEFAULT_SUB, ROWS, familiarityOf, slotLabel, type Slot } from "@cm-clone/shared";
+import { DEFAULT_SUB, slotLabel, type Slot } from "@cm-clone/shared";
 import { FOCUS_RING } from "../focus.js";
-import { dropZoneAt, pitchLayout, type DropZone } from "./pitchLayout.js";
+import { captionShift, fitTierWord, markerBox, markerName } from "./markerLayout.js";
+import { PitchBackground } from "./PitchBackground.js";
+import {
+  NO_GRAB,
+  arrowStepOf,
+  cellStepMove,
+  eligibleCells,
+  intentAt,
+  intentKey,
+  moveFor,
+  nudgeMove,
+  occupiedLabels,
+  runTargetCells,
+  type DropIntent,
+  type GrabOffset,
+  type PitchPoint,
+  type PitchState,
+  type SlotMove,
+} from "./pitchMoves.js";
+import { pitchLayout } from "./pitchLayout.js";
 
 /** The drag channel a marker's slot index rides in; nothing else is exchanged. */
 const SLOT_DRAG = "application/x-cm-tactic-slot";
@@ -12,72 +31,8 @@ const draggedSlotOf = (event: DragEvent): number | null => {
   return raw === "" ? null : Number(raw);
 };
 
-/** "Gilardino, A" — the marker caption; the full name is in the Team Selection list beside it. */
-const markerName = (player: SquadPlayerView): string =>
-  `${player.lastName}, ${player.firstName.slice(0, 1)}`;
-
-/** A marker's width: 6rem, or under a fifth of a narrow pitch, the gap between its five columns, so
- *  neighbours' captions truncate rather than run into each other. Units read the pitch `@container`. */
-const MARKER_WIDTH = "min(6rem, 19cqw)";
-
-/**
- * How far a marker's caption moves so it stays on the pitch. The caption is the marker's width,
- * centred on `x` (percent of the pitch width): past the left touchline it moves right by the
- * overhang, past the right one left by it, and otherwise not.
- */
-const captionShift = (x: number): string => {
-  const half = `(${MARKER_WIDTH} / 2)`;
-  return `max(calc(${half} - ${x}cqw), min(0px, calc(${100 - x}cqw - ${half})))`;
-};
-
-/** The fit tier word for a player in their slot. */
-const fitTierWord = (player: SquadPlayerView, cell: Slot): string => {
-  const t = familiarityOf(player.suitability[slotLabel(cell)] ?? 1);
-  return t === "natural" ? "Natural" : t === "competent" ? "Competent" : "Unfamiliar";
-};
-
-/** Pitch markings in a 68 × 100 box, stretched to the pitch. Decorative: the slots are the list. */
-export const PitchMarkings = () => (
-  <svg
-    aria-hidden="true"
-    viewBox="0 0 68 100"
-    preserveAspectRatio="none"
-    className="absolute inset-0 size-full [&_*]:[vector-effect:non-scaling-stroke]"
-    fill="none"
-    stroke="var(--color-pitch-line)"
-    strokeWidth="1.5"
-  >
-    <rect x="2" y="2" width="64" height="96" />
-    <line x1="2" y1="50" x2="66" y2="50" />
-    <circle cx="34" cy="50" r="7" />
-    <rect x="15" y="2" width="38" height="15" />
-    <rect x="25" y="2" width="18" height="5" />
-    <rect x="30" y="0.6" width="8" height="1.4" />
-    <rect x="15" y="83" width="38" height="15" />
-    <rect x="25" y="93" width="18" height="5" />
-    <rect x="30" y="98" width="8" height="1.4" />
-  </svg>
-);
-
-/** A drag's pointer on the pitch: `x`/`y` in the percent box `pitchLayout` draws in, plus the
- *  pitch's size in pixels, since a marker's reach is measured on screen, not in percent. */
-interface PitchPoint {
-  readonly x: number;
-  readonly y: number;
-  readonly width: number;
-  readonly height: number;
-}
-
-/** Where, in pixels, the pointer held a marker relative to its disc's centre when the drag began.
- *  Grabbing the caption puts the pointer below the disc; the drop subtracts this so the disc lands
- *  where it was drawn under the pointer, not with its centre jumping to the pointer. */
-interface GrabOffset {
-  readonly x: number;
-  readonly y: number;
-}
-
-const NO_OFFSET: GrabOffset = { x: 0, y: 0 };
-
+/** Where on the pitch a drag's pointer is, in the percent box `pitchLayout` draws in, or `null` on a
+ *  pitch that has not been laid out yet. */
 const pointOnPitch = (event: DragEvent<HTMLElement>, grab: GrabOffset): PitchPoint | null => {
   const box = event.currentTarget.getBoundingClientRect();
   if (box.width === 0 || box.height === 0) return null;
@@ -88,54 +43,6 @@ const pointOnPitch = (event: DragEvent<HTMLElement>, grab: GrabOffset): PitchPoi
     height: box.height,
   };
 };
-
-/** How far from a disc's centre, in pixels, a drop still lands on that marker: the disc's radius
- *  plus a little slack. Past it is grass, so even a crowded line has room to move into. */
-const DISC_REACH = 20;
-
-/** What a drop at a point would do: swap with the marker there (or with the slot holding the cell
- *  the point falls in, since a cell holds one slot), move the dragged slot to that position on the
- *  pitch, or nothing (where it already stands, or the keeper's end). */
-type DropIntent =
-  | { readonly kind: "swap"; readonly slotIndex: number }
-  | { readonly kind: "move"; readonly zone: DropZone }
-  | null;
-
-const intentKey = (intent: DropIntent): string =>
-  intent === null ? "" : intent.kind === "swap"
-      ? `swap ${intent.slotIndex}`
-      : `move ${slotLabel(intent.zone.cell)} ${intent.zone.subRow} ${intent.zone.subCol}`;
-
-const sameCell = (a: Slot, b: Slot): boolean => a.row === b.row && a.column === b.column;
-
-/** An arrow key as a step on the grid: `row` +1 is one line forward (up the screen), `column` +1
- *  one place to the right. */
-const ARROW_STEP: Readonly<Record<string, { readonly row: number; readonly column: number }>> = {
-  ArrowUp: { row: 1, column: 0 },
-  ArrowDown: { row: -1, column: 0 },
-  ArrowLeft: { row: 0, column: -1 },
-  ArrowRight: { row: 0, column: 1 },
-};
-
-/** The outfield cell one step from `cell`, or `null` off the grid or into the keeper's row. */
-const stepCell = (cell: Slot, step: { readonly row: number; readonly column: number }): Slot | null => {
-  const row = ROWS[ROWS.indexOf(cell.row) + step.row];
-  const column = COLUMNS[COLUMNS.indexOf(cell.column) + step.column];
-  return row === undefined || row === "GK" || column === undefined ? null : ({ row, column } as Slot);
-};
-
-/** How far one Alt+arrow nudges a marker within its cell, as a share of the cell. */
-const NUDGE = 0.1;
-
-const clampSub = (sub: number): number => Math.round(Math.min(1, Math.max(0, sub)) * 1000) / 1000;
-
-/** The 31 grid cells, each that is empty of any slot. */
-const ALL_CELLS: ReadonlyArray<Slot> = [
-  { row: "GK", column: "C" },
-  ...(["SW", "D", "DM", "M", "AM", "F"] as const).flatMap((row) =>
-    (["L", "LC", "C", "RC", "R"] as const).map((column) => ({ row, column } as Slot)),
-  ),
-];
 
 /**
  * The Tactic's starting eleven drawn on a pitch, attacking up the screen. The markers are an
@@ -173,61 +80,32 @@ export const FormationPitch = ({
   const [dragging, setDragging] = useState<number | null>(null);
   const [intent, setIntent] = useState<DropIntent>(null);
   const [runMode, setRunMode] = useState(false);
-  const grab = useRef<GrabOffset>(NO_OFFSET);
+  const grab = useRef<GrabOffset>(NO_GRAB);
 
   const hasPlayer = (slotIndex: number) => squadById.has(assignments[slotIndex]!);
+  const state: PitchState = { slots, spots, hasPlayer };
 
-  /** The cells already occupied by a slot — used to draw empty-cell indicators. */
-  const occupiedLabels = useMemo(
-    () => new Set(slots.map((slot) => slotLabel(slot.cell))),
-    [slots],
-  );
-
-  /** Empty cells that the selected slot could move to (all but its own and the GK's). */
-  const eligibleCells = useMemo(() => {
-    if (selectedSlot === null) return [];
-    const currentLabel = slotLabel(slots[selectedSlot]!.cell);
-    return ALL_CELLS.filter((cell) => {
-      if (cell.row === "GK" && slots[selectedSlot]!.cell.row !== "GK") return false;
-      if (cell.row !== "GK" && slots[selectedSlot]!.cell.row === "GK") return false;
-      const label = slotLabel(cell);
-      return label !== currentLabel && !occupiedLabels.has(label);
-    });
-  }, [selectedSlot, slots, occupiedLabels]);
-
-  const intentAt = (point: PitchPoint | null, from: number | null): DropIntent => {
-    if (point === null || from === null) return null;
-    const swapWith = (slotIndex: number): DropIntent =>
-      hasPlayer(from) || hasPlayer(slotIndex) ? { kind: "swap", slotIndex } : null;
-    const hit = spots.find(
-      (spot) =>
-        spot.slotIndex !== from &&
-        Math.hypot(((spot.x - point.x) / 100) * point.width, ((spot.y - point.y) / 100) * point.height) <=
-          DISC_REACH,
-    );
-    if (hit !== undefined) return swapWith(hit.slotIndex);
-    const current = slots[from]!;
-    if (current.cell.row === "GK") return null;
-    const zone = dropZoneAt(point.x, point.y);
-    if (zone === null) return null;
-    // Moving onto grass another slot's cell covers would put two slots in one cell, which the
-    // server refuses; the cell is that slot's, so the drop swaps with it instead.
-    const occupant = slots.findIndex((slot, index) => index !== from && sameCell(slot.cell, zone.cell));
-    if (occupant !== -1) return swapWith(occupant);
-    const unmoved =
-      sameCell(current.cell, zone.cell) && current.subRow === zone.subRow && current.subCol === zone.subCol;
-    return unmoved ? null : { kind: "move", zone };
+  /** Hands a rule's verdict to the screen's callbacks, so a drag and a key change the eleven the
+   *  same way. */
+  const apply = (move: SlotMove | null): void => {
+    if (move === null) return;
+    if (move.kind === "swap") onSwap(move.from, move.to);
+    else onMove(move.slotIndex, move.cell, move.subRow, move.subCol);
   };
 
+  /** The cells already occupied by a slot — used to draw empty-cell indicators. */
+  const occupied = occupiedLabels(slots);
+  const selectedCell = selectedSlot === null ? null : slots[selectedSlot]!.cell;
+
   const endDrag = () => {
-    grab.current = NO_OFFSET;
+    grab.current = NO_GRAB;
     setDragging(null);
     setIntent(null);
   };
 
   // While a move is previewed the dragged marker is drawn where it would land.
   const shown =
-    dragging !== null && intent?.kind === "move"
+    dragging !== null && intent?.kind === "place"
       ? pitchLayout(
           slots.map((slot, index) =>
             index === dragging
@@ -239,34 +117,13 @@ export const FormationPitch = ({
 
   const keyHintId = useId();
 
-  /** Shift+arrow: the selected slot one cell over, or a swap with the slot that holds that cell. */
-  const stepSlot = (slotIndex: number, step: { readonly row: number; readonly column: number }) => {
-    const slot = slots[slotIndex]!;
-    if (slot.cell.row === "GK") return;
-    const target = stepCell(slot.cell, step);
-    if (target === null) return;
-    const occupant = slots.findIndex((each, index) => index !== slotIndex && sameCell(each.cell, target));
-    if (occupant === -1) onMove(slotIndex, target, DEFAULT_SUB, DEFAULT_SUB);
-    else if (hasPlayer(slotIndex)) onSwap(slotIndex, occupant);
-    else if (hasPlayer(occupant)) onSwap(occupant, slotIndex);
-  };
-
-  /** Alt+arrow: the selected slot nudged within its own cell, stopping at the cell's edge. */
-  const nudgeSlot = (slotIndex: number, step: { readonly row: number; readonly column: number }) => {
-    const slot = slots[slotIndex]!;
-    if (slot.cell.row === "GK") return;
-    const subRow = clampSub(slot.subRow - step.row * NUDGE);
-    const subCol = clampSub(slot.subCol + step.column * NUDGE);
-    if (subRow !== slot.subRow || subCol !== slot.subCol) onMove(slotIndex, slot.cell, subRow, subCol);
-  };
-
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
       onSelectSlot(null);
       setRunMode(false);
       return;
     }
-    const step = ARROW_STEP[event.key];
+    const step = arrowStepOf(event.key);
     if (selectedSlot === null) {
       if (step !== undefined) {
         event.preventDefault();
@@ -291,8 +148,8 @@ export const FormationPitch = ({
     }
     if (step === undefined) return;
     event.preventDefault();
-    if (event.shiftKey) stepSlot(selectedSlot, step);
-    else if (event.altKey) nudgeSlot(selectedSlot, step);
+    if (event.shiftKey) apply(cellStepMove(selectedSlot, step, state));
+    else if (event.altKey) apply(nudgeMove(selectedSlot, step, state));
     else onSelectSlot((selectedSlot + (step.row < 0 || step.column > 0 ? 1 : -1) + slots.length) % slots.length);
   };
 
@@ -304,7 +161,7 @@ export const FormationPitch = ({
       aria-describedby={keyHintId}
       onKeyDown={handleKeyDown}
       onDragOver={(event) => {
-        const next = intentAt(pointOnPitch(event, grab.current), dragging);
+        const next = intentAt(pointOnPitch(event, grab.current), dragging, state);
         if (next !== null) {
           event.preventDefault();
           event.dataTransfer.dropEffect = "move";
@@ -317,18 +174,12 @@ export const FormationPitch = ({
       onDrop={(event) => {
         event.preventDefault();
         const from = draggedSlotOf(event) ?? dragging;
-        const drop = intentAt(pointOnPitch(event, grab.current), from);
+        const drop = intentAt(pointOnPitch(event, grab.current), from, state);
         endDrag();
-        if (from === null || drop === null) return;
-        if (drop.kind === "swap") {
-          if (hasPlayer(from)) onSwap(from, drop.slotIndex);
-          else onSwap(drop.slotIndex, from);
-        } else {
-          onMove(from, drop.zone.cell, drop.zone.subRow, drop.zone.subCol);
-        }
+        apply(from === null ? null : moveFor(drop, from, state));
       }}
     >
-      <PitchMarkings />
+      <PitchBackground />
 
       {/* Runs: dotted lines from base cell to run target */}
       <svg
@@ -363,7 +214,7 @@ export const FormationPitch = ({
       {/* Empty cells as clickable circles when a slot is selected */}
       {selectedSlot !== null && !runMode && (
         <>
-          {eligibleCells.map((cell) => {
+          {eligibleCells(selectedCell, occupied).map((cell) => {
             const spot = pitchLayout([{ cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
             if (spot === undefined) return null;
             return (
@@ -386,14 +237,10 @@ export const FormationPitch = ({
       {/* Run mode: clicking an eligible cell sets the run target */}
       {runMode && selectedSlot !== null && (
         <>
-          {ALL_CELLS.filter((cell) => {
-            const label = slotLabel(cell);
-            const current = slotLabel(slots[selectedSlot]!.cell);
-            return label !== current;
-          }).map((cell) => {
+          {runTargetCells(slots[selectedSlot]!.cell).map((cell) => {
             const spot = pitchLayout([{ cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
             if (spot === undefined) return null;
-            const alreadyOccupied = occupiedLabels.has(slotLabel(cell));
+            const alreadyOccupied = occupied.has(slotLabel(cell));
             return (
               <button
                 key={slotLabel(cell)}
@@ -441,7 +288,7 @@ export const FormationPitch = ({
                 // The landing preview tracks the pointer, so it must not ease behind it.
                 isDragged ? "" : "transition-[left,top] duration-200 ease-out motion-reduce:transition-none"
               }`}
-              style={{ left: `${x}%`, top: `calc(${y}% - 0.875rem)`, width: MARKER_WIDTH }}
+              style={markerBox(x, y)}
             >
               <button
                 type="button"
@@ -462,7 +309,7 @@ export const FormationPitch = ({
                   const disc = event.currentTarget.querySelector("[data-disc]")?.getBoundingClientRect();
                   grab.current =
                     disc === undefined || disc.width === 0
-                      ? NO_OFFSET
+                      ? NO_GRAB
                       : {
                           x: event.clientX - (disc.left + disc.width / 2),
                           y: event.clientY - (disc.top + disc.height / 2),
@@ -490,7 +337,8 @@ export const FormationPitch = ({
                   {slotIndex + 1}
                 </span>
                 {/* Caption, pulled inward by however much of it would hang past a touchline */}
-                <span aria-hidden="true" className="flex w-full flex-col items-center" style={{ transform: `translateX(${captionShift(x)})` }}>
+                <span aria-hidden="true" className="flex w-full flex-col items-center" style={{ transform: captionShift(x) }}
+>
                   {/* Surname, First initial */}
                   <span className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
                     {player === undefined ? slotLabel(slot.cell) : markerName(player)}

@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import type { MatchEvent } from "../../src/match/events.js";
-import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS, parseCommentaryFile, renderCommentary as renderWith } from "../../src/match/commentary.js";
+import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS } from "../../src/match/commentarySections.js";
+import { parseCommentaryFile } from "../../src/match/commentaryFile.js";
+import { renderCommentary as renderWith } from "../../src/match/commentary.js";
 import { SHIPPED, renderShipped as renderCommentary } from "./shippedCommentary.js";
 
 const COMMENTARY_TEMPLATES = SHIPPED.templates;

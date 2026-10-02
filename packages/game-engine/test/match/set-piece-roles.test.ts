@@ -3,7 +3,8 @@ import { DEFAULT_SET_PIECE_ROLES, type SetPieceRoles } from "@cm-clone/shared";
 import { simulateMatch } from "../../src/match/simulate/index.js";
 import { defendCornerFactor, planCorner } from "../../src/match/simulate/cornerPlan.js";
 import { defendFreeKickFactor, planFreeKick } from "../../src/match/simulate/freeKickPlan.js";
-import { parseCommentaryFile, renderCommentary } from "../../src/match/commentary.js";
+import { parseCommentaryFile } from "../../src/match/commentaryFile.js";
+import { renderCommentary } from "../../src/match/commentary.js";
 import { SHIPPED } from "./shippedCommentary.js";
 import {
   CORNER_CLOSE_DOWN_BONUS,
