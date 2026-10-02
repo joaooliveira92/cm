@@ -12,7 +12,15 @@
  */
 
 export { submitMatchCommand } from "./commands.js";
-export { COMMENTARY_FILE, SHIPPED_COMMENTARY, loadCommentaryTable } from "./commentaryFile.js";
+export {
+  COMMENTARY_FILE,
+  SHIPPED_COMMENTARY,
+  commentaryFileStatus,
+  loadCommentaryTable,
+  openCommentaryFile,
+  resetCommentaryFile,
+  type OpenPath,
+} from "./commentaryFile.js";
 export { getPostMatchSummary } from "./postMatchSummary.js";
 export { getMatchReport, reportEvents } from "./report.js";
 export { aggregateMatchStatistics, getMatchStatistics } from "./statistics.js";

@@ -4,7 +4,14 @@ import path from "node:path";
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
 import { SHIPPED_COMMENTARY_TEXT as SHIPPED_TEXT } from "@cm-clone/game-engine";
-import { COMMENTARY_FILE, SHIPPED_COMMENTARY, loadCommentaryTable } from "../../../src/main/match/commentaryFile.js";
+import {
+  COMMENTARY_FILE,
+  SHIPPED_COMMENTARY,
+  commentaryFileStatus,
+  loadCommentaryTable,
+  openCommentaryFile,
+  resetCommentaryFile,
+} from "../../../src/main/match/commentaryFile.js";
 
 /** A fresh user data folder. */
 const userData = () => Effect.promise(() => mkdtemp(path.join(tmpdir(), "cm-commentary-")));
@@ -49,6 +56,47 @@ describe("the player's commentary file (cm-style-commentary 02)", () => {
       yield* loadCommentaryTable(dir);
       yield* edit(dir, "[Foul]\n{nobody} fouls.\n", 3_000);
       expect((yield* loadCommentaryTable(dir)).templates.Foul).toEqual(SHIPPED_COMMENTARY.templates.Foul);
+    }),
+  );
+});
+
+describe("Preferences' view of the commentary file (cm-style-commentary 04)", () => {
+  it.effect("names the file, and lists what the game skipped in it", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      const fresh = yield* commentaryFileStatus(dir);
+      expect(fresh.file).toBe(path.join(dir, COMMENTARY_FILE));
+      expect(fresh.problems).toEqual([]);
+
+      yield* edit(dir, "[Foul]\n{player} fouls {player2}.\n{player} fouls.\n", 4_000);
+      expect((yield* commentaryFileStatus(dir)).problems).toEqual([
+        "line 2: skipped, {player2} isn't available in [Foul] (it has {player}, {team}, {team2})",
+      ]);
+    }),
+  );
+
+  it.effect("resets the file to the game's own lines", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      yield* loadCommentaryTable(dir);
+      yield* edit(dir, "[Foul]\n{nobody}\n", 5_000);
+      const status = yield* resetCommentaryFile(dir);
+      expect(status.problems).toEqual([]);
+      expect(yield* Effect.promise(() => readFile(status.file, "utf8"))).toBe(SHIPPED_TEXT);
+    }),
+  );
+
+  it.effect("hands the file to the operating system, and survives the shell refusing", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      const opened: Array<string> = [];
+      yield* openCommentaryFile(dir, async (file) => {
+        opened.push(file);
+        return "";
+      });
+      expect(opened).toEqual([path.join(dir, COMMENTARY_FILE)]);
+      const status = yield* openCommentaryFile(dir, async () => "no application to open .cfg");
+      expect(status.file).toBe(path.join(dir, COMMENTARY_FILE));
     }),
   );
 });

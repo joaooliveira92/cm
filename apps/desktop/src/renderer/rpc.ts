@@ -117,6 +117,8 @@ export {
   REFETCH_THRESHOLD,
 } from "./rpc/pacing.js";
 
+export { getCommentaryFileStatus, openCommentaryFile, resetCommentaryFile } from "./rpc/commentaryFile.js";
+
 export {
   getKeyBindingOverrides,
   setKeyBindingOverride,

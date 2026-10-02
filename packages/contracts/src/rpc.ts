@@ -58,6 +58,7 @@ import {
   InvalidTacticError,
   LeagueTableView,
   LockedKeyOverrideError,
+  CommentaryFileStatusView,
   ManagerProfileNotFoundError,
   ManagerProfileScreenView,
   ManagerProfileView,
@@ -872,6 +873,25 @@ commitCareer: {
   resetAllKeyBindings: {
     payload: Schema.Void,
     success: Schema.Record(Schema.String, Schema.String),
+    error: Schema.Never,
+  },
+  /** The player-editable commentary file (cm-style-commentary 04): where it is and what the game
+   *  skipped in it. Reading the status writes the game's own file first if there is none yet. */
+  getCommentaryFileStatus: {
+    payload: Schema.Void,
+    success: CommentaryFileStatusView,
+    error: Schema.Never,
+  },
+  /** Hands the commentary file to the operating system to open in the player's editor. */
+  openCommentaryFile: {
+    payload: Schema.Void,
+    success: CommentaryFileStatusView,
+    error: Schema.Never,
+  },
+  /** Overwrites the commentary file with the game's own lines, discarding the player's edits. */
+  resetCommentaryFile: {
+    payload: Schema.Void,
+    success: CommentaryFileStatusView,
     error: Schema.Never,
   },
   // -------------------------------------------------------------------------

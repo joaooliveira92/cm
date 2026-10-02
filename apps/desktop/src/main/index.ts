@@ -8,7 +8,7 @@ import { handleRpc } from "./rpc/rpcServer.js";
 import { confirmQuit } from "./quit.js";
 import { LoggerLayer } from "./rpc/logging.js";
 
-const { app, BrowserWindow, ipcMain } = electron;
+const { app, BrowserWindow, ipcMain, shell } = electron;
 
 app.setName("cm-clone-desktop");
 
@@ -91,7 +91,7 @@ app.whenReady().then(() => {
 
   ipcMain.handle(RPC_CHANNEL, (_event, method: AppRpcMethod, payload: unknown) =>
     Effect.provide(
-      handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData") }),
+      handleRpc(method, payload, { savesDir, userDataDir: app.getPath("userData"), openPath: (file) => shell.openPath(file) }),
       rpcLayer,
     ).pipe(Effect.runPromise),
   );

@@ -338,6 +338,17 @@ describe("Player Development & Training Focus schemas", () => {
   });
 });
 
+describe("the commentary file — cm-style-commentary 04", () => {
+  it("round-trips a status with and without problems, for all three methods", () => {
+    const clean = { file: "/Users/p/Library/Application Support/cm/commentary/events.cfg", problems: [] };
+    const broken = { ...clean, problems: ["line 12: skipped, {player2} isn't available in [Foul]"] };
+    for (const method of ["getCommentaryFileStatus", "openCommentaryFile", "resetCommentaryFile"] as const) {
+      roundTrip(AppRpcs[method].success, clean);
+      roundTrip(AppRpcs[method].success, broken);
+    }
+  });
+});
+
 describe("key binding overrides — the four Stage 6 procedures (AC-34)", () => {
   it("getKeyBindingOverrides round-trips an empty and a populated override map", () => {
     roundTrip(AppRpcs.getKeyBindingOverrides.success, {});

@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Button } from "../components/ui/button.js";
 import { Dialog } from "../components/shared/Dialog.js";
 import { cn } from "../lib/utils.js";
+import { CommentaryFileSection } from "../match/CommentaryFileSection.js";
 import {
   applyAppearance,
   BASE_COLORS,
@@ -17,9 +18,9 @@ export interface PreferencesDialogProps {
 }
 
 /**
- * Application preferences: today, the two shadcn colour axes. A choice applies
- * and persists the moment it is made, so the dialog previews by being the
- * setting — Done only closes it.
+ * Application preferences: the two shadcn colour axes, and the commentary file.
+ * A choice applies and persists the moment it is made, so the dialog previews by
+ * being the setting — Done only closes it.
  */
 export const PreferencesDialog = ({ onClose }: PreferencesDialogProps) => {
   const [appearance, setAppearance] = useState<Appearance>(() => loadAppearance());
@@ -46,6 +47,7 @@ export const PreferencesDialog = ({ onClose }: PreferencesDialogProps) => {
         value={appearance.themeColor}
         onChange={(themeColor) => choose({ ...appearance, themeColor })}
       />
+      <CommentaryFileSection />
       <div className="flex justify-end">
         <Button type="button" onClick={onClose}>
           Done

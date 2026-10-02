@@ -22,7 +22,22 @@ import {
   resetKeyBinding,
   setKeyBindingOverride,
 } from "./keybindings.js";
-import { getAwaitingMatch, getMatchRatings, getMatchReport, getMatchStatistics, getPostMatchSummary, getTeamSheet, loadCommentaryTable, resumeSimulation, startMatch, submitMatchCommand } from "../match/index.js";
+import {
+  commentaryFileStatus,
+  getAwaitingMatch,
+  getMatchRatings,
+  getMatchReport,
+  getMatchStatistics,
+  getPostMatchSummary,
+  getTeamSheet,
+  loadCommentaryTable,
+  openCommentaryFile,
+  resetCommentaryFile,
+  resumeSimulation,
+  startMatch,
+  submitMatchCommand,
+  type OpenPath,
+} from "../match/index.js";
 import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
@@ -73,6 +88,8 @@ export interface RpcContext {
   readonly savesDir: string;
   /** Electron `userData` — the parent of `saves/`; the machine-local override file lives here. */
   readonly userDataDir: string;
+  /** Electron's `shell.openPath`, for handing a file to the player's editor. Absent under test. */
+  readonly openPath?: OpenPath;
 }
 
 /**
@@ -557,6 +574,9 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       return yield* getPlayerContract(ctx.savesDir, saveId, playerId);
     }),
   getKeyBindingOverrides: (_payload, ctx) => getKeyBindingOverrides(ctx.userDataDir),
+  getCommentaryFileStatus: (_payload, ctx) => commentaryFileStatus(ctx.userDataDir),
+  openCommentaryFile: (_payload, ctx) => openCommentaryFile(ctx.userDataDir, ctx.openPath),
+  resetCommentaryFile: (_payload, ctx) => resetCommentaryFile(ctx.userDataDir),
   setKeyBindingOverride: (payload, ctx) =>
     Effect.gen(function* () {
       const { actionId, binding } = yield* Schema.decodeUnknownEffect(
