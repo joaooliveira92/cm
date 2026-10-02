@@ -4,7 +4,7 @@ import type { MatchPlayerInput } from "../types.js";
 import type { RandomSource } from "@cm-clone/shared";
 import { goalkeeperId, type TeamRuntimeState } from "./teamState.js";
 import { attributeValue, pickTaker } from "./setPiecePicks.js";
-import { planCorner, type CornerDelivery } from "./cornerPlan.js";
+import { defendCornerFactor, planCorner, type CornerDelivery } from "./cornerPlan.js";
 import {
   CORNER_CHANCE,
   CORNER_GOAL_BASE,
@@ -134,6 +134,7 @@ export const resolveCorner = (
   if (!takerId) return;
 
   const plan = planCorner(attackingTeam, takerId, deliveryType);
+  const defendedBy = defendCornerFactor(defendingTeam, attackingTeam, takerId, deliveryType, plan);
 
   // Emit the Corner event
   events.push({
@@ -153,7 +154,7 @@ export const resolveCorner = (
     const shooter = attackingTeam.playersById.get(plan.shooterId);
     if (!shooter) return;
     const atkValue = attackValue(shooter, "shooting", "composure");
-    const defValue = defenseValue(defendingTeam, "positioning") * 0.6 + gkReflexes(defendingTeam) * 0.4;
+    const defValue = (defenseValue(defendingTeam, "positioning") * 0.6 + gkReflexes(defendingTeam) * 0.4) * defendedBy;
     const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_VOLLEY_GOAL_BASE, CORNER_VOLLEY_SAVE_SHARE, CORNER_VOLLEY_MISS_SHARE, random);
     emitOutcomeEvent(
       outcome,
@@ -174,7 +175,7 @@ export const resolveCorner = (
   const headerPlayer = attackingTeam.playersById.get(plan.headerId);
   if (!headerPlayer) return;
   const atkValue = attackValue(headerPlayer, "heading", "strength") * plan.attackFactor;
-  const defValue = defenseValue(defendingTeam, "positioning", "bravery") * plan.defenceFactor;
+  const defValue = defenseValue(defendingTeam, "positioning", "bravery") * plan.defenceFactor * defendedBy;
   const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_GOAL_BASE, CORNER_SAVE_SHARE, CORNER_MISS_SHARE, random);
 
   emitOutcomeEvent(

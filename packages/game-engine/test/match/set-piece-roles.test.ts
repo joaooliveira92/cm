@@ -1,10 +1,18 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SET_PIECE_ROLES, type SetPieceRoles } from "@cm-clone/shared";
 import { simulateMatch } from "../../src/match/simulate/index.js";
-import { planCorner } from "../../src/match/simulate/cornerPlan.js";
+import { defendCornerFactor, planCorner } from "../../src/match/simulate/cornerPlan.js";
 import { parseCommentaryFile, renderCommentary } from "../../src/match/commentary.js";
 import { SHIPPED } from "./shippedCommentary.js";
-import { CORNER_FLICK_ON_BONUS, CORNER_ROLE_MATCH_BONUS } from "../../src/match/simulate/constants.js";
+import {
+  CORNER_CLOSE_DOWN_BONUS,
+  CORNER_DEFENCE_PRESENCE_FLOOR,
+  CORNER_FLICK_ON_BONUS,
+  CORNER_MAN_MARK_BONUS,
+  CORNER_MARK_TARGET_BONUS,
+  CORNER_ROLE_MATCH_BONUS,
+  CORNER_ZONAL_BONUS,
+} from "../../src/match/simulate/constants.js";
 import { applyCommand, initTeamState } from "../../src/match/simulate/teamState.js";
 import { resolveTeamTactics } from "../../src/match/tactical-modifiers.js";
 import { toMatchTactic, type MatchTactic, type MatchTeamSetup } from "../../src/match/types.js";
@@ -217,3 +225,52 @@ describe("a corner follows the attacking roles and the delivery", () => {
   });
 });
 
+
+// ─── 03: defending corners follow the defending roles ────────────────────────
+
+describe("a corner is defended by the defending roles", () => {
+  type DefendRole = SetPieceRoles["defendCorner"];
+
+  const attacking = initTeamState(buildTeam(clubId("home"), 5).setup, 1);
+  const takerId = attacking.resolved.slots.find((slot) => !slot.isGoalkeeper)!.playerId;
+  const defendingWith = (role: DefendRole, howMany = 1) => {
+    const setup = buildTeam(clubId("away"), 9).setup;
+    let given = 0;
+    const slots = setup.tactic.slots.map((slot) => {
+      if (slot.cell.row === "GK" || given >= howMany) return slot;
+      given += 1;
+      return { ...slot, setPieceRoles: { ...DEFAULT_SET_PIECE_ROLES, defendCorner: role } };
+    });
+    return initTeamState({ ...setup, tactic: { ...setup.tactic, slots } }, 1);
+  };
+  const header = (delivery: "default" | "nearPost" | "farPost") => planCorner(attacking, takerId, delivery);
+  const factor = (role: DefendRole, delivery: "default" | "nearPost" | "farPost", howMany = 1) =>
+    defendCornerFactor(defendingWith(role, howMany), attacking, takerId, delivery, header(delivery));
+
+  it("changes nothing when every defending role is default", () => {
+    expect(factor("default", "nearPost", 10)).toBe(1);
+  });
+
+  it("defends worse with players left forward", () => {
+    expect(factor("stayForward", "default", 2)).toBeCloseTo(CORNER_DEFENCE_PRESENCE_FLOOR + (1 - CORNER_DEFENCE_PRESENCE_FLOOR) * (8 / 10));
+  });
+
+  it("is stronger with a zonal defender at the post the corner is aimed at, and only there", () => {
+    expect(factor("nearPost", "nearPost")).toBe(CORNER_ZONAL_BONUS);
+    expect(factor("nearPost", "farPost")).toBe(1);
+    expect(factor("farPost", "farPost")).toBe(CORNER_ZONAL_BONUS);
+  });
+
+  it("is stronger man-marking, and marking the kind of player who attacks the ball", () => {
+    expect(factor("markMan", "default")).toBe(CORNER_MAN_MARK_BONUS);
+    // At default the best header attacks the ball: he is the tall player.
+    expect(factor("markTallPlayer", "default")).toBe(CORNER_MARK_TARGET_BONUS);
+    expect(factor("markSmallPlayer", "default")).toBe(1);
+  });
+
+  it("closes down a shot from the edge of the area", () => {
+    const volley = { kind: "volley", shooterId: takerId, assistId: takerId } as const;
+    expect(defendCornerFactor(defendingWith("closeDown"), attacking, takerId, "edgeOfArea", volley)).toBe(CORNER_CLOSE_DOWN_BONUS);
+    expect(defendCornerFactor(defendingWith("markMan"), attacking, takerId, "edgeOfArea", volley)).toBe(1);
+  });
+});

@@ -4,8 +4,13 @@ import type { ResolvedSlot } from "../tactical-modifiers.js";
 import {
   CORNER_BOX_PRESENCE_FLOOR,
   CORNER_CHALLENGE_KEEPER_FACTOR,
+  CORNER_CLOSE_DOWN_BONUS,
+  CORNER_DEFENCE_PRESENCE_FLOOR,
   CORNER_FLICK_ON_BONUS,
+  CORNER_MAN_MARK_BONUS,
+  CORNER_MARK_TARGET_BONUS,
   CORNER_ROLE_MATCH_BONUS,
+  CORNER_ZONAL_BONUS,
 } from "./constants.js";
 import { attributeValue, pickTaker } from "./setPiecePicks.js";
 import type { TeamRuntimeState } from "./teamState.js";
@@ -116,4 +121,44 @@ export const planCorner = (team: TeamRuntimeState, takerId: PlayerId, delivery: 
     attackFactor,
     defenceFactor: keeperChallenged ? CORNER_CHALLENGE_KEEPER_FACTOR : 1,
   };
+};
+
+type DefendCornerRole = SetPieceRoles["defendCorner"];
+
+/**
+ * How the defending side's corner roles change its value against `plan` (set-piece-roles 03), as one
+ * multiplier on the defence's value; exactly 1 when every role is `default`. Players left forward don't
+ * defend the box; zonal defenders help at the post the ball is aimed at; markers help against the player
+ * attacking it, with heading standing in for height (the attacking side's best header is its tall
+ * player); closing down helps against a shot from the edge.
+ */
+export const defendCornerFactor = (
+  defending: TeamRuntimeState,
+  attacking: TeamRuntimeState,
+  takerId: PlayerId,
+  delivery: CornerDelivery,
+  plan: CornerPlan,
+): number => {
+  if (plan.kind === "short") return 1;
+  const outfield = defending.resolved.slots.filter((slot) => !slot.isGoalkeeper);
+  const roles = new Set<DefendCornerRole>(outfield.map((slot) => slot.setPieceRoles.defendCorner));
+  if (roles.size === 1 && roles.has("default")) return 1;
+
+  let factor = 1;
+  const back = outfield.filter((slot) => slot.setPieceRoles.defendCorner !== "stayForward");
+  if (back.length < outfield.length) {
+    factor *= CORNER_DEFENCE_PRESENCE_FLOOR + (1 - CORNER_DEFENCE_PRESENCE_FLOOR) * (back.length / outfield.length);
+  }
+  if (plan.kind === "volley") return roles.has("closeDown") ? factor * CORNER_CLOSE_DOWN_BONUS : factor;
+
+  if ((delivery === "nearPost" && roles.has("nearPost")) || (delivery === "farPost" && roles.has("farPost"))) {
+    factor *= CORNER_ZONAL_BONUS;
+  }
+  if (roles.has("markMan")) factor *= CORNER_MAN_MARK_BONUS;
+  const attackingOutfield = attacking.resolved.slots.filter((slot) => !slot.isGoalkeeper && slot.playerId !== takerId);
+  const headerIsTall = bestAt(attacking, attackingOutfield, "heading") === plan.headerId;
+  if ((headerIsTall && roles.has("markTallPlayer")) || (!headerIsTall && roles.has("markSmallPlayer"))) {
+    factor *= CORNER_MARK_TARGET_BONUS;
+  }
+  return factor;
 };

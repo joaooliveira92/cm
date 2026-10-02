@@ -86,6 +86,19 @@ export const CORNER_VOLLEY_GOAL_BASE = 0.05;
 export const CORNER_VOLLEY_SAVE_SHARE = 0.35;
 export const CORNER_VOLLEY_MISS_SHARE = 0.65;
 
+// Defending corner roles (set-piece-roles 03): multipliers on the defence's value, each 1 at default.
+
+/** Defence multiplier with no outfield player back to defend; it rises to 1 with all of them back. */
+export const CORNER_DEFENCE_PRESENCE_FLOOR = 0.75;
+/** Defence multiplier when a zonal defender stands at the post the corner is aimed at. */
+export const CORNER_ZONAL_BONUS = 1.08;
+/** Defence multiplier when a defender man-marks. */
+export const CORNER_MAN_MARK_BONUS = 1.05;
+/** Defence multiplier when a defender marks the kind of player who attacks the ball (tall or small). */
+export const CORNER_MARK_TARGET_BONUS = 1.08;
+/** Defence multiplier against a shot from the edge of the area when a defender closes down. */
+export const CORNER_CLOSE_DOWN_BONUS = 1.1;
+
 /** Probability that a foul leads to a free kick (foul in attacking third). */
 export const FOUL_LEADS_TO_FREE_KICK = 0.15;
 /** Base goal probability at equal attacker/defender quality for free kicks. */
