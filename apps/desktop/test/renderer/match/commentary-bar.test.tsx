@@ -73,6 +73,26 @@ describe("CommentaryBar", () => {
     expect(surface("GOAL!").dataset["flashing"]).toBe("false");
   });
 
+  it("holds a flash line inverted instead of blinking it when the system asks for reduced motion", () => {
+    vi.useFakeTimers();
+    vi.stubGlobal("matchMedia", (query: string) => ({ matches: query === "(prefers-reduced-motion: reduce)" }));
+    const { rerender } = render(<CommentaryBar match={MATCH} playing={null} revealed={[]} />);
+    rerender(<CommentaryBar match={MATCH} playing={null} revealed={[line({ tag: "Goal", text: "GOAL!", flash: true })]} />);
+    const states: Array<string | undefined> = [];
+    for (let step = 0; step < 6; step++) {
+      states.push(surface("GOAL!").dataset["flashing"]);
+      act(() => {
+        vi.advanceTimersByTime(220);
+      });
+    }
+    expect(states).toEqual(["true", "true", "true", "true", "true", "true"]);
+    act(() => {
+      vi.advanceTimersByTime(5_000);
+    });
+    expect(surface("GOAL!").dataset["flashing"]).toBe("false");
+    vi.unstubAllGlobals();
+  });
+
   it("does not blink a flash line that was already on screen when the bar mounted", () => {
     render(<CommentaryBar match={MATCH} playing={null} revealed={[line({ tag: "Goal", text: "GOAL!", flash: true })]} />);
     expect(surface("GOAL!").dataset["flashing"]).toBe("false");

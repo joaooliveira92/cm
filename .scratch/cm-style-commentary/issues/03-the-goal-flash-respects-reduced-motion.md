@@ -9,4 +9,10 @@ the commentary bar; it is marked once (bold, inverted) for the length of the bli
 
 **Blocked by:** 01
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+`useFlash` in `apps/desktop/src/renderer/match/CommentaryBar.tsx` reads `prefers-reduced-motion`: when it is
+set, a flash line stays inverted for the length of the blink and never toggles. Covered in
+`apps/desktop/test/renderer/match/commentary-bar.test.tsx`.

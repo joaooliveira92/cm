@@ -15,8 +15,13 @@ const clubColours = (match: MatchSummary, line: CommentaryLineView): CSSProperti
   return colours === null ? undefined : { backgroundColor: colours.primary.background, color: colours.primary.foreground };
 };
 
-/** Blinks while `line` is a fresh flash line; false otherwise. A line already on screen when the bar
- *  mounts (returning to Match day after a goal) does not blink again. */
+/** The operating system asks for less motion: a flash line is marked once instead of blinking. */
+const prefersReducedMotion = (): boolean =>
+  typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/** Whether `line` is marked right now: blinking while it is a fresh flash line, or held inverted for
+ *  the same time under reduced motion. A line already on screen when the bar mounts (returning to
+ *  Match day after a goal) is not marked again. */
 const useFlash = (line: CommentaryLineView | null): boolean => {
   const [blink, setBlink] = useState(0);
   const mountedWith = useRef(line);
@@ -34,7 +39,7 @@ const useFlash = (line: CommentaryLineView | null): boolean => {
     }, FLASH_BLINK_MS);
     return () => clearInterval(interval);
   }, [line]);
-  return blink % 2 === 1;
+  return prefersReducedMotion() ? blink > 0 : blink % 2 === 1;
 };
 
 /**
