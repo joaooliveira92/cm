@@ -15,12 +15,12 @@ import {
 import {
   simulateMatchWithCounts,
   toMatchTactic,
-  type AiTacticalChange,
-  type AiTacticalController,
+  type AiController,
   type MatchCommand,
   type MatchEvent,
   type MatchPlayerCountEntry,
   type MatchTeamSetup,
+  type TacticalDecision,
 } from "@cm-clone/game-engine";
 import { type StreamEvent } from "../season/decider.js";
 
@@ -160,12 +160,11 @@ export const deriveMatchEvents = (
   }
 
   // Build AI controllers for clubs that have preferences
-  const aiController: AiTacticalController | undefined = aiPreferences && aiPreferences.size > 0
-    ? (state) => {
-        const prefs = aiPreferences.get(state.aiClubId as ClubId);
-        if (!prefs) return [];
-        return aiControllerFor(prefs, started.homeClubId, started.awayClubId)(state);
-      }
+  const aiControllers: ReadonlyArray<AiController> | undefined = aiPreferences && aiPreferences.size > 0
+    ? Array.from(aiPreferences, ([clubId, prefs]) => {
+        const setup = clubId === started.homeClubId ? started.homeSetup : started.awaySetup;
+        return aiControllerFor(prefs, clubId, started.homeClubId, started.awayClubId, setup.tactic.team.mentality, setup.tactic.team.menBehindTheBall);
+      })
     : undefined;
 
   return simulateMatchWithCounts({
@@ -176,41 +175,49 @@ export const deriveMatchEvents = (
     awayRegimen: started.awayRegimen,
     commandsByMinute,
     halftimeCommands,
-    aiController,
+    aiControllers,
   });
 };
 
 /**
- * Builds an `AiTacticalController` callback for an AI club's in-match tactical changes.
- * The controller is deterministic: given the same state, it always returns the same changes.
- *
- * The AI club's preferences are derived from the world seed and club id, so the controller
- * is stateless and pure.
+ * Builds an {@link AiController} for an AI club's in-match tactical changes.
+ * The controller is deterministic and owns its mentality/men-behind-the-ball
+ * state across calls.
  */
 export const aiControllerFor = (
   preferences: AiTacticalPreferences,
+  clubId: ClubId,
   homeClubId: ClubId,
   _awayClubId: ClubId,
-): AiTacticalController => {
-  return (state) => {
-    const isHome = state.aiClubId === homeClubId;
-    const currentTeam = {
-      mentality: state.currentMentality as TeamInstructions["mentality"],
-      menBehindTheBall: state.currentMenBehindTheBall,
-    } as TeamInstructions;
-    const change = aiInMatchController(
-      preferences,
-      currentTeam,
-      isHome,
-      state.homeScore,
-      state.awayScore,
-      state.minute,
-      state.justHadRedCard,
-    );
-    if (change === null) return [];
-    const result: AiTacticalChange = {};
-    if (change.newMentality) result.mentality = change.newMentality;
-    if (change.teamOverrides) result.teamOverrides = change.teamOverrides as AiTacticalChange["teamOverrides"];
-    return [result];
+  startMentality: TeamInstructions["mentality"],
+  startMenBehindTheBall: boolean,
+): AiController => {
+  let mentality = startMentality;
+  let menBehindTheBall = startMenBehindTheBall;
+
+  return {
+    clubId,
+    resolve(input) {
+      const isHome = clubId === homeClubId;
+      const currentTeam = { mentality, menBehindTheBall } as TeamInstructions;
+      const change = aiInMatchController(
+        preferences,
+        currentTeam,
+        isHome,
+        input.homeScore,
+        input.awayScore,
+        input.minute,
+        input.justHadRedCard,
+      );
+      if (change === null) return {};
+
+      if (change.newMentality) mentality = change.newMentality;
+      if (change.teamOverrides?.menBehindTheBall !== undefined) menBehindTheBall = change.teamOverrides.menBehindTheBall;
+
+      const decision: Record<string, unknown> = {};
+      if (change.newMentality) decision.mentality = change.newMentality;
+      if (change.teamOverrides?.menBehindTheBall !== undefined) decision.menBehindTheBall = change.teamOverrides.menBehindTheBall;
+      return decision as TacticalDecision;
+    },
   };
 };

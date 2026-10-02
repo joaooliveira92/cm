@@ -6,8 +6,6 @@ export {
   simulateMatchWithCondition,
   simulateMatchWithCounts,
   resolveSlice,
-  type AiTacticalChange,
-  type AiTacticalController,
   type MatchPlayerCountEntry,
   type SimulateMatchInput,
 } from "./loop.js";
@@ -15,3 +13,5 @@ export {
 export * from "./phaseStrengthResolver.js";
 export * from "./eventResolver.js";
 export * from "./setPieceResolver.js";
+
+export type { AiController, AiControllerInput, TacticalDecision } from "../aiController.js";

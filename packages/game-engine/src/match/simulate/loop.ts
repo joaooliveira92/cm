@@ -1,7 +1,8 @@
-import { createSeededRng, type RandomSource, type TeamInstructions } from "@cm-clone/shared";
+import { createSeededRng, type RandomSource } from "@cm-clone/shared";
 import type { MatchCommand } from "../commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "../events.js";
 import type { MatchTeamSetup } from "../types.js";
+import type { AiController } from "../aiController.js";
 import {
   HALF_LENGTH_MINUTES,
   STOPPAGE_MAX_MINUTES,
@@ -21,23 +22,7 @@ import {
   type TeamRuntimeState,
 } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
-import { reconcileTacticalChange, viewTacticalState, type AiTacticalChange, type TacticalState } from "./tacticalAdapter.js";
-
-export type { AiTacticalChange };
-
-export type AiTacticalController = (state: {
-  readonly minute: number;
-  readonly half: MatchHalf;
-  readonly homeScore: number;
-  readonly awayScore: number;
-  readonly justHadRedCard: boolean;
-  readonly justHadGoal: boolean;
-  readonly homeClubId: string;
-  readonly awayClubId: string;
-  readonly currentMentality: string;
-  readonly currentMenBehindTheBall: boolean;
-  readonly aiClubId: string;
-}) => ReadonlyArray<AiTacticalChange>;
+import { reconcileTacticalDecision, viewTacticalState, type TacticalState } from "./tacticalAdapter.js";
 
 export interface SimulateMatchInput {
   readonly seed: number;
@@ -47,7 +32,7 @@ export interface SimulateMatchInput {
   readonly awayRegimen?: number;
   readonly commandsByMinute?: ReadonlyMap<number, ReadonlyArray<MatchCommand>>;
   readonly halftimeCommands?: ReadonlyArray<MatchCommand>;
-  readonly aiController?: AiTacticalController;
+  readonly aiControllers?: ReadonlyArray<AiController>;
 }
 
 /** Match statistics accumulated during simulation. */
@@ -169,13 +154,11 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
   };
 
   const invokeAiController = (minute: number, half: MatchHalf, isHalftime: boolean, stopAfter: boolean): void => {
-    if (!input.aiController) return;
-    for (const team of [home, away]) {
-      const tactical = viewTacticalState(
-        team.clubId, team.teamInstructions, team.playersById,
-        team.resolved.teamModifiers, team.resolved.instructions, team.resolved.slots.length,
-      );
-      const changes = input.aiController({
+    if (!input.aiControllers) return;
+    for (const controller of input.aiControllers) {
+      const team = controller.clubId === home.clubId ? home : away;
+      const tactical = tacticalView(team);
+      const decision = controller.resolve({
         minute,
         half,
         homeScore: score.home,
@@ -184,25 +167,20 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
         justHadGoal: stopAfter,
         homeClubId: home.clubId,
         awayClubId: away.clubId,
-        currentMentality: tactical.mentality,
-        currentMenBehindTheBall: tactical.menBehindTheBall,
-        aiClubId: tactical.clubId,
       });
-      for (const change of changes) {
-        const result = reconcileTacticalChange(tactical, change);
-        if (result) {
-          team.teamInstructions = result.teamInstructions;
-          team.resolved.teamModifiers = result.teamModifiers;
-          team.resolved.instructions = result.instructions;
-          events.push({
-            _tag: "TacticsChanged",
-            minute,
-            half,
-            teamClubId: tactical.clubId,
-            fromFormationLabel: "",
-            toFormationLabel: `${result.teamInstructions.mentality}`,
-          });
-        }
+      const result = reconcileTacticalDecision(tactical, decision);
+      if (result) {
+        team.teamInstructions = result.teamInstructions;
+        team.resolved.teamModifiers = result.teamModifiers;
+        team.resolved.instructions = result.instructions;
+        events.push({
+          _tag: "TacticsChanged",
+          minute,
+          half,
+          teamClubId: controller.clubId,
+          fromFormationLabel: "",
+          toFormationLabel: `${decision.mentality ?? tactical.mentality}`,
+        });
       }
     }
   };
@@ -221,7 +199,7 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
 
       applyScheduledCommands(home, away, minute, half, input.commandsByMinute?.get(minute), false, events);
 
-      if (input.aiController && minute - lastAiMinute >= 5) {
+      if (input.aiControllers && minute - lastAiMinute >= 5) {
         invokeAiController(minute, half, false, false);
         lastAiMinute = minute;
       }
@@ -235,7 +213,7 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
       .filter((event) => STOPPAGE_CAUSING_TAGS.has(event._tag)).length;
     const addedMinutes = Math.round(clamp(STOPPAGE_MIN_MINUTES + causingEventCount * 0.5 + random.next() * 2, STOPPAGE_MIN_MINUTES, STOPPAGE_MAX_MINUTES));
     const stoppageMinute = half === 1 ? HALF_LENGTH_MINUTES + addedMinutes : HALF_LENGTH_MINUTES * 2 + addedMinutes;
-    if (causingEventCount > 0 && input.aiController) {
+    if (causingEventCount > 0 && input.aiControllers) {
       invokeAiController(stoppageMinute, half, false, true);
     }
 

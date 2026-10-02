@@ -14,6 +14,7 @@ import type { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { TeamInstructions } from "@cm-clone/shared";
 import type { MatchPlayerInput, MatchTactic } from "../types.js";
 import type { TeamBehaviourModifiers } from "../resolveBehaviourVectors.js";
+import type { TacticalDecision } from "../aiController.js";
 import {
   resolveTeamInstructions,
   resolveTeamModifiers,
@@ -98,6 +99,42 @@ export const reconcileTacticalChange = (
   }
   if (change.teamOverrides) {
     newInstructions = { ...newInstructions, ...change.teamOverrides };
+    changed = true;
+  }
+
+  if (!changed) return null;
+
+  return {
+    teamInstructions: newInstructions,
+    teamModifiers: resolveTeamModifiers(newInstructions),
+    instructions: resolveTeamInstructions({ team: newInstructions }),
+  };
+};
+
+/**
+ * Apply an AI controller's {@link TacticalDecision} to a {@link TacticalState}.
+ * Flatter API than {@link reconcileTacticalChange} — the controller returns a
+ * decision struct, not an `AiTacticalChange` with nested overrides.
+ *
+ * Returns `null` when nothing changed.
+ */
+export const reconcileTacticalDecision = (
+  state: TacticalState,
+  decision: TacticalDecision,
+): {
+  readonly teamInstructions: TeamInstructions;
+  readonly teamModifiers: TeamBehaviourModifiers;
+  readonly instructions: ResolvedInstructions;
+} | null => {
+  let newInstructions = state.teamInstructions;
+  let changed = false;
+
+  if (decision.mentality) {
+    newInstructions = { ...newInstructions, mentality: decision.mentality };
+    changed = true;
+  }
+  if (decision.menBehindTheBall !== undefined) {
+    newInstructions = { ...newInstructions, menBehindTheBall: decision.menBehindTheBall };
     changed = true;
   }
 
