@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "@effect/vitest";
 import { Effect } from "effect";
-import { SHIPPED_COMMENTARY_TEXT as SHIPPED_TEXT } from "@cm-clone/game-engine";
+import { SHIPPED_COMMENTARY_TEXT as SHIPPED_TEXT, parseCommentaryFile } from "@cm-clone/game-engine";
 import {
   COMMENTARY_FILE,
   SHIPPED_COMMENTARY,
@@ -181,7 +181,8 @@ describe("an older commentary file (cm-style-commentary 10)", () => {
       yield* edit(dir, OLD, 7_000);
       const kept = yield* updateCommentaryFile(dir, false);
       expect(kept.newSections).toEqual([]);
-      expect(yield* Effect.promise(() => readFile(kept.file, "utf8"))).toBe(`version = 1\n\n${OLD}`);
+      const shippedVersion = parseCommentaryFile(SHIPPED_TEXT).version;
+      expect(yield* Effect.promise(() => readFile(kept.file, "utf8"))).toBe(`version = ${shippedVersion}\n\n${OLD}`);
     }),
   );
 });

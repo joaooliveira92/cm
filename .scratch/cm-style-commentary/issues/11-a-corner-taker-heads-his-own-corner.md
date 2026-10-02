@@ -10,4 +10,9 @@ which changes seeded results; seeded tests that pin outcomes would need repinnin
 
 **Blocked by:** None
 
-**Status:** needs-triage
+**Status:** ready-for-agent
+
+## Comments
+
+2026-10-01, triage: approved by Joao for this effort. Ready for an agent: the corner's header-taker is
+picked separately from the taker, and seeded tests that pin outcomes are repinned in the same change.

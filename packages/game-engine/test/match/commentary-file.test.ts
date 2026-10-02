@@ -192,8 +192,10 @@ describe("highlight levels (cm-style-commentary 08)", () => {
 });
 
 describe("bringing an older file up to date (cm-style-commentary 10)", () => {
+  const SHIPPED_VERSION = parseCommentaryFile(SHIPPED_TEXT).version;
+
   it("reads the file's version, and 0 when it has none", () => {
-    expect(parseCommentaryFile(SHIPPED_TEXT).version).toBe(1);
+    expect(parseCommentaryFile(SHIPPED_TEXT).version).toBeGreaterThan(0);
     expect(parseCommentaryFile("[Foul]\nFoul!\n").version).toBe(0);
     expect(parseCommentaryFile("# mine\nversion = 7\n[Foul]\nFoul!\n")).toMatchObject({ version: 7, problems: expect.any(Array) });
   });
@@ -201,29 +203,85 @@ describe("bringing an older file up to date (cm-style-commentary 10)", () => {
   it("appends only the sections the player's file lacks, word for word, and raises its version", () => {
     const mine = "# My commentary\n\n[Foul]\n# my own fouls\ndelay = 400\n{player} hacks him down.\n";
     const { text, added } = upgradeCommentaryFile(mine, SHIPPED_TEXT);
-    expect(added).toHaveLength(COMMENTARY_SECTIONS.size - 1);
+    // Every moment but Foul, plus the phrases.
+    expect(added).toHaveLength(COMMENTARY_SECTIONS.size);
+    expect(added).toContain("Phrases");
     expect(added).not.toContain("Foul");
 
     const upgraded = parseCommentaryFile(text);
-    expect(upgraded.version).toBe(1);
+    expect(upgraded.version).toBe(SHIPPED_VERSION);
     expect(upgraded.problems).toEqual([]);
     expect(upgraded.table.templates.Foul).toEqual(["{player} hacks him down."]);
     expect(upgraded.table.playback.Foul.delayMs).toBe(400);
     expect(upgraded.table.templates.Offside).toEqual(SHIPPED.templates.Offside);
-    expect(text.startsWith("version = 1\n\n# My commentary\n\n[Foul]\n# my own fouls\ndelay = 400\n{player} hacks him down.\n")).toBe(true);
+    expect(text.startsWith(`version = ${SHIPPED_VERSION}\n\n# My commentary\n\n[Foul]\n# my own fouls\ndelay = 400\n{player} hacks him down.\n`)).toBe(true);
   });
 
   it("only raises the version for a player who keeps the file as it is", () => {
     const mine = "[Foul]\nFoul!\n";
     const { text, added } = upgradeCommentaryFile(mine, SHIPPED_TEXT, { addSections: false });
     expect(added).toEqual([]);
-    expect(text).toBe("version = 1\n\n[Foul]\nFoul!\n");
+    expect(text).toBe(`version = ${SHIPPED_VERSION}\n\n[Foul]\nFoul!\n`);
   });
 
   it("replaces an old version line in place, and adds nothing to a complete file", () => {
-    const old = SHIPPED_TEXT.replace("version = 1", "version = 0");
+    const old = SHIPPED_TEXT.replace(`version = ${SHIPPED_VERSION}`, "version = 0");
     const { text, added } = upgradeCommentaryFile(old, SHIPPED_TEXT);
     expect(added).toEqual([]);
     expect(text).toBe(SHIPPED_TEXT);
+  });
+});
+
+describe("the phrases (cm-style-commentary 12)", () => {
+  const injury: MatchEvent = {
+    _tag: "Injury",
+    minute: 20,
+    half: 1,
+    teamClubId: clubId("home"),
+    playerId: playerId("p1"),
+    trigger: "contact",
+    severity: "light",
+    tier: "orange",
+    type: "twistedAnkle",
+  };
+  const goal: MatchEvent = {
+    _tag: "Goal", minute: 9, half: 1, teamClubId: clubId("home"), playerId: playerId("p1"), homeScore: 1, awayScore: 0, chanceType: "cross",
+  };
+
+  it("puts a translated file's own words into {injury}, {score} and {side}", () => {
+    const { table, problems } = edited(
+      [
+        "[Phrases]",
+        "injury.twistedAnkle = une cheville tordue",
+        "score = {home} {homeScore} – {awayScore} {away}",
+        "side.left = gauche",
+        "[Injury:contact:light]",
+        "{player} a {injury}.",
+        "[GoalScore:opener]",
+        "But ! {score}.",
+        "[Corner]",
+        "Corner côté {side}.",
+      ].join("\n"),
+    );
+    expect(problems).toEqual([]);
+    const corner: MatchEvent = { _tag: "Corner", minute: 3, half: 1, teamClubId: clubId("home"), playerId: playerId("p1"), deliveryType: "inswinger", side: "left" };
+    const lines = renderCommentary([started, injury, goal, corner], 1, names, table).map((line) => line.text);
+    expect(lines.slice(1)).toEqual(["Player p1 a une cheville tordue.", expect.stringMatching(/ But ! Rovers 1 – 0 United\.$/), "Corner côté gauche."]);
+  });
+
+  it("keeps the game's phrase for any the file leaves out", () => {
+    const { table } = edited("[Phrases]\nside.left = gauche\n");
+    expect(table.phrases["side.right"]).toBe(SHIPPED.phrases["side.right"]);
+    expect(table.phrases["injury.calf"]).toBe("a calf problem");
+  });
+
+  it("skips and reports a phrase it can't use", () => {
+    const { problems } = edited("[Phrases]\ninjury.elbow = a sore elbow\nscore = {home} beat {team2}\nside.left =\njust words\n");
+    expect(problems).toEqual([
+      "line 2: skipped, there is no phrase injury.elbow",
+      "line 3: skipped, {team2} isn't available in score (it has {home}, {away}, {homeScore}, {awayScore})",
+      "line 4: skipped, side.left is empty",
+      "line 5: skipped, a phrase is written name = text",
+    ]);
   });
 });

@@ -1,4 +1,4 @@
-import type { ChanceType, InjuryType, MatchEvent } from "./events.js";
+import type { ChanceType, MatchEvent } from "./events.js";
 import {
   FOLLOW_ON_DELAY_MS,
   type ChanceTag,
@@ -14,7 +14,10 @@ export {
   COMMENTARY_SECTIONS,
   FOLLOW_ON_DELAY_MS,
   HIGHLIGHT_LEVELS,
+  PHRASES,
+  PHRASES_SECTION,
   type CommentaryPlayback,
+  type PhraseName,
   type HighlightLevel,
   type CommentaryTable,
   type CommentaryTemplateKey,
@@ -25,6 +28,7 @@ export {
   parseCommentaryFile,
   upgradeCommentaryFile,
   type CommentaryFileUpgrade,
+  type CommentarySectionName,
   type ParsedCommentaryFile,
 } from "./commentaryFile.js";
 export { SHIPPED_COMMENTARY_TEXT } from "./shippedCommentaryText.generated.js";
@@ -38,15 +42,6 @@ export { SHIPPED_COMMENTARY_TEXT } from "./shippedCommentaryText.generated.js";
  */
 export type CommentaryEventTag = MatchEvent["_tag"];
 
-/** The noun phrase each injury type reads as, for the `{injury}` token. */
-const INJURY_PHRASES: Record<InjuryType, string> = {
-  brokenToe: "a broken toe",
-  twistedAnkle: "a twisted ankle",
-  deadLeg: "a dead leg",
-  hamstring: "a hamstring problem",
-  calf: "a calf problem",
-  strain: "a muscle strain",
-};
 
 const CHANCE_TYPES: ReadonlySet<string> = new Set<ChanceType>([
   "throughBall",
@@ -135,9 +130,16 @@ interface Draw {
 /** The pools an event draws from, in sentence order, and the tokens they may use. Context comes only
  * from the event and the events before it, never after: a resimulated future (after a match command)
  * must not change a line the player has already read. */
-const drawFor = (event: MatchEvent, previous: MatchEvent | undefined, match: MatchSides, names: CommentaryNameResolver): Draw => {
+const drawFor = (
+  event: MatchEvent,
+  previous: MatchEvent | undefined,
+  match: MatchSides,
+  names: CommentaryNameResolver,
+  phrases: CommentaryTable["phrases"],
+): Draw => {
   const { homeClubId, homeName, awayName } = match;
-  const score = (homeScore: number, awayScore: number): string => `${homeName} ${homeScore}-${awayScore} ${awayName}`;
+  const score = (homeScore: number, awayScore: number): string =>
+    fillTemplate(phrases.score, { home: homeName, away: awayName, homeScore: String(homeScore), awayScore: String(awayScore) });
   /** `{team}` is the club a moment is about, `{team2}` always the other one. */
   const clubs = (clubId: string) =>
     clubId === homeClubId ? { team: homeName, team2: awayName } : { team: names.clubName(clubId), team2: homeName };
@@ -199,7 +201,7 @@ const drawFor = (event: MatchEvent, previous: MatchEvent | undefined, match: Mat
     case "FreeKick":
       return {
         keys: [event._tag],
-        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId), side: event.side },
+        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId), side: phrases[`side.${event.side}`] },
       };
     case "Foul":
     case "Offside":
@@ -214,7 +216,7 @@ const drawFor = (event: MatchEvent, previous: MatchEvent | undefined, match: Mat
         tokens: {
           ...clubs(event.teamClubId),
           player: names.playerName(event.playerId),
-          injury: INJURY_PHRASES[event.type] ?? "an injury",
+          injury: phrases[`injury.${event.type}`],
         },
       };
     case "Substitution":
@@ -341,7 +343,7 @@ export const renderCommentary = (
   };
 
   return events.map((event, index): CommentaryLine => {
-    const { keys, tokens } = drawFor(event, events[index - 1], match, names);
+    const { keys, tokens } = drawFor(event, events[index - 1], match, names, table.phrases);
     const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key, tokens), tokens)));
     // A line plays by its first section's settings: a Goal's, not its GoalScore sentence's.
     const playback = table.playback[keys[0]!];

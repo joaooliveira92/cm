@@ -2,6 +2,9 @@ import {
   ALWAYS_SHOWN,
   COMMENTARY_SECTIONS,
   HIGHLIGHT_LEVELS,
+  PHRASES,
+  PHRASES_SECTION,
+  type PhraseName,
   type HighlightLevel,
   sectionTag,
   type CommentaryPlayback,
@@ -18,12 +21,15 @@ import {
  * and a section that ends up with no lines, or a setting that's missing, takes `fallback`'s (the
  * shipped file's). Without a fallback a missing section is reported and left empty.
  */
+/** A `[Section]` name: a moment of a match, or the phrases. */
+export type CommentarySectionName = CommentaryTemplateKey | typeof PHRASES_SECTION;
+
 export interface ParsedCommentaryFile {
   readonly table: CommentaryTable;
   /** The file's `version = N`, 0 when it has none (cm-style-commentary 10). */
   readonly version: number;
   /** The sections the file itself has, in order of first appearance; the rest come from the fallback. */
-  readonly sections: ReadonlyArray<CommentaryTemplateKey>;
+  readonly sections: ReadonlyArray<CommentarySectionName>;
   /** One sentence per skipped line or missing section, with its line number, for the log. */
   readonly problems: ReadonlyArray<string>;
 }
@@ -33,6 +39,22 @@ const MAX_DELAY_MS = 60_000;
 
 const SECTION = /^\[([^\]]+)\]$/;
 const VERSION = /^version\s*=\s*(\d+)$/i;
+const PHRASE = /^([\w.]+)\s*=\s*(.*)$/;
+
+/** Why `name = value` can't be a phrase, or null when it can. */
+const phraseProblem = (name: string, value: string): string | null => {
+  const allowed = PHRASES.get(name as PhraseName);
+  if (allowed === undefined) return `there is no phrase ${name}`;
+  if (value === "") return `${name} is empty`;
+  for (const [, placeholder] of value.matchAll(PLACEHOLDER)) {
+    if (!allowed.includes(placeholder!)) {
+      return allowed.length === 0
+        ? `${name} can't use {${placeholder}}`
+        : `{${placeholder}} isn't available in ${name} (it has ${allowed.map((p) => `{${p}}`).join(", ")})`;
+    }
+  }
+  return null;
+};
 const SETTING = /^(delay|flash|chance|level)\s*=\s*(.*)$/i;
 const PLACEHOLDER = /\{(\w+)\}/g;
 
@@ -101,6 +123,9 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
   let current: { readonly key: CommentaryTemplateKey; readonly draft: SectionDraft } | null = null;
   let skipping = false;
   let version = 0;
+  let inPhrases = false;
+  const sections: Array<CommentarySectionName> = [];
+  const phrases = new Map<PhraseName, string>();
 
   text
     .replace(/^\uFEFF/, "")
@@ -112,13 +137,22 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
 
       const section = SECTION.exec(line);
       if (section !== null) {
-        const key = section[1]!.trim() as CommentaryTemplateKey;
+        const name = section[1]!.trim();
+        inPhrases = name === PHRASES_SECTION;
+        if (inPhrases) {
+          if (!sections.includes(PHRASES_SECTION)) sections.push(PHRASES_SECTION);
+          current = null;
+          skipping = false;
+          return;
+        }
+        const key = name as CommentaryTemplateKey;
         if (!COMMENTARY_SECTIONS.has(key)) {
           problems.push(`${at}: there is no section [${section[1]}]; its lines are skipped`);
           current = null;
           skipping = true;
           return;
         }
+        if (!sections.includes(key)) sections.push(key);
         let draft = drafts.get(key);
         if (draft === undefined) {
           draft = { lines: [] };
@@ -128,9 +162,16 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
         skipping = false;
         return;
       }
+      if (inPhrases) {
+        const phrase = PHRASE.exec(line);
+        const problem = phrase === null ? "a phrase is written name = text" : phraseProblem(phrase[1]!, phrase[2]!.trim());
+        if (problem === null) phrases.set(phrase![1]! as PhraseName, phrase![2]!.trim());
+        else problems.push(`${at}: skipped, ${problem}`);
+        return;
+      }
       if (current === null) {
         const versionLine = VERSION.exec(line);
-        if (versionLine !== null && !skipping && drafts.size === 0) {
+        if (versionLine !== null && !skipping && sections.length === 0) {
           version = Number(versionLine[1]);
           return;
         }
@@ -167,7 +208,13 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
       level: ALWAYS_SHOWN.has(sectionTag(key) as never) ? "key" : (draft?.level ?? base.level),
     };
   }
-  return { table: { templates, playback }, problems, version, sections: [...drafts.keys()] };
+  const phraseTable = {} as Record<PhraseName, string>;
+  for (const name of PHRASES.keys()) {
+    const value = phrases.get(name) ?? fallback?.phrases[name];
+    if (value === undefined) problems.push(`[${PHRASES_SECTION}] has no ${name}`);
+    phraseTable[name] = value ?? "";
+  }
+  return { table: { templates, playback, phrases: phraseTable }, problems, version, sections };
 };
 
 /** One `[Section]` of a file's text: its header line up to the next header, comments and blank lines
@@ -196,11 +243,11 @@ export interface CommentaryFileUpgrade {
   /** The player's text with the missing sections appended and its version raised. */
   readonly text: string;
   /** The sections appended, in the shipped file's order. */
-  readonly added: ReadonlyArray<CommentaryTemplateKey>;
+  readonly added: ReadonlyArray<CommentarySectionName>;
 }
 
 /** The sections `shippedText` has and `playerText` lacks, in the shipped file's order. */
-export const missingCommentarySections = (playerText: string, shippedText: string): ReadonlyArray<CommentaryTemplateKey> => {
+export const missingCommentarySections = (playerText: string, shippedText: string): ReadonlyArray<CommentarySectionName> => {
   const present = new Set(parseCommentaryFile(playerText).sections);
   return parseCommentaryFile(shippedText).sections.filter((key) => !present.has(key));
 };

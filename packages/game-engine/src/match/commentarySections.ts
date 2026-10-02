@@ -1,4 +1,4 @@
-import type { ChanceType, InjurySeverity, InjuryTrigger, MatchEvent } from "./events.js";
+import type { ChanceType, InjurySeverity, InjuryTrigger, InjuryType, MatchEvent } from "./events.js";
 
 /** Open-play chance events: the build-up beat of an attack, before its key pass and its shot. */
 export type ChanceTag = "ThroughBall" | "Cross" | "LongShot" | "RunWithBall" | "HoldUpLayOff" | "Counter";
@@ -57,10 +57,29 @@ export interface CommentaryPlayback {
   readonly level: HighlightLevel;
 }
 
-/** A parsed commentary file: every section's lines and playback. */
+/** The words the commentary builds its placeholders from, set in the file's `[Phrases]` section
+ *  (cm-style-commentary 12) so a translated file can translate them too: `{injury}` from
+ *  `injury.<type>`, `{score}` from `score`, `{side}` from `side.left` and `side.right`. */
+export type PhraseName = `injury.${InjuryType}` | "score" | "side.left" | "side.right";
+
+/** The section that holds the phrases. Not a moment of a match, so not a `CommentaryTemplateKey`. */
+export const PHRASES_SECTION = "Phrases";
+
+const INJURY_TYPES = ["brokenToe", "twistedAnkle", "deadLeg", "hamstring", "calf", "strain"] as const satisfies ReadonlyArray<InjuryType>;
+
+/** Every phrase, with the placeholders its text may use. Only `score` has any. */
+export const PHRASES: ReadonlyMap<PhraseName, ReadonlyArray<string>> = new Map<PhraseName, ReadonlyArray<string>>([
+  ...INJURY_TYPES.map((type) => [`injury.${type}`, []] as const),
+  ["score", ["home", "away", "homeScore", "awayScore"]],
+  ["side.left", []],
+  ["side.right", []],
+]);
+
+/** A parsed commentary file: every section's lines and playback, and its phrases. */
 export interface CommentaryTable {
   readonly templates: Readonly<Record<CommentaryTemplateKey, ReadonlyArray<string>>>;
   readonly playback: Readonly<Record<CommentaryTemplateKey, CommentaryPlayback>>;
+  readonly phrases: Readonly<Record<PhraseName, string>>;
 }
 
 /** How long a follow-on part holds before the line continues. */

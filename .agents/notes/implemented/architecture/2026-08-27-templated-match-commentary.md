@@ -77,6 +77,8 @@ cannot change a result.
 
 - Adding commentary variety means adding lines to `events.cfg`, not touching code. A new section, or a new
   placeholder, is a code change: it goes in `commentarySections.ts` and in the shipped file together.
+- No commentary word lives in code. The phrases `{injury}`, `{score}` and `{side}` are built from are a
+  `[Phrases]` section of the file, so a translated file translates everything the commentator says.
 - Every `.cfg` in the commentary folder can be chosen in Preferences, as CM shipped `events_eng.cfg`
   and its siblings; the choice is a file name in `commentary/chosen.txt`, and a chosen file that
   disappears falls back to `events.cfg`.
