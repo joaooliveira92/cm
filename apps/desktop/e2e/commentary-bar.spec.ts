@@ -18,6 +18,8 @@ const fitsTheWindow = (page: Page) =>
   page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth);
 
 test("the commentary bar fits Match day at a normal and a narrow width", async ({ window: page, userDataDir }, testInfo) => {
+  // It plays a whole match to full time, past the default 45 s per test, as the journey spec does.
+  test.setTimeout(180_000);
   await seedBeforeMatchday(savesDir(userDataDir));
   await continueSeededCareer(page, "Seed: before-matchday");
   await goto(page, "tactics");
