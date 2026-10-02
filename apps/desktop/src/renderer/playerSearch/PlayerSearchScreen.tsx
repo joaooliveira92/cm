@@ -12,8 +12,9 @@
  * is typed on, and an empty query asks the read for the whole save (capped at
  * `PLAYER_SEARCH_MAX_RESULTS` rows, its `total` still the true count).
  */
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NATION_CODES, POSITION_FILTERS, canonicalNationId, nationName, positionFilterName } from "@cm-clone/shared";
+import type { PositionFilter } from "@cm-clone/shared";
 import type { PlayerSearchQuery, SaveId } from "@cm-clone/contracts";
 import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import type { ScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
@@ -40,9 +41,28 @@ import { DataTable, effectiveActiveId } from "../table/DataTable.js";
 import { CompareSelectionContext } from "../table/playerSearch/compareSelection.js";
 import { searchRowOf } from "../table/playerSearch/searchColumns.js";
 import { usePlayerSearchRoster } from "./usePlayerSearchRoster.js";
+import { ACTIONS_ROW_BUTTON_CLASS } from "../squad/actionsRowClasses.js";
+import { ToolbarChoiceMenu, type ToolbarChoice } from "../squad/ToolbarChoiceMenu.js";
+import {
+  clearToolbarControls,
+  setToolbarControls,
+} from "../screenToolbarControls.js";
 
 const PAGE_CLASS = `p-8 text-foreground ${FOCUS_RING.join(" ")}`;
 const CONTROL_CLASS = `rounded-control border border-border-subtle bg-field-bg px-2 py-1 ${FOCUS_RING.join(" ")}`;
+
+const SEARCH_VIEW_CHOICES: readonly ToolbarChoice[] = [
+  { value: "default", label: "Default" },
+];
+
+const SEARCH_FILTER_CHOICES: readonly ToolbarChoice[] = [
+  { value: "", label: "All positions" },
+  ...POSITION_FILTERS.map((position) => ({
+    value: position,
+    label: position,
+    detail: positionFilterName(position),
+  })),
+];
 
 /** The number an age field holds, or `undefined` for an empty/invalid entry — an untidy field is
  *  simply not a filter, rather than an error: the manager typed a draft, not a mistake. */
@@ -208,19 +228,74 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const maxAge = parseAge(maxAgeText);
   const invalidRange = minAge !== undefined && maxAge !== undefined && minAge > maxAge;
 
+  const buildQuery = (): PlayerSearchQuery => ({
+    ...(nameText.trim() !== "" ? { name: nameText.trim() } : {}),
+    ...(minAge !== undefined ? { minAge } : {}),
+    ...(maxAge !== undefined ? { maxAge } : {}),
+    ...(position !== "" ? { position: position as PlayerSearchQuery["position"] } : {}),
+    ...(nationality !== "" ? { nationality } : {}),
+    ...(clubText.trim() !== "" ? { clubName: clubText.trim() } : {}),
+  });
+
   const onSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     if (invalidRange) return;
-    const query: PlayerSearchQuery = {
-      ...(nameText.trim() !== "" ? { name: nameText.trim() } : {}),
-      ...(minAge !== undefined ? { minAge } : {}),
-      ...(maxAge !== undefined ? { maxAge } : {}),
-      ...(position !== "" ? { position: position as PlayerSearchQuery["position"] } : {}),
-      ...(nationality !== "" ? { nationality } : {}),
-      ...(clubText.trim() !== "" ? { clubName: clubText.trim() } : {}),
-    };
-    setSubmitted(query);
+    setSubmitted(buildQuery());
   };
+
+  const triggerSearch = (): void => {
+    if (invalidRange) return;
+    setSubmitted(buildQuery());
+  };
+
+  const toolbarControls = useMemo(
+    () => (
+      <>
+        <button
+          type="button"
+          className={ACTIONS_ROW_BUTTON_CLASS}
+          aria-label="Search players"
+          disabled={invalidRange}
+          onClick={triggerSearch}
+        >
+          <span>Search</span>
+        </button>
+        <ToolbarChoiceMenu
+          ariaLabel="Player search view"
+          triggerText="View"
+          groupLabel="View"
+          value="default"
+          choices={SEARCH_VIEW_CHOICES}
+          onChoose={() => undefined}
+        />
+      </>
+    ),
+    [invalidRange],
+  );
+
+  const toolbarTrailing = useMemo(
+    () => (
+      <ToolbarChoiceMenu
+        ariaLabel="Filter results by position"
+        triggerText={position === "" ? "Filter" : `Filter: ${positionFilterName(position as PositionFilter)}`}
+        groupLabel="Position"
+        value={position}
+        choices={SEARCH_FILTER_CHOICES}
+        onChoose={(value) => {
+          setPosition(value);
+          if (submitted !== null && !invalidRange) {
+            setSubmitted(buildQuery());
+          }
+        }}
+      />
+    ),
+    [position],
+  );
+
+  useEffect(() => {
+    setToolbarControls(toolbarControls, toolbarTrailing);
+    return () => clearToolbarControls();
+  }, [toolbarControls, toolbarTrailing]);
 
   return (
     <main
