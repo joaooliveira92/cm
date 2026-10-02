@@ -36,7 +36,7 @@ export { SHIPPED_COMMENTARY_TEXT } from "./shippedCommentaryText.generated.js";
 /**
  * Renders the Match Event timeline into Commentary Lines (see
  * `.agents/notes/implemented/architecture/2026-08-27-templated-match-commentary.md`) from a commentary
- * table: the lines and playback of a commentary file (`data/events.cfg`, read by `parseCommentaryFile`).
+ * table, which holds the lines and playback of a commentary file. `parseCommentaryFile` reads `data/events.cfg` into one.
  * The file's sections are keyed off the Match Event vocabulary in `./events.js`, which is why it lives
  * beside the engine rather than in `@cm-clone/shared`.
  */
@@ -88,11 +88,11 @@ export interface CommentaryPart {
 export interface CommentaryLine {
   readonly minute: number;
   readonly tag: CommentaryEventTag;
-  /** The whole line, every part joined: what the log shows. */
+  /** The whole line, every part joined. The log shows this. */
   readonly text: string;
   readonly parts: ReadonlyArray<CommentaryPart>;
   readonly flash: boolean;
-  /** Lost its display-chance draw: revealed, but never shown in the commentary bar. */
+  /** Lost its display-chance draw. It is revealed, but never shown in the commentary bar. */
   readonly quiet: boolean;
   /** The club the line is about, for the bar's colours; null for kick-off, half time and full time. */
   readonly clubId: string | null;
@@ -163,10 +163,10 @@ const drawFor = (
     const { he, him, his } = names.pronounsOf?.(playerId) ?? HE;
     return { player: names.playerName(playerId), he, him, his, He: capitalised(he), His: capitalised(his) };
   };
-  /** `{assist}` on a shot: the player who set it up, when the event names one. */
+  /** `{assist}` on a shot is the player who set it up, when the event names one. */
   const assist = (assistId: string | undefined): Record<string, string> =>
     assistId === undefined ? {} : { assist: names.playerName(assistId) };
-  /** `{player2}` on a goal or a save: the goalkeeper, when the event names one. */
+  /** `{player2}` on a goal or a save is the goalkeeper, when the event names one. */
   const keeper = (keeperId: string | undefined): Record<string, string> =>
     keeperId === undefined ? {} : { player2: names.playerName(keeperId) };
 
@@ -310,7 +310,7 @@ const hash = (seed: number, key: string): number => {
 };
 
 /**
- * Per-pool shuffle bag: no template repeats until every template in its pool has been used, and a
+ * Per-pool shuffle bag. No template repeats until every template in its pool has been used, and a
  * refilled bag never opens with the template that closed the last one.
  */
 interface PoolBag {
@@ -331,7 +331,7 @@ const drawTemplate = (
   tokens: Record<string, string>,
 ): string => {
   const pool = table.templates[key];
-  // A line is usable when the event fills all its placeholders: a save with no keeper named skips the
+  // A line is usable when the event fills all its placeholders. A save with no keeper named skips the
   // lines that use {player2}. Only a table parsed without a fallback can leave nothing usable.
   const usable = [...pool.keys()].filter((index) => fills(pool[index]!, tokens));
   if (usable.length === 0) return "";
@@ -375,7 +375,7 @@ export const renderCommentary = (
   return events.map((event, index): CommentaryLine => {
     const { keys, tokens } = drawFor(event, events[index - 1], match, names, table.phrases);
     const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key, tokens), tokens)));
-    // A line plays by its first section's settings: a Goal's, not its GoalScore sentence's.
+    // A line plays by its first section's settings, so a goal plays by its Goal section, not its GoalScore.
     const playback = table.playback[keys[0]!];
     const shown = playback.displayChance >= 1 || hash(matchSeed, `show:${index}`) / 0x100000000 < playback.displayChance;
     return {

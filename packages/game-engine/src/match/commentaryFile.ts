@@ -12,7 +12,7 @@ import {
   type CommentaryTemplateKey,
 } from "./commentarySections.js";
 
-/** A `[Section]` name: a moment of a match, or the phrases. */
+/** A `[Section]` name, either a moment of a match or the phrases. */
 export type CommentarySectionName = CommentaryTemplateKey | typeof PHRASES_SECTION;
 
 export interface ParsedCommentaryFile {
@@ -220,7 +220,7 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
   return { table: { templates, playback, phrases: phraseTable }, problems, version, sections };
 };
 
-/** One `[Section]` of a file's text: its header line up to the next header, comments and blank lines
+/** One `[Section]` of a file's text, from its header line up to the next header, comments and blank lines
  *  included, so an appended section reads exactly as it does in the shipped file. */
 const sectionBlocks = (text: string): ReadonlyMap<string, string> => {
   const blocks = new Map<string, string>();

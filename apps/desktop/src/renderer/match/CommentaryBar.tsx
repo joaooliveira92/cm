@@ -22,11 +22,11 @@ const clubColours = (match: MatchSummary, line: CommentaryLineView): CSSProperti
   return colours === null ? undefined : { backgroundColor: colours.primary.background, color: colours.primary.foreground };
 };
 
-/** The operating system asks for less motion: a flash line is marked once instead of blinking. */
+/** Whether the operating system asks for less motion. A flash line is then marked once instead of blinking. */
 const prefersReducedMotion = (): boolean =>
   typeof window.matchMedia === "function" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-/** Whether `line` is marked right now: blinking while it is a fresh flash line, or held inverted for
+/** Whether `line` is marked right now. A fresh flash line blinks, or is held inverted for
  *  the same time under reduced motion. A line already on screen when the bar mounts (returning to
  *  Match day after a goal) is not marked again. */
 const useFlash = (line: CommentaryLineView | null): boolean => {
@@ -44,7 +44,7 @@ const useFlash = (line: CommentaryLineView | null): boolean => {
         return count + 1;
       });
     }, FLASH_BLINK_MS);
-    // The next line can start mid-blink (a goal holds 1.1 s at Fast, a blink runs 1.3 s): stop marking.
+    // The next line can start mid-blink, since a goal holds 1.1 s at Fast and a blink runs 1.3 s. Stop marking.
     return () => {
       clearInterval(interval);
       setBlink(0);
@@ -54,7 +54,7 @@ const useFlash = (line: CommentaryLineView | null): boolean => {
 };
 
 /**
- * Championship Manager's commentary bar: the line being played, one at a time, in the colours of the
+ * Championship Manager's commentary bar. It shows the line being played, one at a time, in the colours of the
  * club it is about. A follow-on line grows part by part; once it is revealed the bar holds it until the
  * next line starts. Quiet lines and lines below the chosen highlights never reach it. Hidden from
  * screen readers, which hear each line from the log below when it is revealed.
@@ -103,7 +103,7 @@ export const CommentaryBar = ({
   );
 };
 
-/** A row of toggle buttons for one commentary preference, with a short visible caption: two unlabelled
+/** A row of toggle buttons for one commentary preference, with a short visible caption. Two unlabelled
  *  rows read as one ("Full" beside "Fast"). */
 const ChoiceGroup = <Id extends string>({
   caption,

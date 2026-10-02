@@ -1,7 +1,7 @@
 import { useLayoutEffect, useRef } from "react";
 import type { CommentaryLineView } from "@cm-clone/contracts";
 
-/** Lines that mark a phase of the match rather than play: shown as dividers, with the phase in the
+/** Lines that mark a phase of the match rather than play. They show as dividers, with the phase in the
  * minute column instead of a minute. */
 const MILESTONES: Readonly<Record<string, string>> = {
   MatchStarted: "KO",

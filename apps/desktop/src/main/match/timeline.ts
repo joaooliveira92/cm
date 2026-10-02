@@ -33,7 +33,7 @@ const scoreAt = { minute: Schema.Finite, homeScore: Schema.Finite, awayScore: Sc
 
 const ChanceTypeSchema = Schema.Literals(["throughBall", "cross", "longShot", "runWithBall", "holdUpLayOff", "counter"]);
 const chanceFields = { ...teamPlayer, chanceType: ChanceTypeSchema, assistPlayerId: Schema.optional(PlayerId) };
-/** A save or a goal also names the goalkeeper (cm-style-commentary 07); timelines stored before that
+/** A save or a goal also names the goalkeeper; timelines stored before that
  *  simply lack it. */
 const keeperFields = { ...chanceFields, keeperId: Schema.optional(PlayerId) };
 const attackFields = { ...keeperFields, homeScore: Schema.Finite, awayScore: Schema.Finite };

@@ -1,7 +1,7 @@
 import type { HighlightLevel } from "@cm-clone/shared";
 import type { ChanceType, InjurySeverity, InjuryTrigger, InjuryType, MatchEvent } from "./events.js";
 
-/** Open-play chance events: the build-up beat of an attack, before its key pass and its shot. */
+/** Open-play chance events, the build-up beat of an attack before its key pass and its shot. */
 export type ChanceTag = "ThroughBall" | "Cross" | "LongShot" | "RunWithBall" | "HoldUpLayOff" | "Counter";
 
 /** How a shot was struck, read off the set piece or open-play chance that produced it. */
@@ -87,7 +87,7 @@ export const PHRASES: ReadonlyMap<PhraseName, ReadonlyArray<string>> = new Map<P
   ["side.right", []],
 ]);
 
-/** A parsed commentary file: every section's lines and playback, and its phrases. */
+/** A parsed commentary file, with every section's lines and playback, and its phrases. */
 export interface CommentaryTable {
   readonly templates: Readonly<Record<CommentaryTemplateKey, ReadonlyArray<string>>>;
   readonly playback: Readonly<Record<CommentaryTemplateKey, CommentaryPlayback>>;
@@ -97,7 +97,7 @@ export interface CommentaryTable {
 /** How long a follow-on part holds before the line continues. */
 export const FOLLOW_ON_DELAY_MS = 1100;
 
-/** Moments that change the match: always shown and always `key`, whatever a section says. */
+/** Moments that change the match. They always show and are always `key`, whatever a section says. */
 export const ALWAYS_SHOWN: ReadonlySet<MatchEvent["_tag"]> = new Set<MatchEvent["_tag"]>([
   "MatchStarted",
   "Goal",
@@ -133,7 +133,7 @@ export const COMMENTARY_SECTIONS: ReadonlyMap<CommentaryTemplateKey, ReadonlyArr
   ["KeyPass:solo", PLAYER_MOMENT],
   ["KeyPass", PLAYER_MOMENT],
   // In Goal and ShotOnTarget sections {player2} is the goalkeeper, when the event names one. In every
-  // shot section {assist} is the player who set it up: a corner's taker, or an attack's creator.
+  // shot section {assist} is the player who set it up, a corner's taker or an attack's creator.
   ...(["Goal", "ShotOnTarget"] as const).flatMap((tag) =>
     SHOT_KINDS.map((kind) => [`${tag}:${kind}`, [...TWO_PLAYERS, "assist"]] as const),
   ),

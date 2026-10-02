@@ -19,7 +19,7 @@ type FileMethod =
   | "updateCommentaryFile";
 
 /**
- * Preferences' Commentary section: which commentary file the game reads, buttons to open it or its
+ * Preferences' Commentary section. It shows which commentary file the game reads, buttons to open it or its
  * folder or put the game's lines back, and what the game skipped in it. After Championship Manager's
  * `events.cfg`, which players edited by hand.
  */

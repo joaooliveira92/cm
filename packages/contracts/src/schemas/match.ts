@@ -42,7 +42,7 @@ export class CommentaryPartView extends Schema.Class<CommentaryPartView>("Commen
 
 /** One rendered Commentary Line (ADR-0008) — minute is a separate field, never baked into `text`.
  *  The playback fields are optional: a line without them plays as one part on the renderer's default
- *  reveal interval, shown in the bar, in neutral colours. See `.scratch/cm-style-commentary/spec.md`. */
+ *  reveal interval, shown in the bar, in neutral colours. */
 export class CommentaryLineView extends Schema.Class<CommentaryLineView>("CommentaryLineView")({
   minute: Schema.Finite,
   tag: Schema.String,

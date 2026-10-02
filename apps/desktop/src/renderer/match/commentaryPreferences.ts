@@ -2,9 +2,9 @@ import { useSyncExternalStore } from "react";
 import { HIGHLIGHT_LEVELS, type HighlightLevel } from "@cm-clone/shared";
 
 /**
- * How Match day plays its commentary, after Championship Manager's match settings: the speed (a
+ * How Match day plays its commentary, after Championship Manager's match settings. The speed is a
  * multiplier on the delays the commentary file sets) and the highlight level (which lines reach the
- * commentary bar). Persisted in renderer-local `localStorage`, beside the appearance preference: they
+ * commentary bar. Persisted in renderer-local `localStorage`, beside the appearance preference, since they
  * belong to whoever sits at this machine, not to a save.
  */
 interface Preference<Id extends string> {
@@ -17,7 +17,7 @@ interface Preference<Id extends string> {
 const preference = <Id extends string>(storageKey: string, ids: ReadonlyArray<Id>, fallback: Id): Preference<Id> => {
   let current: Id | null = null;
   const listeners = new Set<() => void>();
-  /** A throwing or corrupt store reads as the default: a match preference must never block a match. */
+  /** A throwing or corrupt store reads as the default. A match preference must never block a match. */
   const load = (): Id => {
     try {
       const stored = window.localStorage.getItem(storageKey);

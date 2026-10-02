@@ -3,7 +3,7 @@ import { Schema } from "effect";
 /**
  * The player-editable commentary file (CONTEXT.md, Commentary File), as Preferences shows it. The file
  * lives in the user data folder and is owned by main. The renderer never touches the filesystem and is
- * never told a path: it names files, and asks main to open them.
+ * never told a path. It names files, and asks main to open them.
  */
 export class CommentaryFileStatusView extends Schema.Class<CommentaryFileStatusView>("CommentaryFileStatusView")({
   /** Every `.cfg` in the commentary folder, by name, sorted. A player adds a translation or a community
@@ -23,8 +23,11 @@ export const CommentaryFileAction = Schema.Literals(["open", "reset", "choose", 
 
 /**
  * A commentary-file command that didn't happen. `reason` is a short code, never an operating-system
- * message (those carry paths): the system error code (`EACCES`, `ENOSPC`, …), `not-in-folder` for a
- * file chosen after it was removed, `no-application` when nothing opens the file, or `unknown`.
+ * message, because those carry paths. It is one of:
+ * - a system error code, such as `EACCES` or `ENOSPC`
+ * - `not-in-folder`, for a file chosen after it was removed
+ * - `no-application`, when nothing opens the file
+ * - `unknown`
  */
 export class CommentaryFileError extends Schema.TaggedError<CommentaryFileError>()("CommentaryFileError", {
   action: CommentaryFileAction,

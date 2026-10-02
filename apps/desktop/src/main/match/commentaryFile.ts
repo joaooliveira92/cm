@@ -17,14 +17,14 @@ import { compareCodeUnits } from "@cm-clone/shared";
  * again whenever its modification time changes, so an edit shows from the next lines of a match in
  * play. A section or setting a player's file lacks takes the shipped file's.
  *
- * Reading never fails: nothing in or around the file can stop a match, so a read problem is logged
+ * Reading never fails. Nothing in or around the file can stop a match, so a read problem is logged
  * and the game falls back to the shipped lines. The Preferences commands (open, choose, update,
  * reset) fail with a `CommentaryFileError` instead, so the player learns their change didn't happen.
  * No path leaves this module for the renderer; the status names files.
  */
 export const COMMENTARY_FILE = path.join("commentary", "events.cfg");
 
-/** Records which `.cfg` the player chose: the file name alone; absent means `events.cfg`. */
+/** Records which `.cfg` the player chose, by file name alone. Without it the game reads `events.cfg`. */
 export const CHOSEN_COMMENTARY_FILE = path.join("commentary", "chosen.txt");
 
 const GAME_FILE_NAME = path.basename(COMMENTARY_FILE);
@@ -47,7 +47,7 @@ export const CommentaryTableSource = Context.Reference<Effect.Effect<CommentaryT
 export type OpenPath = (target: string) => Promise<string>;
 
 interface Loaded {
-  /** The file the game reads, as a path: kept in main. */
+  /** The file the game reads, as a path. It never leaves main. */
   readonly file: string;
   readonly files: ReadonlyArray<string>;
   readonly table: CommentaryTable;
@@ -56,7 +56,12 @@ interface Loaded {
   readonly newSections: ReadonlyArray<string>;
 }
 
-let cached: (Loaded & { readonly mtimeMs: number }) | null = null;
+/**
+ * The last parse of each commentary file, by path. A match reads its commentary on every chunk, about
+ * once a second, and the file rarely changes, so it is parsed again only when its modification time
+ * does. Keyed by path, so two user data folders, such as two test runs, never see each other's entries.
+ */
+const parsed = new Map<string, Loaded & { readonly mtimeMs: number }>();
 
 const commentaryPath = (userDataDir: string): string => path.join(userDataDir, COMMENTARY_FILE);
 const commentaryFolder = (userDataDir: string): string => path.dirname(commentaryPath(userDataDir));
@@ -83,7 +88,7 @@ const listFiles = (userDataDir: string) =>
     Effect.map(({ names }) => names),
   );
 
-/** The file the game reads: the player's choice while it is still in the folder, else `events.cfg`. */
+/** The file the game reads. That is the player's choice while it is still in the folder, else `events.cfg`. */
 const activeFile = (userDataDir: string, files: ReadonlyArray<string>): Promise<string> =>
   readFile(path.join(userDataDir, CHOSEN_COMMENTARY_FILE), "utf8").then(
     (chosen) => path.join(commentaryFolder(userDataDir), files.includes(chosen.trim()) ? chosen.trim() : GAME_FILE_NAME),
@@ -95,7 +100,7 @@ const modifiedAt = (file: string): Promise<number | null> => stat(file).then((in
 const writeShipped = (file: string, flag: "w" | "wx"): Promise<void> =>
   mkdir(path.dirname(file), { recursive: true }).then(() => writeFile(file, SHIPPED_COMMENTARY_TEXT, { encoding: "utf8", flag }));
 
-/** Writes the shipped file where the player can find it, the first time. A failure (a read-only folder)
+/** Writes the shipped file where the player can find it, the first time. A failure, such as a read-only folder,
  *  is logged, and the game goes on with the shipped lines. */
 const seedShipped = (file: string) =>
   Effect.promise(() => writeShipped(file, "wx").then(() => null, errorCode)).pipe(
@@ -114,18 +119,20 @@ const loadCommentary = (userDataDir: string): Effect.Effect<Loaded> =>
     const file = yield* Effect.promise(() => activeFile(userDataDir, files));
     const mtimeMs = yield* Effect.promise(() => modifiedAt(file));
     if (mtimeMs === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [], newSections: [] };
-    if (cached !== null && cached.file === file && cached.mtimeMs === mtimeMs) return { ...cached, files };
+    const cached = parsed.get(file);
+    if (cached !== undefined && cached.mtimeMs === mtimeMs) return { ...cached, files };
 
     const text = yield* Effect.promise(() => readFile(file, "utf8").catch(() => null));
     if (text === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [], newSections: [] };
     const { table, problems, version } = parseCommentaryFile(text, SHIPPED_COMMENTARY);
     if (problems.length > 0) yield* Effect.logWarning("commentary file has lines the game skipped", { problems });
     const newSections = version < SHIPPED_PARSE.version ? missingCommentarySections(text, SHIPPED_COMMENTARY_TEXT) : [];
-    cached = { file, files, mtimeMs, table, problems, newSections };
-    return cached;
+    const loaded = { file, files, mtimeMs, table, problems, newSections };
+    parsed.set(file, loaded);
+    return loaded;
   });
 
-/** The commentary table for `userDataDir`'s file: the player's lines over the shipped ones. */
+/** The commentary table for `userDataDir`'s file, with the player's lines over the shipped ones. */
 export const loadCommentaryTable = (userDataDir: string): Effect.Effect<CommentaryTable> =>
   loadCommentary(userDataDir).pipe(Effect.map((loaded) => loaded.table));
 
@@ -164,7 +171,7 @@ export const chooseCommentaryFile = (userDataDir: string, name: string) =>
     return yield* commentaryFileStatus(userDataDir);
   });
 
-/** Brings the chosen file up to the game's version: with `addNewSections`, appends the sections it
+/** Brings the chosen file up to the game's version. With `addNewSections` it appends the sections it
  *  lacks; either way raises its version so the offer isn't repeated. */
 export const updateCommentaryFile = (userDataDir: string, addNewSections: boolean) =>
   Effect.gen(function* () {
