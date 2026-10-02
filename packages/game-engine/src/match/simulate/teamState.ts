@@ -131,13 +131,13 @@ export const applyCommand = (
       // Find the player's index in the kickoff slot order (from the tactic's slots array)
       const tacticSlotIndex = tactic.slots.findIndex((s) => s.playerId === currentSlot.playerId);
       // If found in the tactic, use the new behaviour vector from that position
-      const newBehaviour = tacticSlotIndex >= 0 && tacticSlotIndex < newResolved.slots.length
-        ? newResolved.slots[tacticSlotIndex]!.behaviour
-        : currentSlot.behaviour;
+      const newSlot = tacticSlotIndex >= 0 && tacticSlotIndex < newResolved.slots.length ? newResolved.slots[tacticSlotIndex]! : null;
 
+      // Behaviour and set-piece roles follow the new tactic; who is on the pitch does not change.
       newSlots.push({
         ...currentSlot,
-        behaviour: newBehaviour,
+        behaviour: newSlot?.behaviour ?? currentSlot.behaviour,
+        setPieceRoles: newSlot?.setPieceRoles ?? currentSlot.setPieceRoles,
       });
     }
 

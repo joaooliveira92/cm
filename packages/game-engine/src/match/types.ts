@@ -1,16 +1,19 @@
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import type { PlayerAttributes, PlayerInstructions, PositionalRatings, Slot, TeamInstructions, TeamSetPieces, TakerList } from "@cm-clone/shared";
+import type { PlayerAttributes, PlayerInstructions, PositionalRatings, SetPieceRoles, Slot, TeamInstructions, TeamSetPieces, TakerList } from "@cm-clone/shared";
 import { DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS } from "@cm-clone/shared";
 import type { PerSlotBehaviour, TeamBehaviourModifiers } from "./resolveBehaviourVectors.js";
 
 /** The takers ordered lists for each set-piece type, keyed by the list name. */
 export type Takers = { readonly [K in TakerList]: ReadonlyArray<PlayerId> };
 
-/** One starter of a match: the player, the grid cell his slot stands in, and his optional run target cell. */
+/** One starter of a match: the player, the grid cell his slot stands in, his optional run target
+ *  cell, and the slot's set-piece roles. Roles are optional so a tactic stored before they reached the
+ *  engine reads as all `default`. */
 export interface MatchSlot {
   readonly playerId: PlayerId;
   readonly cell: Slot;
   readonly run: Slot | null;
+  readonly setPieceRoles?: SetPieceRoles;
 }
 
 /**
@@ -38,9 +41,15 @@ export interface MatchTactic {
   readonly specificMarkings?: ReadonlyMap<PlayerId, PlayerId>;
 }
 
-/** The slice of a complete Tactic the adapter reads. */
+/** The slice of a complete Tactic the adapter reads. A stored Tactic carries each slot's instructions
+ *  and set-piece roles on the slot itself. */
 export interface CompleteTacticLike {
-  readonly slots: ReadonlyArray<{ readonly cell: Slot; readonly run?: Slot | null }>;
+  readonly slots: ReadonlyArray<{
+    readonly cell: Slot;
+    readonly run?: Slot | null;
+    readonly instructions?: PlayerInstructions;
+    readonly setPieceRoles?: SetPieceRoles;
+  }>;
   readonly assignments: ReadonlyArray<PlayerId>;
   readonly bench: ReadonlyArray<PlayerId | null>;
   readonly team: TeamInstructions;
@@ -49,19 +58,25 @@ export interface CompleteTacticLike {
   readonly takers?: Takers;
 }
 
-/** The transitional adapter: a complete Tactic in, the engine's `MatchTactic` out. Preserves runs. */
+/** A complete Tactic in, the engine's `MatchTactic` out. Preserves runs, and carries each slot's
+ *  set-piece roles. */
 export const toMatchTactic = (tactic: CompleteTacticLike): MatchTactic => ({
   slots: tactic.slots.map((slot, index) => ({
     playerId: tactic.assignments[index]!,
     cell: slot.cell,
     run: slot.run ?? null,
+    ...(slot.setPieceRoles === undefined ? {} : { setPieceRoles: slot.setPieceRoles }),
   })),
   bench: tactic.bench,
   team: tactic.team,
-  slotInstructions: tactic.slotInstructions ?? tactic.slots.map((slot) => ({
-    cell: slot.cell,
-    instructions: null as unknown as PlayerInstructions,
-  })),
+  slotInstructions:
+    tactic.slotInstructions ??
+    tactic.slots.map((slot) => ({
+      cell: slot.cell,
+      // Deliberately still null: wiring the slot's own instructions changes every match and needs its
+      // own balance check (.scratch/formations-and-instructions/issues/35-player-instructions-reach-real-matches.md).
+      instructions: null as unknown as PlayerInstructions,
+    })),
   teamSetPieces: tactic.teamSetPieces ?? DEFAULT_TEAM_SET_PIECES,
   takers: tactic.takers ?? EMPTY_TAKERS,
 });

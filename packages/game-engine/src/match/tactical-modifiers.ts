@@ -10,9 +10,11 @@
  */
 
 import {
+  DEFAULT_SET_PIECE_ROLES,
   phaseOfSlot,
   positionRatingAt,
   suitability,
+  type SetPieceRoles,
   type Phase,
   type PlayerAttributes,
   type PlayerInstructions,
@@ -80,6 +82,8 @@ export interface ResolvedSlot {
   readonly fit: (player: MatchPlayerInput) => SlotFit;
   /** The resolved behaviour vector for this slot. */
   readonly behaviour: PerSlotBehaviour;
+  /** The slot's set-piece roles; a substitute who takes the slot takes its roles, as in CM. */
+  readonly setPieceRoles: SetPieceRoles;
 }
 
 /** Flat instruction constants, applied afresh per phase. */
@@ -218,6 +222,7 @@ export const resolveTeamTactics = (
       isGoalkeeper: cell.row === "GK",
       fit: (p: MatchPlayerInput): SlotFit => ({ baseRating: positionRatingAt(p.attributes, cell) }),
       behaviour: resolvedBehaviour,
+      setPieceRoles: slot.setPieceRoles ?? DEFAULT_SET_PIECE_ROLES,
     };
   });
 
