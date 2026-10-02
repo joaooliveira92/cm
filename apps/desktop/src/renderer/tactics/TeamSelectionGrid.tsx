@@ -1,17 +1,18 @@
 /**
  * The CM 03/04-style Team Selection list: a simple HTML table showing all 11 starters, 7 substitutes,
- * and reserves. Columns: shirt number, name (with Capt badge), compact position label, slot label and
- * fit tier, condition. Click to select a slot — the selected player highlights on the pitch — then
+ * and reserves. Columns: shirt number, name (with Capt badge), compact position label, slot label,
+ * fit tier (an icon naming its tier on hover), condition. Click to select a slot — the selected player highlights on the pitch — then
  * click a substitute or a reserve to bring him into it; an empty slot fills the same way.
  *
  * The list narrows before the pitch beside it does, so it drops columns as its panel (an `@container`)
- * gets narrower: Condition first, then the position label, then the fit word, which the pitch
+ * gets narrower: Condition first, then the position label, then the fit icon, which the pitch
  * markers also show.
  */
 import { useMemo, type KeyboardEvent } from "react";
 import type { PlayerId, SquadPlayerView, Tactic } from "@cm-clone/contracts";
-import { familiarityOf, slotLabel, STARTER_COUNT } from "@cm-clone/shared";
-import { CM_BAND_CLASS } from "./cmChrome.js";
+import { familiarityOf, slotLabel, STARTER_COUNT, type FamiliarityTier } from "@cm-clone/shared";
+import { CircleAlert, CircleCheck, CircleMinus, type LucideIcon } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "../components/ui/tooltip.js";
 import { NumberChip } from "./NumberChip.js";
 
 interface SelectionRow {
@@ -20,7 +21,7 @@ interface SelectionRow {
   readonly player: SquadPlayerView | undefined;
   readonly playerId: PlayerId;
   readonly cellLabel: string;
-  readonly fitWord: string | null;
+  readonly fitTier: FamiliarityTier | null;
   readonly condition: number | null;
   readonly isCaptain: boolean;
   readonly id: string;
@@ -43,6 +44,27 @@ export interface TeamSelectionColumns {
 /** A column the View menu hides is gone; a shown one still drops out once the panel is too narrow. */
 const columnClass = (shown: boolean, narrowest: string): string => (shown ? narrowest : "hidden");
 
+const FIT_ICON: Readonly<Record<FamiliarityTier, { icon: LucideIcon; label: string; tone: string }>> = {
+  natural: { icon: CircleCheck, label: "Natural", tone: "text-text-highlight" },
+  competent: { icon: CircleMinus, label: "Competent", tone: "text-text-secondary" },
+  unfamiliar: { icon: CircleAlert, label: "Unfamiliar", tone: "text-text-warning" },
+};
+
+/** The tier as an icon; its shape differs per tier, so it never rests on colour alone. */
+const FitIcon = ({ tier }: { readonly tier: FamiliarityTier }) => {
+  const { icon: Icon, label, tone } = FIT_ICON[tier];
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={<span role="img" aria-label={label} className={`inline-flex align-middle ${tone}`} />}
+      >
+        <Icon className="size-4" aria-hidden />
+      </TooltipTrigger>
+      <TooltipContent side="top">{label}</TooltipContent>
+    </Tooltip>
+  );
+};
+
 const emptySuitabilityRecord: Record<string, number> = {};
 
 const rowData = (
@@ -55,14 +77,13 @@ const rowData = (
   const suitability = squadPlayer?.suitability ?? emptySuitabilityRecord;
   const suit = suitability[cellLabelValue] ?? 1;
   const fitTier = familiarityOf(suit);
-  const fitWord = fitTier === "natural" ? "Natural" : fitTier === "competent" ? "Competent" : "Unfamiliar";
   return {
     kind: slotIndex !== null ? "starter" : "reserve",
     slotIndex,
     player: squadPlayer,
     playerId: playerId as PlayerId,
     cellLabel: cellLabelValue,
-    fitWord: squadPlayer ? fitWord : null,
+    fitTier: squadPlayer ? fitTier : null,
     condition: squadPlayer?.condition ?? null,
     isCaptain: captainIds.some((id) => id === playerId),
     id: `${slotIndex ?? "ns"}-${playerId}`,
@@ -90,7 +111,7 @@ export const TeamSelectionGrid = ({
 }) => {
   const COND_COLUMN = columnClass(columns.condition, "@max-[32rem]:hidden");
   const POS_COLUMN = columnClass(columns.pos, "@max-[27rem]:hidden");
-  const FIT_WORD = columnClass(columns.fit, "@max-[22rem]:hidden");
+  const FIT_COLUMN = columnClass(columns.fit, "@max-[22rem]:hidden");
 
   const squadById = useMemo(
     () => new Map(squad.map((player) => [player.id, player])),
@@ -129,7 +150,7 @@ export const TeamSelectionGrid = ({
           player,
           playerId: pid as PlayerId,
           cellLabel: `SB${index + 1}`,
-          fitWord: null,
+          fitTier: null,
           condition: player?.condition ?? null,
           isCaptain: captainIds.some((id) => id === pid),
           id: `sb-${index}`,
@@ -151,7 +172,7 @@ export const TeamSelectionGrid = ({
         player,
         playerId: player.id,
         cellLabel: "-",
-        fitWord: null,
+        fitTier: null,
         condition: player.condition,
         isCaptain: captainIds.some((id) => id === player.id),
         id: `res-${player.id}`,
@@ -168,14 +189,13 @@ export const TeamSelectionGrid = ({
   return (
     <table data-testid="team-selection-grid" className="w-full text-left" role="grid" aria-label="Team Selection">
       <thead>
-        <tr className={`sticky top-0 z-10 ${CM_BAND_CLASS}`}>
-          <th className="px-2 py-1 w-10">No</th>
-          <th className="px-2 py-1">Player</th>
-          <th className={`px-2 py-1 w-12 ${POS_COLUMN}`}>Pos</th>
-          <th className="whitespace-nowrap px-2 py-1">
-            Slot<span className={FIT_WORD}> · Fit</span>
-          </th>
-          <th className={`px-2 py-1 w-14 text-right ${COND_COLUMN}`}>Cond</th>
+        <tr className="sticky top-0 z-10 h-9 border-b border-panel-border bg-panel-bg-strong text-overline uppercase text-text-secondary">
+          <th className="px-2 w-10 font-semibold">No</th>
+          <th className="px-2 font-semibold">Player</th>
+          <th className={`px-2 w-12 font-semibold ${POS_COLUMN}`}>Pos</th>
+          <th className="px-2 w-12 font-semibold">Slot</th>
+          <th className={`px-2 w-10 font-semibold ${FIT_COLUMN}`}>Fit</th>
+          <th className={`px-2 w-14 text-right font-semibold ${COND_COLUMN}`}>Cond</th>
         </tr>
       </thead>
       <tbody>
@@ -218,16 +238,9 @@ export const TeamSelectionGrid = ({
               <td className={`whitespace-nowrap px-2 py-0.5 text-data text-text-secondary ${POS_COLUMN}`}>
                 {row.player ? row.player.positionLabel : "-"}
               </td>
-              <td className="whitespace-nowrap px-2 py-0.5 text-data">
-                {row.cellLabel}
-                {row.fitWord !== null && (
-                  <span className={FIT_WORD}>
-                    <span className="mx-1 text-text-muted">·</span>
-                    <span className={row.fitWord === "Natural" ? "font-semibold text-text-highlight" : row.fitWord === "Unfamiliar" ? "font-semibold text-text-warning" : "text-text-secondary"}>
-                      {row.fitWord}
-                    </span>
-                  </span>
-                )}
+              <td className="whitespace-nowrap px-2 py-0.5 text-data">{row.cellLabel}</td>
+              <td className={`px-2 py-0.5 ${FIT_COLUMN}`}>
+                {row.fitTier !== null && <FitIcon tier={row.fitTier} />}
               </td>
               <td className={`px-2 py-0.5 text-right text-data tabular-nums ${COND_COLUMN}`}>
                 {row.condition !== null ? `${row.condition}%` : "-"}
@@ -238,7 +251,7 @@ export const TeamSelectionGrid = ({
 
         {/* Substitutes header, under CM's dashed line closing the eleven */}
         <tr className="border-t-2 border-dashed border-white/40">
-          <td colSpan={5} className="px-2 pt-1.5 pb-0.5 text-label font-semibold text-cm-title">
+          <td colSpan={6} className="px-2 pt-1.5 pb-0.5 text-label font-semibold text-cm-title">
             Substitutes
           </td>
         </tr>
@@ -277,6 +290,7 @@ export const TeamSelectionGrid = ({
               {row.player ? row.player.positionLabel : "-"}
             </td>
             <td className="whitespace-nowrap px-2 py-0.5 text-data text-text-muted">{row.cellLabel}</td>
+            <td className={`px-2 py-0.5 ${FIT_COLUMN}`} />
             <td className={`px-2 py-0.5 text-right text-data tabular-nums ${COND_COLUMN}`}>
               {row.condition !== null ? `${row.condition}%` : "-"}
             </td>
@@ -285,7 +299,7 @@ export const TeamSelectionGrid = ({
 
         {/* Reserves header */}
         <tr className="border-t border-white/20">
-          <td colSpan={5} className="px-2 pt-1.5 pb-0.5 text-label font-semibold text-cm-title">
+          <td colSpan={6} className="px-2 pt-1.5 pb-0.5 text-label font-semibold text-cm-title">
             Reserves
           </td>
         </tr>
@@ -324,6 +338,7 @@ export const TeamSelectionGrid = ({
               {row.player ? row.player.positionLabel : "-"}
             </td>
             <td className="whitespace-nowrap px-2 py-0.5 text-data text-text-muted">{row.cellLabel}</td>
+            <td className={`px-2 py-0.5 ${FIT_COLUMN}`} />
             <td className={`px-2 py-0.5 text-right text-data tabular-nums ${COND_COLUMN}`}>
               {row.condition !== null ? `${row.condition}%` : "-"}
             </td>

@@ -8,7 +8,7 @@ const Card = ({ className, ref, ...props }: CardProps) => (
   <div
     data-slot="card"
     ref={ref}
-    className={cn("rounded-panel border border-panel-border bg-card text-card-foreground shadow-panel", className)}
+    className={cn("bg-card text-card-foreground", className)}
     {...props}
   />
 );

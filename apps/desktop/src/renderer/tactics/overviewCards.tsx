@@ -41,11 +41,11 @@ export const FormationCard = ({ view }: View) => (
         <CardHeading>Formation</CardHeading>
         {view.formation !== null && (
           <span className="text-figure tabular-nums">
-            {view.formation.template}
-            {view.formation.modified && " (modified)"}
-            {view.formation.shape !== view.formation.template && (
+            <span className="text-text-primary text-body">{view.formation.template}</span>
+            <span className="text-text-primary text-body">{view.formation.modified && " (modified)"}</span>
+            <span className="text-text-primary text-body">{view.formation.shape !== view.formation.template && (
               <span className="ml-2 text-text-secondary">{view.formation.shape}</span>
-            )}
+            )}</span>
           </span>
         )}
       </div>
@@ -334,9 +334,8 @@ export const IssuesPanel = ({
           <li
             key={issue.id}
             id={issueId}
-            className={`flex items-start justify-between gap-3 rounded-panel border border-l-4 px-3 py-2 ${
-              blocking ? "border-l-text-danger border-border-subtle" : "border-l-text-warning border-border-subtle"
-            }`}
+            className={`flex items-start justify-between gap-3 rounded-panel border border-l-4 px-3 py-2 ${blocking ? "border-l-text-danger border-border-subtle" : "border-l-text-warning border-border-subtle"
+              }`}
           >
             <span>
               <span className="font-semibold">{issue.title}.</span>{" "}

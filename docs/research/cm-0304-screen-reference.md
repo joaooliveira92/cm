@@ -1,7 +1,6 @@
 # Research: what CM 03/04 looked like, screen kind by screen kind
 
-Resolves [ticket 01](../../.scratch/cm-restyle/issues/01-cm-0304-reference-catalogue.md) of the
-cm-restyle effort. It records how Championship Manager 03/04 drew each kind of screen and decides
+Records how Championship Manager 03/04 drew each kind of screen and decides
 nothing about this codebase. Screenshots the human supplies take precedence over it (map decision 9).
 
 ## Labels
