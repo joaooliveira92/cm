@@ -880,3 +880,1411 @@ Shipped and closed:
 
 Squad work committed from `.scratch/squad-instructions.md` (`6a04f33`…`5663faf`) is not a
 `.scratch/<effort>/` and has no tracker entry. Whether to charter it is a human call.
+
+## Group maps
+
+The wayfinder map of every `.scratch/group-*` effort that has one, copied verbatim on 2026-10-02 with
+headings demoted and links re-pointed from `.ai/`. The `map.md` files stay canonical; these copies
+do not update when a map does. `group-b-blanket-disposals` and `group-f-tactics-and-match-preparation`
+have no map.
+
+### Map: Group A reconciliation
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A Group A spec and deviation register: a `spec.md` covering all 21 Group A screens that states, per
+screen, what the implementation must do — plus an explicit record of every place the imported spec at
+[docs/specs/group_a_application_shell_and_game_lifecycle_remaining/](../docs/specs/group_a_application_shell_and_game_lifecycle_remaining/)
+is knowingly not followed, and why. Ready to hand to `/to-spec` → `/to-tickets`.
+
+Screens 01–17 have an implementation to audit against their spec. Screens 18–21 have none and are new
+design. Both halves land in the same spec.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + Effect, event-sourced into one
+SQLite file per save. Vocabulary lives in [CONTEXT.md](../CONTEXT.md).
+
+**Skills every session should consult**: `grilling` and `domain-modeling` by default; `doc-standards`
+for anything written under `docs/`; `effect-code` for any session that touches source.
+
+**The imported specs are not requirements.** They read as generated from a generic template rather
+than authored against this game, and they routinely describe subsystems this project has never decided
+to build. A session treats them as a checklist to reconcile against, not a contract to satisfy. Where
+the spec and this codebase disagree, the codebase's existing decisions win unless a ticket explicitly
+overturns them — and the disagreement gets written into the register rather than silently dropped.
+
+**Standing decisions from charting** (settled 2026-08-30, before any ticket opened):
+
+- The multiplayer / network / cloud / multi-manager axis is removed wholesale (see Out of scope).
+- Screen 19 "Manager Status" is redefined as the single-manager profile-and-tenure screen, absorbing
+  the meaning already carried by the `manager_status` table — one name, one concept.
+- Retirement is voluntary termination reusing the existing sacked-archive path, differing in cause and
+  messaging only. No interim-manager or club-continuity machinery.
+- Quit confirmation is an accidental-keypress guard on closing the application, never an unsaved-progress
+  warning: commands are durable at commit, so there is no unsaved progress to lose.
+- The twelve numbered ADRs were deliberately deleted and are not coming back. Agent Notes under
+  `.agents/notes/` are the repo's sole decision record from here.
+
+**The import duplicates Screen 2.** `01_app_shell.md` contains Screen 1, a screen-inventory preamble,
+*and* a full copy of Screen 2 with the same 29 sections as `02_new_game.md`. `02_new_game.md` is
+canonical; file 01's copy is not audited separately, and `## N.` numbering is not unique inside file 01.
+
+**Execution posture**: this map plans. Ticket 01 is the one exception — it performs a documentation
+repair, because `pnpm check:all` is red until it lands and every later session inherits that red gate.
+
+#### Decisions so far
+
+<!-- one line per closed ticket -->
+
+- [01 — Decision-record layer after ADR removal](../.scratch/group-a-reconciliation/issues/01-decision-record-layer-after-adr-removal.md):
+  Agent Notes are the sole decision record; ten ADRs migrated to `implemented/` notes, two absorbed by
+  existing notes, `docs/adr/` deleted, two vendored skills forked, `check:all` green.
+
+- [02 — Deviation register: format and home](../.scratch/group-a-reconciliation/issues/02-deviation-register-format.md): a
+  *reconciliation ledger* per spec group at `docs/specs/<group>/RECONCILIATION.md` — one row per
+  `## N.` section, four kinds (`out-of-scope`/`contradicted`/`deferred`/`renamed`) each with a
+  mandatory anchor, silence meaning "followed" only under an `Audited` status line, imports never
+  edited. Screen 21 written out as the worked example.
+
+- [03 — Blanket scope trim across the Group A specs](../.scratch/group-a-reconciliation/issues/03-blanket-scope-trim.md): the trim is
+  narrow — screens 2, 3, 4, 6, 8, 9, 10, 12 and 17 lose only scaffolding and a few clauses, screens 13
+  to 16 lose about a quarter each, and screen 7 disappears entirely. ~25,000 lines survive across
+  sixteen screens, so the audit does not merge. Two new axes found (off-device telemetry, non-normative
+  import scaffolding); recorded as `out-of-scope` rows on every screen in the ledger.
+
+- [05 — Screen 18: what a local Game Status screen contains](../.scratch/group-a-reconciliation/issues/05-screen-18-game-status.md):
+  removed; survivors (season/save-name orientation, sacked badge, app version) redistribute into
+  CareerChrome, Save List, and a new About dialog.
+
+- [04 — Audit: application shell (spec 01)](../.scratch/group-a-reconciliation/issues/04-audit-application-shell.md): Screen 1 audited
+  against the shell; 28 ledger rows, no code changed. The entry point is the Save List, not a Main
+  Menu; the shell has no way to quit, open settings, or read credits; the Save List declares no
+  Actions and has no keyboard tier; a failing save repository is swallowed silently. Two new
+  out-of-scope rulings (mod indicator, online update check).
+
+- [06 — Screen 19: Manager Status redefined, and the name collision](../.scratch/group-a-reconciliation/issues/06-screen-19-manager-status-redefinition.md):
+  Screen is "Manager Profile", showing profile identity (name, archetype, pillars, club, tenure) with
+  a passive Active/Archived badge; all sacking/outcome detail stays exclusive to Season Summary;
+  "Manager Status" retired as domain term; CONTEXT.md and reconciliation ledger updated.
+
+- [07 — Screen 20: Retire Manager](../.scratch/group-a-reconciliation/issues/07-screen-20-retire-manager.md): retirement is the second cause
+  of an **Archived Save**; a `ManagerRetired` event and a nullable `archived_cause` column replace the
+  `sacked` boolean, `assertSaveNotSacked` becomes `assertSaveNotArchived`, and the action is a dialog on
+  Manager Profile confirmed by an Irreversibility Disclosure. Breaks the save format with no migration path.
+
+- [08 — Screen 21: Quit confirmation as an accident guard](../.scratch/group-a-reconciliation/issues/08-screen-21-quit-confirmation.md):
+  one intent (close_application), one provisional-career exception, before-quit guard with renderer IPC,
+  dialog-only (no keyboard shortcut). Durable-at-commit note written and re-anchors the reconciliation
+  ledger's contradicted rows.
+
+- [09 — Navigation surface for the new shell screens](../.scratch/group-a-reconciliation/issues/09-navigation-surface-for-new-screens.md):
+  Save List tiered at level 2; app-chrome bar (Preferences, Credits, Quit) on the Save List as
+  lightweight dialogs; no command-palette entries for boot-screen destinations.
+
+- [10 — Assemble the Group A spec and deviation register](../.scratch/group-a-reconciliation/issues/10-assemble-spec-and-register.md):
+  Spec assembled at `.scratch/group-a-reconciliation/spec.md`; deviation register remains at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`; all out-of-scope axes recorded; ready for `/to-spec` → `/to-tickets`.
+
+- [10 — Assemble the Group A spec and deviation register](../.scratch/group-a-reconciliation/issues/10-assemble-spec-and-register.md):
+  Spec assembled at `.scratch/group-a-reconciliation/spec.md`; deviation register remains at `docs/specs/group_a_application_shell_and_game_lifecycle_remaining/RECONCILIATION.md`; all out-of-scope axes recorded; ready for `/to-spec` → `/to-tickets`.
+- [11 — Slice the screen 2–17 audit into tickets](../.scratch/group-a-reconciliation/issues/11-slice-the-screen-2-17-audit.md):
+  Nine absent screens grouped into three cheap "confirm absence" tickets; six with implementation
+  audited as individual, flow, or complement tickets; Screen 13 as a thin complement to the shell
+  audit. Eight tickets sized to one session each, all blocked against ticket 10.
+
+- [12 — Absence: Screens 3, 4, 5 (creation-form screens)](../.scratch/group-a-reconciliation/issues/12-absence-creation-screens.md):
+  Three creation-form screens (league/nation selection, competition detail, database size/performance)
+  have no routes, components, or screens. All surviving sections classified `contradicted` — the
+  fixed single 20-club league (CONTEXT.md) and three-step Manager→Club→Review creation flow leave
+  no room for any of them.
+
+- [13 — Absence: Screens 9, 10 (identity screens)](../.scratch/group-a-reconciliation/issues/13-absence-identity-screens.md):
+  Two identity screens (nationality/languages, background) have no routes or components — no
+  nationality/languages or background concept exists in the codebase. All 91 surviving sections
+  classified `contradicted` against the three-step creation flow and the Archetype/Pillar identity
+  model (CONTEXT.md).
+- [14 — Absence: Screens 14, 15, 16, 17 (management screens)](../.scratch/group-a-reconciliation/issues/14-absence-management-screens.md):
+  Four management screens (Save/Save As, Delete Saved Game, Game Preferences, Display/Sound Options)
+  have no routes, components, or UI of any kind. All surviving sections of all four screens classified
+  `contradicted` — the codebase has no user-invoked save, no delete-save path, no preferences surface,
+  and no display/audio configuration UI.
+
+- [15 — Screen 2: New Game, Database Initialization](../.scratch/group-a-reconciliation/issues/15-screen-2-new-game.md):
+  Screen 2 audited and reconciled; all 28 content sections `contradicted` by the three-step creation
+  flow with invisible world generation. No cache, progress UI, or validation stages exist.
+
+- [16 — Screen 6: Game Loading and World Generation](../.scratch/group-a-reconciliation/issues/16-screen-6-world-gen.md):
+  Screen 6 audited against the creation flow implementation. All 40 surviving sections `contradicted`:
+  generation is a masked wait with no progress bar, no task checklist, no cancellation, no retry, no
+  validation, no checkpoint, no completion summary. Transitions to Club Selection, not Add Manager.
+
+- [17 — Screen 8: Manager Personal Details](../.scratch/group-a-reconciliation/issues/17-screen-8-personal-details.md):
+  Screen 8 `Reviewed` against the implementation (CreationStep1.tsx): only a single Manager name `<input>`
+  exists; date of birth, place of birth, portrait, hot-seat privacy, name normalization, structured name
+  components, and all form behaviors are absent. Reconciliation ledger updated with `contradicted` rows
+  covering 9 audit categories. Status changed from `Not yet audited` to `Reviewed` (ticket 17, 2026-08-31).
+- [19 — Screen 13: Load Saved Game (complement)](../.scratch/group-a-reconciliation/issues/19-screen-13-load-game-complement.md):
+  Screen 13 `Reviewed` against the implementation (`saveList.tsx` 79 lines + `loadSave` in `main/saves.ts`).
+  The shell audit (ticket 04) already covered entry point, Actions, keyboard tier, repository failure
+  swallowing, and stale-entry contract; the complement adds `contradicted` rows for the absent save-library
+  surface (search, filter, sort, details panel, save-type presentation, footer actions, load pipeline,
+  corrupt-save behavior, initial destination), and `deferred` rows for keyboard interaction, accessibility,
+  responsive, localization, save read lease, compatibility/integrity models, state machine, import/duplicate/
+  delete, loading progress, and cancellation. 40 ledger rows added; no code changed; status changed from
+  `Not yet audited` to `Reviewed` (ticket 19, 2026-08-31).## Not yet specified
+
+<!-- none — every question resolved, fog cleared, map complete. -->
+
+#### Out of scope
+
+- **Multiplayer, network sessions, participant reconnect, ownership transfer, cloud synchronization,
+  and multiple human managers per career.** Authorized for removal by the user during charting. This
+  is the single largest axis in the imported specs and it has no referent in a local single-player
+  app. Also rules out all of `docs/specs/group_r_multiplayer_administration/` as an inheritor.
+- **Worker pools, memory budgets, and resource-policy tuning.** The app has no worker profile or
+  configurable memory budget to expose, tune, or report on. Wider than charting assumed: it consumes
+  spec 5 §18 in full plus its warnings, spec 6 §33–§34, spec 16 §26–§27, and spec 18 §4 Runtime. It
+  does *not* cover internal threading, which stays a design question for the audit tickets.
+- **Human manager slots, capacity, reservations, and roster.** A sharpening of the multi-manager axis
+  above, recorded separately because of how much it consumes: essentially all of spec 7 (Add Manager),
+  most of spec 19, and the reservation and conflict machinery in spec 11 §29–§30 and §35. It also
+  removes the recurring "revalidate draft ownership" clause threaded through specs 8–12, which has no
+  referent with a single local user.
+- **Off-device telemetry, crash reporting, and product analytics** (spec 16 §40). Missed during
+  charting. The app has no backend to receive them, so there is no consent to collect and no privacy
+  policy to link. Local structured logging is unaffected and stays in scope.
+- **Non-normative import scaffolding.** The `Condensed LLM implementation brief`, `Next planned item`,
+  and `Suggested Git commit` sections, spec 1 §15 Clean-room constraints, and spec 1's screen-inventory
+  preamble are authoring artifacts of the import, not requirements. Fifty-three sections across the
+  group. The briefs in particular restate their own file, so auditing them would double-count every
+  section they summarize.
+- **Resignation and the unemployed-manager job market.** Spec 20 §2 wants "Resign instead" as an
+  alternative to retiring. Resignation only means something with somewhere to go afterwards, which is
+  Group N (jobs and manager career), not the application shell.
+- **Restoring the twelve deleted ADRs.** Decided against during charting. Their 151 citations and the
+  21 broken links they leave behind are in scope (ticket 01); reversing the deletion is not.
+- **Introducing genuine unsaved career state** so that spec 21's `UnsavedCareerState` model becomes
+  true. That is an architectural regression against durable-at-commit persistence.
+- **Game Status screen (Screen 18).** Decided via ticket 05. The survivors (career/season orientation,
+  sacked badge, app version) redistribute into existing real estate; no route, component, or
+  `GameStatusSnapshot` type is built.
+- **Save-format migration machinery.** Ticket 07's `archived_cause` column is the second Group A decision
+  to break existing saves, and the repo has no migration layer to carry them across. Building one is a
+  project-wide architectural effort with its own versioning and upgrade-path questions; it sits past this
+  map's destination. Recorded here so the need is visible rather than lost — see the risk in
+  [Retire Manager](../.agents/notes/implemented/feature/2026-08-30-retire-manager.md).
+- **The other eighteen spec groups.** Group A is the pilot. If a reusable trimming method falls out, it
+  is captured as a `process` Agent Note — widening this map to 19 groups is a different effort.
+- **An enabled-mods indicator.** Ruled by ticket 04 while auditing spec 1 §4.2 and §8. Nothing in the
+  app loads third-party content, so there is nothing to enable, list, or indicate.
+- **The main menu's online update check** (spec 1 §8 `updateStatus`). Ruled by ticket 04. A sharpening
+  of the off-device-telemetry axis above: the app has no backend to query and no update channel.
+- **ADR-000x citation rewrites in source comments.** Ticket 01 provided the mechanism (rewrite to note path, reword, or drop); the 151 mentions are a source-comment hygiene pass that sits past this map's destination (a Group A spec and deviation register). No screen's reconciliation depends on the outcome.
+- **How the Quit dialog stays on top.** Ticket 20. A dedicated `MODAL_SCRIM_TOP` (`z-[60]`) in
+  `theme.ts`, not a mount reorder in `main.tsx`. The renderer stacks overlays at two levels —
+  hand-rolled ones tie at `z-40` and are broken by DOM order, vendored Base UI surfaces portal out
+  at `z-50` — so reordering wins only the first tier and would have left the bug half-fixed. The
+  z-index is independent of mount position, which keeps `QuitGuard` free to sit outside the router.
+Adopting the vendored portal `Dialog` was rejected: it renders at `z-50` too, so it would still
+   tie, and it would mean replacing `useDialogKeyboard`'s focus trap. Raising the z-index does not
+   beat a Base UI *modal*, which inerts everything outside its portal — split out as ticket 21.
+
+- [21 — The Quit dialog takes no clicks while a Base UI modal is open](../.scratch/group-a-reconciliation/issues/21-quit-dialog-under-base-ui-modals.md):
+  The Quit dialog outranks any open Base UI modal. `QuitGuard` portals to `document.body` via
+  `createPortal`, placing itself outside the `#root` subtree that Base UI marks as inert. Combined
+  with `MODAL_SCRIM_TOP` (`z-[60]`) from ticket 20, it now paints on top of and receives clicks
+  through every overlay tier. A unit test proves the portal lands in `document.body`, not in the
+  mount container. Decision recorded in
+  `.agents/notes/implemented/architecture/2026-09-17-quitguard-outranks-base-ui-modals.md`.
+
+- [22 — the Quit dialog's provisional variant](../.scratch/group-a-reconciliation/issues/22-quit-guard-provisional-career-variant.md):
+  built, and the ticket's two hard parts were both unnamed. `QuitGuard` is mounted outside the
+  router and cannot read `CreateSessionContext`, so the flow publishes `{ present, id }` through
+  `create/provisionalCareer.ts`. And a renderer-side discard would race `app.quit()` and lose
+  silently, so the id travels with the confirmation and `main/quit.ts` deletes before quitting.
+  Surfaced a pre-existing bug on the way: the quit dialog never took initial focus in *either*
+  variant, because `useDialogKeyboard` ran its mount effect at app startup.
+  [Note](../.agents/notes/proposed/feature/2026-09-19-quitting-mid-creation-discards-in-main.md).
+
+### Map: Group B reconciliation
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A Group B spec and deviation register: a `spec.md` covering all 11 Group B screens that states, per
+screen, what the implementation must do — plus a completed
+[reconciliation ledger](../docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md)
+recording every place the import at
+[docs/specs/group_b_global_navigation_and_inbox/](../docs/specs/group_b_global_navigation_and_inbox/)
+is knowingly not followed, and why. Every screen off `Not yet audited`. Ready to hand to
+`/to-spec` → `/to-tickets`.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + Effect, event-sourced into one
+SQLite file per save. Vocabulary lives in [CONTEXT.md](../CONTEXT.md), which already defines
+**News Message**, **News Inbox**, **Main Menu**, **Load Career**, and **Save** — screens 22, 24 and 31
+audit against real vocabulary, not fog.
+
+**Skills every session should consult**: `grilling` and `domain-modeling` by default; `doc-standards`
+for anything written under `docs/`; `effect-code` for any session that touches source.
+
+**The imported specs are not requirements.** All eleven files are the same generated 24-section
+template (~2,400 lines total, ~260 sections — a tenth of Group A). A session treats them as a
+checklist to reconcile against, not a contract to satisfy. Where the import and this codebase
+disagree, the codebase's existing decisions win unless a ticket explicitly overturns them, and the
+disagreement becomes a ledger row rather than a silent drop.
+
+**This map inherits Group A's rulings.** The
+[Group A map](../.scratch/group-a-reconciliation/map.md) settled the multiplayer / network / multi-manager
+axis, worker pools and memory budgets, off-device telemetry, non-normative import scaffolding, and
+resignation-and-job-market. Those are not re-litigated here; they are cited.
+
+**Run the blanket disposals first.** [group-b-blanket-disposals](../.scratch/group-b-blanket-disposals/README.md)
+is a three-ticket prefactor that applies the already-settled rulings — screens 29 and 32 in full, the
+import scaffolding, the multiplayer axis — across the whole group. It strips roughly a third of the
+import's 261 sections, so every audit ticket here opens a smaller file. It writes to the same ledger,
+so an audit session should not run concurrently with one of its tickets.
+
+**Execution posture**: this map plans, with no exception. Screens 22, 24–26 and 31 have live code and
+an audit will find bugs in it. Findings become ledger rows and spec statements; fixes go through
+`/to-tickets` afterwards.
+
+**Screen 23 is done and is not re-opened.** It is `Reviewed` in the ledger, its design lives in two
+`implemented` Agent Notes, and its remaining work is execution owned by
+[`.scratch/continue-and-advance-time/`](../.scratch/continue-and-advance-time/map.md). The Group B spec cites it.
+
+**Standing decisions from charting** (settled 2026-09-07, before any ticket opened):
+
+- Screen 32 (Manager Chat and Multiplayer Communication) is out of scope in full — it is nothing but
+  the axis Group A already removed.
+- Screen 29 (Manager Notebook) is out of scope in full — an import invention with no referent here.
+- Screens 24, 25 and 26 are three specs over one implementation and are audited as one ticket.
+- Screen 31 is a thin complement to a decision Group A already made, not a fresh audit.
+
+#### Decisions so far
+
+<!-- one line per closed ticket -->
+
+- **The blanket disposals ran and the ledger absorbed them** (group-b-blanket-disposals, all three
+  tickets, 2026-09-07). Screens 29 and 32 are `Disposed in full` under a fourth ledger status added for
+  whole-file rulings; the import scaffolding is disposed across all nine surviving screens; and the
+  multiplayer axis is disposed per screen, with its three recurring disguises — the active manager, the
+  career revision, the permission context — stated once under *The multiplayer axis* in the ledger for
+  the remaining tickets to cite.
+
+- **Ticket 01 — Screen 22 is `Reviewed`.** "Prior safe screen" disposes to "the previous screen":
+  Back and Forward are the router's own unfiltered history, and no career route names an entity, so no
+  stack entry can go stale. That one fact also disposes of the deleted-entity fallback and §19's stale
+  selection cases. `GlobalShellState` has no counterpart and should not — the chrome composes five
+  independently-failing reads and a compile-time navbar. Two real gaps recorded `deferred`: a failed
+  header read is indistinguishable from one in flight, and back navigation restores the screen wrapper
+  rather than the region the player left. See
+  [issues/01-screen-22-career-chrome.md](../.scratch/group-b-reconciliation/issues/01-screen-22-career-chrome.md).
+
+- **Ticket 02 — Screens 24, 25, 26 (News Inbox, Message, Filters) are `Reviewed`.** Audited as one
+  ticket per the charting spec. All three screens move off `Not yet audited` to `Reviewed`. The
+  implementation handles all three as one list-and-detail route — Screen 25 is an inline pane rather
+  than a separate route, and Screen 26 is an inline filter bar. Main gaps recorded `deferred`: saved
+  filter presets, date-range/sender-type/priority criteria, sender summary and entity links on
+  messages, content blocks and attachments, virtualization, and the full filter lifecycle. No News
+  Message taxonomy hole was found. See
+  [issues/02-screens-24-26-news.md](../.scratch/group-b-reconciliation/issues/02-screens-24-26-news.md).
+
+- **Tickets 03–07 closed; the effort is complete.** Recorded late, during the 2026-09-18 stale-lock
+  sweep — 05, 06 and 07 had shipped but were held open by a `claimed` line left above their
+  `resolved` line. The load-bearing answers: **Screen 28 (Calendar) is not a new screen** — Fixtures
+  already *is* the Calendar surface under another name, and the import's extra controls are
+  `deferred`/`unscheduled` with no CONTEXT.md change needed
+  ([issues/05](../.scratch/group-b-reconciliation/issues/05-screen-28-is-calendar-a-screen.md)). **Screen 30 (Manager History): a career
+  record partially exists** — per-season `board_objective` rows and a single-row `manager_status`, no
+  honours or aggregate totals, and its home is Season Summary rather than Manager Profile
+  ([issues/06](../.scratch/group-b-reconciliation/issues/06-screen-30-does-a-save-accumulate-a-career-record.md)). Ticket 07 assembled
+  [spec.md](../.scratch/group-b-reconciliation/spec.md) and the ledger at
+  [docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md](../docs/specs/group_b_global_navigation_and_inbox/RECONCILIATION.md).
+
+The charting-time rulings above are written up as a spec at [charting-spec.md](../.scratch/group-b-reconciliation/charting-spec.md). It covers this effort's method and scope only; the Group B
+screens spec is `spec.md`, produced by ticket 07.
+
+#### Not yet specified
+
+Nothing. The one open patch — where new Group B surfaces land in the navigation model — was answered
+by tickets 05 and 06 and is resolved rather than pending: **no new screen is warranted**, so there is
+no navbar slot, keyboard tier or command-palette decision to make. Fixtures already carries the
+Calendar, and the career record lives on Season Summary. It stayed listed here only because the map
+was never updated when those tickets closed.
+
+- **The News Message taxonomy.** Which simulated events produce a News Message, and who decides. The
+  news audit (ticket 02) will either find this already settled by the implementation or expose it as
+  a design hole; only then is it a ticket.
+
+- **Navigation history and focus restoration as a design question.** The chrome audit (ticket 01)
+  reads what exists. Whether the gap between it and the import's model is worth its own decision
+  depends on what that audit finds.
+
+#### Out of scope
+
+- **Screen 32, Manager Chat and Multiplayer Communication, in full.** Ruled at charting. The file is
+  entirely the multiplayer / network / multi-manager axis Group A removed wholesale; there is exactly
+  one human manager per Save, so there is nobody to communicate with. The whole-file disposal was
+  written into the ledger by group-b-blanket-disposals ticket 01, not by ticket 07 as originally
+  planned, so the silence is recorded rather than assumed. Both screens are `Disposed in full`.
+
+- **Screen 29, Manager Notebook, in full.** Ruled at charting. Manager-private notes, tags, pinning,
+  entity-linked annotations, and note-to-reminder conversion are an import invention: no note concept
+  exists in the codebase, in `CONTEXT.md`, or in any recorded decision, and nothing in the game asks
+  the player to keep private prose. Also carries the multi-manager privacy model as its premise.
+  Ledger row written by group-b-blanket-disposals ticket 01.
+
+- **Multiplayer, network sessions, participant reconnect, ownership transfer, cloud synchronization,
+  and multiple human managers per career.** Inherited from Group A. Consumes §10 of all eleven files.
+
+- **Worker pools, memory budgets, and resource-policy tuning.** Inherited from Group A. Consumes most
+  of screen 27, which is why that screen is a disposal ticket rather than a design one.
+
+- **Off-device telemetry, crash reporting, and product analytics.** Inherited from Group A. Local
+  structured logging is unaffected and stays in scope.
+
+- **Non-normative import scaffolding.** Inherited from Group A: the `Condensed LLM implementation
+  brief`, `Next planned item`, and `Suggested Git commit` sections are authoring artifacts, not
+  requirements. Three sections per file, thirty-three across this group.
+
+- **Resignation and the unemployed-manager job market.** Inherited from Group A, and the reason
+  screen 30's career timeline has at most one appointment on it. Belongs to Group N.
+
+- **Screen 23's remaining execution.** Owned by [continue-and-advance-time](../.scratch/continue-and-advance-time/map.md).
+  This map cites screen 23's reconciliation; it does not carry its build.
+
+- **The other spec groups.** Group A was the pilot, Group B is the second application of its method.
+  Widening to the remaining seventeen is a different effort.
+
+### Map: Group C — Club Information (the remainder)
+
+Label: `wayfinder:map`
+
+#### Destination
+
+Every Group C screen disposed or built, with no row in
+[RECONCILIATION.md](../docs/specs/group_c_club_information/RECONCILIATION.md) reading
+`Not yet audited`. That is milestone [M1](MILESTONES.md) **step 3**, and exit criterion 2
+names it directly.
+
+#### What is already settled
+
+- **Screen 38 Club Staff — shipped.** `club-staff-presence`, audited 2026-09-07. Its ledger rows are
+  complete and are not reopened. Its Club-section nav entry now reaches it through an own-club
+  resolver ([ticket 02](../.scratch/group-c-club-information/issues/02-the-club-staff-nav-entry-lands-on-a-placeholder.md)).
+- **Screen 49 Team Scout Report — shipped, and the ledger does not say so.** The `team-scout-report`
+  effort closed with all eight tickets resolved and the screen lives at
+  `renderer/scouting/TeamScoutReportScreen.tsx`, routed club-scoped as `teamScoutReport`. Its
+  coverage row still reads `Not yet audited`. **This is a stale row, not unaudited work**, and
+  correcting it is part of ticket 03 rather than a screen to dispose.
+- **Screens 43–45 History, Records, Honours — out of this milestone.** Confirmed 2026-09-19: they
+  need persisted season history and follow **Group Q** rather than carving a history store inside
+  M1. The same gap holds Group D 55 and Group L 172–173, so the store is one piece of work serving
+  six screens across three groups. Do not dispose them here; record the anchor and move on.
+
+That leaves **twelve** screens — 33–37, 39–42, 46–48 — which is exactly what M1 step 3 names.
+
+#### Notes
+
+**Domain**: local single-player football-management sim. Glossary terms this group touches:
+**Club**, **Stature Tier**, **Simulation Depth**, **Transfer Budget**, **Wage Budget**, **Board
+Objective**, **Competition**, **Fixture**, **Squad**, **Staff**. Read CONTEXT.md before ruling that a
+screen has no model — several of these exist under a different word.
+
+**Skills every session should consult**: `grilling` and `domain-modeling` by default; `doc-standards`
+for anything under `docs/`; `effect-code` for any session that touches source.
+
+**The imported specs are not requirements.** All seventeen files are the same generated template.
+Treat them as a reconciliation checklist, exactly as Groups A and D did.
+
+**Standing decisions inherited from Group A**: the multiplayer/multi-manager axis is out of scope;
+worker pools and memory budgets are out of scope; off-device telemetry is out of scope; non-normative
+import scaffolding is disposed.
+
+#### Fog
+
+##### The one that shapes everything else: own club, or any club?
+
+The renderer already carries **two parallel families** of club screen, and the import has no opinion
+about the difference because it was written for a game with one.
+
+- **Save-scoped nav destinations**, reached from the Club section with only a `saveId`:
+  `clubInfo`, `finances`, `boardConfidence`, `clubHistory`, and `clubs` (a browse list).
+- **Club-scoped drill-downs** at `club/$clubId/…`, reached from a surface that already names a club:
+  `clubInformation`, `clubFinancesDetail`, `clubHistoryDetail`, `clubSquadDetail`,
+  `clubReservesDetail`, `clubYouthDetail`, `clubFixturesDetail`, `clubTransfersDetail`,
+  `clubCompetitionsDetail`.
+
+Several import screens therefore have **two placeholders**, not one — `clubInfo` and
+`clubInformation` are both Screen 34's; `finances` and `clubFinancesDetail` are both Screen 39's.
+Whether that is one screen or two is the question the whole group turns on, and answering it twelve
+times independently is how a codebase ends up with twelve inconsistent answers.
+
+**There is already a precedent, and it points one way.** Screen 38 exists **once**, club-scoped, and
+its nav entry is a thin own-club resolver over the same screen
+([ticket 02](../.scratch/group-c-club-information/issues/02-the-club-staff-nav-entry-lands-on-a-placeholder.md)). `destinations.ts`
+records why: a drill-down needs a target club and so cannot be a save-scoped nav destination, and
+`squadAtom(saveId).club.id` is the established own-club resolution. Ticket 04 should test that
+precedent rather than assume it — it was set by one screen whose content happens not to differ
+between my club and theirs, and Finances plausibly does differ.
+
+##### What actually has a model
+
+Ruling on twelve screens without knowing which have data behind them is how Group D's summary came to
+miscount its own dispositions. The survey comes first, and it is ticket 03.
+
+Known or strongly suspected:
+
+- **35 Club Squad** — the Squad screen is shipped for the own club; `clubSquadDetail` is the any-club
+  version. Likely `renamed`, pending ticket 04.
+- **36 Reserve Squad, 37 Youth Squad** — no reserve or youth squad model is known to exist. If none
+  does, these are the absence-of-a-model case, which is **`deferred`**, not `out-of-scope`
+  ([the rule](../.agents/notes/proposed/architecture/2026-09-19-per-player-statistics-deferred-not-ruled-out.md)).
+  M1 step 1 found this error three times in four; do not make it a fourth.
+- **39 Club Finances** — Transfer Budget and Wage Budget are modelled and the Budget Review screen
+  ships. Whether that satisfies 39 or is a different screen is a real question.
+- **40 Club Fixtures, 41 Club Results** — Fixtures ship for the own club. Any-club versions are the
+  same question as 35.
+- **42 Club Transfers** — Transfer History ships. Same shape again.
+- **46 Information and Facilities** — Stature Tier exists; facilities do not, as far as is known.
+- **47 Supporter and Board Confidence** — Board Objective is modelled; supporter confidence is not
+  known to be. The screen may be half-satisfiable, which is its own disposition problem.
+- **48 Club Comparison** — Group D disposed Player Comparison (63) for having no comparison
+  mechanism, and re-kinded it `deferred` on 2026-09-19. 48 is the same question about clubs and
+  should get the same kind for the same reason.
+
+##### What the answers cost
+
+M1 step 5 deletes the placeholder of every screen disposed here, and there are roughly fourteen
+`club*` WIP screens. A disposition that is wrong is therefore a deleted route, which is recoverable,
+and a ledger row that lies, which is the thing M1 exists to end.
+
+#### Decisions so far
+
+##### Screen inventory ([ticket 03](../.scratch/group-c-club-information/issues/03-screen-inventory-and-the-stale-49-row.md), 2026-09-19)
+
+Every "none found" below names the search behind it. A model missing from `schema.ts` *and* from
+`CONTEXT.md` is recorded as not found; a model that exists under another word is named.
+
+| Screen | Placeholder(s) in `renderer/` | Route(s) | Model behind it | Shipped screen that may satisfy it |
+|---|---|---|---|---|
+| 33 Club Overview | none | — | A dashboard over every other Group C subject. Has no model of its own; it is a composition of theirs. | None. Its content is whatever 34–48 resolve to. |
+| 34 Club General Information | **`clubInfo/` and `clubInformation/`** — both carry `aria-label="Club Information"` | `club-info` (save-scoped) and `club/$clubId/information` | Club, **Stature Tier**, `stadium_name`, `stadium_capacity` on `clubs` | None |
+| 35 Club Squad | `clubSquadDetail/` | `club/$clubId/squad` | Squad, Player, Position Rating — fully modelled | **`squad/`**, shipped and interactive, for the own club |
+| 36 Reserve Squad | `clubReservesDetail/` | `club/$clubId/reserves` | **None — and ruled.** `CONTEXT.md:774` "no youth or reserve squad exists", cut from v1. Note `competitions.kind` admits `"reserve"`, so reserve *Competitions* exist while reserve *squads* do not. | None |
+| 37 Youth Squad | `clubYouthDetail/` | `club/$clubId/youth` | **None — and ruled.** Same sentence, `CONTEXT.md:774`. | None |
+| 39 Club Finances | **`finances/` and `clubFinancesDetail/`** | `finances` (save-scoped) and `club/$clubId/finances` | **Transfer Budget**, **Wage Budget** — `club_budgets` carries `transfer_budget_remaining` and `wage_budget` | **`budgetReview/`**, shipped, for the own club |
+| 40 Club Fixtures | `clubFixturesDetail/` | `club/$clubId/fixtures` | Fixture, Competition — fully modelled | **`fixtures/`**, shipped, for the own club |
+| 41 Club Results | none | — | Fixture carries its result. **Attendance and player-of-the-match: none found** (absent from `schema.ts` and `CONTEXT.md`). | `fixtures/` and `seasonSummary/` may cover the played half |
+| 42 Club Transfers | `clubTransfersDetail/` | `club/$clubId/transfers` | Transfer, Bid — modelled | **`transferHistory/`**, shipped, for the own club |
+| 46 Information and Facilities | none of its own | — | `stadium_name` and `stadium_capacity` exist on `clubs`, deliberately without a stadium entity. **Training ground, medical, recruitment reach, expansions: none found** (`facilit` appears nowhere in `schema.ts` or `CONTEXT.md`). | None |
+| 47 Supporter and Board Confidence | `boardConfidence/` | `board-confidence` (save-scoped) | **Board Objective** is modelled — `board_objective`, `board_objective_verdict`. **Supporter confidence: none found** (`supporter`, `attendance` appear nowhere). | None |
+| 48 Club Comparison | none | — | **None found.** No comparison mechanism, matching Group D 63 Player Comparison. | None |
+
+**Two screens have two placeholders each** — 34 and 39 — which is ticket 04's subject, now with
+names rather than a suspicion. Three screens (33, 41, 48) have **no** placeholder and never did;
+their absence is itself a finding, since M1 step 5 has nothing to cull for them.
+
+##### Corrections to the coverage table
+
+- **Screen 49 Team Scout Report is shipped, and its row said `Not yet audited`.** Verified against
+  the tree, not the ticket: `renderer/scouting/TeamScoutReportScreen.tsx` exists and is routed
+  club-scoped as `teamScoutReport` in `router/index.tsx`. The `team-scout-report` effort closed with
+  all eight tickets `resolved`.
+- **Screens 43–45 follow Group Q**, confirmed 2026-09-19. Their rows say so rather than leaving a
+  reader to re-derive it.
+
+##### The kind 36 and 37 take, decided here because the evidence is unambiguous
+
+`CONTEXT.md:774` — "Youth integration and youth promotion are cut from v1: no youth or reserve squad
+exists" — is a **version boundary**, and
+[a v1 exclusion is `deferred`](../.agents/notes/proposed/process/2026-09-19-a-v1-exclusion-is-deferred-not-out-of-scope.md)
+rules that those are `deferred`, anchored `v1 exclusion — CONTEXT.md:774`. Not `out-of-scope`: that
+kind is reserved for a positive statement that the thing should not exist, and "cut from v1" is not
+one. The map flagged 36 and 37 as shaped to attract this error; the evidence says the flag was right.
+
+46 and 48 are the absence-of-a-model case and take `deferred` too, but ticket 05 owns their anchors.
+
+##### The own-club rule ([ticket 04](../.scratch/group-c-club-information/issues/04-one-screen-per-subject-or-two.md), 2026-09-19)
+
+**A Group C screen is club-scoped and exists once; a nav entry is a thin own-club resolver over it.
+The exception is subject existence, not visibility.**
+[Note](../.agents/notes/proposed/architecture/2026-09-19-a-club-screen-is-club-scoped-unless-only-your-club-has-one.md).
+
+The information axis the fog worried about turned out to be empty. `CONTEXT.md`: *a Club never
+carries a hidden value of its own for an Attribute Range to narrow* — uncertainty lives at the
+Player level, and there is no club-level fog mechanism, so visibility can never be the
+discriminator.
+
+What decides it is whether a rival club has a row. `club_budgets` is keyed on `club_id`, so Screen
+39 is club-scoped; `board_objective` is keyed on `season_number` and names the human's club, so a
+rival has no Board Objective at all and Screen 47 is save-scoped. **Screens 34 and 39 collapse to
+one screen each** — `clubInfo/` and `finances/` go, `clubInformation/` and `clubFinancesDetail/`
+stay.
+
+An interactive own-club screen is not a second screen: that is a capability difference the resolver
+handles, and building two is how Screen 34's pair came to exist.
+
+##### The dispositions ([ticket 05](../.scratch/group-c-club-information/issues/05-dispose-the-twelve.md), 2026-09-19)
+
+All twelve disposed. **No coverage row reads `Not yet audited`** — M1 exit criterion 2 met for
+Group C. Nine `deferred`, three `renamed`, and **none `out-of-scope`**: not one of the twelve is
+ruled out by a statement that the thing should not exist, which is the opposite of Group D's staff
+screens. Two screens are half-modelled (39, 47) and their halves are named separately, or the build
+ticket would invent the missing one.
+
+#### Not yet specified
+
+The chart is complete; what remains is building. Tickets 06, 07 and 08 built 34, 40/42 and the modelled
+halves; 09 culled the placeholders those roads freed — all resolved. The one open build ticket is
+[10 — Screen 35, the any-club squad](../.scratch/group-c-club-information/issues/10-the-any-club-squad.md), unblocked 2026-09-23 now that
+[group-i decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
+is answered and its shared read shipped.
+
+### Map: Group D — Player and Staff Records
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciled spec covering all 19 Group D screens (50-68) — player profile, attributes, positions, form, statistics, history, contract, transfer status, happiness, injuries, discipline, development, action menu, comparison, staff profile/contract/history, coach report, and scout report — stating per screen what the implementation must do, and which screens are already satisfied by shipped code.
+
+#### Notes
+
+**Domain**: local single-player football-management sim. Key glossary terms in CONTEXT.md that this group touches: **Attribute**, **Position**, **Position Rating**, **Overall Rating**, **Transfer Value**, **Contract**, **Free Agent**, **Injury** (match event), **Condition**, **Natural Fitness**, **Injury Proneness**, **Player Development**, **Training Focus**, **Scouting Progress**, **Attribute Range**, **Fully Scouted**, **Scout**, **Coach**, **Staff**, **Bound Staff**, **Presence Staff**.
+
+**Skills every session should consult**: `grilling` and `domain-modeling` by default; `doc-standards` for anything written under `docs/`; `effect-code` for any session that touches source.
+
+**The imported specs are not requirements.** All 19 files are the same generated template. Treat them as a reconciliation checklist.
+
+**Several screens may already be satisfied by shipped work:**
+
+- **Screen 61 (Player Development)** — Player Development, Training Focus, and the per-season step are modeled and built. See [deterministic Player Development](../.agents/notes/implemented/feature/2026-08-28-deterministic-fractional-player-development.md).
+- **Screen 56-57 (Contract/Transfer Status)** — Contract, Transfer Value, Bid, Free Agent are modeled. Screen 57 may be satisfied by existing transfers screens.
+- **Screen 67 (Coach Report), Screen 68 (Scout Report)** — Scouting system exists. Coach Report may have no counterpart.
+- **Screen 59 (Injuries)** — Match injury model exists as match events; a player injury history screen may not.
+
+**Standing decisions inherited from Group A**: multiplayer/multi-manager axis is out of scope; worker pools and memory budgets out of scope; off-device telemetry out of scope; non-normative import scaffolding disposed.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-d-player-and-staff-records/issues/01-screen-inventory.md): All 19 screens surveyed. All dedicated player/staff routes exist as WIP placeholders registered during Group A reconciliation — none show real data because no player-read RPCs exist. Screens 51 (Attributes), 52 (Positions), and 61 (Development/Training Focus) are partially satisfied by inline squad-table display. Screens 58 (Happiness), 60 (Discipline), 63 (Comparison), 54 (Statistics), 57 (Transfer Status), and 62 (Action Menu) have no modeled data.
+- [02 — Staff screens scope](../.scratch/group-d-player-and-staff-records/issues/02-staff-screens-scope.md): All five staff screens (64-68) disposed. Screens 64-66 (Staff Profile, Contract, History) out-of-scope per closed role set. Screen 67 (Coach Report) out-of-scope — no counterpart. Screen 68 (Player Scout Report) deferred — Team Scout Report exists, player-level scouting is inline via Attribute Ranges.
+- [03 — Missing systems disposition](../.scratch/group-d-player-and-staff-records/issues/03-missing-systems-disposition.md): Screens 58 (Happiness), 60 (Discipline), 63 (Comparison) out-of-scope — none of these systems exist. Screen 62 (Action Menu) deferred — actions exist through specific surfaces but no unified menu.
+- [04 — Remaining screens disposition](../.scratch/group-d-player-and-staff-records/issues/04-remaining-screens-disposition.md): All 19 screens disposed. 11 out-of-scope, 3 satisfied-inline (51, 52, 53), 2 deferred (55, 62, 68), 3 needs-design (50 Player Profile, 56 Player Contract, 61 Player Development/Training Focus display).
+- [05 — Player read RPCs](../.scratch/group-d-player-and-staff-records/issues/05-player-read-rpcs.md): `getPlayerProfile` and `getPlayerContract` RPCs implemented with schemas, handlers, renderer atoms. Committed 2026-09-14.
+- [06 — Player Profile screen](../.scratch/group-d-player-and-staff-records/issues/06-player-profile-screen.md): Replaced WIP placeholder with real screen showing identity, positions, attributes, club, contract info, injury status. Committed 2026-09-14.
+- [07 — Player Contract display](../.scratch/group-d-player-and-staff-records/issues/07-player-contract-display.md): Replaced WIP placeholder with real screen showing wage, length, signing and expiry dates. Committed 2026-09-14.
+- [08 — Player Development display](../.scratch/group-d-player-and-staff-records/issues/08-player-development-display.md): Implemented training focus management screen at `player/$playerId/development`. Committed 2026-09-14.
+
+- [09 — cull the player placeholders](../.scratch/group-d-player-and-staff-records/issues/09-cull-the-player-placeholders.md) and
+  [10 — rule on the staff placeholders](../.scratch/group-d-player-and-staff-records/issues/10-rule-on-the-staff-placeholders.md): filed
+  2026-09-19, closing the obligation ticket 04 named and never ticketed. 09 is mechanical: five
+  disposed player screens plus `playerCoachReport`, which the ledger's list omitted. 10 is not,
+  because three `staff*` folders answer to no screen in this import and need a first-time
+  disposition rather than a deletion. Both are milestone M1 step 5.
+
+#### Not yet specified
+
+None. All 19 screens disposed. Three needs-design surfaces identified, all three shipped.
+
+The placeholder cull shipped in tickets 09 and 10 (2026-09-19). Ten placeholders and the whole
+`staff/$staffId` route branch are gone. One survivor is deliberate: `staffOverview` is `deferred`,
+not disposed — it is a live navbar destination whose roster already ships as `clubStaff`, and
+connecting them is [group-c ticket 02](../.scratch/group-c-club-information/issues/02-the-club-staff-nav-entry-lands-on-a-placeholder.md).
+
+#### Out of scope
+
+- **Multiplayer, network sessions, multiple human managers** — inherited from Group A.
+- **Worker pools, memory budgets, resource tuning** — inherited from Group A.
+- **Off-device telemetry, crash reporting** — inherited from Group A.
+- **Non-normative import scaffolding** — inherited from Group A.
+- **Staff Profile / Contract / History (screens 64-66)** — per closed role set.
+- **Coach Report (screen 67)** — no counterpart.
+- **Player Happiness (screen 58)** — no morale system.
+- **Player Discipline (screen 60)** — no card accumulation or ban model.
+- **Player Comparison (screen 63)** — no comparison mechanism.
+- **Player Statistics per-player (screen 54)** — no aggregated model.
+- **Player Transfer Status (screen 57)** — transfer listing not modeled.
+- **Player Form (screen 53)** — no match rating history model.
+- **Player Injuries history (screen 59)** — injury is per-match event, no durable record.
+- **Player Attributes dedicated screen (screen 51)** — satisfied inline in squad.
+- **Player Positions dedicated screen (screen 52)** — satisfied inline in squad.
+
+### Map: Group E — Squad Management
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciled spec covering all 11 Group E screens (69-79) — squad selection, view selector, filters, sorting, shirt numbers, captaincy, set-piece takers, registration, availability/eligibility, player interaction, team meeting/discipline — stating per screen what to build or dispose.
+
+#### Notes
+
+**Several screens may already be satisfied or out of scope:**
+
+- **Squad screen** is partially built (table, columns, positions, condition, training focus column). Selection, filters, sorting exist inline.
+- **Captain/Set-pieces** — no system exists.
+- **Player interaction/grievances, team meeting/discipline** — no morale, discipline, or meeting system exists.
+- **Shirt numbers** — no squad number model.
+- **Squad registration, eligibility** — no system exists.
+
+Inherited from Group A: multiplayer axis out of scope, worker pools out of scope, telemetry out of scope.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-e-squad-management/issues/01-screen-inventory.md): All 11 screens surveyed. 4 satisfied (69, 70, 72, partially 71), 2 partial (71, 77), 6 out-of-scope (73-76, 78-79).
+- [02 — Status filter](../.scratch/group-e-squad-management/issues/02-status-filter.md): Squad gets a Status filter beside Position, offering only modelled statuses (Tired) and matching via `statusesOf`. Each dropdown clears only its own clause; URL form `status:Tir`.
+- [03 — Attribute filters](../.scratch/group-e-squad-management/issues/03-attribute-filters.md): owned Squad only; one attribute from `ALL_ATTRIBUTES` at a time, at a minimum `N` from the 1–20 scale; a non-exact figure never matches. Built as [04](../.scratch/group-e-squad-management/issues/04-attribute-threshold-filter.md).
+- [04 — Attribute threshold filter](../.scratch/group-e-squad-management/issues/04-attribute-threshold-filter.md): shipped 2026-09-28. `matchesAttribute` matches exact figures only, the URL form is `attr:pace:15`, and there are no palette rows (740 would be noise).
+
+#### Not yet specified
+
+Screen 71's status and attribute halves have shipped (02, 04). Its other axes (team, availability, registration, selection, age, morale, contract, transfer, presets) are recorded in the ledger as not yet audited. Existing squad features are otherwise shipping.
+
+#### Out of scope
+
+- **Multiplayer, network sessions, multiple human managers** — inherited from Group A.
+- **Worker pools, memory budgets, resource tuning** — inherited from Group A.
+- **Off-device telemetry, crash reporting** — inherited from Group A.
+- **Non-normative import scaffolding** — inherited from Group A.
+
+### Map: Group G — Match Day and Match Review
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciled spec covering all 14 Group G screens (91-104) — match preview, team sheet, live match overview/commentary/statistics/ratings/tactics, half-time team talk, post-match summary/statistics/ratings/team talk, match report, incidents/review — stating per screen what is already built and what needs new surfaces.
+
+#### Notes
+
+The match engine and several match screens are partially built. Match commentary, events, Condition, injuries, substitutions, and tactical commands exist. Full-screen match live view, half-time talk, post-match flow, and disciplinary review are not built.
+
+Inherited from Group A: multiplayer, worker pools, telemetry, non-normative scaffolding.
+
+#### Decisions so far
+
+- [01 — Group G screen inventory survey](../.scratch/group-g-match-day/issues/01-screen-inventory.md): 1 built, 8 partial, 3 absent (98/102 need morale model; 104 cut from v1)
+- [02 — Scope decision for absent screens](../.scratch/group-g-match-day/issues/02-scope-absent-screens.md): 104 out of scope (cut from v1); 98/102 out of scope for Group G (deferred — require new domain model)
+- [03 — Build sequence for 8 partial screens](../.scratch/group-g-match-day/issues/03-partial-screen-build-sequence.md): Priority order set; shared component pairs identified
+- [04 — Team Sheet screen](../.scratch/group-g-match-day/issues/04-team-sheet-screen.md): Implemented. New `getTeamSheet` RPC + screens for both team lineups with formation and substitutes.
+- [05 — Match Preview screen](../.scratch/group-g-match-day/issues/05-match-preview-screen.md): Implemented. Fixture context, recent form, head-to-head from existing fixture data.
+- [06 — Standalone Commentary screen](../.scratch/group-g-match-day/issues/06-standalone-commentary-screen.md): Implemented. Commentary lines with polling for live updates.
+- [07 — Tactics/Substitutions UI](../.scratch/group-g-match-day/issues/07-tactics-substitutions-ui.md): Implemented. Standalone live screens share one live tactic with the Match day panel; tab-bar reachability deferred to 13. Follow-ups: [12](../.scratch/group-g-match-day/issues/12-live-panel-controlled-club.md), [13](../.scratch/group-g-match-day/issues/13-mount-live-match-tab-bar.md), [decision request 01](../.scratch/group-g-match-day/decision-request-01-live-change-tactics-scope.md) (live Change Tactics scope).
+- [08 — Post-Match Summary](../.scratch/group-g-match-day/issues/08-post-match-summary-enhancement.md): Implemented. `getPostMatchSummary` read RPC; summary shown only after the result is committed; fixed accepted results reverting to Accept result. Follow-ups: [14](../.scratch/group-g-match-day/issues/14-post-match-summary-penalties.md), [15](../.scratch/group-g-match-day/issues/15-full-time-session-lost-before-accept.md).
+- [09 — Match Statistics](../.scratch/group-g-match-day/issues/09-match-statistics-component.md): Implemented. `getMatchStatistics` projection; live totals cut by revealed-event count; possession/corners/fouls/offsides unavailable pending [decision request 02](../.scratch/group-g-match-day/decision-request-02-unsimulated-match-statistics.md). Follow-up: [16](../.scratch/group-g-match-day/issues/16-live-commands-stamped-by-revealed-minute.md).
+- [10 — Match Player Ratings](../.scratch/group-g-match-day/issues/10-match-player-ratings-component.md): resolved 2026-09-27. A
+  **Match Rating** per participant: a base of 6.0, plus the player's own events and their phase's share
+  of the result while on the pitch, read from the stored timeline ([decision request 03](../.scratch/group-g-match-day/decision-request-03-match-player-rating-formula.md),
+  Option B). The clean sheet counts only at full time. `matchId` is not on the destination, the same
+  deviation as ticket 09.
+- [11 — Match Report](../.scratch/group-g-match-day/issues/11-match-report-screen.md): Implemented. `getMatchReport` read, refused until the result is committed; route carries `matchId`; embeds full-match statistics. Follow-up: [17](../.scratch/group-g-match-day/issues/17-stoppage-minutes-read-as-second-half.md).
+- [13 — Mount live-match tab bar](../.scratch/group-g-match-day/issues/13-mount-live-match-tab-bar.md): Implemented. `SecondaryNav` mounted in `CareerShell`; flat `match-*` routes detected by parser; tab-to-destination mapping covers all match contexts. Follow-up: none.
+- [Spec published](../.scratch/group-g-match-day/spec.md): Reconciled spec marking handoff from charting to slicing.
+- [Implementation tickets](../.scratch/group-g-match-day/issues/): 8 vertical slices (04–11), all unblocked.
+- [32 — Saves need a migration path](../.scratch/group-g-match-day/issues/32-saves-need-a-migration-path.md): resolved 2026-09-21.
+  Saves are disposable during development: a save is stamped with a DDL-derived `SAVE_SCHEMA_VERSION`
+  and `loadSave` refuses any other with `SaveSchemaMismatchError`, proved against a real 2026-09-02
+  save. [31](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md) is unblocked and needs no backfill.
+- [31 — A committed match stores its timeline](../.scratch/group-g-match-day/issues/31-committed-matches-store-their-timeline.md):
+  resolved 2026-09-21. One `MatchTimelineRecorded` event on the match stream, appended in the commit
+  transaction; report, summary and statistics load it, a live match re-derives. Proved by flipping a
+  mocked engine rule after commit. Unblocks 26 and 29; the restart message split out as
+  [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md).
+- [29 — Substitution windows are keyed by half and minute](../.scratch/group-g-match-day/issues/29-substitution-windows-share-a-minute-across-halves.md):
+  resolved 2026-09-21. A first-half stoppage forced Substitution and a second-half one at the same
+  minute now spend two windows; engine and view agree. Only re-derived (live) matches replay differently.
+- 2026-09-21, orchestrator: [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md) re-blocked on
+  [34](../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md). Decision request 04 makes the named bench the only source of
+  substitutes and no AI club names one. [35](../.scratch/group-g-match-day/issues/35-manager-substitutions-come-from-the-bench.md) and
+  [36](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md) slice decision requests 04 and 06.
+- 2026-09-21, orchestrator: [33](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md) re-blocked on
+  [37](../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md). A started, uncommitted match cannot
+  be reopened after an app restart: Match day never reads `pending.matchId` and `startMatch` refuses, so
+  the career is stranded rather than replaying from kickoff as 31 and decision request 05 assumed.
+- [34 — AI clubs name a bench](../.scratch/group-g-match-day/issues/34-ai-clubs-name-a-bench.md): resolved 2026-09-21. A spare
+  Natural-tier goalkeeper first, then by Position Rating. Unblocks [26](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md).
+  Review split out [38](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md) (locale-free sorting in the pure packages).
+- [26 — A forced substitution comes from the named bench](../.scratch/group-g-match-day/issues/26-forced-substitution-picks-any-squad-player.md):
+  resolved 2026-09-21. Never-on bench players only, like for like first, then bench order; none left →
+  10 men. Review split out [39](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md) (empty-bench advisory).
+- [35 — A manager's substitution comes from the bench](../.scratch/group-g-match-day/issues/35-manager-substitutions-come-from-the-bench.md):
+  resolved 2026-09-21. Off-bench and re-entry refused; the picker lists the kickoff bench minus been-on. The
+  bench is fixed at kickoff. Decision request 01's line-up half filed as
+  [40](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md).
+- [36 — A red-carded keeper drags a stand-in](../.scratch/group-g-match-day/issues/36-a-red-carded-keeper-drags-a-stand-in.md):
+  resolved 2026-09-21. One rule for every way a keeper leaves; decision request 06's note is implemented.
+- [37 — Match day resumes a started match after a restart](../.scratch/group-g-match-day/issues/37-match-day-resumes-a-started-match-after-a-restart.md):
+  resolved 2026-09-21. `getAwaitingMatch` reads the started match back; the feed replays from kickoff.
+  Unblocks 33. Review split out [41](../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md) and
+  [42](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md).
+- [33 — A restarted live match says so](../.scratch/group-g-match-day/issues/33-a-restarted-live-match-says-so.md): resolved 2026-09-21.
+  A restart-restored match shows a standing notice that it replays from kickoff.
+- [38 — The pure packages sort without the locale](../.scratch/group-g-match-day/issues/38-pure-packages-sort-without-locale.md): resolved
+  2026-09-21. `compareCodeUnits` everywhere, and an `effect-lint` rule so it stays that way.
+- [39 — An empty bench is flagged before kickoff](../.scratch/group-g-match-day/issues/39-an-empty-bench-is-flagged-before-kickoff.md):
+  resolved 2026-09-21. A match-readiness advisory on the Kickoff panel and the Tactics Overview.
+- [40 — A live Change Tactics changes only the Team Instructions](../.scratch/group-g-match-day/issues/40-a-live-change-tactics-changes-only-instructions.md):
+  resolved 2026-09-22. A dismissal sticks; decision request 01 is built. Review split out
+  [43](../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md).
+- [41 — Starting a match and accepting its result refresh the season read](../.scratch/group-g-match-day/issues/41-accepting-a-result-refreshes-the-season-read.md):
+  resolved 2026-09-22. `reachedFullTime` is gone; screens decide "accepted" from the season read.
+- [43 — "Formation in play" lists the pitch](../.scratch/group-g-match-day/issues/43-formation-in-play-reads-the-pitch.md): resolved
+  2026-09-22. Every live surface now reads who is on from the match, not a Tactic.
+- [42 — Quick result skips the live reveal](../.scratch/group-g-match-day/issues/42-quick-result-skips-the-live-reveal.md): resolved
+  2026-09-27. The renderer reads and reveals a Quick result's feed at once, with no injury pause. The
+  mode is not persisted, so after an app restart the match replays live from kickoff.
+- [20 — A command rewrites play already seen](../.scratch/group-g-match-day/issues/20-a-command-rewrites-play-already-seen.md): resolved
+  2026-09-27. A live command is stamped at M+1, the minute after the last revealed Match Event
+  ([decision request 08](../.scratch/group-g-match-day/decision-request-08-live-command-timing-relative-to-revealed-play.md), Option A);
+  the renderer reveals nothing and polls nothing while the command is in flight, then reads on from the
+  revealed position. The halftime path is its own guarantee: the engine now emits `HalfTimeReached`
+  before the commands it applies at the break, so a halftime instruction lands after the break without
+  re-simulating minute 45. Closes the last of the four points in
+  [revealed play is immutable](../.agents/notes/implemented/feature/2026-09-19-revealed-play-is-immutable.md).
+
+#### Not yet specified
+
+None — all known decisions resolved, spec written, tickets sliced.
+
+#### Out of scope
+
+- Screen 104 (Match Incidents and Disciplinary Review) — cut from v1 per CONTEXT.md.
+- Screens 98/102 (Half-Time and Post-Match Team Talk) — require new morale/team-talk domain model; deferred to a future effort.
+- Post-match flow — integration with Season Summary and Continue (Group H scope).
+
+### Map: Group H — Training and Player Development
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciled spec covering all 13 Group H screens (105-117) — training overview, calendar/schedule, training unit assignment, individual training plan, position/role training, additional focus and trait development, coaching assignments, workload and recovery, performance report, player development centre, mentoring groups, youth intake and academy development, training camp and pre-season plan — stating per screen what is already built and what needs new surfaces.
+
+#### Notes
+
+- Training screen (`apps/desktop/src/renderer/training/TrainingScreen.tsx`) is a placeholder stub.
+- `SetTrainingFocus` command and `TrainingFocusSetEvent` exist; `PlayerDevelopedEvent` drives per-season attribute changes.
+- Training Focus (single-category toggle) is the only training-plan concept; fully implemented with RPC, DB, domain logic.
+- Player Development (`developPlayer`, `developPlayersForSeason`) is fully implemented including coach modifier.
+- Coach model exists (`coachModifier` in `staff.ts`, `Technical Coaching` manager pillar) but no assignments UI.
+- Match-driven condition/recovery engine exists; no training-specific workload model.
+- No training calendar, unit, position-training, traits, mentoring, youth-academy-generation, or training-camp code exists.
+- The `packages/game-engine` and `packages/shared` are pure — any new training simulation logic goes there.
+
+#### Decisions so far
+
+- [01 — Group H screen inventory survey](../.scratch/group-h-training-and-player-development/issues/01-screen-inventory.md): 0 built, 7 partial, 6 absent. Backend models for Training Focus and Player Development are fully implemented; calendar/units/position-training/traits/mentoring/youth-intake/training-camp have no code.
+- [02 — Scope decision for absent screens](../.scratch/group-h-training-and-player-development/issues/02-scope-absent-screens.md): 6 screens in scope for v1 (105, 108, 111, 112, 113, 114); 7 deferred (106, 107, 109, 110, 115, 116, 117). See [Agent Note: Group H v1 scope](../.agents/notes/proposed/architecture/2026-09-15-group-h-v1-scope.md).
+- [03 — Build sequence](../.scratch/group-h-training-and-player-development/issues/03-partial-screen-build-sequence.md): Priority 1=Coaching Assignments, 2=Workload/Recovery, 3=Individual Training Plan, 4=Performance Report, 5=Player Dev Centre, 6=Training Overview.
+- [Spec published](../.scratch/group-h-training-and-player-development/spec.md): Reconciled spec marking handoff from charting to slicing.
+- [Implementation tickets](../.scratch/group-h-training-and-player-development/issues/): 6 vertical slices (04-09), all unblocked except 09 (blocked on 04-08).
+- [05 — Workload and Recovery](../.scratch/group-h-training-and-player-development/issues/05-workload-and-recovery.md): shipped. The Rest/Active indicator is derived in main from stored Condition against the engine's non-contact threshold (75), so the renderer never imports the engine; v1 shows stored Condition, not a projection to the next kickoff. The detail line states the last injury's Severity this Season, since the ledger keeps it until Season start. Recorded in [spec.md](../.scratch/group-h-training-and-player-development/spec.md).
+- [06 — Individual Training Plan](../.scratch/group-h-training-and-player-development/issues/06-individual-training-plan.md): shipped at `/training/plan/$playerId`, reached from Workload and Recovery rows; focus read from `getSquad`, set through the existing `setTrainingFocus`. Goalkeeping offered only to players with goalkeeping Attributes, renderer-side for now; main-side enforcement filed as [10](../.scratch/group-h-training-and-player-development/issues/10-enforce-goalkeeping-focus-rule.md).
+- [07 — Performance Report](../.scratch/group-h-training-and-player-development/issues/07-performance-report.md): partly shipped, needs-info. The coach report stub shows Training Focus and season-over-season Attribute changes from `PlayerDeveloped` events through a new own-club-only read, `getPlayerDevelopmentHistory`. Open: what "coach rating" shows ([decision request 01](../.scratch/group-h-training-and-player-development/decision-request-01-performance-report-coach-rating.md)) and whether events should record pre-development Attributes so the first Season shows changes ([decision request 02](../.scratch/group-h-training-and-player-development/decision-request-02-development-baseline-in-events.md)).
+- [08 — Player Development Centre](../.scratch/group-h-training-and-player-development/issues/08-player-development-centre.md): shipped at `/training/development-centre`. One squad-wide read, `getSquadDevelopment`, reuses the Performance Report's season diff; the indicator counts visible Attributes that rose and fell in the latest recorded Season, with an explicit no-comparison state. Rows link to Player Development (given a navigation destination for the first time) and Training Plan. No Workload gauge on 114 in v1.
+- [10 — Enforce the Goalkeeping Training Focus rule](../.scratch/group-h-training-and-player-development/issues/10-enforce-goalkeeping-focus-rule.md): shipped. One shared predicate decides which Categories a player may take; `setTrainingFocus` refuses the rest with `TrainingFocusNotOfferedError`. Off-rule rows in older saves stay as they are: they develop the player exactly as None, and any offered choice replaces them.
+
+#### Not yet specified
+
+None — all known decisions resolved. Proceeding to spec.
+
+#### Out of scope
+
+- Screens 106 (Training Calendar), 107 (Training Unit Assignment), 109 (Position/Role Training), 110 (Additional Focus/Traits), 115 (Mentoring Groups), 116 (Youth Intake), 117 (Training Camp/Pre-Season Plan) — deferred to post-v1; each requires a new domain model.
+- Game-engine simulation logic for training outcomes — chart UI surfaces first.
+
+### Map: Group I — Scouting and Recruitment
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciled spec covering all 14 Group I screens (118-131): scouting centre, player search, staff
+search, scouting assignment, scouting priorities, recruitment focus, player shortlist, staff shortlist,
+scouting knowledge, recruitment meetings, squad planner, transfer target comparison, agent and
+intermediary information, trial and assessment. It states per screen what is already built, what is in
+scope for v1, and in what order the in-scope screens get built.
+
+#### Notes
+
+- Screen specs are copied into this directory (`00_group_i_index.md`, `118_*.md` to `131_*.md`).
+- CONTEXT.md § Scouting defines Scout, Scouting Assignment, Scouting Progress, Attribute Range, Fully
+  Scouted and Scouting Report. Use those terms; a spec's own wording does not override them.
+- The [team-scout-report](../.scratch/team-scout-report/) effort shipped a club-scoped Team Scout Report.
+  Check it before treating any scouting surface as absent.
+- Follow the [Group H](../.scratch/group-h-training-and-player-development/map.md) precedent: inventory, then
+  scope, then build sequence, then spec and tickets.
+
+#### Decisions so far
+
+- [01 — Group I screen inventory survey](../.scratch/group-i-scouting-and-recruitment/issues/01-screen-inventory.md): 0 built, 5 partial (four placeholder stubs and the assignment commands), 9 absent. The Scouting model behind the Team Scout Report exists; shortlists, focuses, priorities, meetings, planner, agents, trials and staff hiring do not. The transfer market shows exact figures for unscouted Players.
+- [02 — Scope decision for missing systems](../.scratch/group-i-scouting-and-recruitment/issues/02-scope-absent-screens.md): 3 screens in scope for v1 (118, 121, 126), 11 deferred. See [Agent Note: Group I v1 scope](../.agents/notes/implemented/architecture/2026-09-15-group-i-v1-scope.md).
+- [03 — Build sequence](../.scratch/group-i-scouting-and-recruitment/issues/03-partial-screen-build-sequence.md): 1=Scouting Assignment, 2=Scouting Knowledge, 3=Scouting Centre. New Player targets wait for [decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md).
+- [Spec published](../.scratch/group-i-scouting-and-recruitment/spec.md): reconciled spec, handoff from charting to slicing.
+- [Implementation tickets](../.scratch/group-i-scouting-and-recruitment/issues/): 3 vertical slices (04-06); 06 blocked on 04 and 05. 07 added during 04.
+- [04 — Scouting Assignment screen](../.scratch/group-i-scouting-and-recruitment/issues/04-scouting-assignment-screen.md): shipped at `/scouting-assignment`. Club assignments take `expectedReportId` from the Club's `getTeamScoutReport`; a Club target reads "Tracked per Player".
+- [07 — Typed RPC errors survive the IPC boundary](../.scratch/group-i-scouting-and-recruitment/issues/07-typed-rpc-errors-survive-ipc.md): shipped. Found in 04: every typed error reached the renderer as `{ name: "Error" }`. `handleRpc` now encodes failures with the method's error schema.
+- [05 — Scouting Knowledge screen](../.scratch/group-i-scouting-and-recruitment/issues/05-scouting-knowledge-screen.md): shipped at `/scouting-knowledge`. One read, `getScoutingKnowledge`, gives per-Club coverage and Knowledge Confidence over the whole squad and per-Player Scouting Progress, with no figure. Knowledge Confidence now also reads live per Club (CONTEXT.md).
+- [06 — Scouting Centre screen](../.scratch/group-i-scouting-and-recruitment/issues/06-scouting-centre-screen.md): shipped on the `scouting` route, aggregating the Scout roster and coverage summary with links to 121 and 126. All three v1 screens shipped; follow-up [08](../.scratch/group-i-scouting-and-recruitment/issues/08-shared-read-state-helper.md) extracts the read-state code repeated across five screens.
+- [08 — One read-state helper for the scouting and training screens](../.scratch/group-i-scouting-and-recruitment/issues/08-shared-read-state-helper.md): shipped. `readState` serves all five sites; `ReadStateMessage` serves three, since the Scouting Centre's section lines are not page messages.
+- [09 — The Transfer market reads by Scouting Progress](../.scratch/group-i-scouting-and-recruitment/issues/09-the-market-reads-players-by-scouting-progress.md): resolved 2026-09-23 against the tree. Every rival and Free Agent on the market reads as a `KnownFigure` by the human club's progress on him — a Range until Fully Scouted (`packages/shared/src/rules/scouting.ts`), exact at it. The wire carries no exact figure below Fully Scouted; `CONTEXT.md` **Listed** lost its full-information Transfer Value clause in the same commit. See the ticket's Answer for per-criterion evidence.
+- [10 — The Player screens read by Scouting Progress](../.scratch/group-i-scouting-and-recruitment/issues/10-player-screens-read-players-by-scouting-progress.md): resolved 2026-09-23. `getPlayerProfile` gates every figure by the human club's Scouting Progress through the ticket-09 shared rule — a Range below Fully Scouted, exact at it — for every player outside the manager's squad; own-squad players skip the lookup. The profile wire (same `PlayerFigureSchema`) and the market can no longer disagree about one Player, and Player screens, header band and market tables share one renderer. The same commit filed the four pre-existing e2e reds it surfaced as [desktop-suite-red 15/16](../.scratch/desktop-suite-red/issues/15-empty-load-list-specs-assert-retired-copy.md). See the ticket's Answer for per-criterion evidence.
+- [11 — Player Search reads by Scouting Progress](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md): resolved 2026-09-23 (`58eab5d4`). One `getPlayerSearch` read covers the whole save in one result pool; every rival/Free Agent maps through the ticket-09 shared rule (Range below Fully Scouted, exact at it, own squad exact), so the wire carries no exact figure below Fully Scouted. `PlayerSearchScreen` retires the `playerSearch` WIP placeholder. See the ticket's Answer for per-criterion evidence.
+- [12 — Transfer Target Comparison reads by Scouting Progress](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md): sliced 2026-09-23 from the same decision request, blocked on 11. 11 shipped; now the frontier. See the ticket.
+- [13 — Scout Player from the Player Profile](../.scratch/group-i-scouting-and-recruitment/issues/13-scout-player-from-the-player-profile.md): resolved 2026-09-28. The Profile's career bar carries Scout Player, which opens a Scout picker over the existing `assignScout` command; the scouting key alone is invalidated. Held with a reason for the manager's own Player or a club with no Scouts. The full `test` gate was red on four unrelated main-process season timeouts at resolution; see the ticket's Answer.
+
+#### Not yet specified
+
+None for v1. Screens 119 and 129 are sliced ([11](../.scratch/group-i-scouting-and-recruitment/issues/11-player-search-reads-by-scouting-progress.md), [12](../.scratch/group-i-scouting-and-recruitment/issues/12-transfer-target-comparison-reads-by-scouting-progress.md)).
+
+#### Out of scope
+
+- Screens 120 (Staff Search) and 125 (Staff Shortlist): no staff hiring, and no roles beyond `coach` and `scout`.
+- Screens 122 (Scouting Priorities), 123 (Recruitment Focus), 124 (Player Shortlist): each needs a new model.
+- Screens 127 (Recruitment Meetings), 128 (Squad Planner), 130 (Agent and Intermediary Information), 131 (Trial and Assessment): each needs a new model and leans on Group J.
+- Assignment duration, cadence, travel, priority, and competition, nation or region targets.
+
+### Map: Group J — Transfers, Contracts and Negotiations
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciled spec covering all 15 Group J screens (132-146): transfer centre, incoming transfer offer,
+make transfer offer, transfer negotiation, loan offer and negotiation, player contract offer, player
+contract negotiation, staff contract offer and negotiation, contract renewal, contract expiry and Bosman
+status, transfer completion and registration, transfer cancellation and withdrawal, transfer clauses and
+installments, transfer budget and wage budget review, transfer history and audit trail. It states per
+screen what is already built, what is in scope for v1, and in what order the in-scope screens get built.
+
+#### Notes
+
+- Screen specs are copied into this directory (`00_group_j_index.md`, `132_*.md` to `146_*.md`).
+- CONTEXT.md § Transfers & contracts (around line 502) is binding vocabulary.
+- The transfer market already exists (`renderer/transfers/`, RPCs `getTransfersScreen`, `placeBid`,
+  `respondToBid`, `respondAsBidder`, `signFreeAgent`, `renewContract`). Inventory before assuming absence.
+- Group I's [decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md)
+  (knowledge-limited Player reads) bears directly on any Group J screen that shows another club's Player.
+- Follow the [Group I](../.scratch/group-i-scouting-and-recruitment/map.md) precedent: inventory, scope, build
+  sequence, then spec and tickets.
+
+#### Decisions so far
+
+- [01 — Group J screen inventory survey](../.scratch/group-j-transfers-contracts-and-negotiations/issues/01-screen-inventory.md): 0 built, 6 partial, 9 absent, all working UI on one Transfers screen. Six screens contradict CONTEXT.md's single-round Bid and never-renegotiated Contract, and the market shows exact figures for other clubs' Players.
+- [02 — Scope decision for missing systems](../.scratch/group-j-transfers-contracts-and-negotiations/issues/02-scope-absent-screens.md): 4 own-club screens in v1 (140, 141 without Bosman, 145, 146), 11 deferred. See [Agent Note: Group J v1 scope](../.agents/notes/proposed/architecture/2026-09-15-group-j-v1-scope.md).
+- [03 — Build sequence](../.scratch/group-j-transfers-contracts-and-negotiations/issues/03-partial-screen-build-sequence.md): 1=Contract Renewal, 2=Contract Expiry, 3=Budget Review, 4=Transfer History.
+- [Spec published](../.scratch/group-j-transfers-contracts-and-negotiations/spec.md): reconciled spec, handoff from charting to slicing.
+- [Implementation tickets](../.scratch/group-j-transfers-contracts-and-negotiations/issues/): 4 vertical slices (04-07), all unblocked.
+- [04 — Contract Renewal](../.scratch/group-j-transfers-contracts-and-negotiations/issues/04-contract-renewal.md): resolved 2026-09-21 (`f60a3093`). The Player Contract screen renews an own-club Player's Contract for a chosen length; a Contract renews only in its last contracted year, per [decision request 01](../.scratch/group-j-transfers-contracts-and-negotiations/decision-request-01-when-a-contract-can-be-renewed.md), and a mid-term press gets `ContractRenewalNotDueError`'s sentence.
+- [05 — Contract Expiry](../.scratch/group-j-transfers-contracts-and-negotiations/issues/05-contract-expiry.md): resolved. Screen 141 shipped 2026-09-15.
+- [06 — Budget Review](../.scratch/group-j-transfers-contracts-and-negotiations/issues/06-budget-review.md): resolved. Screen 145 shipped 2026-09-15.
+- [07 — Transfer History](../.scratch/group-j-transfers-contracts-and-negotiations/issues/07-transfer-history.md): resolved. Screen 146 shipped 2026-09-15 on
+  its own route `career/$saveId/transfer-history`, leaving the club-scoped stub alone. See
+  [Agent Note](../.agents/notes/implemented/architecture/2026-09-15-transfer-history-takes-its-own-career-route.md).
+- [08 — Navbar entries for 141 and 145](../.scratch/group-j-transfers-contracts-and-negotiations/issues/08-navbar-entries-for-141-and-145.md): resolved
+  2026-09-16. All three v1 screens are in the Recruitment submenu with `g 4 <key>` bindings; the
+  submenu strip now scrolls, since ten entries overflow the default window.
+- [Decision request 02](../.scratch/group-j-transfers-contracts-and-negotiations/decision-request-02-club-scoped-transfer-history-index.md): open. Whether the
+  save takes two more indexes for the club-scoped `player_transfers` read. Raised by 07, which ships
+  without them.
+- [09 — The Player Contract Offer reads by Scouting Progress](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md): sliced 2026-09-23 from [Group I decision request 01](../.scratch/group-i-scouting-and-recruitment/decision-request-01-knowledge-limited-player-reads.md), now answered and shipped (group-i 09/10). 137 was out of scope only pending that decision; it is now buildable. See the ticket.
+- [09 — The Player Contract Offer reads by Scouting Progress](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md): resolved 2026-09-26. Screen 137's offer terms are a read, not a form's guesswork: the shared `progressForReading` rule now has one loader (`club/scoutingProgress.ts`) behind all seven Player reads, and `knowledge-agreement.test.ts` holds them to equal *values* for one Player rather than to equal shapes. `signFreeAgent` takes role, length and wage and the signing lands the Player in the squad. Two things the ticket could not settle, both escalated rather than decided here: the wage band contradicts ADR-0005's wage clause and CONTEXT.md (see [decision request 03](../.scratch/group-j-transfers-contracts-and-negotiations/decision-request-03-is-a-wage-offered-inside-a-knowledge-band.md)), and the signed Role rides the event payload with no projection to read it, because persisting it needs a column and there is no save migration path ([ticket 32](../.scratch/group-g-match-day/issues/32-saves-need-a-migration-path.md)).
+- [Decision request 03](../.scratch/group-j-transfers-contracts-and-negotiations/decision-request-03-is-a-wage-offered-inside-a-knowledge-band.md): open, raised by 09. Whether an offered wage is a formula figure the manager confirms or a band he picks inside. Blocks the prose (ADR-0005, two CONTEXT.md entries), not the queue.
+- [10 — Make Offer from the Player Profile](../.scratch/group-j-transfers-contracts-and-negotiations/issues/10-make-offer-from-the-player-profile.md): filed 2026-09-28, `ready-for-agent`. A way into the shipped Bid Composer from the Player Profile: the `transfers` destination takes an optional `playerId` and opens on the right tab with that Player selected. No change to the composer itself.
+
+#### Not yet specified
+
+None for v1.
+
+#### Out of scope
+
+- Screens 132 (Transfer Centre) and 134 (Make Transfer Offer): served by the shipped Transfers screen's market and Bid composer, which read by Scouting Progress since group-i ticket 09. Screen 137 is [ticket 09](../.scratch/group-j-transfers-contracts-and-negotiations/issues/09-player-contract-offer-reads-by-scouting-progress.md), not out of scope.
+- Screens 135 (Transfer Negotiation), 136 (Loan Offer), 138 (Player Contract Negotiation), 139 (Staff Contract Offer), 144 (Clauses and Installments), and 141's Bosman and pre-contract part: contradict CONTEXT.md (single-round Bid, no loans, never-renegotiated Contract, no Staff wages). Need a domain change a human makes.
+- Screens 133 (Incoming Transfer Offer), 142 (Completion and Registration), 143 (Cancellation and Withdrawal): already served by the Transfers screen's Bid tables; a dedicated screen needs clause, registration or cancellation models.
+
+### Map: Group K — Club Operations, Board and Facilities
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A Group K reconciliation covering the 14 club operations, board, and facilities screens (147–160): a `spec.md` stating per screen what v1 must deliver, plus a deviation register recording every place the imported spec is knowingly not followed. Ready to hand to `/to-spec` → `/to-tickets`.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + Effect. Vocabulary in CONTEXT.md.
+
+**Skills every session should consult**: `grilling`, `domain-modeling`, `doc-standards`, `effect-code`.
+
+**The imported specs are not requirements.** They read as generated from a generic template. Where the spec and codebase disagree, existing decisions win unless a ticket overturns them.
+
+**Most Group K screens have no v1 counterpart.** Facilities, affiliates, commercial/sponsorship, supporter engagement, and stadiums do not exist in v1. Board Objectives (Screen 148) is partially modeled in CONTEXT.md. Staff Responsibilities (Screen 152) may partly overlap with the Staff entity.
+
+#### Decisions so far
+
+<!-- none yet -->
+
+#### Not yet specified
+
+- Which screens are in v1 scope vs deferred vs out-of-scope
+- Whether Board Objectives (Screen 148) needs a UI screen or is satisfied by the existing model
+- Whether Staff Responsibilities (Screen 152) overlaps with the existing Staff entity enough to skip
+- What "Board Overview" means when the President is the Board's face and objectives are League-position bands
+- Facility/stadium/affiliate/commercial axes — confirmed out of v1 scope or part of a later effort?
+
+#### Out of scope
+
+- **Multiplayer, network sessions, cloud.** Removed wholesale per standing decision.
+- **Off-device telemetry.** No backend.
+
+### Map: Group L — Competitions, Nations and World Information
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 161–180 (Competition Overview through World
+Football Overview), stating per screen what the implementation must do and what deviations exist
+from the imported spec at
+`docs/specs/group_l_competitions_nations_and_world_information/`.
+
+#### Notes
+
+**Domain**: local single-player football-management sim. CONTEXT.md already models Competition,
+League, Fixture, Cup Tie, League Table, Nation, Pyramid, Tier, Season, Calendar, Selection Intent,
+Effective Selection, Simulation Depth, and many more. Several screens here overlap with known
+implementations (League Table, Fixtures).
+
+**Skills**: `cm-wayfinder` for charting; `grilling` and `domain-modeling` for ambiguous or
+conflicting specs; `doc-standards` for any spec/reconciliation writing.
+
+**Precedent**: Group A established the reconciliation pattern — audit each screen against existing
+implementation, record deviations (out-of-scope, contradicted, deferred, renamed), write deviation
+register, then spec → slice → implement.
+
+**Blocking impact**: Several screens (174 Nation Overview, 175 Nation Competitions) depend on the
+Nation/Competition data model already built by active-leagues-setup, world-data-model, etc. The
+national team screens (176–178) depend on national team modelling which does not exist yet.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-l-competitions-nations-and-world-information/issues/01-screen-inventory.md): All 18 screens (161–180) are absent or
+  partial WIP placeholders. 11 have routes + 15-line `<h1>` stubs but zero real content; 7 have no
+  route at all. The binding constraint is the data layer — `packages/shared`, `packages/contracts`,
+  and `packages/game-engine` have no models, RPC schemas, or simulation code for competitions,
+  tables, results, statistics, stages, draws, awards, history, records, world rankings, or nation
+  football data. Every screen is blocked at the contract layer.
+
+- [02 — v1 scope](../.scratch/group-l-competitions-nations-and-world-information/issues/02-v1-scope.md): Screens 162–164 (Competition Table, Fixtures, Results)
+  and 161 (Competition Overview) are in v1. The national team screens (176–178) and world-ranking
+  screens (179–180) are out of scope for v1. The remaining 11 screens are deferred — routes exist
+  but data models need building later. Priority: 162 → 163/164 → 161.
+
+- [03 — Competition Table screen](../.scratch/group-l-competitions-nations-and-world-information/issues/03-competition-table-screen.md): WIP stub replaced with
+  real screen. New `getCompetitionTable` RPC (`packages/contracts`), backend handler (`season/`),
+  atom (`queries.ts`), and screen component. Standings rendered from existing `computeStandings`
+  function via `competitionTableAtom(saveId, competitionId)`. 5 tests cover heading, rows, errors,
+  and navigation. New RPC needed a nested `Atom.family` pattern to avoid `MutableHashMap`
+  reference-identity issue.
+
+- [04 — Competition Fixtures screen](../.scratch/group-l-competitions-nations-and-world-information/issues/04-competition-fixtures-screen.md): WIP stub replaced
+  with a real Fixture list. New `getCompetitionFixtures` RPC scoped by `competitionId` rather than
+  widening `getFixtures`, which stays the human's own calendar. The shared SQL was extracted into
+  `fixturesForCompetition` so the two reads cannot drift; the helper keeps `competitionId` nullable
+  so the human read's "no club chosen yet" case still binds SQL `NULL`. An unplayed Fixture reads
+  **Unplayed**, never a fabricated `0 - 0` — CONTEXT.md lists *Schedule* as an _Avoid_ term, so
+  "scheduled" was rejected. Review caught the new RPC omitting `PendingFixtureIntegrityError` from
+  its error union, which typecheck cannot see because the handler is typed
+  `Effect<unknown, unknown>`; fixed before commit. Ticket 03 shipped the same omission in
+  `getCompetitionTable` — filed as [05](../.scratch/group-l-competitions-nations-and-world-information/issues/05-competition-read-followups.md).
+
+- [05 — Competition read follow-ups](../.scratch/group-l-competitions-nations-and-world-information/issues/05-competition-read-followups.md): the narrow-error-union
+  defect ticket 04 found turned out to be systemic. Audited every method in `AppRpcs` by typing the
+  handler map against each declared error schema and reading what `tsc` rejected — 11 mismatches,
+  8 fixed (`getCompetitionTable`, both Manager Profile reads, `respondToBid`, `respondAsBidder`,
+  `signFreeAgent`, `renewContract`, `createSave`). `ManagerProfileNotFoundError` was schema'd and
+  raisable but named by no union at all. Three classes stay open as design questions —
+  `SqlError` across roughly every save-scoped handler, engine invariant errors, and payload
+  `SchemaError` — carried by
+  [decision-request-01](../.scratch/group-l-competitions-nations-and-world-information/decision-request-01-rpc-error-channel.md). An `effect-lint` rule is the
+  wrong tool (the needed fact is a type, not a syntax pattern); the permanent gate is the probe
+  itself as a type alias, blocked only by `SqlError`. Both fixture lists now read `Unplayed`.
+
+- [06 — Deferred Competition Fixtures surface](../.scratch/group-l-competitions-nations-and-world-information/issues/06-competition-fixtures-deferred-surface.md):
+  none of the deferred controls (filters, round/stage and calendar navigation, export, coverage
+  states) enter v1 — each needs data the game does not model, and the imported spec's coverage tiers
+  are not this game's Simulation Depth. Screen 164 is next and should reuse
+  `getCompetitionFixtures` rather than add a third fixture read, then 161.
+
+#### Not yet specified
+
+- Screen inventory completed (ticket 01). All 18 screens are effectively absent. Next steps:
+  - Data model audit: what Competition data already exists vs what needs building
+  - v1 scope: which screens are in/out of scope given the data constraints
+  - Deviation register: how the imported spec maps to what we'll actually build
+- National team modelling (screens 176–178): the codebase has no national team concept, no
+  international fixtures, no national team squad management. These may be out-of-scope for v1.
+
+#### Out of scope
+
+- **National team management as a playable system.** Screens 176–178 (National Team Overview,
+  National Team Squad, International Fixtures and Results) describe surfaces for managing a national
+  team, which requires a national team manager career track and international match calendar.
+  National teams exist as data (Nations with generated squads, perhaps for view-only reference),
+  but managing them is a separate effort (Group O).
+
+### Map: Group M — Media, Press and Communications
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 181–193 (Media Centre through
+Communication History and Transcript), stating per screen what the implementation must do and what
+deviations exist from the imported spec at
+`docs/specs/group_m_media_press_and_communications/`.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer. Charted following the Group A and Group L reconciliation precedent: inventory each screen
+against the existing implementation, decide v1 scope, record deviations (out-of-scope, contradicted,
+deferred, renamed), then spec → slice → implement.
+
+**Skills**: `cm-wayfinder` for charting; `grilling` and `domain-modeling` for the scope and
+vocabulary questions, both of which are human-in-the-loop; `doc-standards` for the spec and
+deviation register.
+
+**What makes this group different from L.** Group L was a set of *views* over data the game already
+half-modelled. Group M is largely a *game system*: press conferences, interviews and statements are
+inputs the player makes, with consequences (morale, reputation, relationships) that must be
+modelled, simulated and persisted. A reconciliation that treats these as screens over existing data
+will understate the work by an order of magnitude. The v1 scope question here is therefore heavier
+than L's, and it is a design decision about what the game *is* — not an implementation call an agent
+should make alone.
+
+**The adjacent concept that already exists.** CONTEXT.md models **News Message** and **News Inbox**
+(lines 907–926), shipped as Screen 24, and is explicit that the News Inbox is "a career record and
+never a queue of work". It lists _Avoid_ terms for it: News feed, Message centre, Notification
+centre. Screen 181 "Media Centre" is the obvious collision: if it becomes a second inbox-like
+surface, the domain grows two names for one idea. Whether Media Centre is a distinct concept, a
+facet of the News Inbox, or a renaming, is the first vocabulary question this map owes an answer to.
+
+**Grounding** — ticket 01 confirmed the charting hypothesis and went further: not only are all 13
+screens absent, CONTEXT.md affirmatively excludes media handling from v1 rather than merely omitting
+it. The Calendar's design depends on that absence. This map's likely destination is therefore a
+deviation register recording that Group M is out of v1, not a spec to build from — unless a human
+overturns the exclusion.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-m-media-press-and-communications/issues/01-screen-inventory.md): all 13 screens are Absent — not even
+  stubbed, though the repo has a stub idiom ~30 screens use. No supporting data exists either: no
+  manager reputation, no morale, no board opinion (one annual verdict from league position plus a
+  consecutive-miss counter), no relationship model, and no command that produces text. The game does
+  generate prose — Commentary Templates and the News copy table — both deterministic, neither a
+  generator. **The decisive finding is that CONTEXT.md already excludes this group from v1**, at
+  751-753 ("media handling ... none of those systems ship in v1") and at 445-447, where the absence
+  of "press content" is the stated reason the Calendar needs no finer clock. That reframes ticket 02
+  from a scope question into a question about overturning a recorded decision.
+
+- [02 — Does CONTEXT.md's v1 exclusion get overturned?](../.scratch/group-m-media-press-and-communications/issues/02-v1-scope.md): **no.** Option A —
+  the exclusion stands, all 13 screens stay out of v1, CONTEXT.md is unchanged because it was
+  already right. Reopening would be a programme (reputation, morale, consequence decider,
+  persistence, balance, a finer Calendar), not a group, and would require amending CONTEXT.md in the
+  same commit as the first code.
+
+#### Not yet specified
+
+Nothing. Ticket 02 closed the map: with Group M out of v1 there is no further fog *toward* this
+destination. The modelling questions the fog used to hold — consequence model, where media sits in
+the event model, determinism of generated content, the Inbox relationship — all moved to
+**Out of scope**, since they are only reachable by reopening the scope decision, which would be a
+fresh effort rather than a resumption of this one.
+
+#### Out of scope
+
+- **Redesigning the News Inbox (Screen 24).** It is shipped and modelled; this map may need to
+  *name its boundary* against Media Centre, but changing it belongs to its own effort.
+- **Multiplayer and administration surfaces.** Group R's territory, even where a media screen
+  implies a shared or hosted context.
+- **National team media.** Group O owns national team management; media attached to it follows that
+  effort, not this one.
+- **The whole of screens 181-193**, per ticket 02. Out of v1, not deferred within it.
+- **A media consequence model** — manager reputation, morale, board opinion, relationships. None
+  exists; each would be its own effort, and only if the scope decision is reopened.
+- **A finer-grained Calendar.** Screens 184/185 assume a clock that stops on non-Fixture dates.
+  CONTEXT.md:445-447 makes the absence of press content the reason no such clock exists, so this
+  cannot change without the scope decision changing first.
+
+### Map: Group N — Jobs, Employment and Manager Career
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 194–207 (Job Centre through Employment
+History and Career Milestones), stating per screen what the implementation must do and what
+deviations exist from the imported spec at
+`docs/specs/group_n_jobs_employment_and_manager_career/`.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer. Charted following the Group M reconciliation precedent: inventory each screen against the
+existing implementation, decide v1 scope, record deviations (out-of-scope, contradicted, deferred,
+renamed), then spec → slice → implement.
+
+**Skill**: `cm-wayfinder` for charting.
+
+**Existing architecture note**: [The job market is deferred; a sacking still ends the career]
+(../../../.agents/notes/implemented/architecture/2026-09-13-job-market-deferred-sacking-stays-terminal.md)
+already rules the core question: Group N is deferred with anchor `unscheduled`, and sacking stays
+terminal. This map's job is to confirm that finding per screen and produce the deviation register.
+
+**What makes this group different from M.** Group M was unsettled — CONTEXT.md's exclusion was spread
+across two non-obvious lines and could have been overturned. Group N's exclusion is explicit and
+recorded in an `implemented` Agent Note with proving tests. The charting here is a confirmation pass,
+not an open scope question.
+
+**Grounding**: all 14 screens are absent from the shipped renderer, RPC layer, schema, and shared
+domain — no stubs, no routes, no tables, no components. The existing codebase models only:
+- **Manager Profile** (Screen 19) — identity, Pillars, retirement
+- **Manager Status** — `consecutive_misses`, `archived_cause`, `last_outcome`
+- **Board Verdict** — `advance.ts` fires seasons and judges objectives
+- **Sacking/Retirement events** — `ManagerSacked`, `ManagerRetired` archive the save
+
+Screen 203 (Dismissal) and Screen 202 (Resign) overlap the existing Manager Sacked / Manager
+Retired events as views of the terminal outcome. Screen 207 (Employment History) overlaps Manager
+History (Screen 30).
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-n-jobs-employment-and-manager-career/issues/01-screen-inventory.md): all 14 screens are Absent — no routes, no
+  stubs, no RPCs, no DB tables, no components, no shared models. Narrow overlap exists for Screens
+  202, 203 and 207 against existing Manager Sacked / Manager Retired events and Manager History,
+  but no dedicated Group N implementation surface uses any of them.
+- [02 — v1 scope](../.scratch/group-n-jobs-employment-and-manager-career/issues/02-v1-scope.md): the existing deferred decision holds. All 14 screens stay
+  out of v1, deferred unscheduled. CONTEXT.md's job market exclusion (810-812) and _Avoid_ of
+  Resignation (821) remain accurate.
+
+#### Not yet specified
+
+Nothing. The existing Agent Note settles the core question; this map closes on the inventory and
+confirmation pass.
+
+#### Out of scope
+
+- **A job market.** Vacancies, applications, interviews, offers, appointments, and the multi-club
+  career path they imply are deferred per the existing Agent Note. Screen 194–201 as imported.
+- **Manager reputation systems.** Screen 205 — no reputation model exists, and no data stores it.
+- **Coaching badges and qualifications.** Screen 206 — no qualifications model exists, and the
+  Manager Pillar system is the shipped substitute.
+- **Resignation as a job-market transition.** Screen 202 as imported — the game has no referent for
+  leaving a club for another. Manager Retired is the existing terminal-resignation equivalent.
+- **Multiplayer and administration surfaces.** Group R's territory, even where a career screen
+  implies a shared or hosted context.
+
+### Map: Group O — National Team Management
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 208–221 (National Team Management Centre
+through International Management History), stating per screen what the implementation must do and
+what deviations exist from the imported spec at
+`docs/specs/group_o_national_team_management/`.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer.
+
+**Existing Agent Note**: [National teams are deferred, not ruled out]
+(../../../.agents/notes/implemented/architecture/2026-09-13-national-teams-deferred-not-ruled-out.md)
+already settles this group: deferred, unscheduled. CONTEXT.md's **Nationality** entry confirms
+"national teams are not modelled" and lists them as deferred.
+
+**Grounding**: all 14 screens are absent from the shipped renderer, RPC layer, schema, and shared
+domain — no stubs, no routes, no components. CONTEXT.md:102-103 explicitly states "work permits and
+national teams are not modelled."
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-o-national-team-management/issues/01-screen-inventory.md): all 14 screens are Absent — no routes, no
+  stubs, no RPCs, no DB tables, no components. CONTEXT.md:103 confirms "national teams are not
+  modelled."
+- [02 — v1 scope](../.scratch/group-o-national-team-management/issues/02-v1-scope.md): the existing deferred decision holds. All 14 screens stay
+  out of v1, deferred unscheduled.
+
+#### Not yet specified
+
+Nothing. The existing Agent Note and CONTEXT.md settle the scope.
+
+#### Out of scope
+
+This map produces a deviation register — everything here is deferred per the existing note, not
+out of scope. Will any screen land `out-of-scope` in the register? Only if a shipped screen
+contradicts it. None do — these screens are merely absent.
+
+- **Screens 208–221 as imported.** All deferred per the existing Agent Note. Building national teams
+  would require international fixtures in the Calendar, eligibility (a second Nationality per player),
+  and club-release rules — a new effort with its own map.
+
+### Map: Group P — Statistics, Records and Analytics
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 222–235 (Analytics Centre through Analytics
+Export and Scheduled Reports), deciding per screen whether it is in v1 scope, deferred, renamed,
+contradicted, or out of scope.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer.
+
+**Existing decisions touching this group:**
+- Per-player statistics are deferred, not ruled out (Agent Note 2026-09-19). Screen 54 (Group D)
+  and Screen 166 (Group L) are the existing dependents; Group P owns the store.
+- Two blocking decisions were approved 2026-09-19 that affect this group.
+
+**Dependencies**: Group P depends on Groups G (match day), L (competitions), and Q (season
+transitions) — accumulated match and season stats must exist before analytics can read them. The
+SPEC-ROADMAP places Group P in Tier 5: last among gameplay groups.
+
+**Known disagreements between the spec and shipped game:**
+- Screen 228 Expected Performance needs a chance-quality model the engine does not produce.
+- Screens 234-235 Custom Report Builder and Analytics Export are flagged as heavy for a local
+  single-player game and may land `out-of-scope` rather than `deferred`.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-p-statistics-records-and-analytics/issues/01-screen-inventory.md): all 14 screens are Absent — no routes, no
+  components, no statistics infrastructure beyond match-level aggregates. The engine produces 9
+  countable statistics; four are Unavailable. No charting library exists. No season-level or
+  player-level stats exist.
+
+- [02 — v1 scope](../.scratch/group-p-statistics-records-and-analytics/issues/02-v1-scope.md): Option A. 222–227, 229–233 deferred; 228, 234, 235 out of scope; nothing built in v1. [Agent Note](../.agents/notes/proposed/architecture/2026-09-21-group-p-v1-scope.md).
+
+### Map: Group Q — Awards, Honours and Season Transitions
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 236–249 (Awards Centre through Pre-Season
+Readiness Checklist), deciding per screen whether it is in v1 scope, deferred, renamed,
+contradicted, or out of scope.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer.
+
+**Existing codebase overlap**: The `season_summary` read model exists in the schema and is used in
+shipped code — it derives from `competition_participants` and `board_objective`. CONTEXT.md defines
+`Season Concluded`, `Board Objective Judged`, `Manager Warned`, `Manager Sacked`, `Manager Retired`,
+`Archived Save`, and `Verdict` — all domain concepts Group Q would build on.
+
+**The job-market note depends on Group Q**: The Agent Note deferring Group N says reopening should
+wait until Group Q is reconciled, because a job market depends on season transitions.
+
+**Known disagreements between the spec and shipped game:**
+- Screens 244 (Promotion Relegation) and 246 (Season Transition / Competition Rollover) are
+  load-bearing: rollover already exists in the shipped game, so the spec may partially contradict
+  shipped behaviour.
+- The spec's "resumable, checkpointed" rollover conflicts with the one-transaction advance recorded
+  in the Group B ledger for Screen 23.
+- Awards screens (236–241) are entirely new — no awards model exists.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-q-awards-honours-and-season-transitions/issues/01-screen-inventory.md): zero Group Q screens have a dedicated
+  route or component. Six screens have partial data-layer overlap (season_summary, rollover,
+  budgets); the rest are entirely absent.
+- [02 — v1 scope](../.scratch/group-q-awards-honours-and-season-transitions/issues/02-v1-scope.md): 243 renamed (ships as Season Summary, which ticket 01 missed); every other screen deferred; nothing built in v1. [Agent Note](../.agents/notes/proposed/architecture/2026-09-21-group-q-v1-scope.md).
+
+### Map: Group R — Multiplayer Administration
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 250–262 (Multiplayer Centre through
+Participant Removal and Session Moderation), stating per screen that the group is disposed in full.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer.
+
+**Existing reconciliation ledger**: A durable
+[RECONCILIATION.md](../docs/specs/group_r_multiplayer_administration/RECONCILIATION.md) already
+exists at the spec source, ruling every screen `out-of-scope` / `Disposed in full`. The multiplayer
+axis was removed wholesale at Group A. CONTEXT.md's **Save** entry fixes exactly one human manager
+per Save. This effort is a confirmation pass — no new analysis is owed.
+
+#### Decisions so far
+
+- [01 — Disposal confirmation](../.scratch/group-r-multiplayer-administration/issues/01-disposal-confirmation.md): all 13 screens are disposed in
+  full per the existing ledger at
+  `../../../docs/specs/group_r_multiplayer_administration/RECONCILIATION.md`. No section-by-section
+  pass is owed — no screen has residue on another axis.
+
+#### Not yet specified
+
+Nothing. The ledger is complete.
+
+#### Out of scope
+
+- **Screens 250–262 as imported.** All disposed in full. Multiplayer is not part of this game.
+
+### Map: Group S — Search, Utilities and Reference
+
+Label: `wayfinder:map`
+
+#### Destination
+
+A reconciliation spec and deviation register for screens 264–277 (Global Search through Application
+Information and Content Manifest), deciding per screen whether it is in v1 scope, deferred,
+renamed, contradicted, out of scope, or already shipped under another name.
+
+#### Notes
+
+**Domain**: local single-player football-management sim, Electron + event-sourced Effect domain
+layer.
+
+**Group S is unique**: three screens are already shipped under other efforts — the rest are absent.
+
+| Screen | Status in shipped code |
+|--------|----------------------|
+| 270 Command Palette and Quick Actions | **Shipped** — `renderer/actions/registry.ts` etc. |
+| 271 Keyboard Shortcuts Reference | **Shipped** — key binding system and help overlay |
+| 272 Contextual Help and Onboarding | **Contracted** — full architecture defined in `contextual-help-mechanical-provenance.md` Agent Note; CONTEXT.md defines the terms |
+| 264–269, 273–277 | **Absent** — no routes, no components, no data models |
+
+**Known overlaps with shipped concepts:**
+- 264 Global Search would need Groups D–L to exist before it pays off.
+- 267–269 Favorites/Pinned/Saved would need a model for marking entities as favourites.
+- 275 Notification and Reminder Centre overlaps the existing News Inbox and would need a clear
+  boundary.
+- 276 Import/Export overlaps Group F Screen 88.
+- 277 Application Information overlaps the existing About/version screen.
+
+#### Decisions so far
+
+- [01 — Screen inventory](../.scratch/group-s-search-utilities-and-reference/issues/01-screen-inventory.md): three screens shipped as modals (270, 271,
+  272), one partial (277), ten absent (264–269, 273–276). Shipped forms are modal/overlay, not
+  route-addressable screens.
+- [02 — v1 scope](../.scratch/group-s-search-utilities-and-reference/issues/02-v1-scope.md): Option C. 270–272 and 277 renamed to their shipped forms; 264–269, 273–275 deferred; 276 goes to Group F. [Agent Note](../.agents/notes/proposed/architecture/2026-09-21-group-s-v1-scope.md).

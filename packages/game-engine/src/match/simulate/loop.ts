@@ -11,7 +11,7 @@ import {
 } from "./constants.js";
 import { PhaseStrengthResolver } from "./phaseStrengthResolver.js";
 import { EventResolver } from "./eventResolver.js";
-import { SetPieceResolver } from "./setPieceResolver.js";
+import { resolveSetPieceFor } from "./setPieceResolvers.js";
 import {
   applyCommand,
   applyForcedOff,
@@ -114,7 +114,7 @@ export const resolveSlice = (
   );
 
   // Set piece resolution from events emitted in this slice
-  SetPieceResolver.resolve({
+  resolveSetPieceFor({
     attacker,
     defender,
     minute,

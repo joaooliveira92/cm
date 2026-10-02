@@ -27,6 +27,38 @@ import {
 
 export { pickTaker } from "./setPiecePicks.js";
 
+/**
+ * Input for set piece resolution, provided by the simulation loop.
+ */
+export interface SetPieceInput {
+  readonly attacker: TeamRuntimeState;
+  readonly defender: TeamRuntimeState;
+  readonly minute: number;
+  readonly half: MatchHalf;
+  readonly score: { home: number; away: number };
+  readonly attackerIsHome: boolean;
+  readonly home: TeamRuntimeState;
+  readonly away: TeamRuntimeState;
+  readonly eventCountBeforeSlice: number;
+  readonly random: RandomSource;
+}
+
+export function resolveSetPieceFor(input: SetPieceInput, events: Array<MatchEvent>): void {
+  resolveSetPieces(
+    input.attacker,
+    input.defender,
+    input.minute,
+    input.half,
+    input.score,
+    input.attackerIsHome,
+    input.home,
+    input.away,
+    input.eventCountBeforeSlice,
+    input.random,
+    events,
+  );
+}
+
 // ─── Side selection ──────────────────────────────────────────────────────────
 
 type Side = "left" | "right";

@@ -12,6 +12,6 @@ export {
 
 export * from "./phaseStrengthResolver.js";
 export * from "./eventResolver.js";
-export * from "./setPieceResolver.js";
+export * from "./setPieceResolvers.js";
 
 export type { AiController, AiControllerInput, TacticalDecision } from "../aiController.js";
