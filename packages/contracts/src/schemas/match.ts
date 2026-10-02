@@ -1,4 +1,5 @@
 import { Schema } from "effect";
+import { HIGHLIGHT_LEVELS } from "@cm-clone/shared";
 
 import { ClubColoursView } from "./clubs.js";
 import { ClubId, FixtureId, MatchId, PlayerId } from "./ids.js";
@@ -54,7 +55,7 @@ export class CommentaryLineView extends Schema.Class<CommentaryLineView>("Commen
   /** The club the line is about, for the bar's colours. */
   clubId: Schema.optional(Schema.NullOr(ClubId)),
   /** How important the moment is; the bar shows it only at this highlight level or a fuller one. */
-  level: Schema.optional(Schema.Literals(["key", "extended", "full"])),
+  level: Schema.optional(Schema.Literals(HIGHLIGHT_LEVELS)),
 }) {}
 
 /** Per-club substitution cap status (ticket 14: 5 subs / 3 windows, halftime doesn't count as a

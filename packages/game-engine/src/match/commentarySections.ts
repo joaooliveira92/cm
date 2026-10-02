@@ -1,3 +1,4 @@
+import type { HighlightLevel } from "@cm-clone/shared";
 import type { ChanceType, InjurySeverity, InjuryTrigger, InjuryType, MatchEvent } from "./events.js";
 
 /** Open-play chance events: the build-up beat of an attack, before its key pass and its shot. */
@@ -56,11 +57,7 @@ export type PronounPlaceholder = "he" | "him" | "his" | "He" | "His";
 
 const PRONOUNS: ReadonlyArray<Placeholder> = ["he", "him", "his", "He", "His"];
 
-/** How important a moment is, after Championship Manager's event priority: a player watching Key
- *  highlights sees only `key` lines in the commentary bar, Extended adds `extended`, Full shows all. */
-export type HighlightLevel = "key" | "extended" | "full";
-
-export const HIGHLIGHT_LEVELS: ReadonlyArray<HighlightLevel> = ["key", "extended", "full"];
+export { HIGHLIGHT_LEVELS, isHighlightLevel, type HighlightLevel } from "@cm-clone/shared";
 
 /** How a section's lines play, after Championship Manager's per-event playback fields. */
 export interface CommentaryPlayback {

@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from "react";
+import { HIGHLIGHT_LEVELS, type HighlightLevel } from "@cm-clone/shared";
 
 /**
  * How Match day plays its commentary, after Championship Manager's match settings: the speed (a
@@ -72,19 +73,17 @@ export const speedFactor = (id: CommentarySpeedId): number =>
 
 /** Highlight levels, after CM's Key / Extended / Full highlights. A line shows in the bar when its
  *  level is at or above the chosen one; the rest are revealed at once and stay in the log. */
-export const COMMENTARY_HIGHLIGHTS = [
-  { id: "key", label: "Key" },
-  { id: "extended", label: "Extended" },
-  { id: "full", label: "Full" },
-] as const;
+const HIGHLIGHT_LABELS: Readonly<Record<HighlightLevel, string>> = { key: "Key", extended: "Extended", full: "Full" };
 
-export type CommentaryHighlightsId = (typeof COMMENTARY_HIGHLIGHTS)[number]["id"];
+export const COMMENTARY_HIGHLIGHTS = HIGHLIGHT_LEVELS.map((id) => ({ id, label: HIGHLIGHT_LABELS[id] }));
+
+export type CommentaryHighlightsId = HighlightLevel;
 
 export const COMMENTARY_HIGHLIGHTS_STORAGE_KEY = "cm-clone.commentaryHighlights";
 
 const highlights = preference<CommentaryHighlightsId>(
   COMMENTARY_HIGHLIGHTS_STORAGE_KEY,
-  COMMENTARY_HIGHLIGHTS.map((option) => option.id),
+  HIGHLIGHT_LEVELS,
   "full",
 );
 

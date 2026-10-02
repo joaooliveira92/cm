@@ -2,6 +2,7 @@ import {
   ALWAYS_SHOWN,
   COMMENTARY_SECTIONS,
   HIGHLIGHT_LEVELS,
+  isHighlightLevel,
   PHRASES,
   PHRASES_SECTION,
   type PhraseName,
@@ -101,8 +102,8 @@ const applySetting = (draft: SectionDraft, key: CommentaryTemplateKey, name: str
       return null;
     }
     case "level": {
-      const level = value.toLowerCase() as HighlightLevel;
-      if (!HIGHLIGHT_LEVELS.includes(level)) return "level must be key, extended or full";
+      const level = value.toLowerCase();
+      if (!isHighlightLevel(level)) return `level must be ${HIGHLIGHT_LEVELS.slice(0, -1).join(", ")} or ${HIGHLIGHT_LEVELS.at(-1)}`;
       if (ALWAYS_SHOWN.has(sectionTag(key) as never) && level !== "key") return `[${key}] changes the match, so it is always key; level is ignored`;
       draft.level = level;
       return null;
