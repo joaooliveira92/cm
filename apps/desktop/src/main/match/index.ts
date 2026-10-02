@@ -13,8 +13,10 @@
 
 export { submitMatchCommand } from "./commands.js";
 export {
+  CHOSEN_COMMENTARY_FILE,
   COMMENTARY_FILE,
   SHIPPED_COMMENTARY,
+  chooseCommentaryFile,
   commentaryFileStatus,
   loadCommentaryTable,
   openCommentaryFile,

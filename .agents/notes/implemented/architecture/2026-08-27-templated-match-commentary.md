@@ -77,6 +77,9 @@ cannot change a result.
 
 - Adding commentary variety means adding lines to `events.cfg`, not touching code. A new section, or a new
   placeholder, is a code change: it goes in `commentarySections.ts` and in the shipped file together.
+- Every `.cfg` in the commentary folder can be chosen in Preferences, as CM shipped `events_eng.cfg`
+  and its siblings; the choice is a file name in `commentary/chosen.txt`, and a chosen file that
+  disappears falls back to `events.cfg`.
 - A player's copy of the file is not upgraded when the shipped one gains lines; their sections win, and
   sections new to the game come from the shipped file.
 - The feed is sparse by design; a quiet match reads as quiet.

@@ -11,4 +11,15 @@ commentary from the next lines; a chosen file that disappears falls back to `eve
 
 **Blocked by:** 04
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+- Contract: the status view gains `files` (every `.cfg` in the folder, sorted) and `active`;
+  `chooseCommentaryFile({ name })` is the fourth method.
+- Main: the choice is the file name in `commentary/chosen.txt`. A name not in the folder is ignored (so
+  no path from the renderer is ever opened), and a chosen file that disappears falls back to
+  `events.cfg`. Reset rewrites `events.cfg` and chooses it again, leaving other files alone.
+- Renderer: the Commentary section shows a File picker once the folder holds more than one `.cfg`.
+- Tests: choosing describe in `apps/desktop/test/main/match/commentary-file.test.ts`, the picker case in
+  `commentary-file-section.test.tsx`, the payload in `packages/contracts/test/roundtrip.test.ts`.

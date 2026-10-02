@@ -6,12 +6,18 @@ import { CommentaryFileSection } from "../../../src/renderer/match/CommentaryFil
  *  what the game skipped in it. */
 const FILE = "/Users/p/Library/Application Support/cm/commentary/events.cfg";
 
-const mockMain = (problems: ReadonlyArray<string>) => {
+const mockMain = (problems: ReadonlyArray<string>, files: ReadonlyArray<string> = ["events.cfg"]) => {
   const calls: Array<string> = [];
+  let active = "events.cfg";
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {
-    call: async (method: string) => {
+    call: async (method: string, payload: { name?: string } | undefined) => {
       calls.push(method);
-      return { _tag: "Success", value: { file: FILE, problems: method === "resetCommentaryFile" ? [] : problems } };
+      if (method === "chooseCommentaryFile" && payload?.name !== undefined) active = payload.name;
+      if (method === "resetCommentaryFile") active = "events.cfg";
+      return {
+        _tag: "Success",
+        value: { file: FILE, files, active, problems: method === "resetCommentaryFile" ? [] : problems },
+      };
     },
   };
   return calls;
@@ -52,5 +58,21 @@ describe("the Commentary section of Preferences", () => {
     fireEvent.click(screen.getByRole("button", { name: "Reset, losing my edits" }));
     await waitFor(() => expect(calls).toEqual(["getCommentaryFileStatus", "resetCommentaryFile"]));
     await waitFor(() => expect(screen.queryByRole("region", { name: "Problems in the commentary file" })).toBeNull());
+  });
+
+  it("offers a choice of file only when the folder has more than one, and switches to the chosen one", async () => {
+    mockMain([]);
+    const { unmount } = render(<CommentaryFileSection />);
+    await screen.findByText(FILE);
+    expect(screen.queryByRole("combobox", { name: "File" })).toBeNull();
+    unmount();
+
+    const calls = mockMain([], ["events.cfg", "events_fr.cfg"]);
+    render(<CommentaryFileSection />);
+    const picker = (await screen.findByRole("combobox", { name: "File" })) as HTMLSelectElement;
+    expect(picker.value).toBe("events.cfg");
+    fireEvent.change(picker, { target: { value: "events_fr.cfg" } });
+    await waitFor(() => expect((screen.getByRole("combobox", { name: "File" }) as HTMLSelectElement).value).toBe("events_fr.cfg"));
+    expect(calls).toEqual(["getCommentaryFileStatus", "chooseCommentaryFile"]);
   });
 });

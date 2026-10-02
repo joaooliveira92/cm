@@ -14,5 +14,10 @@ export const getCommentaryFileStatus: Effect.Effect<CommentaryFileStatusView, Rp
 export const openCommentaryFile: Effect.Effect<CommentaryFileStatusView, RpcClientError<"openCommentaryFile">> =
   call("openCommentaryFile", undefined);
 
+/** Makes another `.cfg` in the commentary folder the one the game reads. */
+export const chooseCommentaryFile = (
+  name: string,
+): Effect.Effect<CommentaryFileStatusView, RpcClientError<"chooseCommentaryFile">> => call("chooseCommentaryFile", { name });
+
 export const resetCommentaryFile: Effect.Effect<CommentaryFileStatusView, RpcClientError<"resetCommentaryFile">> =
   call("resetCommentaryFile", undefined);

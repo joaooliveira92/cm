@@ -2,10 +2,10 @@ import { useEffect, useState } from "react";
 import { Effect, Result } from "effect";
 import type { CommentaryFileStatusView } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
-import { getCommentaryFileStatus, openCommentaryFile, resetCommentaryFile } from "../rpc.js";
+import { chooseCommentaryFile, getCommentaryFileStatus, openCommentaryFile, resetCommentaryFile } from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 
-type FileMethod = "getCommentaryFileStatus" | "openCommentaryFile" | "resetCommentaryFile";
+type FileMethod = "getCommentaryFileStatus" | "openCommentaryFile" | "resetCommentaryFile" | "chooseCommentaryFile";
 
 /**
  * Preferences' Commentary section: where the player-editable commentary file is, buttons to open it
@@ -35,8 +35,25 @@ export const CommentaryFileSection = () => {
       <legend className="mb-2 text-label text-text-secondary">Commentary</legend>
       <p className="text-data text-text-soft">
         Every line the commentator says comes from this file. Edit it in any text editor; changes show
-        from the next lines of a match.
+        from the next lines of a match. Put another .cfg file in the same folder (a translation, a
+        community file) to choose it here.
       </p>
+      {status !== null && status.files.length > 1 && (
+        <label className="flex items-center gap-2 text-data text-text-secondary">
+          File
+          <select
+            value={status.active}
+            onChange={(event) => run(chooseCommentaryFile(event.target.value))}
+            className="rounded-control border border-border-subtle bg-field-bg px-2 py-1 text-data text-text-primary"
+          >
+            {status.files.map((name) => (
+              <option key={name} value={name}>
+                {name}
+              </option>
+            ))}
+          </select>
+        </label>
+      )}
       {status !== null && <p className="break-all font-mono text-data text-text-secondary">{status.file}</p>}
       {error !== null && <p className="text-data text-destructive">{error}</p>}
       <div className="flex flex-wrap gap-2">

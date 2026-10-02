@@ -8,6 +8,11 @@ import { Schema } from "effect";
 export class CommentaryFileStatusView extends Schema.Class<CommentaryFileStatusView>("CommentaryFileStatusView")({
   /** Absolute path of the file the game reads. */
   file: Schema.String,
+  /** Every `.cfg` in the commentary folder, by name, sorted: the files a player can choose from
+   *  (another language, a community file). */
+  files: Schema.Array(Schema.String),
+  /** The name of the chosen file, one of `files`. */
+  active: Schema.String,
   /** One sentence per line the game skipped or section it replaced, with its line number. */
   problems: Schema.Array(Schema.String),
 }) {}

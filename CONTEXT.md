@@ -276,7 +276,8 @@ _Avoid_: Generator, script (there is no generation/composition step in v1 — se
 The plain-text, player-editable file every Commentary Template and its playback (delay, flash, display
 chance, highlight level) comes from, after Championship Manager's `events.cfg`. The game ships one
 (`packages/game-engine/data/events.cfg`) and writes a copy to the user data folder for the player to
-edit; a section the player's copy lacks or breaks falls back to the shipped one.
+edit; a section the player's copy lacks or breaks falls back to the shipped one. Any other `.cfg` the
+player puts in the same folder (a translation, a community file) can be chosen in Preferences instead.
 _Avoid_: Commentary config, language file
 
 ### Tactics

@@ -888,7 +888,15 @@ commitCareer: {
     success: CommentaryFileStatusView,
     error: Schema.Never,
   },
-  /** Overwrites the commentary file with the game's own lines, discarding the player's edits. */
+  /** Makes another `.cfg` in the commentary folder the one the game reads (cm-style-commentary 09). A
+   *  name that isn't in the folder leaves the choice as it was. */
+  chooseCommentaryFile: {
+    payload: Schema.Struct({ name: Schema.String }),
+    success: CommentaryFileStatusView,
+    error: Schema.Never,
+  },
+  /** Overwrites `events.cfg` with the game's own lines, discarding the player's edits, and makes it the
+   *  file the game reads. Any other `.cfg` in the folder is left alone. */
   resetCommentaryFile: {
     payload: Schema.Void,
     success: CommentaryFileStatusView,

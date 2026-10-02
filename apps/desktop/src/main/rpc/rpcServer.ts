@@ -23,6 +23,7 @@ import {
   setKeyBindingOverride,
 } from "./keybindings.js";
 import {
+  chooseCommentaryFile,
   commentaryFileStatus,
   getAwaitingMatch,
   getMatchRatings,
@@ -577,6 +578,11 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   getCommentaryFileStatus: (_payload, ctx) => commentaryFileStatus(ctx.userDataDir),
   openCommentaryFile: (_payload, ctx) => openCommentaryFile(ctx.userDataDir, ctx.openPath),
   resetCommentaryFile: (_payload, ctx) => resetCommentaryFile(ctx.userDataDir),
+  chooseCommentaryFile: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { name } = yield* Schema.decodeUnknownEffect(AppRpcs.chooseCommentaryFile.payload)(payload);
+      return yield* chooseCommentaryFile(ctx.userDataDir, name);
+    }),
   setKeyBindingOverride: (payload, ctx) =>
     Effect.gen(function* () {
       const { actionId, binding } = yield* Schema.decodeUnknownEffect(

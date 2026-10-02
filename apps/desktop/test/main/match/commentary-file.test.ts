@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, utimes, writeFile } from "node:fs/promises";
+import { mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "@effect/vitest";
@@ -7,6 +7,7 @@ import { SHIPPED_COMMENTARY_TEXT as SHIPPED_TEXT } from "@cm-clone/game-engine";
 import {
   COMMENTARY_FILE,
   SHIPPED_COMMENTARY,
+  chooseCommentaryFile,
   commentaryFileStatus,
   loadCommentaryTable,
   openCommentaryFile,
@@ -29,7 +30,7 @@ describe("the player's commentary file (cm-style-commentary 02)", () => {
     Effect.gen(function* () {
       const dir = yield* userData();
       const table = yield* loadCommentaryTable(dir);
-      expect(table).toBe(SHIPPED_COMMENTARY);
+      expect(table).toEqual(SHIPPED_COMMENTARY);
       const written = yield* Effect.promise(() => readFile(path.join(dir, COMMENTARY_FILE), "utf8"));
       expect(written).toBe(SHIPPED_TEXT);
     }),
@@ -97,6 +98,54 @@ describe("Preferences' view of the commentary file (cm-style-commentary 04)", ()
       expect(opened).toEqual([path.join(dir, COMMENTARY_FILE)]);
       const status = yield* openCommentaryFile(dir, async () => "no application to open .cfg");
       expect(status.file).toBe(path.join(dir, COMMENTARY_FILE));
+    }),
+  );
+});
+
+describe("choosing a commentary file (cm-style-commentary 09)", () => {
+  /** Drops another commentary file into the folder, as a player installing a translation would. */
+  const install = (dir: string, name: string, text: string) =>
+    Effect.promise(() => writeFile(path.join(dir, "commentary", name), text, "utf8"));
+
+  it.effect("offers every .cfg in the folder, and reads the one chosen", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      yield* loadCommentaryTable(dir);
+      yield* install(dir, "events_fr.cfg", "[Foul]\nFaute de {player}.\n");
+      yield* install(dir, "notes.txt", "not commentary");
+
+      const before = yield* commentaryFileStatus(dir);
+      expect(before.files).toEqual(["events.cfg", "events_fr.cfg"]);
+      expect(before.active).toBe("events.cfg");
+
+      const after = yield* chooseCommentaryFile(dir, "events_fr.cfg");
+      expect(after.active).toBe("events_fr.cfg");
+      expect((yield* loadCommentaryTable(dir)).templates.Foul).toEqual(["Faute de {player}."]);
+    }),
+  );
+
+  it.effect("ignores a name that isn't in the folder", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      const status = yield* chooseCommentaryFile(dir, "../../secrets.cfg");
+      expect(status.active).toBe("events.cfg");
+    }),
+  );
+
+  it.effect("goes back to events.cfg when the chosen file disappears, and when the player resets", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      yield* loadCommentaryTable(dir);
+      yield* install(dir, "community.cfg", "[Foul]\nFoul!\n");
+      yield* chooseCommentaryFile(dir, "community.cfg");
+      yield* Effect.promise(() => rm(path.join(dir, "commentary", "community.cfg")));
+      expect((yield* commentaryFileStatus(dir)).active).toBe("events.cfg");
+
+      yield* install(dir, "community.cfg", "[Foul]\nFoul!\n");
+      yield* chooseCommentaryFile(dir, "community.cfg");
+      const reset = yield* resetCommentaryFile(dir);
+      expect(reset.active).toBe("events.cfg");
+      expect(yield* Effect.promise(() => readFile(path.join(dir, "commentary", "community.cfg"), "utf8"))).toBe("[Foul]\nFoul!\n");
     }),
   );
 });

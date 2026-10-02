@@ -339,10 +339,16 @@ describe("Player Development & Training Focus schemas", () => {
 });
 
 describe("the commentary file — cm-style-commentary 04", () => {
-  it("round-trips a status with and without problems, for all three methods", () => {
-    const clean = { file: "/Users/p/Library/Application Support/cm/commentary/events.cfg", problems: [] };
+  it("round-trips a status with and without problems, for every method", () => {
+    roundTrip(AppRpcs.chooseCommentaryFile.payload, { name: "events_fr.cfg" });
+    const clean = {
+      file: "/Users/p/Library/Application Support/cm/commentary/events.cfg",
+      problems: [],
+      files: ["events.cfg", "events_fr.cfg"],
+      active: "events.cfg",
+    };
     const broken = { ...clean, problems: ["line 12: skipped, {player2} isn't available in [Foul]"] };
-    for (const method of ["getCommentaryFileStatus", "openCommentaryFile", "resetCommentaryFile"] as const) {
+    for (const method of ["getCommentaryFileStatus", "openCommentaryFile", "resetCommentaryFile", "chooseCommentaryFile"] as const) {
       roundTrip(AppRpcs[method].success, clean);
       roundTrip(AppRpcs[method].success, broken);
     }
