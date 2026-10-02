@@ -85,7 +85,7 @@ const decodeProfile = Effect.gen(function* () {
     favoriteClubId: profile.favoriteClubId === null ? null : ClubId.make(profile.favoriteClubId),
     favoriteClubName:
       profile.favoriteClubId === null ? null : resolveName(profile.favoriteClubId),
-    preferredFormation: yield* Schema.decodeUnknownEffect(TemplateNameSchema)(profile.preferredFormation),
+    preferredFormation: yield* Schema.decodeEffect(TemplateNameSchema)(profile.preferredFormation),
     avatarPortraitKey: profile.avatarPortraitKey,
     avatarPrimaryColor: profile.avatarPrimaryColor,
     avatarSecondaryColor: profile.avatarSecondaryColor,
