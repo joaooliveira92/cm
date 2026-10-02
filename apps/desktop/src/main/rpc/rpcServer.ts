@@ -34,6 +34,7 @@ import {
   submitMatchCommand,
 } from "../match/index.js";
 import {
+  CommentaryTableSource,
   chooseCommentaryFile,
   commentaryFileStatus,
   loadCommentaryTable,
@@ -141,6 +142,10 @@ const saveIdOf = (method: AppRpcMethod, payload: unknown): string | null => {
   const record = payload as Record<string, unknown>;
   return typeof record["saveId"] === "string" ? record["saveId"] : null;
 };
+
+/** A match read renders its commentary from the player's commentary file in the user data folder. */
+const withPlayersCommentary = (ctx: RpcContext) =>
+  Effect.provideService(CommentaryTableSource, loadCommentaryTable(ctx.userDataDir));
 
 const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   ...browseHandlers,
@@ -380,7 +385,9 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { saveId, matchId, cursor, revealedEvents } = yield* Schema.decodeUnknownEffect(
         AppRpcs.resumeSimulation.payload,
       )(payload);
-      return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor, revealedEvents, yield* loadCommentaryTable(ctx.userDataDir));
+      return yield* resumeSimulation(ctx.savesDir, saveId, matchId, cursor, revealedEvents).pipe(
+        withPlayersCommentary(ctx),
+      );
     }),
   getAwaitingMatch: (payload, ctx) =>
     Effect.gen(function* () {
@@ -421,16 +428,8 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
       const { saveId, matchId, cursor, revealedEvents, minute, isHalftime, command } = yield* Schema.decodeUnknownEffect(
         AppRpcs.submitMatchCommand.payload,
       )(payload);
-      return yield* submitMatchCommand(
-        ctx.savesDir,
-        saveId,
-        matchId,
-        cursor,
-        revealedEvents,
-        minute,
-        isHalftime,
-        command,
-        yield* loadCommentaryTable(ctx.userDataDir),
+      return yield* submitMatchCommand(ctx.savesDir, saveId, matchId, cursor, revealedEvents, minute, isHalftime, command).pipe(
+        withPlayersCommentary(ctx),
       );
     }),
   getTransfersScreen: (payload, ctx) =>

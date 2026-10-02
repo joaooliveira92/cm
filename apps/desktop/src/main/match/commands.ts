@@ -13,7 +13,7 @@ import {
   type SaveId,
   SubmitMatchCommandView,
 } from "@cm-clone/contracts";
-import { nextCommandMinute, type CommentaryTable, type MatchEvent } from "@cm-clone/game-engine";
+import { nextCommandMinute, type MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { appendStreamEvents, loadStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
@@ -25,7 +25,6 @@ import {
   type PersistedTacticsChanged,
 } from "./stream.js";
 import { substitutionApplied, substitutionLedger } from "./substitutions.js";
-import { SHIPPED_COMMENTARY } from "./commentaryFile.js";
 import { buildResumeSimulationView } from "./view.js";
 import { matchAiPreferences } from "./aiPreferences.js";
 
@@ -70,7 +69,6 @@ export const submitMatchCommand = (
   requestedMinute: number,
   isHalftime: boolean,
   command: MatchCommandPayloadInput,
-  commentary: CommentaryTable = SHIPPED_COMMENTARY,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
@@ -114,7 +112,6 @@ export const submitMatchCommand = (
         cursor,
         revealedEvents,
         ledger,
-        commentary,
       );
       return new SubmitMatchCommandView({
         ...view,

@@ -16,13 +16,13 @@ import {
 import {
   renderCommentary,
   type CommentaryNameResolver,
-  type CommentaryTable,
   type MatchEvent,
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import type { StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
+import { CommentaryTableSource } from "./commentaryFile.js";
 import { pitchAsOf } from "./pitch.js";
 import { hashString, matchStartedOf } from "./stream.js";
 import { countedSubstitutions, substitutionStatus, type SubstitutionLedger } from "./substitutions.js";
@@ -115,7 +115,6 @@ export const buildResumeSimulationView = (
   cursor: number,
   revealedEvents: number | null,
   ledger: SubstitutionLedger,
-  commentary: CommentaryTable,
 ) =>
   Effect.gen(function* () {
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
@@ -142,6 +141,7 @@ export const buildResumeSimulationView = (
     };
 
     const commentarySeed = hashString(matchId);
+    const commentary = yield* yield* CommentaryTableSource;
     const allLines = renderCommentary(events, commentarySeed, names, commentary);
 
     const remaining = events.slice(cursor);

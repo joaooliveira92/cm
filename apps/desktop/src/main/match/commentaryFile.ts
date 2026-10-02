@@ -1,6 +1,6 @@
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { Effect } from "effect";
+import { Context, Effect } from "effect";
 import { CommentaryFileError, CommentaryFileStatusView } from "@cm-clone/contracts";
 import {
   SHIPPED_COMMENTARY_TEXT,
@@ -31,6 +31,16 @@ const GAME_FILE_NAME = path.basename(COMMENTARY_FILE);
 
 const SHIPPED_PARSE = parseCommentaryFile(SHIPPED_COMMENTARY_TEXT);
 export const SHIPPED_COMMENTARY: CommentaryTable = SHIPPED_PARSE.table;
+
+/**
+ * Where a match read gets its commentary table. Defaults to the shipped file, so a test or any caller
+ * that doesn't care reads the game's own lines; the RPC handlers provide the player's file from the
+ * user data folder (`loadCommentaryTable`).
+ */
+export const CommentaryTableSource = Context.Reference<Effect.Effect<CommentaryTable>>(
+  "cm-clone/main/match/CommentaryTableSource",
+  { defaultValue: () => Effect.succeed(SHIPPED_COMMENTARY) },
+);
 
 /** Opens a file or folder with the operating system; resolves to an error message, or "" on success
  *  (Electron's `shell.openPath` contract). */
