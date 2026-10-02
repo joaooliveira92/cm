@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MatchEvent } from "../../src/match/events.js";
-import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS } from "../../src/match/commentary.js";
+import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS, parseCommentaryFile, renderCommentary as renderWith } from "../../src/match/commentary.js";
 import { SHIPPED, renderShipped as renderCommentary } from "./shippedCommentary.js";
 
 const COMMENTARY_TEMPLATES = SHIPPED.templates;
@@ -64,11 +64,11 @@ describe("injury commentary", () => {
     expect(contact).not.toBe(nonContact);
   });
 
-  it("uses structural phrasing for contact and muscular/fatigue phrasing for non-contact", () => {
-    const contact = renderCommentary([injury("medium", "contact", "twistedAnkle")], 1, names)[0]!.text.toLowerCase();
-    const nonContact = renderCommentary([injury("medium", "non-contact", "hamstring")], 1, names)[0]!.text.toLowerCase();
-    expect(contact).toMatch(/challenge|tackle|collision/);
-    expect(nonContact).toMatch(/pulls up|tired muscle|no one near/);
+  it("narrates every contact injury as a challenge and every non-contact one as pulling up", () => {
+    for (const severity of ["light", "medium", "severe"] as const) {
+      for (const line of COMMENTARY_TEMPLATES[`Injury:contact:${severity}`]) expect(line).toMatch(/challenge|tackle|collision/);
+      for (const line of COMMENTARY_TEMPLATES[`Injury:non-contact:${severity}`]) expect(line).toMatch(/pull(s|ing)? up|tired muscle|no one near/i);
+    }
   });
 
   it("narrates severe injuries distinctly from light ones (stretcher imagery)", () => {
@@ -150,7 +150,10 @@ describe("commentary reads the events around a line", () => {
   it("names the winner at full time, and calls a level score a draw", () => {
     const [, win] = textOf([started, { _tag: "FullTimeWhistle", minute: 90, homeScore: 0, awayScore: 2 }]);
     expect(win).toContain("Home 0-2 Away");
-    expect(win).toMatch(/Away (take|beat)|for Away/);
+    const { table } = parseCommentaryFile("[FullTimeWhistle:win]\n{team} beat {team2}, {score}.\n", SHIPPED);
+    expect(renderWith([started, { _tag: "FullTimeWhistle", minute: 90, homeScore: 0, awayScore: 2 }], 1, names, table)[1]!.text).toBe(
+      "Away beat Home, Home 0-2 Away.",
+    );
     const [, draw] = textOf([started, { _tag: "FullTimeWhistle", minute: 90, homeScore: 1, awayScore: 1 }]);
     expect(draw).not.toMatch(/\bwin\b|\bbeat\b/);
   });

@@ -10,4 +10,11 @@ simulated matches.
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+The shipped `events.cfg` grew from 186 to 317 lines across its 56 sections: at least six in every
+frequent section and four elsewhere. Two existing lines broke the injury wording rule (non-contact
+injuries say the player pulled up) and were rewritten. Two engine tests that matched the wording of one
+random pick now check the rule over every line, and `{team}` as the full-time winner, instead.
