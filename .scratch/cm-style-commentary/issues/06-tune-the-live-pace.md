@@ -9,4 +9,19 @@ shipped delays or the default speed so a match at Normal plays in a time a playe
 
 **Blocked by:** 02
 
-**Status:** ready-for-agent
+**Status:** resolved
+
+## Answer
+
+Measured over 200 simulated matches with the shipped file (61.5 lines a match on average):
+
+| Speed | Average | 10th to 90th percentile |
+|---|---|---|
+| Slow (x1.5) | 129 s | 87 s to 166 s |
+| Normal (x1) | 86 s | 58 s to 110 s |
+| Fast (x0.4) | 34 s | 23 s to 44 s |
+
+Shots on target, shots missed and goals take about 60 % of the time. Kept as they are: Normal is a
+minute and a half, close to CM's feel without dragging, and Fast is about the pace before playback
+existed (35 s). Normal stays the default. `commentary-file.test.ts` pins the Normal average between 60 s
+and 120 s, so a delay edit that drifts far is caught.

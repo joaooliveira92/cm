@@ -137,3 +137,25 @@ describe("the goalkeeper in commentary (cm-style-commentary 07)", () => {
     }
   });
 });
+
+describe("the live pace the shipped file sets (cm-style-commentary 06)", () => {
+  /** Seconds a match's commentary holds the bar at speed factor 1 (Normal): every shown line's parts. */
+  const playSeconds = (seed: number): number => {
+    const events = simulateMatch({
+      seed,
+      home: buildTeam(clubId("home"), seed).setup,
+      away: buildTeam(clubId("away"), seed + 1000).setup,
+    });
+    const lines = renderCommentary(events, seed, names, SHIPPED).filter((line) => !line.quiet);
+    return lines.reduce((total, line) => total + line.parts.reduce((sum, part) => sum + part.delayMs, 0), 0) / 1000;
+  };
+
+  it("plays a match at Normal in about a minute and a half", () => {
+    const seconds = Array.from({ length: 40 }, (_, index) => playSeconds(index + 1));
+    const average = seconds.reduce((total, value) => total + value, 0) / seconds.length;
+    // Measured 2026-10-01 over 200 seeds: 86 s on average, 58 s to 110 s from the 10th to the 90th
+    // percentile. Delays that drift far from that change how long every live match takes.
+    expect(average).toBeGreaterThan(60);
+    expect(average).toBeLessThan(120);
+  });
+});
