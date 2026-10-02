@@ -1,8 +1,10 @@
 import { useId, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
 import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
 import { DEFAULT_SUB, slotLabel, type Slot } from "@cm-clone/shared";
+import { useOptionalClubColours } from "../chrome/CareerStateProvider.js";
 import { FOCUS_RING } from "../focus.js";
 import { captionShift, fitTierWord, markerBox, markerName } from "./markerLayout.js";
+import { markerKitStyle } from "./markerKit.js";
 import { PitchBackground } from "./PitchBackground.js";
 import {
   NO_GRAB,
@@ -77,6 +79,7 @@ export const FormationPitch = ({
   readonly onToggleRun: (slotIndex: number, target: Slot | null) => void;
 }) => {
   const spots = pitchLayout(slots);
+  const clubColours = useOptionalClubColours();
   const [dragging, setDragging] = useState<number | null>(null);
   const [intent, setIntent] = useState<DropIntent>(null);
   const [runMode, setRunMode] = useState(false);
@@ -324,12 +327,13 @@ export const FormationPitch = ({
                 <span
                   aria-hidden="true"
                   data-disc
+                  style={landing || player === undefined ? undefined : markerKitStyle(clubColours, isKeeper)}
                   className={`relative flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
                     landing
                       ? "border-dashed border-text-bright bg-pitch-marker/60"
                       : player === undefined
                       ? "border-dashed border-text-bright/70 bg-transparent"
-                      : `border-cm-title ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
+                      : `${clubColours === null ? "border-cm-title" : ""} ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
                   } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""} ${
                     isSelected ? "ring-2 ring-focus-ring ring-offset-2 ring-offset-bg-base scale-110" : ""
                   } ${hasRun && !isSelected ? "after:absolute after:bottom-0 after:right-0 after:h-2 after:w-2 after:rounded-full after:bg-text-highlight" : ""}`}

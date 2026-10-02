@@ -296,3 +296,6 @@ export const CareerStateProvider = ({
 
   return <CareerStateCtx.Provider value={value}>{children}</CareerStateCtx.Provider>;
 };
+/** The manager's club colours, or null outside a career, where a screen renders without the
+ *  provider and paints its neutral theme instead of throwing. */
+export const useOptionalClubColours = (): ClubColoursView | null => useContext(CareerStateCtx)?.clubColours ?? null;
