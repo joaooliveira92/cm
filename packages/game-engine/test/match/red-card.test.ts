@@ -14,7 +14,7 @@ import { GOALKEEPER_SLOT, type RandomSource } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
 import type { MatchEvent, RedCardEvent } from "../../src/match/events.js";
 import { simulateMatchWithCounts } from "../../src/match/simulate/index.js";
-import { resolveCards } from "../../src/match/simulate/resolvers.js";
+import { resolveCards } from "../../src/match/simulate/minuteResolvers.js";
 import { initTeamState, type TeamRuntimeState } from "../../src/match/simulate/teamState.js";
 import type { MatchTeamSetup } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId } from "./fixtures.js";

@@ -4,11 +4,13 @@ import type { MatchEvent, MatchHalf } from "../events.js";
 import type { RandomSource } from "@cm-clone/shared";
 import {
   resolveAttackingEvent,
-  resolveOffside,
   resolveCards,
+  resolveOffside,
+} from "./minuteResolvers.js";
+import {
   resolveContactDuels,
   resolveNonContactInjuries,
-} from "./resolvers.js";
+} from "./injuryResolver.js";
 import { pickPlayerId } from "./teamState.js";
 
 /**
