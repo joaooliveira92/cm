@@ -20,18 +20,9 @@ import {
   type TeamRuntimeState,
 } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
-import { resolveTeamInstructions } from "../tactical-modifiers.js";
-import { resolveTeamModifiers } from "../resolveBehaviourVectors.js";
+import { reconcileTacticalChange, viewTacticalState, type AiTacticalChange } from "./tacticalAdapter.js";
 
-/**
- * A lightweight tactical change an AI controller can request, without needing to
- * construct a full MatchTactic. The engine applies changes directly to team instructions
- * and re-resolves the team-level modifiers and behaviour vectors.
- */
-export interface AiTacticalChange {
-  mentality?: TeamInstructions["mentality"];
-  teamOverrides?: Partial<Pick<TeamInstructions, "menBehindTheBall">>;
-}
+export type { AiTacticalChange };
 
 export type AiTacticalController = (state: {
   readonly minute: number;
@@ -158,12 +149,24 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
   let lastAiMinute = 0;
 
   const snapshotCounts = (minute: number, half: MatchHalf): void => {
-    counts.push({ half, minute, homeCount: home.resolved.slots.length, awayCount: away.resolved.slots.length });
+    const homeTactical = viewTacticalState(
+      home.clubId, home.teamInstructions, home.playersById,
+      home.resolved.teamModifiers, home.resolved.instructions, home.resolved.slots.length,
+    );
+    const awayTactical = viewTacticalState(
+      away.clubId, away.teamInstructions, away.playersById,
+      away.resolved.teamModifiers, away.resolved.instructions, away.resolved.slots.length,
+    );
+    counts.push({ half, minute, homeCount: homeTactical.slotCount, awayCount: awayTactical.slotCount });
   };
 
   const invokeAiController = (minute: number, half: MatchHalf, isHalftime: boolean, stopAfter: boolean): void => {
     if (!input.aiController) return;
     for (const team of [home, away]) {
+      const tactical = viewTacticalState(
+        team.clubId, team.teamInstructions, team.playersById,
+        team.resolved.teamModifiers, team.resolved.instructions, team.resolved.slots.length,
+      );
       const changes = input.aiController({
         minute,
         half,
@@ -173,31 +176,23 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
         justHadGoal: stopAfter,
         homeClubId: home.clubId,
         awayClubId: away.clubId,
-        currentMentality: team.teamInstructions.mentality,
-        currentMenBehindTheBall: team.teamInstructions.menBehindTheBall,
-        aiClubId: team.clubId,
+        currentMentality: tactical.mentality,
+        currentMenBehindTheBall: tactical.menBehindTheBall,
+        aiClubId: tactical.clubId,
       });
       for (const change of changes) {
-        if (change.mentality) {
-          team.teamInstructions = { ...team.teamInstructions, mentality: change.mentality };
-        }
-        if (change.teamOverrides) {
-          team.teamInstructions = { ...team.teamInstructions, ...change.teamOverrides };
-        }
-        if (change.mentality || change.teamOverrides) {
-          const newTeamModifiers = resolveTeamModifiers(team.teamInstructions);
-          team.resolved.teamModifiers = newTeamModifiers;
-          team.resolved.instructions = resolveTeamInstructions(
-            { team: team.teamInstructions },
-            team.playersById,
-          );
+        const result = reconcileTacticalChange(tactical, change);
+        if (result) {
+          team.teamInstructions = result.teamInstructions;
+          team.resolved.teamModifiers = result.teamModifiers;
+          team.resolved.instructions = result.instructions;
           events.push({
             _tag: "TacticsChanged",
             minute,
             half,
-            teamClubId: team.clubId,
+            teamClubId: tactical.clubId,
             fromFormationLabel: "",
-            toFormationLabel: `${team.teamInstructions.mentality}`, // mentality changes only for AI
+            toFormationLabel: `${result.teamInstructions.mentality}`,
           });
         }
       }

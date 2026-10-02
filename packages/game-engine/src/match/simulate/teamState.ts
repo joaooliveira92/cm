@@ -7,13 +7,12 @@ import { PENALTY_SLASH_FACTOR } from "../injury.js";
 import {
   aggregatePhaseSlots,
   modifiersOf,
-  resolveTeamTactics,
-  type ResolvedTeamTactics,
   type ResolvedSlot,
 } from "../tactical-modifiers.js";
 import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "../types.js";
 import { HOME_ADVANTAGE_MULTIPLIER, clamp } from "./constants.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
+import { resolveTeamTactics, type ResolvedTeamTactics } from "./tacticalAdapter.js";
 
 
 /**

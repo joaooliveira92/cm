@@ -9,7 +9,7 @@ import type { MatchCommand } from "../../src/match/commands.js";
 import type { MatchEvent, RedCardEvent } from "../../src/match/events.js";
 import { simulateMatch, simulateMatchWithCounts } from "../../src/match/simulate/index.js";
 import { applyCommand, applyForcedOff, computeTeamStrengths, initTeamState, type TeamRuntimeState } from "../../src/match/simulate/teamState.js";
-import { resolveTeamInstructions } from "../../src/match/tactical-modifiers.js";
+import { resolveTeamInstructions } from "../../src/match/simulate/tacticalAdapter.js";
 import type { MatchTactic } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, withNamedBench } from "./fixtures.js";
 
@@ -38,8 +38,8 @@ describe("applyCommand's live ChangeTactics", () => {
 
     expect(onPitch(team)).toEqual(tenMen);
     expect(onPitch(team)).not.toContain(sentOff);
-    expect(team.resolved.instructions).toEqual(resolveTeamInstructions(attacking, team.playersById));
-    expect(team.resolved.instructions).not.toEqual(resolveTeamInstructions(setup.tactic, team.playersById));
+    expect(team.resolved.instructions).toEqual(resolveTeamInstructions(attacking));
+    expect(team.resolved.instructions).not.toEqual(resolveTeamInstructions(setup.tactic));
     expect(computeTeamStrengths(team).modifiers.attack).toBeGreaterThan(attackBefore);
   });
 
