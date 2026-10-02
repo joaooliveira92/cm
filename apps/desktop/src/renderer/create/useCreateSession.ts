@@ -11,12 +11,7 @@ import type { PillarDistribution } from "@cm-clone/shared";
 import { Effect, Result } from "effect";
 import { beginCareer, commitCareer, describeRpcError, discardCareer } from "../rpc.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
-import {
-  creationCancelButton,
-  describeCreationBottomBar,
-  withShellCancel,
-  type BottomBarPlan,
-} from "../chrome/bottom-bar/index.js";
+import { type BottomBarPlan } from "../chrome/bottom-bar/index.js";
 import {
   abandon,
   blockedReason,
@@ -40,6 +35,8 @@ import { managerStyleComplete } from "./managerStyle.js";
 import { personalDetailsComplete } from "./personalDetails.js";
 import { setProvisionalCareer } from "./provisionalCareer.js";
 import { suggestedSaveName } from "./suggestedSaveName.js";
+import { buildBottomBarPlan } from "./bottomBarPlan.js";
+import { advanceManagerStep, setManagerStep as setManagerStepInternal } from "./stepGuards.js";
 import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
 
 const DEFAULT_PILLARS: PillarDistribution = {
@@ -93,9 +90,6 @@ export const stepOf = (pathname: string): CreationStep => {
 const runAtEdge = <A, E>(
   effect: Effect.Effect<A, E>,
 ): Promise<Result.Result<A, E>> => Effect.runPromise(Effect.result(effect));
-
-const sumPillars = (pillars: PillarDistribution): number =>
-  Object.values(pillars).reduce((total, value) => total + value, 0);
 
 export interface CreateFlowSession {
   readonly session: CreationSession;
@@ -303,34 +297,18 @@ export const useCreateSession = (): CreateFlowSession => {
     navigate({ type: "createStep3" });
   }, []);
 
-  /** Whether the Manager step's `next` sub-panel may be reached from the current one. Step 1 is
-   *  always reachable; 2 needs personal details; 3 needs personal details and a spent pillar
-   *  budget. The shell and the in-panel stepper share this, so they cannot disagree. */
-  const canReachManagerStep = useCallback(
-    (current: CreationSession, next: ManagerSubStep): boolean => {
-      if (next === 1) return true;
-      if (next === 2) return personalDetailsComplete(current);
-      return personalDetailsComplete(current) && sumPillars(current.pillars) === 12;
-    },
-    [],
-  );
-
   /** Advance the Manager step one sub-panel. Gated on the same reachability predicate the in-panel
    *  stepper uses, so the bottom bar cannot jump past an incomplete panel. */
   const handleNextManagerSubStep = useCallback((): void => {
-    const current = sessionRef.current;
-    const next = (current.managerStep + 1) as ManagerSubStep;
-    if (next > 3 || !canReachManagerStep(current, next)) return;
-    update({ managerStep: next });
-  }, [canReachManagerStep, update]);
+    advanceManagerStep(sessionRef.current, update);
+  }, [update]);
 
   /** Direct control of the Manager step's sub-panel, used by the in-panel stepper. */
   const setManagerStep = useCallback(
     (next: ManagerSubStep): void => {
-      if (!canReachManagerStep(sessionRef.current, next)) return;
-      update({ managerStep: next });
+      setManagerStepInternal(sessionRef.current, next, update);
     },
-    [canReachManagerStep, update],
+    [update],
   );
 
   const handleCommitCareer = useCallback(async (): Promise<void> => {
@@ -502,14 +480,6 @@ export const useCreateSession = (): CreateFlowSession => {
     [applyGeneration],
   );
 
-  const pillarsComplete = sumPillars(session.pillars) === 12;
-  const managerStepComplete =
-    personalDetailsComplete(session) && pillarsComplete && managerStyleComplete(session);
-  const selectionReady = isSelectionReady(session.generation);
-  const blocked = blockedReason(session.generation);
-  /** Continue past the club step is gated on the decision that step exists to collect. */
-  const clubPicked = selectedClubOf(session) !== null;
-
   const contextValue = useMemo<CreateSessionApi>(
     () => ({
       session,
@@ -533,32 +503,17 @@ export const useCreateSession = (): CreateFlowSession => {
     ],
   );
 
-  // One bar, described rather than assembled: Cancel keeps its zone on every
-  // step, the step's forward verb keeps its own, and the reason row is always
-  // in the layout, so nothing under the pointer moves when a step blocks or
-  // unblocks. A step that wants different controls registers a different plan —
-  // never a different layout.
-  const bottomBarPlan =
-    registeredBar === null
-      ? describeCreationBottomBar({
-        step,
-        generationBlockedReason: blocked,
-        personalDetailsComplete: personalDetailsComplete(session),
-        pillarsComplete,
-        managerStyleComplete: managerStyleComplete(session),
-        managerStep: session.managerStep,
-        managerStepComplete,
-        selectionReady,
-        clubPicked,
-        committing: session.commit === "committing",
-        onCancel: requestLeave,
-        onBackToLeagues: handleBackToLeagues,
-        onNextManagerSubStep: handleNextManagerSubStep,
-        onGoToClubSelection: handleGoToClubSelection,
-        onGoToReview: handleGoToReview,
-        onCreateCareer: handleCreateCareer,
-      })
-      : withShellCancel(registeredBar, creationCancelButton(requestLeave));
+  const bottomBarPlan = buildBottomBarPlan({
+    step,
+    session,
+    registeredBar,
+    onCancel: requestLeave,
+    onBackToLeagues: handleBackToLeagues,
+    onNextManagerSubStep: handleNextManagerSubStep,
+    onGoToClubSelection: handleGoToClubSelection,
+    onGoToReview: handleGoToReview,
+    onCreateCareer: handleCreateCareer,
+  });
 
   return {
     session,
