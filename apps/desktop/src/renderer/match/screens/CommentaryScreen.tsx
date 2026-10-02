@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Effect, Result } from "effect";
 import type { CommentaryLineView, MatchId, SaveId } from "@cm-clone/contracts";
-import { leagueTableAtom, resumeSimulation, useAtomValue, POLL_INTERVAL_MS } from "../rpc.js";
-import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
-import { FOCUS_RING } from "../focus.js";
-import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "../match/session.js";
-import { CommentaryFeed } from "../match/CommentaryFeed.js";
+import { leagueTableAtom, resumeSimulation, useAtomValue, POLL_INTERVAL_MS } from "../../rpc.js";
+import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
+import { FOCUS_RING } from "../../focus.js";
+import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "../session.js";
+import { CommentaryFeed } from "../CommentaryFeed.js";
 
 /**
  * How many of the match's Commentary Lines this screen may show, or null for all of them. Bound the

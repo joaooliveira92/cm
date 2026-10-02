@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
 import { Effect, Result } from "effect";
 import type { SaveId, TeamSheetClubView } from "@cm-clone/contracts";
-import { getTeamSheet, leagueTableAtom, useAtomValue } from "../rpc.js";
-import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
-import { FOCUS_RING } from "../focus.js";
+import { getTeamSheet, leagueTableAtom, useAtomValue } from "../../rpc.js";
+import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
+import { FOCUS_RING } from "../../focus.js";
 
 const SlotRow = ({
   player,
@@ -48,7 +48,7 @@ const TeamClubPanel = ({ club }: { readonly club: TeamSheetClubView }) => (
   </section>
 );
 
-export const MatchHomeTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+export const MatchAwayTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [teamSheet, setTeamSheet] = useState<{ readonly home: TeamSheetClubView; readonly away: TeamSheetClubView } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,8 +72,8 @@ export const MatchHomeTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => 
   return (
     <main
       tabIndex={-1}
-      data-focus-id="matchHomeTeam"
-      aria-label="Match Home Team"
+      data-focus-id="matchAwayTeam"
+      aria-label="Match Away Team"
       className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
     >
       <h1 className="text-title mb-6">Match Day</h1>

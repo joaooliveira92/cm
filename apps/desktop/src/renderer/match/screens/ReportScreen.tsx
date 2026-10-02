@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useState } from "react";
 import { Effect, Result } from "effect";
 import type { ClubId, MatchId, MatchReportEventView, MatchReportView, SaveId } from "@cm-clone/contracts";
-import { Alert } from "../components/ui/alert.js";
-import { Button } from "../components/ui/button.js";
-import { FOCUS_RING } from "../focus.js";
-import { formatMinute } from "../format.js";
-import { MatchStatsView } from "../match/MatchStatsView.js";
-import { getMatchReport } from "../rpc.js";
-import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
+import { Alert } from "../../components/ui/alert.js";
+import { Button } from "../../components/ui/button.js";
+import { FOCUS_RING } from "../../focus.js";
+import { formatMinute } from "../../format.js";
+import { MatchStatsView } from "../MatchStatsView.js";
+import { getMatchReport } from "../../rpc.js";
+import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 
 type ReportState =
   | { readonly _tag: "loading" }

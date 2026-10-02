@@ -72,20 +72,20 @@ import { CompetitionTableScreen } from "../competitionTable/CompetitionTableScre
 import { CompetitionFixturesDetailScreen } from "../competitionFixturesDetail/CompetitionFixturesDetailScreen.js";
 import { CompetitionResultsScreen } from "../competitionResults/CompetitionResultsScreen.js";
 // Ticket 07 — Match sub-screen placeholders
-import { MatchStatsScreen } from "../matchStats/MatchStatsScreen.js";
-import { MatchPlayerStatsScreen } from "../matchPlayerStats/MatchPlayerStatsScreen.js";
-import { MatchHomeTeamScreen } from "../matchHomeTeam/MatchHomeTeamScreen.js";
-import { MatchAwayTeamScreen } from "../matchAwayTeam/MatchAwayTeamScreen.js";
-import { MatchPreviewScreen } from "../matchPreview/MatchPreviewScreen.js";
-import { MatchRatingsScreen } from "../matchRatings/MatchRatingsScreen.js";
-import { MatchLatestScoresScreen } from "../matchLatestScores/MatchLatestScoresScreen.js";
-import { MatchLiveTableScreen } from "../matchLiveTable/MatchLiveTableScreen.js";
-import { MatchMatchTacticsScreen } from "../matchMatchTactics/MatchMatchTacticsScreen.js";
-import { MatchSubstitutionsScreen } from "../matchSubstitutions/MatchSubstitutionsScreen.js";
-import { MatchOppositionInstructionsScreen } from "../matchOppositionInstructions/MatchOppositionInstructionsScreen.js";
-import { MatchCommentaryScreen } from "../matchCommentary/MatchCommentaryScreen.js";
-import { MatchReplaysScreen } from "../matchReplays/MatchReplaysScreen.js";
-import { MatchReportScreen } from "../matchReport/MatchReportScreen.js";
+import { MatchStatsScreen } from "../match/screens/StatsScreen.js";
+import { MatchPlayerStatsScreen } from "../match/screens/PlayerStatsScreen.js";
+import { MatchHomeTeamScreen } from "../match/screens/HomeTeamScreen.js";
+import { MatchAwayTeamScreen } from "../match/screens/AwayTeamScreen.js";
+import { MatchPreviewScreen } from "../match/screens/PreviewScreen.js";
+import { MatchRatingsScreen } from "../match/screens/RatingsScreen.js";
+import { MatchLatestScoresScreen } from "../match/screens/LatestScoresScreen.js";
+import { MatchLiveTableScreen } from "../match/screens/LiveTableScreen.js";
+import { MatchMatchTacticsScreen } from "../match/screens/MatchTacticsScreen.js";
+import { MatchSubstitutionsScreen } from "../match/screens/SubstitutionsScreen.js";
+import { MatchOppositionInstructionsScreen } from "../match/screens/OppositionInstructionsScreen.js";
+import { MatchCommentaryScreen } from "../match/screens/CommentaryScreen.js";
+import { MatchReplaysScreen } from "../match/screens/ReplaysScreen.js";
+import { MatchReportScreen } from "../match/screens/ReportScreen.js";
 import {
   CareerChildView,
   CareerClubChildView,

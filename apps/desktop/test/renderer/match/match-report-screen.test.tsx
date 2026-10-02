@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MatchId, SaveId } from "@cm-clone/contracts";
-import { MatchReportScreen } from "../../../src/renderer/matchReport/MatchReportScreen.js";
+import { MatchReportScreen } from "../../../src/renderer/match/screens/ReportScreen.js";
 
 const report = (overrides: Record<string, unknown> = {}) => ({
   matchId: "m1",

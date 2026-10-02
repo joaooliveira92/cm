@@ -1,5 +1,5 @@
-import { useAtomValue, fixturesAtom, leagueTableAtom } from "../rpc.js";
-import { FOCUS_RING } from "../focus.js";
+import { useAtomValue, fixturesAtom, leagueTableAtom } from "../../rpc.js";
+import { FOCUS_RING } from "../../focus.js";
 import type { SaveId, FixtureView } from "@cm-clone/contracts";
 
 const formIcon = (fixture: FixtureView, clubId: string): string => {

@@ -12,8 +12,8 @@ Components; `slay-gods.md` does not fit them, and they are better done as single
 
 ### 1.1 Home and Away team screens are the same screen
 
-[MatchHomeTeamScreen.tsx](../apps/desktop/src/renderer/matchHomeTeam/MatchHomeTeamScreen.tsx) and
-[MatchAwayTeamScreen.tsx](../apps/desktop/src/renderer/matchAwayTeam/MatchAwayTeamScreen.tsx)
+[MatchHomeTeamScreen.tsx](../apps/desktop/src/renderer/match/screens/HomeTeamScreen.tsx) and
+[MatchAwayTeamScreen.tsx](../apps/desktop/src/renderer/match/screens/AwayTeamScreen.tsx)
 differ in three lines: the export name, `data-focus-id` and `aria-label`. Both render *both* team
 panels, so the "Home" and "Away" tabs show identical content. Each also fetches imperatively
 (`useEffect` + `Effect.runPromise`) and casts `matchId as never`.

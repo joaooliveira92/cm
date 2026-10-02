@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { MatchId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
-import { MatchCommentaryScreen } from "../../../src/renderer/matchCommentary/MatchCommentaryScreen.js";
+import { MatchCommentaryScreen } from "../../../src/renderer/match/screens/CommentaryScreen.js";
 import {
   clearActiveMatch,
   recordRevealedLines,

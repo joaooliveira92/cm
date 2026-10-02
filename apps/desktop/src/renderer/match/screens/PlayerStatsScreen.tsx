@@ -1,5 +1,5 @@
 import { type SaveId } from "@cm-clone/contracts";
-import { FOCUS_RING } from "../focus.js";
+import { FOCUS_RING } from "../../focus.js";
 
 export const MatchPlayerStatsScreen = ({ saveId: _saveId }: { readonly saveId: SaveId }) => (
   <main

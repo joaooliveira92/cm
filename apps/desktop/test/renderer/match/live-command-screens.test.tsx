@@ -8,8 +8,8 @@ import {
   legacyPositionOf,
   tacticFromTemplate,
 } from "@cm-clone/shared";
-import { MatchSubstitutionsScreen } from "../../../src/renderer/matchSubstitutions/MatchSubstitutionsScreen.js";
-import { MatchMatchTacticsScreen } from "../../../src/renderer/matchMatchTactics/MatchMatchTacticsScreen.js";
+import { MatchSubstitutionsScreen } from "../../../src/renderer/match/screens/SubstitutionsScreen.js";
+import { MatchMatchTacticsScreen } from "../../../src/renderer/match/screens/MatchTacticsScreen.js";
 import {
   clearActiveMatch,
   getLiveTactic,

@@ -1,7 +1,7 @@
 import { cleanup, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MatchId, SaveId } from "@cm-clone/contracts";
-import { MatchRatingsScreen } from "../../../src/renderer/matchRatings/MatchRatingsScreen.js";
+import { MatchRatingsScreen } from "../../../src/renderer/match/screens/RatingsScreen.js";
 import { clearActiveMatch, recordRevealedLines, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 

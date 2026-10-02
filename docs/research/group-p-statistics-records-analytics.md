@@ -16,10 +16,10 @@ the "four statistics" the engine does **not** produce?
 - `packages/contracts/src/schemas/match.ts` — `MatchStatisticsView`, `MatchStatisticKey`, `MatchReportView`
 - `packages/contracts/src/schemas/season.ts` — `SeasonSummaryView`
 - `apps/desktop/src/main/match/statistics.ts` — `aggregateMatchStatistics`, `matchStatisticsView`, `getMatchStatistics`
-- `apps/desktop/src/renderer/matchStats/MatchStatsScreen.tsx` — Match Statistics screen
+- `apps/desktop/src/renderer/match/screens/StatsScreen.tsx` — Match Statistics screen
 - `apps/desktop/src/renderer/match/MatchStatsView.tsx` — shared component rendering the stats table
 - `apps/desktop/src/renderer/match/PostMatchSummary.tsx` — Post-Match Summary screen (links to stats)
-- `apps/desktop/src/renderer/matchReport/MatchReportScreen.tsx` — Match Report (includes `MatchStatsView`)
+- `apps/desktop/src/renderer/match/screens/ReportScreen.tsx` — Match Report (includes `MatchStatsView`)
 - `apps/desktop/src/renderer/seasonSummary/SeasonSummaryScreen.tsx` — Season Summary screen
 - `apps/desktop/src/renderer/navigation/destinations.ts` — all existing route destinations
 - `apps/desktop/src/renderer/router/index.tsx` — route definitions

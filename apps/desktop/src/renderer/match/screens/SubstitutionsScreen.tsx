@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { PlayerId, type SaveId } from "@cm-clone/contracts";
-import { Button } from "../components/ui/button.js";
-import { SELECT_CLASS } from "../match/controls.js";
-import { LiveCommandFrame } from "../match/LiveCommandFrame.js";
-import { NO_SUBSTITUTES_LEFT, substitutionErrorLabel, validateLiveSubstitution } from "../match/substitution.js";
-import { useLiveMatchCommands, type LiveMatchReady } from "../match/useLiveMatchCommands.js";
+import { Button } from "../../components/ui/button.js";
+import { SELECT_CLASS } from "../controls.js";
+import { LiveCommandFrame } from "../LiveCommandFrame.js";
+import { NO_SUBSTITUTES_LEFT, substitutionErrorLabel, validateLiveSubstitution } from "../substitution.js";
+import { useLiveMatchCommands, type LiveMatchReady } from "../useLiveMatchCommands.js";
 
 /** Screen 97, substitutions half: pick who comes off and who comes on, then submit a
  *  `MakeSubstitution` to the live match. The caps shown and enforced, and the players offered, come

@@ -1,11 +1,11 @@
 import type { SaveId } from "@cm-clone/contracts";
-import { Alert } from "../components/ui/alert.js";
-import { Button } from "../components/ui/button.js";
-import { FOCUS_RING } from "../focus.js";
-import { MatchStatsView } from "../match/MatchStatsView.js";
-import { useBoundMatchRead, type MatchBinding } from "../match/useBoundMatchRead.js";
-import { getMatchStatistics } from "../rpc.js";
-import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
+import { Alert } from "../../components/ui/alert.js";
+import { Button } from "../../components/ui/button.js";
+import { FOCUS_RING } from "../../focus.js";
+import { MatchStatsView } from "../MatchStatsView.js";
+import { useBoundMatchRead, type MatchBinding } from "../useBoundMatchRead.js";
+import { getMatchStatistics } from "../../rpc.js";
+import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 
 const read = (binding: MatchBinding) => getMatchStatistics(binding);
 const describe = (error: RpcClientError<"getMatchStatistics">) => describeRpcError(error);

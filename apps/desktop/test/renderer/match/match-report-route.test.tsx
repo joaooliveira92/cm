@@ -9,7 +9,7 @@ import {
 } from "@tanstack/react-router";
 import { afterEach, describe, expect, it } from "vitest";
 import { MatchId, SaveId } from "@cm-clone/contracts";
-import { MatchReportScreen } from "../../../src/renderer/matchReport/MatchReportScreen.js";
+import { MatchReportScreen } from "../../../src/renderer/match/screens/ReportScreen.js";
 import { resolveDestination } from "../../../src/renderer/navigation/destinations.js";
 import { CareerMatchChildView } from "../../../src/renderer/router/career.js";
 import { router as appRouter } from "../../../src/renderer/router/index.js";
