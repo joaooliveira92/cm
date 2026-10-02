@@ -103,14 +103,15 @@ type ShotEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "ShotOnTarget" | 
 
 /**
  * How a shot was struck. A set-piece shot follows its Corner/FreeKick/Penalty event directly and
- * carries a placeholder `chanceType`, so the set piece wins; an open-play shot reads its own.
+ * carries a placeholder `chanceType`, so the set piece wins; an open-play shot reads its own. A free
+ * kick or penalty is struck by its taker; a corner is headed by someone else, the taker's assist.
  */
 const shotKindFor = (event: ShotEvent, previous: MatchEvent | undefined): ShotKind => {
   if (previous !== undefined && "playerId" in previous && previous.playerId === event.playerId) {
     if (previous._tag === "Penalty") return "penalty";
     if (previous._tag === "FreeKick") return "freeKick";
-    if (previous._tag === "Corner") return "header";
   }
+  if (previous?._tag === "Corner" && previous.teamClubId === event.teamClubId) return "header";
   if (event.chanceType === "cross") return "header";
   if (event.chanceType === "longShot") return "longRange";
   return "closeRange";

@@ -258,3 +258,48 @@ describe("determinism with set pieces", () => {
     throw new Error("no set-piece events found in seed sweep");
   });
 });
+// ─── Corners: the taker delivers, someone else heads it (cm-style-commentary 11) ─────────
+
+describe("a corner", () => {
+  /** Every corner across a spread of seeds, with the shot that follows it. */
+  const cornersWithShots = (nominate: boolean) =>
+    Array.from({ length: 30 }, (_, index) => index + 1).flatMap((seed) => {
+      const home = buildTeam(makeClubId("home-club"), seed).setup;
+      const takerId = home.tactic.slots.find((slot) => slot.cell.row !== "GK")!.playerId;
+      const takers = nominate ? { ...EMPTY_TAKERS, cornersLeft: [takerId], cornersRight: [takerId] } : EMPTY_TAKERS;
+      const events = simulateMatch({
+        seed,
+        home: { ...home, tactic: { ...home.tactic, takers } },
+        away: buildTeam(makeClubId("away-club"), seed + 1000).setup,
+      });
+      return events.flatMap((event, index) => {
+        const shot = events[index + 1];
+        if (event._tag !== "Corner" || shot === undefined) return [];
+        if (shot._tag !== "Goal" && shot._tag !== "ShotOnTarget" && shot._tag !== "ShotMissed") return [];
+        return [{ corner: event as CornerEvent, shot, home, takerId, nominated: event.teamClubId === makeClubId("home-club") && nominate }];
+      });
+    });
+
+  it("is headed by someone other than its taker, never the keeper, with the taker as the assist", () => {
+    const corners = cornersWithShots(false);
+    expect(corners.length).toBeGreaterThan(10);
+    for (const { corner, shot } of corners) {
+      expect(shot.playerId).not.toBe(corner.playerId);
+      expect("assistPlayerId" in shot ? shot.assistPlayerId : undefined).toBe(corner.playerId);
+    }
+  });
+
+  it("is taken by the nominated corner taker", () => {
+    const nominated = cornersWithShots(true).filter((entry) => entry.nominated);
+    expect(nominated.length).toBeGreaterThan(0);
+    for (const { corner, shot, home, takerId } of nominated) {
+      expect(corner.playerId).toBe(takerId);
+      const keeper = home.tactic.slots.find((slot) => slot.cell.row === "GK")?.playerId;
+      expect(shot.playerId).not.toBe(keeper);
+    }
+  });
+
+  it("plays out the same way twice from the same seed", () => {
+    expect(cornersWithShots(true)).toEqual(cornersWithShots(true));
+  });
+});

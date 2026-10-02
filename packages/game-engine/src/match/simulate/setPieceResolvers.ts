@@ -137,8 +137,11 @@ const gkReflexes = (defender: TeamRuntimeState): number => {
 
 // ─── Corner resolution ───────────────────────────────────────────────────────
 
-/** Resolve a corner kick: pick taker, determine delivery type from team instruction,
- *  resolve header outcome based on taker's heading + strength vs defender's positioning + bravery. */
+/** Resolve a corner kick: the taker delivers it (the first nominated corner taker on the pitch, else the
+ *  best crosser), and the best header among the other outfield players attacks it. The header outcome
+ *  is his heading + strength vs the defence's positioning + bravery, and the taker is his assist.
+ *  Both picks are deterministic, so a corner draws no more random numbers than it did when the taker
+ *  headed his own corner (cm-style-commentary 11). */
 export const resolveCorner = (
   attackingTeam: TeamRuntimeState,
   defendingTeam: TeamRuntimeState,
@@ -160,17 +163,21 @@ export const resolveCorner = (
       ? attackingTeam.teamSetPieces.cornersLeft
       : attackingTeam.teamSetPieces.cornersRight;
 
-  // Pick taker
+  const onPitch = attackingTeam.resolved.slots;
   const takerId = pickTaker(
     takerList,
-    new Set(attackingTeam.resolved.slots.map((s) => s.playerId)),
+    new Set(onPitch.map((s) => s.playerId)),
     attackingTeam.playersById,
-    (p) => attributeValue(p, "heading"),
+    (p) => attributeValue(p, "crossing"),
   );
   if (!takerId) return;
 
-  const takerPlayer = attackingTeam.playersById.get(takerId);
-  if (!takerPlayer) return;
+  // The player who attacks the ball: never the taker, never the goalkeeper. A side down to its taker
+  // and keeper sends the taker in, as before.
+  const targets = new Set(onPitch.filter((s) => !s.isGoalkeeper && s.playerId !== takerId).map((s) => s.playerId));
+  const headerId = targets.size > 0 ? pickTaker([], targets, attackingTeam.playersById, (p) => attributeValue(p, "heading")) : takerId;
+  const headerPlayer = headerId == null ? undefined : attackingTeam.playersById.get(headerId);
+  if (headerId == null || !headerPlayer) return;
 
   // Emit the Corner event
   events.push({
@@ -183,12 +190,22 @@ export const resolveCorner = (
     side,
   });
 
-  // Resolve header outcome: taker's heading + strength vs defender's positioning + bravery
-  const atkValue = attackValue(takerPlayer, "heading", "strength");
+  const atkValue = attackValue(headerPlayer, "heading", "strength");
   const defValue = defenseValue(defendingTeam, "positioning", "bravery");
   const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_GOAL_BASE, CORNER_SAVE_SHARE, CORNER_MISS_SHARE, random);
 
-  emitOutcomeEvent(outcome, minute, half, attackingTeam.clubId, takerId, goalkeeperId(defendingTeam), isAttackerHome, homeAwayScore, events);
+  emitOutcomeEvent(
+    outcome,
+    minute,
+    half,
+    attackingTeam.clubId,
+    headerId,
+    goalkeeperId(defendingTeam),
+    isAttackerHome,
+    homeAwayScore,
+    events,
+    headerId === takerId ? undefined : takerId,
+  );
 };
 
 // ─── Free kick resolution ───────────────────────────────────────────────────
@@ -301,8 +318,10 @@ const emitOutcomeEvent = (
   isHome: boolean,
   homeAwayScore: { home: number; away: number },
   events: Array<MatchEvent>,
+  assistPlayerId?: PlayerId,
 ): void => {
   const keeperField = keeperId === undefined ? {} : { keeperId };
+  const assistField = assistPlayerId === undefined ? {} : { assistPlayerId };
   if (outcome === "goal") {
     if (isHome) homeAwayScore.home += 1;
     else homeAwayScore.away += 1;
@@ -316,6 +335,7 @@ const emitOutcomeEvent = (
       awayScore: homeAwayScore.away,
       chanceType: "throughBall", // set pieces use throughBall as the generic chance type
       ...keeperField,
+      ...assistField,
     });
   } else if (outcome === "onTarget") {
     events.push({
@@ -326,6 +346,7 @@ const emitOutcomeEvent = (
       playerId,
       chanceType: "throughBall",
       ...keeperField,
+      ...assistField,
     });
   } else {
     events.push({
@@ -335,6 +356,7 @@ const emitOutcomeEvent = (
       teamClubId,
       playerId,
       chanceType: "throughBall",
+      ...assistField,
     });
   }
 };
