@@ -556,9 +556,9 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
 
       {/* Main content: left column (Team Selection) + right area (pitch) */}
       {/* A size container, so the pitch panel can take the width a 68:100 pitch of this height needs.
-          Size containment ignores content height, so in a match, where nothing above bounds it, it
-          gets a fixed one. */}
-      <div className={`flex min-h-0 flex-1 gap-3 [container-type:size] ${isInMatch ? "h-[40rem] flex-none" : ""}`}>
+          In a match the match state sits above it, so it keeps a floor rather than shrink to nothing
+          on a short window. */}
+      <div className={`flex min-h-0 flex-1 gap-3 [container-type:size] ${isInMatch ? "min-h-[24rem]" : ""}`}>
         {/* Left column: Team Selection */}
         <section
           aria-label="Team Selection"

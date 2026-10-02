@@ -11,18 +11,24 @@ import type { LiveMatchCommands, LiveMatchReady } from "./useLiveMatchCommands.j
  * The shell both live-match command screens share: the heading, the non-ready states (no match in
  * play, loading, failed with Retry), the scoreline and substitution allowance, the halftime toggle,
  * and the command status line. `children` renders only once the view is ready.
+ *
+ * `fill` makes the frame exactly the height its route gives it (the route needs `fitHeight`) and
+ * hands the space left under the match state to `children`, for a workspace that sizes itself to
+ * the window, such as Match Tactics.
  */
 export const LiveCommandFrame = ({
   saveId,
   focusId,
   title,
   commands,
+  fill = false,
   children,
 }: {
   readonly saveId: SaveId;
   readonly focusId: string;
   readonly title: string;
   readonly commands: LiveMatchCommands;
+  readonly fill?: boolean;
   readonly children: (ready: LiveMatchReady) => ReactNode;
 }) => {
   const { view, status, isHalftime, setIsHalftime, retry } = commands;
@@ -31,9 +37,9 @@ export const LiveCommandFrame = ({
       tabIndex={-1}
       data-focus-id={focusId}
       aria-label={title}
-      className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+      className={`${fill ? "flex min-h-0 flex-1 flex-col p-6" : "p-8"} text-foreground ${FOCUS_RING.join(" ")}`}
     >
-      <div className="mb-6 flex items-center justify-between gap-4">
+      <div className={`${fill ? "mb-4 shrink-0" : "mb-6"} flex items-center justify-between gap-4`}>
         <h1 className="text-title">{title}</h1>
         <Button
           type="button"
@@ -63,8 +69,11 @@ export const LiveCommandFrame = ({
       )}
 
       {view._tag === "ready" && (
-        <div className="space-y-4 text-body">
-          <section aria-label="Match state" className="rounded-panel border border-panel-border bg-panel-bg p-4">
+        <div className={`${fill ? "flex min-h-0 flex-1 flex-col gap-4" : "space-y-4"} text-body`}>
+          <section
+            aria-label="Match state"
+            className="shrink-0 rounded-panel border border-panel-border bg-panel-bg p-4"
+          >
             <p className="font-semibold">
               {view.score === null
                 ? `${view.match.homeClubName} v ${view.match.awayClubName}`

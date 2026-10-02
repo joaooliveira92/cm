@@ -16,13 +16,19 @@ const draggedSlotOf = (event: DragEvent): number | null => {
 const markerName = (player: SquadPlayerView): string =>
   `${player.lastName}, ${player.firstName.slice(0, 1)}`;
 
+/** A marker's width: 6rem, or under a fifth of a narrow pitch, the gap between its five columns, so
+ *  neighbours' captions truncate rather than run into each other. Units read the pitch `@container`. */
+const MARKER_WIDTH = "min(6rem, 19cqw)";
+
 /**
- * How far a marker's caption moves so it stays on the pitch. The caption is the marker's 6rem width,
- * centred on `x` (percent of the pitch width, which is the `@container` the units read): past the
- * left touchline it moves right by the overhang, past the right one left by it, and otherwise not.
+ * How far a marker's caption moves so it stays on the pitch. The caption is the marker's width,
+ * centred on `x` (percent of the pitch width): past the left touchline it moves right by the
+ * overhang, past the right one left by it, and otherwise not.
  */
-const captionShift = (x: number): string =>
-  `max(calc(3rem - ${x}cqw), min(0px, calc(${100 - x}cqw - 3rem)))`;
+const captionShift = (x: number): string => {
+  const half = `(${MARKER_WIDTH} / 2)`;
+  return `max(calc(${half} - ${x}cqw), min(0px, calc(${100 - x}cqw - ${half})))`;
+};
 
 /** The fit tier word for a player in their slot. */
 const fitTierWord = (player: SquadPlayerView, cell: Slot): string => {
@@ -431,11 +437,11 @@ export const FormationPitch = ({
               key={slotIndex}
               data-landing={landing || undefined}
               data-selected={isSelected || undefined}
-              className={`absolute w-24 -translate-x-1/2 ${
+              className={`absolute -translate-x-1/2 ${
                 // The landing preview tracks the pointer, so it must not ease behind it.
                 isDragged ? "" : "transition-[left,top] duration-200 ease-out motion-reduce:transition-none"
               }`}
-              style={{ left: `${x}%`, top: `calc(${y}% - 0.875rem)` }}
+              style={{ left: `${x}%`, top: `calc(${y}% - 0.875rem)`, width: MARKER_WIDTH }}
             >
               <button
                 type="button"
@@ -491,7 +497,7 @@ export const FormationPitch = ({
                   </span>
                   {/* Fit word as non-colour indicator */}
                   {fitWord !== null && (
-                    <span className="text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
+                    <span className="max-w-full truncate text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
                       {fitWord}
                     </span>
                   )}

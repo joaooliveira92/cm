@@ -34,7 +34,7 @@ export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId })
   const [validationError, setValidationError] = useState<string | null>(null);
 
   return (
-    <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands}>
+    <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands} fill>
       {(ready) => {
         const tactic = draftTactic ?? ready.tactic;
 

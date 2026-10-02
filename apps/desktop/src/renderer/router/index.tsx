@@ -163,12 +163,12 @@ const defineCareerChild = <const P extends string>(
   path: P,
   screenId: string,
   Screen: typeof SquadScreen,
-  options: { readonly fullHeight?: boolean } = {},
+  options: { readonly fullHeight?: boolean; readonly fitHeight?: boolean } = {},
 ) =>
   createRoute({
     getParentRoute: () => saveRoute,
     path,
-    component: () => <CareerChildView screenId={screenId} Screen={Screen} fullHeight={options.fullHeight} />,
+    component: () => <CareerChildView screenId={screenId} Screen={Screen} fullHeight={options.fullHeight} fitHeight={options.fitHeight} />,
   });
 
 // Full height so the lineup bar sits on the bottom edge of the window, not under a short list.
@@ -527,7 +527,10 @@ const matchAwayTeamRoute = defineCareerChild("match-away-team", "matchAwayTeam",
 const matchRatingsRoute = defineCareerChild("match-ratings", "matchRatings", MatchRatingsScreen);
 const matchLatestScoresRoute = defineCareerChild("match-latest-scores", "matchLatestScores", MatchLatestScoresScreen);
 const matchLiveTableRoute = defineCareerChild("match-live-table", "matchLiveTable", MatchLiveTableScreen);
-const matchMatchTacticsRoute = defineCareerChild("match-match-tactics", "matchMatchTactics", MatchMatchTacticsScreen);
+// Window height, like the Tactics editor: the pitch sizes itself to what is left under the match state.
+const matchMatchTacticsRoute = defineCareerChild("match-match-tactics", "matchMatchTactics", MatchMatchTacticsScreen, {
+  fitHeight: true,
+});
 const matchSubstitutionsRoute = defineCareerChild("match-substitutions", "matchSubstitutions", MatchSubstitutionsScreen);
 const matchOppositionInstructionsRoute = defineCareerChild("match-opposition-instructions", "matchOppositionInstructions", MatchOppositionInstructionsScreen);
 const matchCommentaryRoute = defineCareerChild("match-commentary", "matchCommentary", MatchCommentaryScreen);
