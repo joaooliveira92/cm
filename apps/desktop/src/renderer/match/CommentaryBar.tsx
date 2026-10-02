@@ -44,7 +44,11 @@ const useFlash = (line: CommentaryLineView | null): boolean => {
         return count + 1;
       });
     }, FLASH_BLINK_MS);
-    return () => clearInterval(interval);
+    // The next line can start mid-blink (a goal holds 1.1 s at Fast, a blink runs 1.3 s): stop marking.
+    return () => {
+      clearInterval(interval);
+      setBlink(0);
+    };
   }, [line]);
   return prefersReducedMotion() ? blink > 0 : blink % 2 === 1;
 };
@@ -52,8 +56,8 @@ const useFlash = (line: CommentaryLineView | null): boolean => {
 /**
  * Championship Manager's commentary bar: the line being played, one at a time, in the colours of the
  * club it is about. A follow-on line grows part by part; once it is revealed the bar holds it until the
- * next line starts. Quiet lines and lines below the chosen highlights never reach it. Hidden from screen readers, which hear each line from
- * the log below when it is revealed.
+ * next line starts. Quiet lines and lines below the chosen highlights never reach it. Hidden from
+ * screen readers, which hear each line from the log below when it is revealed.
  */
 export const CommentaryBar = ({
   match,

@@ -95,6 +95,26 @@ describe("CommentaryBar", () => {
     vi.unstubAllGlobals();
   });
 
+  it("stops marking a flash line the moment the next line starts, blinking or held (review fix)", () => {
+    vi.useFakeTimers();
+    const goal = line({ tag: "Goal", text: "GOAL!", flash: true, clubId: "home" as never });
+    const next = line({ tag: "Foul", text: "Next…" });
+    const playing = { line: next, parts: [{ text: "Next…", delayMs: 1000 }, { text: "done", delayMs: 900 }], shown: 1 };
+    for (const reduced of [false, true]) {
+      vi.stubGlobal("matchMedia", (query: string) => ({ matches: reduced && query === "(prefers-reduced-motion: reduce)" }));
+      const { rerender, unmount } = render(<CommentaryBar match={MATCH} playing={null} revealed={[]} />);
+      rerender(<CommentaryBar match={MATCH} playing={null} revealed={[goal]} />);
+      // Partway through the blink, on an odd (marked) step.
+      act(() => {
+        vi.advanceTimersByTime(220 * 4);
+      });
+      rerender(<CommentaryBar match={MATCH} playing={playing} revealed={[goal]} />);
+      expect(surface("Next…").dataset["flashing"]).toBe("false");
+      unmount();
+    }
+    vi.unstubAllGlobals();
+  });
+
   it("does not blink a flash line that was already on screen when the bar mounted", () => {
     render(<CommentaryBar match={MATCH} playing={null} revealed={[line({ tag: "Goal", text: "GOAL!", flash: true })]} />);
     expect(surface("GOAL!").dataset["flashing"]).toBe("false");
