@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { DEFAULT_SET_PIECE_ROLES, type SetPieceRoles } from "@cm-clone/shared";
 import { simulateMatch } from "../../src/match/simulate/index.js";
 import { defendCornerFactor, planCorner } from "../../src/match/simulate/cornerPlan.js";
+import { defendFreeKickFactor, planFreeKick } from "../../src/match/simulate/freeKickPlan.js";
 import { parseCommentaryFile, renderCommentary } from "../../src/match/commentary.js";
 import { SHIPPED } from "./shippedCommentary.js";
 import {
@@ -12,6 +13,10 @@ import {
   CORNER_MARK_TARGET_BONUS,
   CORNER_ROLE_MATCH_BONUS,
   CORNER_ZONAL_BONUS,
+  FREE_KICK_DECOY_BONUS,
+  FREE_KICK_DISRUPT_KEEPER_FACTOR,
+  FREE_KICK_DISRUPT_WALL_BONUS,
+  FREE_KICK_WALL_BONUS_PER_PLAYER,
 } from "../../src/match/simulate/constants.js";
 import { applyCommand, initTeamState } from "../../src/match/simulate/teamState.js";
 import { resolveTeamTactics } from "../../src/match/tactical-modifiers.js";
@@ -272,5 +277,89 @@ describe("a corner is defended by the defending roles", () => {
     const volley = { kind: "volley", shooterId: takerId, assistId: takerId } as const;
     expect(defendCornerFactor(defendingWith("closeDown"), attacking, takerId, "edgeOfArea", volley)).toBe(CORNER_CLOSE_DOWN_BONUS);
     expect(defendCornerFactor(defendingWith("markMan"), attacking, takerId, "edgeOfArea", volley)).toBe(1);
+  });
+});
+
+// ─── 04: free kicks follow the delivery and the roles ───────────────────────
+
+describe("a free kick follows the delivery and the roles", () => {
+  type AttackRole = SetPieceRoles["attackFreeKick"];
+  type DefendRole = SetPieceRoles["defendFreeKick"];
+
+  const sideWith = (seed: number, attack: Readonly<Record<number, AttackRole>> = {}, defend: DefendRole = "default", defenders = 0) => {
+    const setup = buildTeam(clubId(seed === 5 ? "home" : "away"), seed).setup;
+    let given = 0;
+    const slots = setup.tactic.slots.map((slot, index) => {
+      let roles = slot.setPieceRoles ?? DEFAULT_SET_PIECE_ROLES;
+      if (attack[index] !== undefined) roles = { ...roles, attackFreeKick: attack[index]! };
+      if (slot.cell.row !== "GK" && given < defenders) {
+        given += 1;
+        roles = { ...roles, defendFreeKick: defend };
+      }
+      return { ...slot, setPieceRoles: roles };
+    });
+    return initTeamState({ ...setup, tactic: { ...setup.tactic, slots } }, 1);
+  };
+  const base = sideWith(5);
+  const outfield = base.resolved.slots.flatMap((slot, index) => (slot.isGoalkeeper ? [] : [index]));
+  const TAKER = outfield[0]!;
+  const takerId = base.resolved.slots[TAKER]!.playerId;
+
+  it("is a direct shot at default, exactly as before", () => {
+    expect(planFreeKick(base, takerId, "default")).toEqual({ kind: "shot", attackFactor: 1, keeperFactor: 1 });
+    expect(defendFreeKickFactor(sideWith(9), "default", planFreeKick(base, takerId, "default"))).toBe(1);
+  });
+
+  it("is kept when played short or long", () => {
+    expect(planFreeKick(base, takerId, "short")).toEqual({ kind: "kept" });
+    expect(planFreeKick(base, takerId, "long")).toEqual({ kind: "kept" });
+  });
+
+  it("is crossed to the best header in the box, leaving out players kept back or at the ball", () => {
+    const best = planFreeKick(base, takerId, "crossCentre");
+    expect(best).toMatchObject({ kind: "header", attackFactor: 1 });
+    const bestIndex = base.resolved.slots.findIndex((slot) => best.kind === "header" && slot.playerId === best.headerId);
+    const team = sideWith(5, { [bestIndex]: "alwaysStayBack" });
+    const without = planFreeKick(team, takerId, "crossCentre");
+    expect(without.kind === "header" && without.headerId).not.toBe(best.kind === "header" && best.headerId);
+    expect(planFreeKick(base, takerId, "aimForBestHeader")).toMatchObject({ kind: "header", attackFactor: CORNER_ROLE_MATCH_BONUS });
+  });
+
+  it("is helped by disrupting the wall or the keeper, and by a decoy", () => {
+    expect(planFreeKick(sideWith(5, { [outfield[1]!]: "disruptWall" }), takerId, "default")).toMatchObject({ attackFactor: FREE_KICK_DISRUPT_WALL_BONUS });
+    expect(planFreeKick(sideWith(5, { [outfield[1]!]: "runOverBall" }), takerId, "default")).toMatchObject({ attackFactor: FREE_KICK_DECOY_BONUS });
+    expect(planFreeKick(sideWith(5, { [outfield[1]!]: "disruptGoalkeeper" }), takerId, "default")).toMatchObject({ keeperFactor: FREE_KICK_DISRUPT_KEEPER_FACTOR });
+  });
+
+  it("is defended by the wall against a shot, and by markers and zones against a cross", () => {
+    const shot = planFreeKick(base, takerId, "default");
+    expect(defendFreeKickFactor(sideWith(9, {}, "formWall", 3), "default", shot)).toBeCloseTo(1 + FREE_KICK_WALL_BONUS_PER_PLAYER * 3);
+    expect(defendFreeKickFactor(sideWith(9, {}, "formWall", 6), "default", shot)).toBeCloseTo(1 + FREE_KICK_WALL_BONUS_PER_PLAYER * 4);
+    const cross = planFreeKick(base, takerId, "crossNear");
+    expect(defendFreeKickFactor(sideWith(9, {}, "nearPost", 1), "crossNear", cross)).toBe(CORNER_ZONAL_BONUS);
+    expect(defendFreeKickFactor(sideWith(9, {}, "manMark", 1), "crossFar", cross)).toBe(CORNER_MAN_MARK_BONUS);
+    expect(defendFreeKickFactor(sideWith(9, {}, "forward", 2), "crossCentre", cross)).toBeLessThan(1);
+  });
+
+  it("plays out in whole matches: a crossed free kick is headed by someone else, a kept one brings no shot", () => {
+    const followUps = (delivery: "crossCentre" | "short") =>
+      Array.from({ length: 30 }, (_, index) => index + 1).flatMap((seed) => {
+        const setup = buildTeam(clubId("home"), seed).setup;
+        const home = { ...setup, tactic: { ...setup.tactic, teamSetPieces: { ...setup.tactic.teamSetPieces, freeKicksLeft: delivery, freeKicksRight: delivery } } };
+        const events = simulateMatch({ seed, home, away: buildTeam(clubId("away"), seed + 1000).setup });
+        return events.flatMap((event, at) =>
+          event._tag === "FreeKick" && event.teamClubId === clubId("home") ? [{ kick: event, next: events[at + 1] }] : [],
+        );
+      });
+    const crossed = followUps("crossCentre");
+    expect(crossed.length).toBeGreaterThan(3);
+    for (const { kick, next } of crossed) {
+      expect(kick).toMatchObject({ deliveryType: "crossCentre" });
+      expect(next).toMatchObject({ chanceType: "cross", assistPlayerId: kick.playerId });
+      expect(next && "playerId" in next && next.playerId).not.toBe(kick.playerId);
+    }
+    const kept = followUps("short");
+    expect(kept.length).toBeGreaterThan(3);
+    expect(kept.filter(({ next }) => next?._tag === "Goal" || next?._tag === "ShotOnTarget" || next?._tag === "ShotMissed")).toEqual([]);
   });
 });

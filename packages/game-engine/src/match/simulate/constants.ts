@@ -99,6 +99,18 @@ export const CORNER_MARK_TARGET_BONUS = 1.08;
 /** Defence multiplier against a shot from the edge of the area when a defender closes down. */
 export const CORNER_CLOSE_DOWN_BONUS = 1.1;
 
+// Free-kick instructions (set-piece-roles 04). Each takes effect only when a role or delivery is set.
+
+/** Attack multiplier on a direct free kick when a teammate disrupts the wall. */
+export const FREE_KICK_DISRUPT_WALL_BONUS = 1.06;
+/** Attack multiplier on a direct free kick when a teammate stands with the taker or runs over the ball. */
+export const FREE_KICK_DECOY_BONUS = 1.04;
+/** Multiplier on the goalkeeper's part of the defence when a teammate disrupts him. */
+export const FREE_KICK_DISRUPT_KEEPER_FACTOR = 0.94;
+/** Defence bonus per player forming the wall against a direct free kick, up to `FREE_KICK_WALL_MAX`. */
+export const FREE_KICK_WALL_BONUS_PER_PLAYER = 0.03;
+export const FREE_KICK_WALL_MAX = 4;
+
 /** Probability that a foul leads to a free kick (foul in attacking third). */
 export const FOUL_LEADS_TO_FREE_KICK = 0.15;
 /** Base goal probability at equal attacker/defender quality for free kicks. */

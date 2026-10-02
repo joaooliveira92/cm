@@ -111,6 +111,8 @@ export interface CornerEvent extends TeamPlayerEvent {
 export interface FreeKickEvent extends TeamPlayerEvent {
   readonly _tag: "FreeKick";
   readonly side: "left" | "right";
+  /** The team's delivery instruction when it isn't `default` (a direct shot): a cross, short or long. */
+  readonly deliveryType?: string;
 }
 
 /** A penalty kick awarded after a foul in the box. */

@@ -5,6 +5,7 @@ import type { RandomSource } from "@cm-clone/shared";
 import { goalkeeperId, type TeamRuntimeState } from "./teamState.js";
 import { attributeValue, pickTaker } from "./setPiecePicks.js";
 import { defendCornerFactor, planCorner, type CornerDelivery } from "./cornerPlan.js";
+import { defendFreeKickFactor, planFreeKick, type FreeKickDelivery } from "./freeKickPlan.js";
 import {
   CORNER_CHANCE,
   CORNER_GOAL_BASE,
@@ -212,6 +213,8 @@ export const resolveFreeKick = (
       ? attackingTeam.takers.freeKicksLeft
       : attackingTeam.takers.freeKicksRight;
 
+  const delivery: FreeKickDelivery = side === "left" ? attackingTeam.teamSetPieces.freeKicksLeft : attackingTeam.teamSetPieces.freeKicksRight;
+
   // Pick taker
   const takerId = pickTaker(
     takerList,
@@ -224,6 +227,9 @@ export const resolveFreeKick = (
   const takerPlayer = attackingTeam.playersById.get(takerId);
   if (!takerPlayer) return;
 
+  const plan = planFreeKick(attackingTeam, takerId, delivery);
+  const defendedBy = defendFreeKickFactor(defendingTeam, delivery, plan);
+
   // Emit the FreeKick event
   events.push({
     _tag: "FreeKick",
@@ -232,12 +238,38 @@ export const resolveFreeKick = (
     teamClubId: attackingTeam.clubId,
     playerId: takerId,
     side,
+    ...(delivery === "default" ? {} : { deliveryType: delivery }),
   });
 
-  // Resolve outcome: taker's shooting + composure vs defender's positioning + GK reflexes
-  const atkValue = attackValue(takerPlayer, "shooting", "composure");
-  const gkRef = gkReflexes(defendingTeam);
-  const defValue = defenseValue(defendingTeam, "positioning") * 0.6 + gkRef * 0.4;
+  // Played short or long, the ball is kept: no shot comes straight from it.
+  if (plan.kind === "kept") return;
+
+  if (plan.kind === "header") {
+    const headerPlayer = attackingTeam.playersById.get(plan.headerId);
+    if (!headerPlayer) return;
+    const atkValue = attackValue(headerPlayer, "heading", "strength") * plan.attackFactor;
+    const defValue = defenseValue(defendingTeam, "positioning", "bravery") * defendedBy;
+    const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_GOAL_BASE, CORNER_SAVE_SHARE, CORNER_MISS_SHARE, random);
+    emitOutcomeEvent(
+      outcome,
+      minute,
+      half,
+      attackingTeam.clubId,
+      plan.headerId,
+      goalkeeperId(defendingTeam),
+      isAttackerHome,
+      homeAwayScore,
+      events,
+      takerId,
+      "cross",
+    );
+    return;
+  }
+
+  // A direct shot: taker's shooting + composure vs defender's positioning + GK reflexes
+  const atkValue = attackValue(takerPlayer, "shooting", "composure") * plan.attackFactor;
+  const gkRef = gkReflexes(defendingTeam) * plan.keeperFactor;
+  const defValue = (defenseValue(defendingTeam, "positioning") * 0.6 + gkRef * 0.4) * defendedBy;
   const outcome = resolveSetPieceOutcome(atkValue, defValue, FREE_KICK_GOAL_BASE, FREE_KICK_SAVE_SHARE, FREE_KICK_MISS_SHARE, random);
 
   emitOutcomeEvent(outcome, minute, half, attackingTeam.clubId, takerId, goalkeeperId(defendingTeam), isAttackerHome, homeAwayScore, events);
@@ -303,8 +335,9 @@ const emitOutcomeEvent = (
   homeAwayScore: { home: number; away: number },
   events: Array<MatchEvent>,
   assistPlayerId?: PlayerId,
-  // Set pieces use throughBall as the generic chance type, except a shot from the edge of the area.
-  chanceType: "throughBall" | "longShot" = "throughBall",
+  // Set pieces use throughBall as the generic chance type, except a shot from the edge of the area
+  // (longShot) and a crossed free kick (cross).
+  chanceType: "throughBall" | "longShot" | "cross" = "throughBall",
 ): void => {
   const keeperField = keeperId === undefined ? {} : { keeperId };
   const assistField = assistPlayerId === undefined ? {} : { assistPlayerId };

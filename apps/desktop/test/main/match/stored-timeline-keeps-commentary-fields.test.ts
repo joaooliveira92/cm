@@ -18,6 +18,7 @@ const EVENTS: ReadonlyArray<MatchEvent> = [
   { _tag: "Cross", minute: 4, half: 1, teamClubId: home, playerId: p("nine"), assistPlayerId: p("seven") },
   { _tag: "KeyPass", minute: 4, half: 1, teamClubId: home, playerId: p("seven"), chanceType: "cross" },
   { _tag: "ShotOnTarget", minute: 4, half: 1, teamClubId: home, playerId: p("nine"), chanceType: "cross", assistPlayerId: p("seven"), keeperId: p("gk") },
+  { _tag: "FreeKick", minute: 7, half: 1, teamClubId: home, playerId: p("seven"), side: "left", deliveryType: "crossFar" },
   { _tag: "Goal", minute: 9, half: 1, teamClubId: home, playerId: p("nine"), chanceType: "cross", homeScore: 1, awayScore: 0, keeperId: p("gk") },
 ];
 
