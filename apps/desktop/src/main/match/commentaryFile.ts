@@ -1,7 +1,7 @@
 import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Effect } from "effect";
-import { CommentaryFileStatusView } from "@cm-clone/contracts";
+import { CommentaryFileError, CommentaryFileStatusView } from "@cm-clone/contracts";
 import {
   SHIPPED_COMMENTARY_TEXT,
   missingCommentarySections,
@@ -9,18 +9,22 @@ import {
   upgradeCommentaryFile,
   type CommentaryTable,
 } from "@cm-clone/game-engine";
+import { compareCodeUnits } from "@cm-clone/shared";
 
 /**
  * The player-editable commentary file, after Championship Manager's `events.cfg`: plain text in the
  * app's user data folder. The game writes its own copy there the first time it is needed, and reads it
  * again whenever its modification time changes, so an edit shows from the next lines of a match in
- * play. A section or setting a player's file lacks takes the shipped file's; nothing in the file can
- * stop a match. Problems are logged once per change of the file, and Preferences lists them.
+ * play. A section or setting a player's file lacks takes the shipped file's.
+ *
+ * Reading never fails: nothing in or around the file can stop a match, so a read problem is logged
+ * and the game falls back to the shipped lines. The Preferences commands (open, choose, update,
+ * reset) fail with a `CommentaryFileError` instead, so the player learns their change didn't happen.
+ * No path leaves this module for the renderer; the status names files.
  */
 export const COMMENTARY_FILE = path.join("commentary", "events.cfg");
 
-/** The file in the commentary folder that records which `.cfg` the player chose (cm-style-commentary
- *  09). Plain text, the file name alone; absent means `events.cfg`. */
+/** Records which `.cfg` the player chose: the file name alone; absent means `events.cfg`. */
 export const CHOSEN_COMMENTARY_FILE = path.join("commentary", "chosen.txt");
 
 const GAME_FILE_NAME = path.basename(COMMENTARY_FILE);
@@ -28,11 +32,12 @@ const GAME_FILE_NAME = path.basename(COMMENTARY_FILE);
 const SHIPPED_PARSE = parseCommentaryFile(SHIPPED_COMMENTARY_TEXT);
 export const SHIPPED_COMMENTARY: CommentaryTable = SHIPPED_PARSE.table;
 
-/** Opens a file with the operating system; resolves to an error message, or "" on success
+/** Opens a file or folder with the operating system; resolves to an error message, or "" on success
  *  (Electron's `shell.openPath` contract). */
-export type OpenPath = (file: string) => Promise<string>;
+export type OpenPath = (target: string) => Promise<string>;
 
 interface Loaded {
+  /** The file the game reads, as a path: kept in main. */
   readonly file: string;
   readonly files: ReadonlyArray<string>;
   readonly table: CommentaryTable;
@@ -44,33 +49,48 @@ interface Loaded {
 let cached: (Loaded & { readonly mtimeMs: number }) | null = null;
 
 const commentaryPath = (userDataDir: string): string => path.join(userDataDir, COMMENTARY_FILE);
+const commentaryFolder = (userDataDir: string): string => path.dirname(commentaryPath(userDataDir));
 
-/** Every `.cfg` in the commentary folder, sorted by name. */
-const listFiles = (userDataDir: string): Promise<ReadonlyArray<string>> =>
-  readdir(path.dirname(commentaryPath(userDataDir))).then(
-    (names) => names.filter((name) => name.toLowerCase().endsWith(".cfg")).sort((a, b) => (a < b ? -1 : a > b ? 1 : 0)),
-    () => [],
+/** A system error's code (`EACCES`, …): the only part of it that may reach the renderer. */
+const errorCode = (error: unknown): string =>
+  typeof error === "object" && error !== null && "code" in error && typeof error.code === "string" ? error.code : "unknown";
+
+/** Runs a filesystem step of a Preferences command, failing as `action` with the error's code. */
+const attempt = <A>(action: CommentaryFileError["action"], run: () => Promise<A>) =>
+  Effect.tryPromise({ try: run, catch: (error) => new CommentaryFileError({ action, reason: errorCode(error) }) });
+
+/** Every `.cfg` in the commentary folder, sorted by name. A folder that can't be read lists nothing. */
+const listFiles = (userDataDir: string) =>
+  Effect.promise(() =>
+    readdir(commentaryFolder(userDataDir)).then(
+      (names) => ({ names: names.filter((name) => name.toLowerCase().endsWith(".cfg")).sort(compareCodeUnits), failure: null }),
+      (error: unknown) => ({ names: [], failure: errorCode(error) }),
+    ),
+  ).pipe(
+    Effect.tap(({ failure }) =>
+      failure === null ? Effect.void : Effect.logWarning("commentary folder could not be read", { failure }),
+    ),
+    Effect.map(({ names }) => names),
   );
 
 /** The file the game reads: the player's choice while it is still in the folder, else `events.cfg`. */
 const activeFile = (userDataDir: string, files: ReadonlyArray<string>): Promise<string> =>
   readFile(path.join(userDataDir, CHOSEN_COMMENTARY_FILE), "utf8").then(
-    (chosen) => path.join(path.dirname(commentaryPath(userDataDir)), files.includes(chosen.trim()) ? chosen.trim() : GAME_FILE_NAME),
+    (chosen) => path.join(commentaryFolder(userDataDir), files.includes(chosen.trim()) ? chosen.trim() : GAME_FILE_NAME),
     () => commentaryPath(userDataDir),
   );
 
 const modifiedAt = (file: string): Promise<number | null> => stat(file).then((info) => info.mtimeMs, () => null);
 
-/** Writes the shipped file to `file`; `overwrite` replaces a player's copy. A failure (read-only folder)
+const writeShipped = (file: string, flag: "w" | "wx"): Promise<void> =>
+  mkdir(path.dirname(file), { recursive: true }).then(() => writeFile(file, SHIPPED_COMMENTARY_TEXT, { encoding: "utf8", flag }));
+
+/** Writes the shipped file where the player can find it, the first time. A failure (a read-only folder)
  *  is logged, and the game goes on with the shipped lines. */
-const writeShipped = (file: string, overwrite: boolean) =>
-  Effect.promise(() =>
-    mkdir(path.dirname(file), { recursive: true })
-      .then(() => writeFile(file, SHIPPED_COMMENTARY_TEXT, { encoding: "utf8", flag: overwrite ? "w" : "wx" }))
-      .then(() => null, (error: unknown) => String(error)),
-  ).pipe(
+const seedShipped = (file: string) =>
+  Effect.promise(() => writeShipped(file, "wx").then(() => null, errorCode)).pipe(
     Effect.flatMap((failure) =>
-      failure === null ? Effect.void : Effect.logWarning("commentary file could not be written", { file, failure }),
+      failure === null ? Effect.void : Effect.logWarning("commentary file could not be written", { failure }),
     ),
   );
 
@@ -78,9 +98,9 @@ const writeShipped = (file: string, overwrite: boolean) =>
 const loadCommentary = (userDataDir: string): Effect.Effect<Loaded> =>
   Effect.gen(function* () {
     if ((yield* Effect.promise(() => modifiedAt(commentaryPath(userDataDir)))) === null) {
-      yield* writeShipped(commentaryPath(userDataDir), false);
+      yield* seedShipped(commentaryPath(userDataDir));
     }
-    const files = yield* Effect.promise(() => listFiles(userDataDir));
+    const files = yield* listFiles(userDataDir);
     const file = yield* Effect.promise(() => activeFile(userDataDir, files));
     const mtimeMs = yield* Effect.promise(() => modifiedAt(file));
     if (mtimeMs === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [], newSections: [] };
@@ -89,7 +109,7 @@ const loadCommentary = (userDataDir: string): Effect.Effect<Loaded> =>
     const text = yield* Effect.promise(() => readFile(file, "utf8").catch(() => null));
     if (text === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [], newSections: [] };
     const { table, problems, version } = parseCommentaryFile(text, SHIPPED_COMMENTARY);
-    if (problems.length > 0) yield* Effect.logWarning("commentary file has lines the game skipped", { file, problems });
+    if (problems.length > 0) yield* Effect.logWarning("commentary file has lines the game skipped", { problems });
     const newSections = version < SHIPPED_PARSE.version ? missingCommentarySections(text, SHIPPED_COMMENTARY_TEXT) : [];
     cached = { file, files, mtimeMs, table, problems, newSections };
     return cached;
@@ -104,7 +124,6 @@ export const commentaryFileStatus = (userDataDir: string): Effect.Effect<Comment
     Effect.map(
       ({ file, files, problems, newSections }) =>
         new CommentaryFileStatusView({
-          file,
           files: [...files],
           active: path.basename(file),
           problems: [...problems],
@@ -113,37 +132,25 @@ export const commentaryFileStatus = (userDataDir: string): Effect.Effect<Comment
     ),
   );
 
-/** Hands the file to the operating system's editor. Without an `openPath` (a test, or no shell) the
- *  request is logged and the status returned as it is. */
-export const openCommentaryFile = (userDataDir: string, openPath: OpenPath | undefined) =>
+/** Hands the file the game reads, or the commentary folder, to the operating system. */
+export const openCommentaryFile = (userDataDir: string, target: "file" | "folder", openPath: OpenPath | undefined) =>
   Effect.gen(function* () {
-    const status = yield* commentaryFileStatus(userDataDir);
-    if (openPath === undefined) {
-      yield* Effect.logWarning("commentary file can't be opened: no shell", { file: status.file });
-      return status;
+    const { file } = yield* loadCommentary(userDataDir);
+    if (openPath === undefined) return yield* new CommentaryFileError({ action: "open", reason: "no-application" });
+    const failure = yield* attempt("open", () => openPath(target === "file" ? file : commentaryFolder(userDataDir)));
+    if (failure !== "") {
+      yield* Effect.logWarning("commentary file could not be opened", { target, failure });
+      return yield* new CommentaryFileError({ action: "open", reason: "no-application" });
     }
-    const failure = yield* Effect.promise(() => openPath(status.file).catch((error: unknown) => String(error)));
-    if (failure !== "") yield* Effect.logWarning("commentary file could not be opened", { file: status.file, failure });
-    return status;
+    return yield* commentaryFileStatus(userDataDir);
   });
 
-/** Records `name` as the file the game reads, when it is a `.cfg` in the commentary folder. */
-const writeChoice = (userDataDir: string, name: string) =>
-  Effect.promise(() =>
-    writeFile(path.join(userDataDir, CHOSEN_COMMENTARY_FILE), name, "utf8").then(() => null, (error: unknown) => String(error)),
-  ).pipe(
-    Effect.flatMap((failure) =>
-      failure === null ? Effect.void : Effect.logWarning("commentary file choice could not be saved", { name, failure }),
-    ),
-  );
-
-/** Makes `name` the file the game reads. A name not in the folder (it was just deleted, say) leaves the
- *  choice as it was. */
+/** Makes `name` the file the game reads. */
 export const chooseCommentaryFile = (userDataDir: string, name: string) =>
   Effect.gen(function* () {
-    const { files } = yield* commentaryFileStatus(userDataDir);
-    if (files.includes(name)) yield* writeChoice(userDataDir, name);
-    else yield* Effect.logWarning("commentary file to choose is not in the folder", { name });
+    const { files } = yield* loadCommentary(userDataDir);
+    if (!files.includes(name)) return yield* new CommentaryFileError({ action: "choose", reason: "not-in-folder" });
+    yield* attempt("choose", () => writeFile(path.join(userDataDir, CHOSEN_COMMENTARY_FILE), name, "utf8"));
     return yield* commentaryFileStatus(userDataDir);
   });
 
@@ -151,19 +158,17 @@ export const chooseCommentaryFile = (userDataDir: string, name: string) =>
  *  lacks; either way raises its version so the offer isn't repeated. */
 export const updateCommentaryFile = (userDataDir: string, addNewSections: boolean) =>
   Effect.gen(function* () {
-    const { file } = yield* commentaryFileStatus(userDataDir);
-    const failure = yield* Effect.promise(() =>
-      readFile(file, "utf8")
-        .then((text) => writeFile(file, upgradeCommentaryFile(text, SHIPPED_COMMENTARY_TEXT, { addSections: addNewSections }).text, "utf8"))
-        .then(() => null, (error: unknown) => String(error)),
-    );
-    if (failure !== null) yield* Effect.logWarning("commentary file could not be updated", { file, failure });
+    const { file } = yield* loadCommentary(userDataDir);
+    const text = yield* attempt("update", () => readFile(file, "utf8"));
+    const upgraded = upgradeCommentaryFile(text, SHIPPED_COMMENTARY_TEXT, { addSections: addNewSections }).text;
+    yield* attempt("update", () => writeFile(file, upgraded, "utf8"));
     return yield* commentaryFileStatus(userDataDir);
   });
 
 /** Replaces `events.cfg` with the game's own lines and makes it the file the game reads. */
 export const resetCommentaryFile = (userDataDir: string) =>
-  writeShipped(commentaryPath(userDataDir), true).pipe(
-    Effect.andThen(writeChoice(userDataDir, GAME_FILE_NAME)),
-    Effect.andThen(commentaryFileStatus(userDataDir)),
-  );
+  Effect.gen(function* () {
+    yield* attempt("reset", () => writeShipped(commentaryPath(userDataDir), "w"));
+    yield* attempt("reset", () => writeFile(path.join(userDataDir, CHOSEN_COMMENTARY_FILE), GAME_FILE_NAME, "utf8"));
+    return yield* commentaryFileStatus(userDataDir);
+  });

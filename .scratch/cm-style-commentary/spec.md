@@ -29,7 +29,8 @@ gave the feed its suspense.
 
 ## Out of scope
 
-Highlight levels (key/extended/full), sound, and ambient filler lines.
+Sound, and ambient filler lines. (Highlight levels were out of scope here at first; ticket 08 added them
+when the follow-up recommendations were approved.)
 
 ## Addendum, 2026-10-01: a player-editable commentary file
 

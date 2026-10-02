@@ -1,4 +1,4 @@
-import { mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
+import { chmod, mkdtemp, readFile, rm, utimes, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import path from "node:path";
 import { describe, expect, it } from "@effect/vitest";
@@ -63,11 +63,12 @@ describe("the player's commentary file (cm-style-commentary 02)", () => {
 });
 
 describe("Preferences' view of the commentary file (cm-style-commentary 04)", () => {
-  it.effect("names the file, and lists what the game skipped in it", () =>
+  it.effect("names the file, never its path, and lists what the game skipped in it", () =>
     Effect.gen(function* () {
       const dir = yield* userData();
       const fresh = yield* commentaryFileStatus(dir);
-      expect(fresh.file).toBe(path.join(dir, COMMENTARY_FILE));
+      expect(fresh.active).toBe("events.cfg");
+      expect(JSON.stringify(fresh)).not.toContain(dir);
       expect(fresh.problems).toEqual([]);
 
       yield* edit(dir, "[Foul]\n{player} fouls {player2}.\n{player} fouls.\n", 4_000);
@@ -84,21 +85,38 @@ describe("Preferences' view of the commentary file (cm-style-commentary 04)", ()
       yield* edit(dir, "[Foul]\n{nobody}\n", 5_000);
       const status = yield* resetCommentaryFile(dir);
       expect(status.problems).toEqual([]);
-      expect(yield* Effect.promise(() => readFile(status.file, "utf8"))).toBe(SHIPPED_TEXT);
+      expect(yield* Effect.promise(() => readFile(path.join(dir, COMMENTARY_FILE), "utf8"))).toBe(SHIPPED_TEXT);
     }),
   );
 
-  it.effect("hands the file to the operating system, and survives the shell refusing", () =>
+  it.effect("hands the file or its folder to the operating system", () =>
     Effect.gen(function* () {
       const dir = yield* userData();
       const opened: Array<string> = [];
-      yield* openCommentaryFile(dir, async (file) => {
-        opened.push(file);
+      const shell = async (target: string) => {
+        opened.push(target);
         return "";
-      });
-      expect(opened).toEqual([path.join(dir, COMMENTARY_FILE)]);
-      const status = yield* openCommentaryFile(dir, async () => "no application to open .cfg");
-      expect(status.file).toBe(path.join(dir, COMMENTARY_FILE));
+      };
+      yield* openCommentaryFile(dir, "file", shell);
+      yield* openCommentaryFile(dir, "folder", shell);
+      expect(opened).toEqual([path.join(dir, COMMENTARY_FILE), path.join(dir, "commentary")]);
+    }),
+  );
+
+  it.effect("fails, with a code and no path, when nothing opens the file or a write is refused (review fix)", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      const refused = yield* Effect.flip(openCommentaryFile(dir, "file", async () => `No application knows how to open ${dir}`));
+      expect(refused).toMatchObject({ _tag: "CommentaryFileError", action: "open", reason: "no-application" });
+
+      // A folder the game may not write to.
+      yield* loadCommentaryTable(dir);
+      yield* Effect.promise(() => chmod(path.join(dir, "commentary"), 0o500));
+      yield* Effect.promise(() => chmod(path.join(dir, COMMENTARY_FILE), 0o400));
+      const reset = yield* Effect.flip(resetCommentaryFile(dir));
+      yield* Effect.promise(() => chmod(path.join(dir, "commentary"), 0o700));
+      expect(reset).toMatchObject({ _tag: "CommentaryFileError", action: "reset", reason: "EACCES" });
+      expect(JSON.stringify(reset)).not.toContain(dir);
     }),
   );
 });
@@ -125,11 +143,12 @@ describe("choosing a commentary file (cm-style-commentary 09)", () => {
     }),
   );
 
-  it.effect("ignores a name that isn't in the folder", () =>
+  it.effect("refuses a name that isn't in the folder, and keeps the choice it had", () =>
     Effect.gen(function* () {
       const dir = yield* userData();
-      const status = yield* chooseCommentaryFile(dir, "../../secrets.cfg");
-      expect(status.active).toBe("events.cfg");
+      const refused = yield* Effect.flip(chooseCommentaryFile(dir, "../../secrets.cfg"));
+      expect(refused).toMatchObject({ _tag: "CommentaryFileError", action: "choose", reason: "not-in-folder" });
+      expect((yield* commentaryFileStatus(dir)).active).toBe("events.cfg");
     }),
   );
 
@@ -168,7 +187,7 @@ describe("an older commentary file (cm-style-commentary 10)", () => {
       const updated = yield* updateCommentaryFile(dir, true);
       expect(updated.newSections).toEqual([]);
       expect(updated.problems).toEqual([]);
-      const text = yield* Effect.promise(() => readFile(updated.file, "utf8"));
+      const text = yield* Effect.promise(() => readFile(path.join(dir, COMMENTARY_FILE), "utf8"));
       expect(text).toContain("[Foul]\n{player} hacks him down.\n");
       expect(text).toContain("[Offside]");
     }),
@@ -182,7 +201,7 @@ describe("an older commentary file (cm-style-commentary 10)", () => {
       const kept = yield* updateCommentaryFile(dir, false);
       expect(kept.newSections).toEqual([]);
       const shippedVersion = parseCommentaryFile(SHIPPED_TEXT).version;
-      expect(yield* Effect.promise(() => readFile(kept.file, "utf8"))).toBe(`version = ${shippedVersion}\n\n${OLD}`);
+      expect(yield* Effect.promise(() => readFile(path.join(dir, COMMENTARY_FILE), "utf8"))).toBe(`version = ${shippedVersion}\n\n${OLD}`);
     }),
   );
 });

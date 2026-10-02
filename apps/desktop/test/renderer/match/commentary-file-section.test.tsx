@@ -4,10 +4,13 @@ import { CommentaryFileSection } from "../../../src/renderer/match/CommentaryFil
 
 /** cm-style-commentary 04: Preferences shows the commentary file, opens it, resets it, and lists
  *  what the game skipped in it. */
-const FILE = "/Users/p/Library/Application Support/cm/commentary/events.cfg";
+/** The file the game reads, as the status names it: a name, never a path. */
+const FILE = "events.cfg";
 
 /** The `addNewSections` flag of every `updateCommentaryFile` call the last `mockMain` saw. */
 let updates: Array<boolean> = [];
+/** The `target` of every `openCommentaryFile` call the last `mockMain` saw. */
+let targets: Array<string> = [];
 
 const mockMain = (
   problems: ReadonlyArray<string>,
@@ -16,10 +19,12 @@ const mockMain = (
 ) => {
   const calls: Array<string> = [];
   updates = [];
+  targets = [];
   let active = "events.cfg";
   let newSections = initialNewSections;
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {
-    call: async (method: string, payload: { name?: string; addNewSections?: boolean } | undefined) => {
+    call: async (method: string, payload: { name?: string; addNewSections?: boolean; target?: string } | undefined) => {
+      if (method === "openCommentaryFile" && payload?.target !== undefined) targets.push(payload.target);
       if (method === "updateCommentaryFile") updates.push(payload?.addNewSections === true);
       calls.push(method);
       if (method === "chooseCommentaryFile" && payload?.name !== undefined) active = payload.name;
@@ -27,7 +32,7 @@ const mockMain = (
       if (method === "updateCommentaryFile") newSections = [];
       return {
         _tag: "Success",
-        value: { file: FILE, files, active, newSections, problems: method === "resetCommentaryFile" ? [] : problems },
+        value: { files, active, newSections, problems: method === "resetCommentaryFile" ? [] : problems },
       };
     },
   };
@@ -37,13 +42,15 @@ const mockMain = (
 afterEach(cleanup);
 
 describe("the Commentary section of Preferences", () => {
-  it("shows where the file is, and opens it", async () => {
+  it("names the file the game reads, and opens it or its folder", async () => {
     const calls = mockMain([]);
     render(<CommentaryFileSection />);
     expect(await screen.findByText(FILE)).toBeTruthy();
     expect(screen.queryByRole("region", { name: "Problems in the commentary file" })).toBeNull();
     fireEvent.click(screen.getByRole("button", { name: "Open commentary file" }));
-    await waitFor(() => expect(calls).toEqual(["getCommentaryFileStatus", "openCommentaryFile"]));
+    fireEvent.click(screen.getByRole("button", { name: "Open folder" }));
+    await waitFor(() => expect(calls).toEqual(["getCommentaryFileStatus", "openCommentaryFile", "openCommentaryFile"]));
+    expect(targets).toEqual(["file", "folder"]);
   });
 
   it("lists the problems the game found, with their line numbers", async () => {
@@ -104,5 +111,21 @@ describe("the Commentary section of Preferences", () => {
     fireEvent.click(within(offer).getByRole("button", { name: "Keep my file as it is" }));
     await waitFor(() => expect(screen.queryByRole("region", { name: "New commentary from the game" })).toBeNull());
     expect(updates).toEqual([false]);
+  });
+
+  it("tells the player when a change didn't happen, without a path (review fix)", async () => {
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string) =>
+        method === "getCommentaryFileStatus"
+          ? { _tag: "Success", value: { files: ["events.cfg"], active: "events.cfg", problems: [], newSections: [] } }
+          : { _tag: "Failure", error: { _tag: "CommentaryFileError", action: "reset", reason: "EACCES" } },
+    };
+    render(<CommentaryFileSection />);
+    await screen.findByText(FILE);
+    fireEvent.click(screen.getByRole("button", { name: "Reset to the game's lines" }));
+    fireEvent.click(screen.getByRole("button", { name: "Reset, losing my edits" }));
+    expect(
+      await screen.findByText("Couldn't reset the commentary file: the game isn't allowed to write to its commentary folder."),
+    ).toBeTruthy();
   });
 });

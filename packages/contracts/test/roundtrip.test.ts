@@ -338,19 +338,14 @@ describe("Player Development & Training Focus schemas", () => {
   });
 });
 
-describe("the commentary file — cm-style-commentary 04", () => {
-  it("round-trips a status with and without problems, for every method", () => {
-    roundTrip(AppRpcs.chooseCommentaryFile.payload, { name: "events_fr.cfg" });
-    const clean = {
-      file: "/Users/p/Library/Application Support/cm/commentary/events.cfg",
-      problems: [],
-      files: ["events.cfg", "events_fr.cfg"],
-      active: "events.cfg",
-      newSections: [],
+describe("the commentary file", () => {
+  it("round-trips a status, with and without problems and new sections, for every method", () => {
+    const clean = { files: ["events.cfg", "events_fr.cfg"], active: "events.cfg", problems: [], newSections: [] };
+    const older = {
+      ...clean,
+      problems: ["line 12: skipped, {player2} isn't available in [Foul]"],
+      newSections: ["KeyPass:solo", "Phrases"],
     };
-    const older = { ...clean, newSections: ["KeyPass:solo", "Goal:header"] };
-    const broken = { ...clean, problems: ["line 12: skipped, {player2} isn't available in [Foul]"] };
-    roundTrip(AppRpcs.updateCommentaryFile.payload, { addNewSections: true });
     for (const method of [
       "getCommentaryFileStatus",
       "openCommentaryFile",
@@ -358,10 +353,21 @@ describe("the commentary file — cm-style-commentary 04", () => {
       "chooseCommentaryFile",
       "updateCommentaryFile",
     ] as const) {
-      roundTrip(AppRpcs[method].success, older);
       roundTrip(AppRpcs[method].success, clean);
-      roundTrip(AppRpcs[method].success, broken);
+      roundTrip(AppRpcs[method].success, older);
     }
+  });
+
+  it("round-trips the payloads and the error", () => {
+    roundTrip(AppRpcs.openCommentaryFile.payload, { target: "folder" });
+    roundTrip(AppRpcs.chooseCommentaryFile.payload, { name: "events_fr.cfg" });
+    roundTrip(AppRpcs.updateCommentaryFile.payload, { addNewSections: true });
+    roundTrip(AppRpcs.resetCommentaryFile.error, { _tag: "CommentaryFileError", action: "reset", reason: "EACCES" });
+  });
+
+  it("carries no filesystem path to the renderer", () => {
+    const fields = Object.keys(AppRpcs.getCommentaryFileStatus.success.fields);
+    expect(fields.sort()).toEqual(["active", "files", "newSections", "problems"]);
   });
 });
 

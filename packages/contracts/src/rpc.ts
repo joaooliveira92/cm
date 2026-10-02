@@ -58,6 +58,7 @@ import {
   InvalidTacticError,
   LeagueTableView,
   LockedKeyOverrideError,
+  CommentaryFileError,
   CommentaryFileStatusView,
   ManagerProfileNotFoundError,
   ManagerProfileScreenView,
@@ -875,40 +876,40 @@ commitCareer: {
     success: Schema.Record(Schema.String, Schema.String),
     error: Schema.Never,
   },
-  /** The player-editable commentary file (cm-style-commentary 04): where it is and what the game
-   *  skipped in it. Reading the status writes the game's own file first if there is none yet. */
+  /** The player-editable commentary file: which files there are, which one the game reads, and what
+   *  it skipped in it. Reading the status writes the game's own file first if there is none yet. */
   getCommentaryFileStatus: {
     payload: Schema.Void,
     success: CommentaryFileStatusView,
     error: Schema.Never,
   },
-  /** Hands the commentary file to the operating system to open in the player's editor. */
+  /** Hands the file the game reads, or the folder that holds the commentary files, to the operating
+   *  system to open. */
   openCommentaryFile: {
-    payload: Schema.Void,
+    payload: Schema.Struct({ target: Schema.Literals(["file", "folder"]) }),
     success: CommentaryFileStatusView,
-    error: Schema.Never,
+    error: CommentaryFileError,
   },
-  /** Makes another `.cfg` in the commentary folder the one the game reads (cm-style-commentary 09). A
-   *  name that isn't in the folder leaves the choice as it was. */
+  /** Makes another `.cfg` in the commentary folder the one the game reads. */
   chooseCommentaryFile: {
     payload: Schema.Struct({ name: Schema.String }),
     success: CommentaryFileStatusView,
-    error: Schema.Never,
+    error: CommentaryFileError,
   },
-  /** Brings an older commentary file up to the game's version (cm-style-commentary 10):
-   *  `addNewSections` appends the sections it lacks, word for word; either way its version is raised so
-   *  the offer isn't repeated. The player's own sections are never changed. */
+  /** Brings an older commentary file up to the game's version: `addNewSections` appends the sections
+   *  it lacks, word for word; either way its version is raised so the offer isn't repeated. The
+   *  player's own sections are never changed. */
   updateCommentaryFile: {
     payload: Schema.Struct({ addNewSections: Schema.Boolean }),
     success: CommentaryFileStatusView,
-    error: Schema.Never,
+    error: CommentaryFileError,
   },
   /** Overwrites `events.cfg` with the game's own lines, discarding the player's edits, and makes it the
    *  file the game reads. Any other `.cfg` in the folder is left alone. */
   resetCommentaryFile: {
     payload: Schema.Void,
     success: CommentaryFileStatusView,
-    error: Schema.Never,
+    error: CommentaryFileError,
   },
   // -------------------------------------------------------------------------
   // League and Nation Selection (Screen 3)

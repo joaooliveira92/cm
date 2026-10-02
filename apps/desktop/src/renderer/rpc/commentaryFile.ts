@@ -4,15 +4,16 @@ import { call } from "./call.js";
 import type { RpcClientError } from "./errors.js";
 
 /**
- * The player-editable commentary file through the seam (cm-style-commentary 04). Main owns the file in
- * the user data folder; the renderer only asks where it is, what was skipped in it, and to open or
- * reset it. Machine-local, so plain typed calls like the key binding ones, never save-keyed atoms.
+ * The player-editable commentary file through the seam. Main owns the file in the user data folder;
+ * the renderer names files, never paths, and asks main to open, choose, update or reset them. Machine-local, so plain typed calls like the key binding ones, never save-keyed atoms.
  */
 export const getCommentaryFileStatus: Effect.Effect<CommentaryFileStatusView, RpcClientError<"getCommentaryFileStatus">> =
   call("getCommentaryFileStatus", undefined);
 
-export const openCommentaryFile: Effect.Effect<CommentaryFileStatusView, RpcClientError<"openCommentaryFile">> =
-  call("openCommentaryFile", undefined);
+/** Opens the file the game reads, or the folder the commentary files live in, with the operating system. */
+export const openCommentaryFile = (
+  target: "file" | "folder",
+): Effect.Effect<CommentaryFileStatusView, RpcClientError<"openCommentaryFile">> => call("openCommentaryFile", { target });
 
 /** Makes another `.cfg` in the commentary folder the one the game reads. */
 export const chooseCommentaryFile = (

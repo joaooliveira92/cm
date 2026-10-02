@@ -23,23 +23,25 @@ import {
   setKeyBindingOverride,
 } from "./keybindings.js";
 import {
-  chooseCommentaryFile,
-  commentaryFileStatus,
   getAwaitingMatch,
   getMatchRatings,
   getMatchReport,
   getMatchStatistics,
   getPostMatchSummary,
   getTeamSheet,
-  loadCommentaryTable,
-  openCommentaryFile,
-  resetCommentaryFile,
   resumeSimulation,
   startMatch,
   submitMatchCommand,
+} from "../match/index.js";
+import {
+  chooseCommentaryFile,
+  commentaryFileStatus,
+  loadCommentaryTable,
+  openCommentaryFile,
+  resetCommentaryFile,
   updateCommentaryFile,
   type OpenPath,
-} from "../match/index.js";
+} from "../match/commentaryFile.js";
 import { commitMatchday } from "../season/commitMatchday.js";
 import { getManagerProfile, getManagerProfileScreen } from "../career/managerProfile.js";
 import { getNewsInbox, setNewsMessageState } from "../career/news.js";
@@ -577,7 +579,11 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     }),
   getKeyBindingOverrides: (_payload, ctx) => getKeyBindingOverrides(ctx.userDataDir),
   getCommentaryFileStatus: (_payload, ctx) => commentaryFileStatus(ctx.userDataDir),
-  openCommentaryFile: (_payload, ctx) => openCommentaryFile(ctx.userDataDir, ctx.openPath),
+  openCommentaryFile: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { target } = yield* Schema.decodeUnknownEffect(AppRpcs.openCommentaryFile.payload)(payload);
+      return yield* openCommentaryFile(ctx.userDataDir, target, ctx.openPath);
+    }),
   resetCommentaryFile: (_payload, ctx) => resetCommentaryFile(ctx.userDataDir),
   updateCommentaryFile: (payload, ctx) =>
     Effect.gen(function* () {

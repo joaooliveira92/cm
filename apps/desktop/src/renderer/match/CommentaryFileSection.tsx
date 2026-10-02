@@ -19,8 +19,8 @@ type FileMethod =
   | "updateCommentaryFile";
 
 /**
- * Preferences' Commentary section: where the player-editable commentary file is, buttons to open it
- * or put the game's lines back, and the lines the game skipped in it. After Championship Manager's
+ * Preferences' Commentary section: which commentary file the game reads, buttons to open it or its
+ * folder or put the game's lines back, and what the game skipped in it. After Championship Manager's
  * `events.cfg`, which players edited by hand.
  */
 export const CommentaryFileSection = () => {
@@ -65,11 +65,18 @@ export const CommentaryFileSection = () => {
           </select>
         </label>
       )}
-      {status !== null && <p className="break-all font-mono text-data text-text-secondary">{status.file}</p>}
+      {status !== null && status.files.length <= 1 && (
+        <p className="text-data text-text-secondary">
+          File: <span className="font-mono">{status.active}</span>
+        </p>
+      )}
       {error !== null && <p className="text-data text-destructive">{error}</p>}
       <div className="flex flex-wrap gap-2">
-        <Button type="button" variant="secondary" disabled={status === null} onClick={() => run(openCommentaryFile)}>
+        <Button type="button" variant="secondary" disabled={status === null} onClick={() => run(openCommentaryFile("file"))}>
           Open commentary file
+        </Button>
+        <Button type="button" variant="ghost" disabled={status === null} onClick={() => run(openCommentaryFile("folder"))}>
+          Open folder
         </Button>
         {confirmingReset ? (
           <>
@@ -113,8 +120,8 @@ export const CommentaryFileSection = () => {
       {status !== null && status.problems.length > 0 && (
         <section aria-label="Problems in the commentary file" className="flex flex-col gap-1">
           <p className="text-data text-text-warning">
-            The game skipped {status.problems.length === 1 ? "1 problem" : `${status.problems.length} problems`} in
-            the file and used its own lines there:
+            The game skipped {status.problems.length === 1 ? "1 thing" : `${status.problems.length} things`} it
+            couldn't use in the file. A section left with no usable lines uses the game's own.
           </p>
           <ul className="max-h-32 overflow-y-auto rounded-control border border-border-subtle p-2 font-mono text-data text-text-soft">
             {status.problems.map((problem) => (

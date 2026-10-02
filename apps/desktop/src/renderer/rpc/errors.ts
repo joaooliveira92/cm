@@ -48,6 +48,32 @@ export const remoteFailure = <M extends AppRpcMethod>(
 ): RpcClientError<M> => ({ _tag: "RemoteFailure", method, error });
 
 /** The message a screen renders for a typed failure. Pure; screens call this. */
+const COMMENTARY_ACTIONS = {
+  open: "open the commentary file",
+  reset: "reset the commentary file",
+  choose: "switch commentary files",
+  update: "update the commentary file",
+} as const;
+
+/** A sentence for a failed commentary-file command. The reason is a code, never a system message. */
+const describeCommentaryFileError = (action: keyof typeof COMMENTARY_ACTIONS, reason: string): string => {
+  const failed = `Couldn't ${COMMENTARY_ACTIONS[action]}`;
+  switch (reason) {
+    case "EACCES":
+    case "EPERM":
+    case "EROFS":
+      return `${failed}: the game isn't allowed to write to its commentary folder.`;
+    case "ENOSPC":
+      return `${failed}: the disk is full.`;
+    case "not-in-folder":
+      return `${failed}: that file is no longer in the commentary folder.`;
+    case "no-application":
+      return `${failed}: nothing on this computer is set to open it.`;
+    default:
+      return `${failed} (${reason}).`;
+  }
+};
+
 export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string => {
   switch (error._tag) {
     case "TransportFailure":
@@ -183,6 +209,8 @@ export const describeRpcError = (error: RpcClientError<AppRpcMethod>): string =>
           return "That message is no longer in your inbox. Refresh to see the current list.";
         case "MalformedNewsMessageIdError":
           return "That message could not be identified. Refresh to see the current list.";
+        case "CommentaryFileError":
+          return describeCommentaryFileError(error.error.action, error.error.reason);
       }
       return "An unexpected error occurred.";
   }
