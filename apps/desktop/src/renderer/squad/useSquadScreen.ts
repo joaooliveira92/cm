@@ -216,7 +216,6 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
 
   const copy: TableStateCopy = STATE_COPY.squad;
 
-  const openLegend = useCallback(() => setLegendExpanded(true), [setLegendExpanded]);
   const { context: fitContext, toggle: toggleFitContext, clear: clearFitContext } = useLineupFit(
     lineup.tactic,
   );
@@ -225,7 +224,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     sort,
     onSortChange: setSort,
     preferences,
-    onOpenLegend: openLegend,
+    onOpenLegend: () => setLegendExpanded(true),
     fitActive: fitContext !== null,
   });
   const fit = readoutOf(fitContext, filtered);
@@ -273,11 +272,6 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     setBarNotice(`Cleared the filters. ${allPlayers.length} ${allPlayers.length === 1 ? "player is" : "players are"} shown.`);
   }, [setFilters, allPlayers.length]);
 
-  const clearSortCommand = useCallback(() => {
-    setSort(null);
-    setBarNotice("Cleared the Squad sort.");
-  }, [setSort]);
-
   useEffect(() => {
     const unregisters: Array<() => void> = [];
     for (const action of tableSortAndFilterActions(SQUAD_PALETTE_OPTIONS)) {
@@ -297,7 +291,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
               break;
             }
             case "clear-sort":
-              clearSortCommand();
+              setSort(null);
+              setBarNotice("Cleared the Squad sort.");
               break;
             case "set-filter":
               if (parsed.filter !== undefined) applyFilter(upsertFilter(latest.current.filters, parsed.filter));
@@ -310,9 +305,7 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       );
     }
     unregisters.push(
-      registerActionHandler("retry-squad-table", () => {
-        refreshSquad();
-      }),
+      registerActionHandler("retry-squad-table", refreshSquad),
     );
     unregisters.push(
       registerActionHandler("assistant-pick-lineup", () => {
@@ -549,9 +542,8 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
       setView,
       toggleOneColumn,
       clearFilterCommand,
-      clearSortCommand,
       refreshSquad,
-      captureForNavigation: (state) => captureForNavigation(state),
+      captureForNavigation,
       restoreScroll,
     },
     meta: {
