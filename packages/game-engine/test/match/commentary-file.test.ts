@@ -285,3 +285,24 @@ describe("the phrases (cm-style-commentary 12)", () => {
     ]);
   });
 });
+
+describe("the corner taker in commentary (review fix for 07)", () => {
+  it("names the player who set up a header, and skips the line when nobody did", () => {
+    const { table } = edited("[ShotOnTarget:header]\n{assist} swings it in for {player}…|saved.\n{player} heads it…|saved.\n");
+    const corner: MatchEvent = { _tag: "Corner", minute: 30, half: 1, teamClubId: clubId("home"), playerId: playerId("taker"), deliveryType: "default", side: "left" };
+    const header = (assistPlayerId?: string): MatchEvent => ({
+      _tag: "ShotOnTarget",
+      minute: 30,
+      half: 1,
+      teamClubId: clubId("home"),
+      playerId: playerId("p9"),
+      chanceType: "throughBall",
+      ...(assistPlayerId === undefined ? {} : { assistPlayerId: playerId(assistPlayerId) }),
+    });
+    const texts = [1, 2, 3, 4].map((seed) => renderCommentary([started, corner, header("taker")], seed, names, table)[2]!.text);
+    expect(texts).toContain("Player taker swings it in for Player p9… saved.");
+    for (const seed of [1, 2, 3, 4]) {
+      expect(renderCommentary([started, corner, header()], seed, names, table)[2]!.text).toBe("Player p9 heads it… saved.");
+    }
+  });
+});

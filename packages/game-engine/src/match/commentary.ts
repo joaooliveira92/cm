@@ -163,6 +163,9 @@ const drawFor = (
     const { he, him, his } = names.pronounsOf?.(playerId) ?? HE;
     return { player: names.playerName(playerId), he, him, his, He: capitalised(he), His: capitalised(his) };
   };
+  /** `{assist}` on a shot: the player who set it up, when the event names one. */
+  const assist = (assistId: string | undefined): Record<string, string> =>
+    assistId === undefined ? {} : { assist: names.playerName(assistId) };
   /** `{player2}` on a goal or a save: the goalkeeper, when the event names one. */
   const keeper = (keeperId: string | undefined): Record<string, string> =>
     keeperId === undefined ? {} : { player2: names.playerName(keeperId) };
@@ -201,6 +204,7 @@ const drawFor = (
         tokens: {
           ...clubs(event.teamClubId),
           ...keeper(event.keeperId),
+          ...assist(event.assistPlayerId),
           ...person(event.playerId),
           score: score(event.homeScore, event.awayScore),
         },
@@ -209,12 +213,12 @@ const drawFor = (
     case "ShotOnTarget":
       return {
         keys: [`ShotOnTarget:${shotKindFor(event, previous)}`],
-        tokens: { ...clubs(event.teamClubId), ...keeper(event.keeperId), ...person(event.playerId) },
+        tokens: { ...clubs(event.teamClubId), ...keeper(event.keeperId), ...assist(event.assistPlayerId), ...person(event.playerId) },
       };
     case "ShotMissed":
       return {
         keys: [`ShotMissed:${shotKindFor(event, previous)}`],
-        tokens: { ...clubs(event.teamClubId), ...person(event.playerId) },
+        tokens: { ...clubs(event.teamClubId), ...assist(event.assistPlayerId), ...person(event.playerId) },
       };
     case "Corner":
     case "FreeKick":
