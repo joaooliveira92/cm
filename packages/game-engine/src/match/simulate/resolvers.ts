@@ -24,7 +24,7 @@ import {
   YELLOW_CARD_SHARE_OF_FOULS,
   clamp,
 } from "./constants.js";
-import { applyForcedOff, forcePlayerOff, pickPlayerId, type TeamRuntimeState } from "./teamState.js";
+import { applyForcedOff, forcePlayerOff, goalkeeperId, pickPlayerId, type TeamRuntimeState } from "./teamState.js";
 import type { MatchPlayerInput } from "../types.js";
 
 // ─── Chance type list for weighted picking ──────────────────────────────────
@@ -383,6 +383,8 @@ export const resolveChancePipeline = (
     chanceType,
     assistPlayerId: creatorId,
   };
+  const keeper = goalkeeperId(defender);
+  const keeperField = keeper === undefined ? {} : { keeperId: keeper };
 
   if (outcome === "goal") {
     if (isAttackerHome) homeAwayScore.home += 1;
@@ -390,11 +392,12 @@ export const resolveChancePipeline = (
     events.push({
       _tag: "Goal",
       ...outcomeBase,
+      ...keeperField,
       homeScore: homeAwayScore.home,
       awayScore: homeAwayScore.away,
     });
   } else if (outcome === "onTarget") {
-    events.push({ _tag: "ShotOnTarget", ...outcomeBase });
+    events.push({ _tag: "ShotOnTarget", ...outcomeBase, ...keeperField });
   } else {
     events.push({ _tag: "ShotMissed", ...outcomeBase });
   }

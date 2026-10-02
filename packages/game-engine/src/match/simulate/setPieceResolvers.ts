@@ -2,7 +2,7 @@ import type { PlayerId, ClubId } from "@cm-clone/contracts";
 import type { MatchEvent, MatchHalf } from "../events.js";
 import type { MatchPlayerInput } from "../types.js";
 import type { RandomSource } from "@cm-clone/shared";
-import { type TeamRuntimeState } from "./teamState.js";
+import { goalkeeperId, type TeamRuntimeState } from "./teamState.js";
 import {
   CORNER_CHANCE,
   CORNER_GOAL_BASE,
@@ -188,7 +188,7 @@ export const resolveCorner = (
   const defValue = defenseValue(defendingTeam, "positioning", "bravery");
   const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_GOAL_BASE, CORNER_SAVE_SHARE, CORNER_MISS_SHARE, random);
 
-  emitOutcomeEvent(outcome, minute, half, attackingTeam.clubId, takerId, isAttackerHome, homeAwayScore, events);
+  emitOutcomeEvent(outcome, minute, half, attackingTeam.clubId, takerId, goalkeeperId(defendingTeam), isAttackerHome, homeAwayScore, events);
 };
 
 // ─── Free kick resolution ───────────────────────────────────────────────────
@@ -239,7 +239,7 @@ export const resolveFreeKick = (
   const defValue = defenseValue(defendingTeam, "positioning") * 0.6 + gkRef * 0.4;
   const outcome = resolveSetPieceOutcome(atkValue, defValue, FREE_KICK_GOAL_BASE, FREE_KICK_SAVE_SHARE, FREE_KICK_MISS_SHARE, random);
 
-  emitOutcomeEvent(outcome, minute, half, attackingTeam.clubId, takerId, isAttackerHome, homeAwayScore, events);
+  emitOutcomeEvent(outcome, minute, half, attackingTeam.clubId, takerId, goalkeeperId(defendingTeam), isAttackerHome, homeAwayScore, events);
 };
 
 // ─── Penalty resolution ──────────────────────────────────────────────────────
@@ -285,7 +285,7 @@ export const resolvePenalty = (
   const defValue = gkRef;
   const outcome = resolveSetPieceOutcome(atkValue, defValue, PENALTY_GOAL_BASE, PENALTY_SAVE_SHARE, PENALTY_MISS_SHARE, random);
 
-  emitOutcomeEvent(outcome, minute, half, team.clubId, takerId, isHome, homeAwayScore, events);
+  emitOutcomeEvent(outcome, minute, half, team.clubId, takerId, goalkeeperId(defendingTeam), isHome, homeAwayScore, events);
 };
 
 // ─── Shared outcome event emission ───────────────────────────────────────────
@@ -297,10 +297,12 @@ const emitOutcomeEvent = (
   half: MatchHalf,
   teamClubId: ClubId,
   playerId: PlayerId,
+  keeperId: PlayerId | undefined,
   isHome: boolean,
   homeAwayScore: { home: number; away: number },
   events: Array<MatchEvent>,
 ): void => {
+  const keeperField = keeperId === undefined ? {} : { keeperId };
   if (outcome === "goal") {
     if (isHome) homeAwayScore.home += 1;
     else homeAwayScore.away += 1;
@@ -313,6 +315,7 @@ const emitOutcomeEvent = (
       homeScore: homeAwayScore.home,
       awayScore: homeAwayScore.away,
       chanceType: "throughBall", // set pieces use throughBall as the generic chance type
+      ...keeperField,
     });
   } else if (outcome === "onTarget") {
     events.push({
@@ -322,6 +325,7 @@ const emitOutcomeEvent = (
       teamClubId,
       playerId,
       chanceType: "throughBall",
+      ...keeperField,
     });
   } else {
     events.push({

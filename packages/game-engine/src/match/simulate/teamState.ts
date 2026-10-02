@@ -267,6 +267,11 @@ export const effectiveStrengths = (
   };
 };
 
+/** The side's goalkeeper on the pitch, if it has one. A lookup, not a draw: naming him costs the
+ *  seeded match no random numbers. */
+export const goalkeeperId = (team: TeamRuntimeState): PlayerId | undefined =>
+  team.resolved.slots.find((slot) => slot.isGoalkeeper)?.playerId;
+
 export const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, preferAttacking: boolean): PlayerId | undefined => {
   const onPitchSlots = team.resolved.slots;
   const pool = preferAttacking ? onPitchSlots.filter((slot) => slot.phase === "attack") : onPitchSlots;

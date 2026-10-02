@@ -33,20 +33,25 @@ const scoreAt = { minute: Schema.Finite, homeScore: Schema.Finite, awayScore: Sc
 
 const ChanceTypeSchema = Schema.Literals(["throughBall", "cross", "longShot", "runWithBall", "holdUpLayOff", "counter"]);
 const chanceFields = { ...teamPlayer, chanceType: ChanceTypeSchema, assistPlayerId: Schema.optional(PlayerId) };
-const attackFields = { ...chanceFields, homeScore: Schema.Finite, awayScore: Schema.Finite };
+/** A save or a goal also names the goalkeeper (cm-style-commentary 07); timelines stored before that
+ *  simply lack it. */
+const keeperFields = { ...chanceFields, keeperId: Schema.optional(PlayerId) };
+const attackFields = { ...keeperFields, homeScore: Schema.Finite, awayScore: Schema.Finite };
+/** An open-play chance names its creator as the assist; without it here a stored timeline dropped it. */
+const buildUp = { ...teamPlayer, assistPlayerId: Schema.optional(PlayerId) };
 
 /** The engine's `MatchEvent` union, field for field, so a stored timeline decodes back to it. */
 const StoredMatchEvent = Schema.Union([
   Schema.TaggedStruct("MatchStarted", { seed: Schema.Finite, homeClubId: ClubId, awayClubId: ClubId }),
   Schema.TaggedStruct("Goal", attackFields),
-  Schema.TaggedStruct("ShotOnTarget", chanceFields),
+  Schema.TaggedStruct("ShotOnTarget", keeperFields),
   Schema.TaggedStruct("ShotMissed", chanceFields),
-  Schema.TaggedStruct("ThroughBall", teamPlayer),
-  Schema.TaggedStruct("Cross", teamPlayer),
-  Schema.TaggedStruct("LongShot", teamPlayer),
-  Schema.TaggedStruct("RunWithBall", teamPlayer),
-  Schema.TaggedStruct("HoldUpLayOff", teamPlayer),
-  Schema.TaggedStruct("Counter", teamPlayer),
+  Schema.TaggedStruct("ThroughBall", buildUp),
+  Schema.TaggedStruct("Cross", buildUp),
+  Schema.TaggedStruct("LongShot", buildUp),
+  Schema.TaggedStruct("RunWithBall", buildUp),
+  Schema.TaggedStruct("HoldUpLayOff", buildUp),
+  Schema.TaggedStruct("Counter", buildUp),
   Schema.TaggedStruct("KeyPass", { ...teamPlayer, chanceType: Schema.String }),
   Schema.TaggedStruct("Foul", { ...teamPlayer, isYellowCard: Schema.Boolean }),
   Schema.TaggedStruct("Offside", teamPlayer),

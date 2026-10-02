@@ -45,12 +45,17 @@ export interface GoalEvent extends TeamPlayerEvent {
   readonly awayScore: number;
   readonly chanceType: ChanceType;
   readonly assistPlayerId?: PlayerId;
+  /** The goalkeeper beaten; absent when the defending side has none on the pitch, and in timelines
+   *  stored before it was recorded. Read only by commentary. */
+  readonly keeperId?: PlayerId;
 }
 
 export interface ShotOnTargetEvent extends TeamPlayerEvent {
   readonly _tag: "ShotOnTarget";
   readonly chanceType: ChanceType;
   readonly assistPlayerId?: PlayerId;
+  /** The goalkeeper who saved it; absent as on `GoalEvent`. */
+  readonly keeperId?: PlayerId;
 }
 
 export interface ShotMissedEvent extends TeamPlayerEvent {

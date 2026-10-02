@@ -94,9 +94,9 @@ export const COMMENTARY_SECTIONS: ReadonlyMap<CommentaryTemplateKey, ReadonlyArr
   ...CHANCE_TYPES.map((type) => [`KeyPass:${type}`, TWO_PLAYERS] as const),
   ["KeyPass:solo", PLAYER_MOMENT],
   ["KeyPass", PLAYER_MOMENT],
-  ...(["Goal", "ShotOnTarget", "ShotMissed"] as const).flatMap((tag) =>
-    SHOT_KINDS.map((kind) => [`${tag}:${kind}`, PLAYER_MOMENT] as const),
-  ),
+  // In Goal and ShotOnTarget sections {player2} is the goalkeeper, when the event names one.
+  ...(["Goal", "ShotOnTarget"] as const).flatMap((tag) => SHOT_KINDS.map((kind) => [`${tag}:${kind}`, TWO_PLAYERS] as const)),
+  ...SHOT_KINDS.map((kind) => [`ShotMissed:${kind}`, PLAYER_MOMENT] as const),
   ...SITUATIONS.map((situation) => [`GoalScore:${situation}`, SIDES] as const),
   ...(["Foul", "Offside", "BeatenTrap", "Penalty", "YellowCard", "RedCard"] as const).map((tag) => [tag, PLAYER_MOMENT] as const),
   ...(["Corner", "FreeKick"] as const).map((tag) => [tag, [...PLAYER_MOMENT, "side"]] as const),

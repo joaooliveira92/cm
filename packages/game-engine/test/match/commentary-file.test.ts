@@ -100,3 +100,40 @@ describe("a player's edited commentary file", () => {
     expect(table.playback.Foul.delayMs).toBe(700);
   });
 });
+
+describe("the goalkeeper in commentary (cm-style-commentary 07)", () => {
+  it("names the defending side's keeper on every save and goal, without changing the match", () => {
+    for (const seed of [3, 11, 42]) {
+      const home = buildTeam(clubId("home"), seed).setup;
+      const away = buildTeam(clubId("away"), seed + 1000).setup;
+      const playersOf = (setup: typeof home) => new Set(setup.squad.map((player) => String(player.id)));
+      const events = simulateMatch({ seed, home, away });
+      const keeperEvents = events.filter((event) => event._tag === "ShotOnTarget" || event._tag === "Goal");
+      expect(keeperEvents.length).toBeGreaterThan(0);
+      for (const event of keeperEvents) {
+        if (event._tag !== "ShotOnTarget" && event._tag !== "Goal") continue;
+        const defending = event.teamClubId === clubId("home") ? away : home;
+        expect(playersOf(defending).has(String(event.keeperId))).toBe(true);
+      }
+    }
+  });
+
+  it("names the keeper in a save line that asks for him, and never leaves {player2} unfilled without one", () => {
+    const { table } = edited("[ShotOnTarget:closeRange]\n{player} shoots…|{player2} saves.\n{player} shoots…|saved.\n");
+    const shot = (keeperId?: string): MatchEvent => ({
+      _tag: "ShotOnTarget",
+      minute: 5,
+      half: 1,
+      teamClubId: clubId("home"),
+      playerId: playerId("p1"),
+      chanceType: "throughBall",
+      ...(keeperId === undefined ? {} : { keeperId: playerId(keeperId) }),
+    });
+    const withKeeper = renderCommentary([started, shot("gk"), shot("gk")], 1, names, table).slice(1).map((line) => line.text);
+    expect(withKeeper).toContain("Player p1 shoots… Player gk saves.");
+    for (const seed of [1, 2, 3, 4]) {
+      const [, line] = renderCommentary([started, shot()], seed, names, table);
+      expect(line!.text).toBe("Player p1 shoots… saved.");
+    }
+  });
+});

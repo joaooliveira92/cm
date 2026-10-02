@@ -132,6 +132,9 @@ const drawFor = (event: MatchEvent, previous: MatchEvent | undefined, match: Mat
   const clubs = (clubId: string) =>
     clubId === homeClubId ? { team: homeName, team2: awayName } : { team: names.clubName(clubId), team2: homeName };
   const sides = { team: homeName, team2: awayName };
+  /** `{player2}` on a goal or a save: the goalkeeper, when the event names one. */
+  const keeper = (keeperId: string | undefined): Record<string, string> =>
+    keeperId === undefined ? {} : { player2: names.playerName(keeperId) };
 
   switch (event._tag) {
     case "MatchStarted":
@@ -164,13 +167,22 @@ const drawFor = (event: MatchEvent, previous: MatchEvent | undefined, match: Mat
       const otherGoals = isHome ? event.awayScore : event.homeScore;
       return {
         keys: [`Goal:${shotKindFor(event, previous)}`, `GoalScore:${goalSituationFor(scorerGoals, otherGoals)}`],
-        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId), score: score(event.homeScore, event.awayScore) },
+        tokens: {
+          ...clubs(event.teamClubId),
+          ...keeper(event.keeperId),
+          player: names.playerName(event.playerId),
+          score: score(event.homeScore, event.awayScore),
+        },
       };
     }
     case "ShotOnTarget":
+      return {
+        keys: [`ShotOnTarget:${shotKindFor(event, previous)}`],
+        tokens: { ...clubs(event.teamClubId), ...keeper(event.keeperId), player: names.playerName(event.playerId) },
+      };
     case "ShotMissed":
       return {
-        keys: [`${event._tag}:${shotKindFor(event, previous)}`],
+        keys: [`ShotMissed:${shotKindFor(event, previous)}`],
         tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId) },
       };
     case "Corner":
@@ -265,26 +277,34 @@ interface PoolBag {
   draws: number;
 }
 
+/** Whether `tokens` fills every placeholder `template` uses. */
+const fills = (template: string, tokens: Record<string, string>): boolean =>
+  [...template.matchAll(/\{(\w+)\}/g)].every(([, name]) => tokens[name!] !== undefined);
+
 const drawTemplate = (
   table: CommentaryTable,
   bags: Map<CommentaryTemplateKey, PoolBag>,
   seed: number,
   key: CommentaryTemplateKey,
+  tokens: Record<string, string>,
 ): string => {
   const pool = table.templates[key];
-  // Only a table parsed without a fallback can have an empty section; parseCommentaryFile reports it.
-  if (pool.length === 0) return "";
+  // A line is usable when the event fills all its placeholders: a save with no keeper named skips the
+  // lines that use {player2}. Only a table parsed without a fallback can leave nothing usable.
+  const usable = [...pool.keys()].filter((index) => fills(pool[index]!, tokens));
+  if (usable.length === 0) return "";
   let bag = bags.get(key);
   if (bag === undefined) {
     bag = { unused: [], last: null, draws: 0 };
     bags.set(key, bag);
   }
-  if (bag.unused.length === 0) {
-    bag.unused.push(...pool.keys());
-    if (bag.last !== null && pool.length > 1) bag.unused.splice(bag.unused.indexOf(bag.last), 1);
+  let candidates = bag.unused.filter((index) => usable.includes(index));
+  if (candidates.length === 0) {
+    bag.unused.splice(0, bag.unused.length, ...pool.keys());
+    candidates = usable.length > 1 ? usable.filter((index) => index !== bag!.last) : usable;
   }
-  const slot = Math.floor((hash(seed, `${key}:${bag.draws}`) / 0x100000000) * bag.unused.length);
-  const index = bag.unused.splice(slot, 1)[0]!;
+  const index = candidates[Math.floor((hash(seed, `${key}:${bag.draws}`) / 0x100000000) * candidates.length)]!;
+  bag.unused.splice(bag.unused.indexOf(index), 1);
   bag.last = index;
   bag.draws += 1;
   return pool[index]!;
@@ -312,7 +332,7 @@ export const renderCommentary = (
 
   return events.map((event, index): CommentaryLine => {
     const { keys, tokens } = drawFor(event, events[index - 1], match, names);
-    const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key), tokens)));
+    const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key, tokens), tokens)));
     // A line plays by its first section's settings: a Goal's, not its GoalScore sentence's.
     const playback = table.playback[keys[0]!];
     const shown = playback.displayChance >= 1 || hash(matchSeed, `show:${index}`) / 0x100000000 < playback.displayChance;
