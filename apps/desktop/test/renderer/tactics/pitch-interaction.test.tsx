@@ -341,3 +341,33 @@ describe("Team Selection fills the eleven", () => {
     expect(marker(2).closest("li")!.dataset.selected).toBe("true");
   });
 });
+
+describe("the right mouse button aims the selected slot's run", () => {
+  const mouseAt = (type: "mouseDown" | "mouseMove" | "mouseUp", x: number, y: number) =>
+    fireEvent[type](pitch(), { button: 2, clientX: x * 4.4, clientY: y * 6.4 });
+
+  it("pressing previews an arrow that follows the pointer, and releasing sets the run there", async () => {
+    await mountTactics();
+    fireEvent.click(marker(6));
+    mouseAt("mouseDown", 89, 41);
+    mouseAt("mouseMove", 89, 13);
+    expect(document.querySelector('[data-run-arrow="preview"]')).not.toBeNull();
+    mouseAt("mouseUp", 89, 13);
+    await waitFor(() => expect(marker(6).getAttribute("aria-label")).toContain("runs to F R"));
+    expect(document.querySelector('[data-run-arrow="preview"]')).toBeNull();
+    expect(document.querySelector('[data-run-arrow="set"]')).not.toBeNull();
+  });
+
+  it("releasing on the slot's own cell clears its run, and nothing selected aims nothing", async () => {
+    await mountTactics();
+    mouseAt("mouseDown", 89, 13);
+    expect(document.querySelector('[data-run-arrow="preview"]')).toBeNull();
+    fireEvent.click(marker(6));
+    mouseAt("mouseDown", 89, 41);
+    mouseAt("mouseUp", 89, 13);
+    await waitFor(() => expect(marker(6).getAttribute("aria-label")).toContain("runs to F R"));
+    mouseAt("mouseDown", 89, 13);
+    mouseAt("mouseUp", 89, 41);
+    await waitFor(() => expect(marker(6).getAttribute("aria-label")).not.toContain("runs to"));
+  });
+});
