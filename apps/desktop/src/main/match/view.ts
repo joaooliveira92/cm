@@ -58,7 +58,13 @@ const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
     case "YellowCard":
     case "RedCard":
     case "Injury":
-      return [event.playerId];
+      // The creator of a chance, a set piece's taker and a save's goalkeeper are named in commentary
+      // too, and may never be any event's main player.
+      return [
+        event.playerId,
+        ...("assistPlayerId" in event && event.assistPlayerId !== undefined ? [event.assistPlayerId] : []),
+        ...("keeperId" in event && event.keeperId !== undefined ? [event.keeperId] : []),
+      ];
     case "Substitution":
       return [event.outPlayerId, event.inPlayerId];
     case "MatchStarted":

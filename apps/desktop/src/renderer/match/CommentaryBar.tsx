@@ -86,26 +86,38 @@ export const CommentaryBar = ({
         <span>{text ?? "Kick-off is coming up..."}</span>
       </div>
       <div className="flex flex-col justify-center gap-1">
-        <ChoiceGroup label="Commentary speed" options={COMMENTARY_SPEEDS} value={speed} onChange={setCommentarySpeed} />
-        <ChoiceGroup label="Highlights" options={COMMENTARY_HIGHLIGHTS} value={highlights} onChange={setCommentaryHighlights} />
+        <ChoiceGroup caption="Speed" label="Commentary speed" options={COMMENTARY_SPEEDS} value={speed} onChange={setCommentarySpeed} />
+        <ChoiceGroup
+          caption="Highlights"
+          label="Highlights"
+          options={COMMENTARY_HIGHLIGHTS}
+          value={highlights}
+          onChange={setCommentaryHighlights}
+        />
       </div>
     </div>
   );
 };
 
-/** A row of toggle buttons for one commentary preference. */
+/** A row of toggle buttons for one commentary preference, with a short visible caption: two unlabelled
+ *  rows read as one ("Full" beside "Fast"). */
 const ChoiceGroup = <Id extends string>({
+  caption,
   label,
   options,
   value,
   onChange,
 }: {
+  readonly caption: string;
   readonly label: string;
   readonly options: ReadonlyArray<{ readonly id: Id; readonly label: string }>;
   readonly value: Id;
   readonly onChange: (id: Id) => void;
 }) => (
   <div role="group" aria-label={label} className="flex items-center gap-1">
+    <span aria-hidden="true" className="w-20 text-label text-text-muted">
+      {caption}
+    </span>
     {options.map((option) => (
       <Button
         key={option.id}

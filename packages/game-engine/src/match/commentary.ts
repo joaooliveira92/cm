@@ -263,7 +263,14 @@ const drawFor = (
     }
     case "TacticsChanged":
       return {
-        keys: [event.fromFormationLabel === event.toFormationLabel ? "TacticsChanged:instructions" : "TacticsChanged:shape"],
+        // A shape change names both formations. The engine also emits TacticsChanged for an AI
+        // mentality change, with an empty `from` and the mentality's id as `to`: that is a change of
+        // instructions, and its id must never be read out as a formation.
+        keys: [
+          event.fromFormationLabel !== "" && event.toFormationLabel !== "" && event.fromFormationLabel !== event.toFormationLabel
+            ? "TacticsChanged:shape"
+            : "TacticsChanged:instructions",
+        ],
         tokens: { ...clubs(event.teamClubId), formation: event.toFormationLabel },
       };
   }

@@ -253,3 +253,19 @@ describe("pronouns (cm-style-commentary 13)", () => {
     ]);
   });
 });
+
+describe("a tactics change", () => {
+  const home = clubId("home");
+  const started: MatchEvent = { _tag: "MatchStarted", seed: 1, homeClubId: home, awayClubId: clubId("away") };
+  const change = (fromFormationLabel: string, toFormationLabel: string): MatchEvent => ({
+    _tag: "TacticsChanged", minute: 60, half: 2, teamClubId: home, fromFormationLabel, toFormationLabel,
+  });
+
+  it("names the new formation only when the shape really changed", () => {
+    const { table } = parseCommentaryFile("[TacticsChanged:shape]\nNow {formation}.\n[TacticsChanged:instructions]\nNew instructions.\n", SHIPPED);
+    const texts = renderWith([started, change("4-4-2", "4-3-3"), change("", "ultraDefensive"), change("4-4-2", "4-4-2")], 1, names, table)
+      .slice(1)
+      .map((line) => line.text);
+    expect(texts).toEqual(["Now 4-3-3.", "New instructions.", "New instructions."]);
+  });
+});
