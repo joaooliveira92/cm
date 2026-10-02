@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "../../src/random.js";
-import type { ClubStrength } from "../../src/rules/clubGeneration.js";
-import { generateSquad, type GeneratedSquadPlayer } from "../../src/rules/generation.js";
-import { compactPositionLabel } from "../../src/rules/positionLabel.js";
-import { ARCHETYPES, drawPositionalRatings, primarySlotOf } from "../../src/rules/positionalGeneration.js";
-import { COMPETENT_SUITABILITY, NATURAL_SUITABILITY, suitability } from "../../src/rules/suitability.js";
-import { POSITION_SLOT } from "../../src/rules/slots.js";
-import { QUALITY_FORMATIONS, QUALITY_FORMATION_SLOTS } from "../../src/rules/bestXi.js";
+import type { ClubStrength } from "../../src/rules/generationRules/clubGeneration.js";
+import { generateSquad, type GeneratedSquadPlayer } from "../../src/rules/generationRules/generation.js";
+import { compactPositionLabel } from "../../src/rules/positionRules/positionLabel.js";
+import { ARCHETYPES, drawPositionalRatings, primarySlotOf } from "../../src/rules/generationRules/positionalGeneration.js";
+import { COMPETENT_SUITABILITY, NATURAL_SUITABILITY, suitability } from "../../src/rules/playerRatings/suitability.js";
+import { POSITION_SLOT } from "../../src/rules/positionRules/slots.js";
+import { QUALITY_FORMATIONS, QUALITY_FORMATION_SLOTS } from "../../src/rules/generationRules/bestXi.js";
 
 const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 

@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   familiarityTierCounts,
   partitionSelection,
-} from "../../src/rules/tacticsSummary.js";
+} from "../../src/rules/tacticalRules/tacticsSummary.js";
 
 describe("partitionSelection", () => {
   const squad = ["p1", "p2", "p3", "p4", "p5"];

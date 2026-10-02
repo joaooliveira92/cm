@@ -4,7 +4,7 @@ import {
   HIDDEN_ATTRIBUTES,
   OUTFIELD_ATTRIBUTES,
   type PlayerAttributes,
-} from "../../src/rules/positions.js";
+} from "../../src/rules/positionRules/positions.js";
 import { developPlayer, isTrainingFocusOffered, offeredTrainingFocuses } from "../../src/rules/training.js";
 
 const outfield = {

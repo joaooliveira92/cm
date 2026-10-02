@@ -1,4 +1,4 @@
-import { attributeCeilingOn20Scale } from "./generation.js";
+import { attributeCeilingOn20Scale } from "./generationRules/generation.js";
 import {
   ALL_ATTRIBUTES,
   CATEGORIES,
@@ -8,7 +8,7 @@ import {
   type Category,
   type HiddenAttribute,
   type PlayerAttributes,
-} from "./positions.js";
+} from "./positionRules/positions.js";
 
 export { attributeCeilingOn20Scale };
 

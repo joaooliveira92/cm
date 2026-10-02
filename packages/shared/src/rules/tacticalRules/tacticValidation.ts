@@ -1,4 +1,4 @@
-import { SLOTS, slotLabel, type Slot } from "./slots.js";
+import { SLOTS, slotLabel, type Slot } from "../positionRules/slots.js";
 import { BENCH_SIZE } from "./tactics.js";
 import {
   PLAYER_OVERRIDE_VALUES,

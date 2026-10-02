@@ -1,14 +1,7 @@
-import type { RandomSource } from "../random.js";
-import type { Line, PositionalRatings, Side } from "./positionalRatings.js";
-import type { Slot } from "./slots.js";
+import type { RandomSource } from "../../random.js";
+import type { Line, PositionalRatings, Side } from "../playerRatings/positionalRatings.js";
+import type { Slot } from "../positionRules/slots.js";
 
-/**
- * The footballing archetypes a generated player is drawn from. Wide archetypes carry their side in
- * the name, so a squad's demand can ask for a pair of full-backs per flank. Each fixes which lines a
- * player is natural in and which he may also be competent in, and draws his sides from its own odds.
- * See the Agent Note
- * `.agents/notes/proposed/architecture/2026-09-29-players-store-cm-line-and-side-ratings.md`.
- */
 export const ARCHETYPES = [
   "goalkeeper",
   "centreBack",
@@ -28,17 +21,11 @@ export const ARCHETYPES = [
 export type Archetype = (typeof ARCHETYPES)[number];
 
 interface Profile {
-  /** The line the archetype is natural in (18-20). */
   readonly natural: Line;
-  /** Lines he may also be competent in (15-17), each with its own chance. */
   readonly competent: ReadonlyArray<readonly [Line, number]>;
-  /** The side he is natural on. */
   readonly side: Side;
-  /** Other sides he may also be competent on, each with its own chance. */
   readonly extraSides: ReadonlyArray<readonly [Side, number]>;
-  /** Whether his hidden Free Role Rating follows his flair, as attacking players' does. */
   readonly roams: boolean;
-  /** The cell his Attributes are generated against. */
   readonly primarySlot: Slot;
 }
 
@@ -80,7 +67,6 @@ const wideForward = (side: "R" | "L"): Profile => ({
   primarySlot: { row: "AM", column: side },
 });
 
-/** The odds are design values, tuned so squads read like real ones; they are not research findings. */
 const PROFILES: Record<Archetype, Profile> = {
   goalkeeper: {
     natural: "GK",
@@ -140,22 +126,15 @@ const PROFILES: Record<Archetype, Profile> = {
   },
 };
 
-/** The cell an archetype's Attributes are generated against. */
 export const primarySlotOf = (archetype: Archetype): Slot => PROFILES[archetype].primarySlot;
 
 const natural = (random: RandomSource): number => 18 + Math.floor(random.next() * 3);
 const competent = (random: RandomSource): number => 15 + Math.floor(random.next() * 3);
-/** Below the label threshold: a line or side he cannot really play. */
 const unrated = (random: RandomSource): number => 1 + Math.floor(random.next() * 10);
 
 const LINE_ORDER: ReadonlyArray<Line> = ["GK", "SW", "D", "DM", "M", "AM", "F", "WB"];
 const SIDE_ORDER: ReadonlyArray<Side> = ["R", "L", "C"];
 
-/**
- * A player's twelve positional ratings, drawn from his archetype. Every line and side takes the same
- * fixed number of draws whatever it ends up as, so a change to one archetype's odds moves no other
- * draw in the player's stream. `flair` feeds the hidden Free Role Rating of attacking archetypes.
- */
 export const drawPositionalRatings = (
   archetype: Archetype,
   flair: number,

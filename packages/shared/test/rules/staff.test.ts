@@ -20,8 +20,8 @@ import {
   TRAINING_FOCUS_MULTIPLIER,
   developPlayer,
 } from "../../src/rules/training.js";
-import { technicalCoachingModifier } from "../../src/rules/managerPillars.js";
-import type { PlayerAttributes } from "../../src/rules/positions.js";
+import { technicalCoachingModifier } from "../../src/rules/generationRules/managerPillars.js";
+import type { PlayerAttributes } from "../../src/rules/positionRules/positions.js";
 
 const LEGAL_QUALITIES = Array.from({ length: 20 }, (_, index) => index + 1);
 

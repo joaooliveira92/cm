@@ -7,7 +7,7 @@ import {
   potentialAbilityRange,
   statureTiersFor,
   type ClubStrength,
-} from "../../src/rules/clubGeneration.js";
+} from "../../src/rules/generationRules/clubGeneration.js";
 
 const strength = (over: Partial<ClubStrength> = {}): ClubStrength => ({
   tier: 1,

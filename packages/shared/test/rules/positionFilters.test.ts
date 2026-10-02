@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
-import { canPlayOf, positionFilterName, positionOrderOf, positionSummaryOf } from "../../src/rules/positionFilters.js";
+import type { Line, PositionalRatings, Side } from "../../src/rules/playerRatings/positionalRatings.js";
+import { canPlayOf, positionFilterName, positionOrderOf, positionSummaryOf } from "../../src/rules/positionRules/positionFilters.js";
 
 const ratings = (lines: Partial<Record<Line, number>>, sides: Partial<Record<Side, number>>): PositionalRatings => ({
   lines: { GK: 1, SW: 1, D: 1, DM: 1, M: 1, AM: 1, F: 1, WB: 1, ...lines },

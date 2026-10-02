@@ -1,5 +1,5 @@
 import { compareCodeUnits } from "../order.js";
-import { PHASE_POSITIONS, type Position } from "./positions.js";
+import { PHASE_POSITIONS, type Position } from "./positionRules/positions.js";
 import {
   attributeRange,
   FULLY_SCOUTED,

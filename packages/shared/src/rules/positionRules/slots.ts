@@ -1,5 +1,5 @@
 import { POSITION_WEIGHTS, type Attribute, type PHASE_POSITIONS, type Position } from "./positions.js";
-import type { Side } from "./positionalRatings.js";
+import type { Side } from "../playerRatings/positionalRatings.js";
 
 /**
  * The rows of Championship Manager 03/04's tactics grid, goalkeeper first, in pitch order. They

@@ -1,4 +1,4 @@
-import type { Slot } from "./slots.js";
+import type { Slot } from "../positionRules/slots.js";
 
 /**
  * CM 03/04's Tactic, as the formations-and-instructions effort decided it. Every value set lists its

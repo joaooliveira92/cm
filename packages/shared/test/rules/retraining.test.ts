@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import type { PositionalRatings } from "../../src/rules/positionalRatings.js";
-import { applyRetraining, ratingOf, retrainingGain } from "../../src/rules/retraining.js";
+import type { PositionalRatings } from "../../src/rules/playerRatings/positionalRatings.js";
+import { applyRetraining, ratingOf, retrainingGain } from "../../src/rules/generationRules/retraining.js";
 
 const winger: PositionalRatings = {
   lines: { GK: 1, SW: 1, D: 6, DM: 4, M: 18, AM: 16, F: 5, WB: 9 },

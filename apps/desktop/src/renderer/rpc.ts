@@ -11,41 +11,62 @@ export { readState, type ReadState } from "./rpc/readState.js";
 
 export {
   squadAtom,
-  tacticsAtom,
-  tacticsOverviewAtom,
+  clubSquadAtom,
+  playerProfileAtom,
+  playerContractAtom,
+  contractExpiryAtom,
+  playerDevelopmentHistoryAtom,
+  squadDevelopmentAtom,
+  workloadAtom,
+  staffProfileAtom,
+} from "./rpc/squadQueries.js";
+
+export {
   leagueTableAtom,
   competitionTableAtom,
   competitionFixturesAtom,
   fixturesAtom,
   seasonSummaryAtom,
-  managerProfileAtom,
+  competitionOverviewAtom,
+  competitionsAtom,
+} from "./rpc/leagueQueries.js";
+
+export {
   transfersAtom,
-  contractExpiryAtom,
+  clubTransfersAtom,
+  clubFinancesAtom,
   budgetReviewAtom,
   transferHistoryAtom,
-  saveSummaryAtom,
-  newsInboxAtom,
+} from "./rpc/transferQueries.js";
+
+export {
   scoutingAtom,
   scoutingKnowledgeAtom,
   teamScoutReportAtom,
   teamScoutReadingsAtom,
-  boardConfidenceAtom,
-  clubFinancesAtom,
-  competitionOverviewAtom,
-  competitionsAtom,
-  clubFixturesAtom,
+} from "./rpc/scoutingQueries.js";
+
+export {
   clubInformationAtom,
-  clubTransfersAtom,
+  clubFixturesAtom,
   clubStaffAtom,
-  staffProfileAtom,
-  clubSquadAtom,
+} from "./rpc/clubQueries.js";
+
+export {
   coachingAssignmentsAtom,
-  workloadAtom,
   trainingScheduleAtom,
-  playerDevelopmentHistoryAtom,
-  squadDevelopmentAtom,
-  playerProfileAtom,
-  playerContractAtom,
+} from "./rpc/trainingQueries.js";
+
+export {
+  tacticsAtom,
+  tacticsOverviewAtom,
+  managerProfileAtom,
+  saveSummaryAtom,
+  newsInboxAtom,
+  boardConfidenceAtom,
+} from "./rpc/queries.js";
+
+export {
   saveKey,
   squadKey,
   transfersKey,
@@ -56,7 +77,7 @@ export {
   matchKey,
   newsKey,
   scoutingKey,
-} from "./rpc/queries.js";
+} from "./rpc/keys.js";
 
 export { playerSearchAtom } from "./rpc/playerSearchQueries.js";
 export { playerComparisonAtom } from "./rpc/playerComparisonQueries.js";

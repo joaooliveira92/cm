@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { PlayerAttributes } from "../../src/rules/positions.js";
-import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
-import type { Slot } from "../../src/rules/slots.js";
+import type { PlayerAttributes } from "../../src/rules/positionRules/positions.js";
+import type { Line, PositionalRatings, Side } from "../../src/rules/playerRatings/positionalRatings.js";
+import type { Slot } from "../../src/rules/positionRules/slots.js";
 import {
   familiarityOf,
   fitRatingAt,
@@ -9,7 +9,7 @@ import {
   overallRatingOverCells,
   positionRatingAt,
   suitability,
-} from "../../src/rules/suitability.js";
+} from "../../src/rules/playerRatings/suitability.js";
 
 /** Ratings with every line and side at 1 unless overridden. */
 const ratings = (

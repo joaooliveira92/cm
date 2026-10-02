@@ -21,7 +21,7 @@ import {
 } from "@cm-clone/shared";
 import { call } from "../../../src/renderer/rpc/call.js";
 import { describeRpcError, typedError } from "../../../src/renderer/rpc/errors.js";
-import { squadAtom } from "../../../src/renderer/rpc/queries.js";
+import { squadAtom } from "../../../src/renderer/rpc/squadQueries.js";
 import {
   INVALIDATION_RULES,
   advanceCalendarEffect,

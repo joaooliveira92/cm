@@ -9,22 +9,22 @@
  * The module is pure and in `shared` so the desktop wiring layer consumes it as a function call
  * rather than an Effect service.
  */
-import { createSeededRng, pickRandom } from "../random.js";
-import { deriveSeed } from "../seed.js";
-import type { StatureTier } from "../content/clubs.js";
+import { createSeededRng, pickRandom } from "../../random.js";
+import { deriveSeed } from "../../seed.js";
+import type { StatureTier } from "../../content/clubs.js";
 import { bestXiForCells, selectBestTemplateXI, selectBench, type BestXiCell, type CellRatingsLike, type BenchCandidate } from "./bestXi.js";
-import { slotLabel } from "./slots.js";
+import { slotLabel } from "../positionRules/slots.js";
 import {
   BUILT_IN_TEMPLATES,
   BUILT_IN_TEMPLATE_NAMES,
   builtInTemplate,
-} from "./tacticTemplates.js";
+} from "../tacticalRules/tacticTemplates.js";
 import {
   DEFAULT_TEAM_INSTRUCTIONS,
   TEAM_INSTRUCTION_VALUES,
   type TacticTemplate,
   type TeamInstructions,
-} from "./tacticModel.js";
+} from "../tacticalRules/tacticModel.js";
 
 // ---------------------------------------------------------------------------
 // Public types

@@ -26,7 +26,7 @@ import { Atom } from "effect/unstable/reactivity";
 import { playerComparisonKey } from "../navigation/destinations.js";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
-import { saveKey, squadKey } from "./queries.js";
+import { saveKey, squadKey } from "./keys.js";
 
 /** The inverse of `playerComparisonKey` — the atom's key is what the RPC payload is built from.
  *  Each segment re-decodes through the contract's brand before it travels, so the payload is typed

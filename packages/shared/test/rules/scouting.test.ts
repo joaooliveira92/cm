@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { transferValue } from "../../src/rules/ratings.js";
+import { transferValue } from "../../src/rules/playerRatings/ratings.js";
 import { weeklyWage } from "../../src/rules/transfers.js";
 import {
   FULLY_SCOUTED,

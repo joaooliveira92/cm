@@ -1,7 +1,7 @@
-import { POSITIONS, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
+import { POSITIONS, type FamiliarityTier, type PlayerAttributes, type Position } from "../positionRules/positions.js";
 import type { Line, PositionalRatings } from "./positionalRatings.js";
 import { weightedRating } from "./ratings.js";
-import { POSITION_SLOT, SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, slotLabel, weightTableOf, widthOf, type Slot } from "./slots.js";
+import { POSITION_SLOT, SLOTS, SLOT_WEIGHTS, legacyPositionOf, sideOf, slotLabel, weightTableOf, widthOf, type Slot } from "../positionRules/slots.js";
 
 /**
  * The line a slot's row is rated against. D and DM on the flanks read the better of the row's line

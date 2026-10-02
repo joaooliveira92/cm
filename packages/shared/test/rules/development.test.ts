@@ -5,7 +5,7 @@ import {
   PHYSICAL_ATTRIBUTES,
   TECHNICAL_ATTRIBUTES,
   type PlayerAttributes,
-} from "../../src/rules/positions.js";
+} from "../../src/rules/positionRules/positions.js";
 import {
   PLAYER_DEVELOPMENT_FRACTION,
   TRAINING_FOCUS_MULTIPLIER,

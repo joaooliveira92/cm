@@ -1,6 +1,6 @@
-import type { PositionalRatings } from "./positionalRatings.js";
+import type { PositionalRatings } from "../playerRatings/positionalRatings.js";
 import { compactPositionLabel } from "./positionLabel.js";
-import { COMPETENT_SUITABILITY, suitability } from "./suitability.js";
+import { COMPETENT_SUITABILITY, suitability } from "../playerRatings/suitability.js";
 import { ROWS, type Slot } from "./slots.js";
 
 /**

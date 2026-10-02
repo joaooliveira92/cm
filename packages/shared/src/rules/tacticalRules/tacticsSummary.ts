@@ -1,4 +1,4 @@
-import type { FamiliarityTier } from "./positions.js";
+import type { FamiliarityTier } from "../positionRules/positions.js";
 
 /**
  * The selection summary's numbers, derived from the registered squad and the active Tactic's slots

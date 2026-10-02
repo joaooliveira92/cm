@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { compactPositionLabel } from "../../src/rules/positionLabel.js";
-import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
+import { compactPositionLabel } from "../../src/rules/positionRules/positionLabel.js";
+import type { Line, PositionalRatings, Side } from "../../src/rules/playerRatings/positionalRatings.js";
 
 const ratings = (
   lines: Partial<Record<Line, number>>,

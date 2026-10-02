@@ -2,8 +2,8 @@ import { readFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
-import { slotLabel, type Slot } from "../../src/rules/slots.js";
-import { DEFAULT_TEAM_INSTRUCTIONS, EMPTY_TAKERS, type Tactic } from "../../src/rules/tacticModel.js";
+import { slotLabel, type Slot } from "../../src/rules/positionRules/slots.js";
+import { DEFAULT_TEAM_INSTRUCTIONS, EMPTY_TAKERS, type Tactic } from "../../src/rules/tacticalRules/tacticModel.js";
 import {
   BUILT_IN_TEMPLATES,
   INSTRUCTION_TEMPLATE_VALUES,
@@ -14,8 +14,8 @@ import {
   rowCountLabel,
   seededInstructions,
   tacticFromTemplate,
-} from "../../src/rules/tacticTemplates.js";
-import { describeTacticProblem, validateTactic, validateTemplate, type TacticProblem } from "../../src/rules/tacticValidation.js";
+} from "../../src/rules/tacticalRules/tacticTemplates.js";
+import { describeTacticProblem, validateTactic, validateTemplate, type TacticProblem } from "../../src/rules/tacticalRules/tacticValidation.js";
 
 const research = readFileSync(
   path.join(path.dirname(fileURLToPath(import.meta.url)), "../../../../docs/research/formations-and-instructions-cm0304-formations-and-tactic-files.md"),

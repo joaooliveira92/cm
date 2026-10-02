@@ -4,10 +4,10 @@ import { compareCodeUnits } from "../order.js";
 import { createSeededRng, pickRandom, type RandomSource } from "../random.js";
 import { deriveSeed } from "../seed.js";
 import type { IsoDate } from "../season/calendar.js";
-import { CATEGORIES, type Category } from "./positions.js";
+import { CATEGORIES, type Category } from "./positionRules/positions.js";
 import { QUALITY_BAND, type ClubPersonRole } from "./staff.js";
-import { TEAM_INSTRUCTION_VALUES, type TeamInstructions } from "./tacticModel.js";
-import { BUILT_IN_TEMPLATE_NAMES } from "./tacticTemplates.js";
+import { TEAM_INSTRUCTION_VALUES, type TeamInstructions } from "./tacticalRules/tacticModel.js";
+import { BUILT_IN_TEMPLATE_NAMES } from "./tacticalRules/tacticTemplates.js";
 
 /**
  * A Staff Profile: the ratings, preferences, and biography a staff member is *seen* with.

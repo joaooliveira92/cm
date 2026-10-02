@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { projectLegacyPositions } from "../../src/rules/suitability.js";
-import { positionRating, overallRating } from "../../src/rules/ratings.js";
+import { projectLegacyPositions } from "../../src/rules/playerRatings/suitability.js";
+import { positionRating, overallRating } from "../../src/rules/playerRatings/ratings.js";
 import { createSeededRng } from "../../src/random.js";
-import { generatePlayer, generateSquad } from "../../src/rules/generation.js";
-import type { PlayerAttributes } from "../../src/rules/positions.js";
-import type { ClubStrength } from "../../src/rules/clubGeneration.js";
+import { generatePlayer, generateSquad } from "../../src/rules/generationRules/generation.js";
+import type { PlayerAttributes } from "../../src/rules/positionRules/positions.js";
+import type { ClubStrength } from "../../src/rules/generationRules/clubGeneration.js";
 
 const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 

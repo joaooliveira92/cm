@@ -7,7 +7,7 @@ import {
   regimenRecoveryModifier,
   influenceThresholdModifier,
   tacticalAcumenModifier,
-} from "../../src/rules/managerPillars.js";
+} from "../../src/rules/generationRules/managerPillars.js";
 
 describe("validatePillarDistribution", () => {
   it("accepts a valid 3/3/3/3 distribution", () => {

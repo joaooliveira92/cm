@@ -1,4 +1,4 @@
-import type { RandomSource } from "../random.js";
+import type { RandomSource } from "../../random.js";
 import {
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
@@ -7,14 +7,14 @@ import {
   type Attribute,
   type HiddenAttribute,
   type PlayerAttributes,
-} from "./positions.js";
-import type { PositionalRatings } from "./positionalRatings.js";
+} from "../positionRules/positions.js";
+import type { PositionalRatings } from "../playerRatings/positionalRatings.js";
 import { drawPositionalRatings, primarySlotOf, type Archetype } from "./positionalGeneration.js";
-import { SLOT_WEIGHTS, weightTableOf } from "./slots.js";
+import { SLOT_WEIGHTS, weightTableOf } from "../positionRules/slots.js";
 import { potentialAbilityRange, type ClubStrength } from "./clubGeneration.js";
-import { CITIES_BY_NATION, type City } from "../content/cities.js";
-import { NAME_POOLS } from "../content/namePools.js";
-import { MIGRATION_LINKS, type NationCode } from "../content/nations.js";
+import { CITIES_BY_NATION, type City } from "../../content/cities.js";
+import { NAME_POOLS } from "../../content/namePools.js";
+import { MIGRATION_LINKS, type NationCode } from "../../content/nations.js";
 
 /**
  * How many players of each archetype a squad is generated with: 25, enough for every common shape

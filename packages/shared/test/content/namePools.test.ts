@@ -2,8 +2,8 @@ import { describe, expect, it } from "vitest";
 import { createSeededRng } from "../../src/random.js";
 import { NAME_POOLS, nationsWithEmptyPools, poolCombinations } from "../../src/content/namePools.js";
 import { NATION_CODES, migrationLink } from "../../src/content/nations.js";
-import { drawNationality, generateSquad } from "../../src/rules/generation.js";
-import type { ClubStrength } from "../../src/rules/clubGeneration.js";
+import { drawNationality, generateSquad } from "../../src/rules/generationRules/generation.js";
+import type { ClubStrength } from "../../src/rules/generationRules/clubGeneration.js";
 
 const TOP_FLIGHT: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 

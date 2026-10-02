@@ -10,7 +10,7 @@
  * It is pure and takes facts rather than fetching them, so the same rules can be unit-tested here
  * and evaluated in the renderer from atoms it already holds. No new RPC method exists for it.
  */
-import { SQUAD_FLOOR } from "../rules/generation.js";
+import { SQUAD_FLOOR } from "../rules/generationRules/generation.js";
 import type { ContinueDestination } from "./continueOutcome.js";
 
 /** The Calendar's phases. Mirrors `SEASON_PHASES` in `@cm-clone/contracts`, restated because this

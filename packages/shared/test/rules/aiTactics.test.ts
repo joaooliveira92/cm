@@ -5,15 +5,15 @@ import {
   aiTacticFromResult,
   aiInMatchController,
   type AiTacticalPreferences,
-} from "../../src/rules/aiTactics.js";
+} from "../../src/rules/generationRules/aiTactics.js";
 import {
   BUILT_IN_TEMPLATES,
-} from "../../src/rules/tacticTemplates.js";
-import { DEFAULT_TEAM_INSTRUCTIONS, type TeamInstructions } from "../../src/rules/tacticModel.js";
-import { STARTER_COUNT, BENCH_SIZE } from "../../src/rules/tactics.js";
-import { slotLabel } from "../../src/rules/slots.js";
-import type { Position, FamiliarityTier } from "../../src/rules/positions.js";
-import type { PlayerPosition } from "../../src/rules/ratings.js";
+} from "../../src/rules/tacticalRules/tacticTemplates.js";
+import { DEFAULT_TEAM_INSTRUCTIONS, type TeamInstructions } from "../../src/rules/tacticalRules/tacticModel.js";
+import { STARTER_COUNT, BENCH_SIZE } from "../../src/rules/tacticalRules/tactics.js";
+import { slotLabel } from "../../src/rules/positionRules/slots.js";
+import type { Position, FamiliarityTier } from "../../src/rules/positionRules/positions.js";
+import type { PlayerPosition } from "../../src/rules/playerRatings/ratings.js";
 
 // ---------------------------------------------------------------------------
 // Test helpers

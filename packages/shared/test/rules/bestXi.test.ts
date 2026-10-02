@@ -7,11 +7,11 @@ import {
   selectBench,
   selectBestFormationXI,
   selectBestTemplateXI,
-} from "../../src/rules/bestXi.js";
-import { SLOTS, slotLabel } from "../../src/rules/slots.js";
-import { builtInTemplate } from "../../src/rules/tacticTemplates.js";
-import { squadQualityBand, computeSquadQuality, SQUAD_QUALITY_THRESHOLDS, SQUAD_QUALITY_BANDS } from "../../src/rules/squadQuality.js";
-import { BENCH_SIZE } from "../../src/rules/tactics.js";
+} from "../../src/rules/generationRules/bestXi.js";
+import { SLOTS, slotLabel } from "../../src/rules/positionRules/slots.js";
+import { builtInTemplate } from "../../src/rules/tacticalRules/tacticTemplates.js";
+import { squadQualityBand, computeSquadQuality, SQUAD_QUALITY_THRESHOLDS, SQUAD_QUALITY_BANDS } from "../../src/rules/generationRules/squadQuality.js";
+import { BENCH_SIZE } from "../../src/rules/tacticalRules/tactics.js";
 import {
   GOALKEEPING_ATTRIBUTES,
   HIDDEN_ATTRIBUTES,
@@ -19,9 +19,9 @@ import {
   POSITIONS,
   type PlayerAttributes,
   type Position,
-} from "../../src/rules/positions.js";
-import type { Line, PositionalRatings, Side } from "../../src/rules/positionalRatings.js";
-import { fitRatingsByPosition } from "../../src/rules/suitability.js";
+} from "../../src/rules/positionRules/positions.js";
+import type { Line, PositionalRatings, Side } from "../../src/rules/playerRatings/positionalRatings.js";
+import { fitRatingsByPosition } from "../../src/rules/playerRatings/suitability.js";
 
 // ---------------------------------------------------------------------------
 // selectBestFormationXI

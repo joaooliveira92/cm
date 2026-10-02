@@ -1,4 +1,4 @@
-import { transferValue } from "./ratings.js";
+import { transferValue } from "./playerRatings/ratings.js";
 import { weeklyWage } from "./transfers.js";
 
 /**

@@ -1,4 +1,4 @@
-import type { PositionalRatings } from "./positionalRatings.js";
+import type { PositionalRatings } from "../playerRatings/positionalRatings.js";
 
 /** The rating at which a line or side appears in the label: CM's own 15, independent of the tier bands. */
 export const LABEL_THRESHOLD = 15;

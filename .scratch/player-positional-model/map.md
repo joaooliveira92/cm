@@ -40,7 +40,7 @@ Plan-only. The map is done when nothing is left to decide and the spec can be ha
 
 ### The current model (2026-09-28)
 
-- **`Position`** (`packages/shared/src/rules/positions.ts`): ten values, `GK DC DL DR DM MC ML MR
+- **`Position`** (`packages/shared/src/rules/positionRules/positions.ts`): ten values, `GK DC DL DR DM MC ML MR
   AMC ST`. No sweeper, no wing-back, no wide DM or wide AM, and `ST` rather than CM's `F`.
 - **`FamiliarityTier`**: `natural | competent | unfamiliar`, stored per (player, Position) in
   `player_positions`. Generation writes one Natural primary plus sometimes one Competent adjacent

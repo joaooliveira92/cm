@@ -16,7 +16,7 @@ import { type PlayerId, type SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
-import { saveKey, scoutingKey } from "./queries.js";
+import { saveKey, scoutingKey } from "./keys.js";
 
 const offersForSave = Atom.family((saveId: SaveId) =>
   Atom.family((playerId: PlayerId) =>

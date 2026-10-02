@@ -1,10 +1,10 @@
-import { compareCodeUnits } from "../order.js";
-import { BENCH_SIZE } from "./tactics.js";
-import type { Position } from "./positions.js";
-import type { PlayerPosition } from "./ratings.js";
-import { slotLabel, type Slot } from "./slots.js";
-import { BUILT_IN_TEMPLATES } from "./tacticTemplates.js";
-import type { TacticTemplate } from "./tacticModel.js";
+import { compareCodeUnits } from "../../order.js";
+import { BENCH_SIZE } from "../tacticalRules/tactics.js";
+import type { Position } from "../positionRules/positions.js";
+import type { PlayerPosition } from "../playerRatings/ratings.js";
+import { slotLabel, type Slot } from "../positionRules/slots.js";
+import { BUILT_IN_TEMPLATES } from "../tacticalRules/tacticTemplates.js";
+import type { TacticTemplate } from "../tacticalRules/tacticModel.js";
 
 // ---------------------------------------------------------------------------
 // Shared best-XI algorithms

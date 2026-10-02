@@ -12,7 +12,7 @@
  * drift between two reads of the same match. The base and every weight are named here and nowhere
  * else. They are balance numbers, tuned by playing.
  */
-import { PHASE_POSITIONS, type Position } from "./positions.js";
+import { PHASE_POSITIONS, type Position } from "./positionRules/positions.js";
 
 /** The rating of a player who took part and did nothing the match recorded. */
 export const MATCH_RATING_BASE = 6.0;

@@ -14,7 +14,7 @@ import {
   tacticsKey,
   trainingKey,
   transfersKey,
-} from "./queries.js";
+} from "./keys.js";
 
 /**
  * The registered Effect-Atom runtime the mutation fns run through. Its layer

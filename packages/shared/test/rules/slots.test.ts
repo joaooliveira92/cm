@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import type { PlayerAttributes } from "../../src/rules/positions.js";
-import { PHASE_POSITIONS, POSITIONS } from "../../src/rules/positions.js";
-import { positionRating } from "../../src/rules/ratings.js";
+import type { PlayerAttributes } from "../../src/rules/positionRules/positions.js";
+import { PHASE_POSITIONS, POSITIONS } from "../../src/rules/positionRules/positions.js";
+import { positionRating } from "../../src/rules/playerRatings/ratings.js";
 import {
   COLUMNS,
   PHASE_OF_ROW,
@@ -15,8 +15,8 @@ import {
   slotLabel,
   weightTableOf,
   type Slot,
-} from "../../src/rules/slots.js";
-import { positionRatingAt } from "../../src/rules/suitability.js";
+} from "../../src/rules/positionRules/slots.js";
+import { positionRatingAt } from "../../src/rules/playerRatings/suitability.js";
 
 const cell = (row: Slot["row"], column: Slot["column"]): Slot => ({ row, column }) as Slot;
 

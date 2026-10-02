@@ -1,4 +1,4 @@
-import { POSITION_WEIGHTS, type Attribute, type FamiliarityTier, type PlayerAttributes, type Position } from "./positions.js";
+import { POSITION_WEIGHTS, type Attribute, type FamiliarityTier, type PlayerAttributes, type Position } from "../positionRules/positions.js";
 
 /** Weighted average of Attributes against a weights table, scaled from the 1-20 attribute range to 1-100. */
 export const weightedRating = (

@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "../../src/random.js";
-import { generatePlayer, generateSquad } from "../../src/rules/generation.js";
+import { generatePlayer, generateSquad } from "../../src/rules/generationRules/generation.js";
 import {
   HIDDEN_ATTRIBUTES,
   PHYSICAL_ATTRIBUTES,
   POSITION_WEIGHTS,
   type PlayerAttributes,
-} from "../../src/rules/positions.js";
-import type { ClubStrength } from "../../src/rules/clubGeneration.js";
+} from "../../src/rules/positionRules/positions.js";
+import type { ClubStrength } from "../../src/rules/generationRules/clubGeneration.js";
 
 const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 

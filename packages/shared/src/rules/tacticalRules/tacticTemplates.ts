@@ -1,5 +1,5 @@
 import { emptyBench } from "./tactics.js";
-import { DEFAULT_SUB, GOALKEEPER_SLOT, widthOf, type Column, type OutfieldRow, type Slot } from "./slots.js";
+import { DEFAULT_SUB, GOALKEEPER_SLOT, widthOf, type Column, type OutfieldRow, type Slot } from "../positionRules/slots.js";
 import {
   DEFAULT_PLAYER_INSTRUCTIONS,
   DEFAULT_SET_PIECE_ROLES,
@@ -14,12 +14,6 @@ import {
   type TacticTemplate,
 } from "./tacticModel.js";
 
-/**
- * CM 03/04's 29 built-in presets (patch 4.1.3 onward), each slot's base cell and run exactly as the
- * shipped `.tac` files hold them, goalkeeper first. Transcribed from the formations research
- * (docs/research/formations-and-instructions-cm0304-formations-and-tactic-files.md, §1), where the
- * top row is written ST; here it is the F row. "D R>AM R" is a base cell with a run to AM R.
- */
 const PRESET_CELLS: ReadonlyArray<readonly [string, string]> = [
   ["4-4-2", "D R,D L,D RC,D LC,M R>AM R,M L>AM L,M RC,M LC,F RC,F LC"],
   ["4-4-2 Attacking", "D R,D L,D RC,D LC,M R>F R,M L>F L,M RC,M LC,F RC,F LC"],
@@ -57,7 +51,6 @@ const parseCell = (text: string): Slot => {
   return { row, column };
 };
 
-/** CM 03/04's seven player-instruction templates (the "Set To Preset" list). */
 export const INSTRUCTION_TEMPLATES = [
   "goalkeeper",
   "centralDefender",
@@ -75,11 +68,6 @@ const often = (...switches: ReadonlyArray<(typeof PLAYER_SWITCHES)[number]>) =>
     (typeof PLAYER_SWITCHES)[number]
   >;
 
-/**
- * The seven templates' values, transcribed from the shipped `tactical_templates.xml` (byte-identical
- * in retail and patch 4.1.4); a stored 0 is `team` on the overrides and `default` on the standalone
- * settings. Recorded in formations-and-instructions ticket 14.
- */
 export const INSTRUCTION_TEMPLATE_VALUES: Record<InstructionTemplate, PlayerInstructions> = {
   goalkeeper: {
     passing: "direct", closingDown: "standOff", tackling: "normal", marking: "zonal", mentality: "normal",
@@ -118,12 +106,6 @@ export const INSTRUCTION_TEMPLATE_VALUES: Record<InstructionTemplate, PlayerInst
   },
 };
 
-/**
- * The instruction template a cell's slot starts from in a built-in preset: GK → goalkeeper; SW and
- * central D → central defender; wide D → full back; DM → defensive midfielder; central AM → attacking
- * midfielder; wide M and AM → winger; F → striker; central M → none (CM had no central-midfielder
- * template).
- */
 export const instructionTemplateForCell = (cell: Slot): InstructionTemplate | null => {
   const wide = widthOf(cell.column) === "wide";
   switch (cell.row) {
@@ -144,13 +126,6 @@ export const instructionTemplateForCell = (cell: Slot): InstructionTemplate | nu
   }
 };
 
-/**
- * A built-in slot's starting instructions: its cell's template for the settings with no team
- * counterpart (Distribution, Cross From, Cross Aim and the seven switches) and `team` on the five
- * overrides, so the Team Instructions still reach every slot. CM's templates set Passing, Tackling
- * and Mentality explicitly; seeding those too would cut built-in slots off from the team. Distribution
- * applies to the goalkeeper slot only.
- */
 export const seededInstructions = (cell: Slot): PlayerInstructions => {
   const template = instructionTemplateForCell(cell);
   if (template === null) return DEFAULT_PLAYER_INSTRUCTIONS;
@@ -167,8 +142,6 @@ export const seededInstructions = (cell: Slot): PlayerInstructions => {
   } as PlayerInstructions;
 };
 
-/** "Set To Preset": every one of a template's values, overrides included; Distribution stays off
- *  outfield slots. */
 export const applyInstructionTemplate = (cell: Slot, template: InstructionTemplate): PlayerInstructions => ({
   ...INSTRUCTION_TEMPLATE_VALUES[template],
   distribution: cell.row === "GK" ? INSTRUCTION_TEMPLATE_VALUES[template].distribution : "default",
@@ -187,7 +160,6 @@ const presetSlot = (text: string): TacticSlot => {
   };
 };
 
-/** The 29 built-in Tactic Templates, read-only, in CM's patched load order. */
 export const BUILT_IN_TEMPLATES: ReadonlyArray<TacticTemplate> = PRESET_CELLS.map(([name, cells]) => ({
   name,
   slots: [
@@ -203,11 +175,6 @@ export const BUILT_IN_TEMPLATE_NAMES: ReadonlyArray<string> = BUILT_IN_TEMPLATES
 export const builtInTemplate = (name: string): TacticTemplate | undefined =>
   BUILT_IN_TEMPLATES.find((template) => template.name === name);
 
-/**
- * A live Tactic loaded from a template: the template's contents named by it, the given players in
- * slot order, an empty bench and no takers. What a new career's first Tactic and an AI club's Tactic
- * start from.
- */
 export const tacticFromTemplate = <Id extends string>(
   template: TacticTemplate,
   assignments: ReadonlyArray<Id>,
@@ -222,17 +189,11 @@ export const tacticFromTemplate = <Id extends string>(
   takers: EMPTY_TAKERS,
 });
 
-/**
- * The shape a set of slots makes, counted by row from the back: SW and D together, then DM, M, AM and
- * F, empty rows left out. Derived, never stored: a preset's name need not match it (5-3-2 puts its
- * wing-backs in DM cells and reads 3-2-3-2).
- */
 export const rowCountLabel = (slots: ReadonlyArray<Pick<TacticSlot, "cell">>): string => {
   const count = (rows: ReadonlyArray<string>) => slots.filter((slot) => rows.includes(slot.cell.row)).length;
   return [count(["SW", "D"]), count(["DM"]), count(["M"]), count(["AM"]), count(["F"])].filter((n) => n > 0).join("-");
 };
 
-/** Structural equality over plain data, independent of key order. */
 const sameData = (a: unknown, b: unknown): boolean => {
   if (a === b) return true;
   if (typeof a !== "object" || typeof b !== "object" || a === null || b === null) return false;
@@ -245,8 +206,6 @@ const sameData = (a: unknown, b: unknown): boolean => {
   );
 };
 
-/** Whether a Tactic or template has moved off the template it came from: any slot, run, instruction,
- *  role, team instruction or team set-piece setting differs. Derived, never stored. */
 export const isModified = (
   current: Pick<TacticTemplate, "slots" | "team" | "teamSetPieces">,
   source: TacticTemplate,

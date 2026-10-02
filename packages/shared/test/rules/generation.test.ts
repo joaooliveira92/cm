@@ -6,10 +6,10 @@ import {
   generatePlayer,
   generateSquad,
   generateYouthIntake,
-} from "../../src/rules/generation.js";
+} from "../../src/rules/generationRules/generation.js";
 import { deriveSeed } from "../../src/seed.js";
 import type { RandomSource } from "../../src/random.js";
-import type { ClubStrength } from "../../src/rules/clubGeneration.js";
+import type { ClubStrength } from "../../src/rules/generationRules/clubGeneration.js";
 
 const MID_TABLE: ClubStrength = { tier: 1, nationPrior: 0.5, statureTier: "mid" };
 

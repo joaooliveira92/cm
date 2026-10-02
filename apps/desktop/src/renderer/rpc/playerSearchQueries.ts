@@ -17,7 +17,7 @@ import type { PlayerSearchQuery, SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
-import { saveKey, squadKey } from "./queries.js";
+import { saveKey, squadKey } from "./keys.js";
 
 /**
  * A Player Search query, serialized to the string key a search atom is keyed on. Field order is
