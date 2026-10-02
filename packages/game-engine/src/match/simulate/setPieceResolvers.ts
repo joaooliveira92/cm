@@ -3,11 +3,16 @@ import type { MatchEvent, MatchHalf } from "../events.js";
 import type { MatchPlayerInput } from "../types.js";
 import type { RandomSource } from "@cm-clone/shared";
 import { goalkeeperId, type TeamRuntimeState } from "./teamState.js";
+import { attributeValue, pickTaker } from "./setPiecePicks.js";
+import { planCorner, type CornerDelivery } from "./cornerPlan.js";
 import {
   CORNER_CHANCE,
   CORNER_GOAL_BASE,
   CORNER_MISS_SHARE,
   CORNER_SAVE_SHARE,
+  CORNER_VOLLEY_GOAL_BASE,
+  CORNER_VOLLEY_MISS_SHARE,
+  CORNER_VOLLEY_SAVE_SHARE,
   FOUL_LEADS_TO_FREE_KICK,
   FOUL_LEADS_TO_PENALTY,
   FREE_KICK_GOAL_BASE,
@@ -19,51 +24,7 @@ import {
   clamp,
 } from "./constants.js";
 
-// ─── Attribute reading ──────────────────────────────────────────────────────
-
-/** Read a numeric attribute from a player, defaulting to 10 (the mid-point on the 1-20 scale). */
-const attributeValue = (player: MatchPlayerInput, attr: string): number => {
-  const attrs = player.attributes as Record<string, number | undefined>;
-  return attrs[attr] ?? 10;
-};
-
-// ─── Taker selection ────────────────────────────────────────────────────────
-
-/**
- * Pick a taker for a set piece from the ordered taker list.
- *
- * The first nominee in the list who is on the pitch takes it. If none are on the
- * pitch, fall back to the on-pitch player with the highest relevant attribute.
- * The captain list is tried for captaincy only — the captain has no match effect.
- *
- * Returns `null` only when the on-pitch player set is empty (should not happen
- * during normal play unless the team has been reduced to 0 on-pitch).
- */
-export const pickTaker = (
-  takerList: ReadonlyArray<PlayerId>,
-  onPitchPlayerIds: ReadonlySet<PlayerId>,
-  playersById: ReadonlyMap<PlayerId, MatchPlayerInput>,
-  attributeSelector: (player: MatchPlayerInput) => number,
-): PlayerId | null => {
-  // 1. First nominee in the list who is on the pitch
-  for (const id of takerList) {
-    if (onPitchPlayerIds.has(id)) return id;
-  }
-
-  // 2. No nominee on pitch — fall back to best attribute on pitch
-  let best: PlayerId | null = null;
-  let bestScore = -1;
-  for (const id of onPitchPlayerIds) {
-    const player = playersById.get(id);
-    if (!player) continue;
-    const score = attributeSelector(player);
-    if (score > bestScore) {
-      bestScore = score;
-      best = id;
-    }
-  }
-  return best;
-};
+export { pickTaker } from "./setPiecePicks.js";
 
 // ─── Side selection ──────────────────────────────────────────────────────────
 
@@ -158,7 +119,7 @@ export const resolveCorner = (
       ? attackingTeam.takers.cornersLeft
       : attackingTeam.takers.cornersRight;
 
-  const deliveryType: string =
+  const deliveryType: CornerDelivery =
     side === "left"
       ? attackingTeam.teamSetPieces.cornersLeft
       : attackingTeam.teamSetPieces.cornersRight;
@@ -172,12 +133,7 @@ export const resolveCorner = (
   );
   if (!takerId) return;
 
-  // The player who attacks the ball: never the taker, never the goalkeeper. A side down to its taker
-  // and keeper sends the taker in, as before.
-  const targets = new Set(onPitch.filter((s) => !s.isGoalkeeper && s.playerId !== takerId).map((s) => s.playerId));
-  const headerId = targets.size > 0 ? pickTaker([], targets, attackingTeam.playersById, (p) => attributeValue(p, "heading")) : takerId;
-  const headerPlayer = headerId == null ? undefined : attackingTeam.playersById.get(headerId);
-  if (headerId == null || !headerPlayer) return;
+  const plan = planCorner(attackingTeam, takerId, deliveryType);
 
   // Emit the Corner event
   events.push({
@@ -190,8 +146,35 @@ export const resolveCorner = (
     side,
   });
 
-  const atkValue = attackValue(headerPlayer, "heading", "strength");
-  const defValue = defenseValue(defendingTeam, "positioning", "bravery");
+  // A short corner is kept: no shot comes straight from it.
+  if (plan.kind === "short") return;
+
+  if (plan.kind === "volley") {
+    const shooter = attackingTeam.playersById.get(plan.shooterId);
+    if (!shooter) return;
+    const atkValue = attackValue(shooter, "shooting", "composure");
+    const defValue = defenseValue(defendingTeam, "positioning") * 0.6 + gkReflexes(defendingTeam) * 0.4;
+    const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_VOLLEY_GOAL_BASE, CORNER_VOLLEY_SAVE_SHARE, CORNER_VOLLEY_MISS_SHARE, random);
+    emitOutcomeEvent(
+      outcome,
+      minute,
+      half,
+      attackingTeam.clubId,
+      plan.shooterId,
+      goalkeeperId(defendingTeam),
+      isAttackerHome,
+      homeAwayScore,
+      events,
+      plan.assistId,
+      "longShot",
+    );
+    return;
+  }
+
+  const headerPlayer = attackingTeam.playersById.get(plan.headerId);
+  if (!headerPlayer) return;
+  const atkValue = attackValue(headerPlayer, "heading", "strength") * plan.attackFactor;
+  const defValue = defenseValue(defendingTeam, "positioning", "bravery") * plan.defenceFactor;
   const outcome = resolveSetPieceOutcome(atkValue, defValue, CORNER_GOAL_BASE, CORNER_SAVE_SHARE, CORNER_MISS_SHARE, random);
 
   emitOutcomeEvent(
@@ -199,12 +182,12 @@ export const resolveCorner = (
     minute,
     half,
     attackingTeam.clubId,
-    headerId,
+    plan.headerId,
     goalkeeperId(defendingTeam),
     isAttackerHome,
     homeAwayScore,
     events,
-    headerId === takerId ? undefined : takerId,
+    plan.assistId,
   );
 };
 
@@ -319,6 +302,8 @@ const emitOutcomeEvent = (
   homeAwayScore: { home: number; away: number },
   events: Array<MatchEvent>,
   assistPlayerId?: PlayerId,
+  // Set pieces use throughBall as the generic chance type, except a shot from the edge of the area.
+  chanceType: "throughBall" | "longShot" = "throughBall",
 ): void => {
   const keeperField = keeperId === undefined ? {} : { keeperId };
   const assistField = assistPlayerId === undefined ? {} : { assistPlayerId };
@@ -333,7 +318,7 @@ const emitOutcomeEvent = (
       playerId,
       homeScore: homeAwayScore.home,
       awayScore: homeAwayScore.away,
-      chanceType: "throughBall", // set pieces use throughBall as the generic chance type
+      chanceType,
       ...keeperField,
       ...assistField,
     });
@@ -344,7 +329,7 @@ const emitOutcomeEvent = (
       half,
       teamClubId,
       playerId,
-      chanceType: "throughBall",
+      chanceType,
       ...keeperField,
       ...assistField,
     });
@@ -355,7 +340,7 @@ const emitOutcomeEvent = (
       half,
       teamClubId,
       playerId,
-      chanceType: "throughBall",
+      chanceType,
       ...assistField,
     });
   }

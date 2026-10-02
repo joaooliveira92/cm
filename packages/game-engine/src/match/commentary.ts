@@ -111,7 +111,8 @@ const shotKindFor = (event: ShotEvent, previous: MatchEvent | undefined): ShotKi
     if (previous._tag === "Penalty") return "penalty";
     if (previous._tag === "FreeKick") return "freeKick";
   }
-  if (previous?._tag === "Corner" && previous.teamClubId === event.teamClubId) return "header";
+  // A corner is headed, unless it was played back to the edge of the area for a shot from range.
+  if (previous?._tag === "Corner" && previous.teamClubId === event.teamClubId) return event.chanceType === "longShot" ? "longRange" : "header";
   if (event.chanceType === "cross") return "header";
   if (event.chanceType === "longShot") return "longRange";
   return "closeRange";

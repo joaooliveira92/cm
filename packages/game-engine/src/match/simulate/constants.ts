@@ -69,6 +69,23 @@ export const CORNER_SAVE_SHARE = 0.40;
 /** Share of non-goal corner outcomes that miss the target entirely. */
 export const CORNER_MISS_SHARE = 0.50;
 
+// Corner instructions (set-piece-roles 02). Each takes effect only when a role or delivery is set; with
+// everything at default a corner resolves exactly as before.
+
+/** Attack multiplier when the header was picked by a role that matches the delivery. */
+export const CORNER_ROLE_MATCH_BONUS = 1.1;
+/** Attack multiplier when a near-post flick-on finds a far-post attacker. */
+export const CORNER_FLICK_ON_BONUS = 1.1;
+/** Defence multiplier when a teammate challenges the goalkeeper. */
+export const CORNER_CHALLENGE_KEEPER_FACTOR = 0.92;
+/** Attack multiplier with nobody in the box; it rises to 1 with every outfield player there. */
+export const CORNER_BOX_PRESENCE_FLOOR = 0.7;
+/** Base goal probability for a corner played to the edge of the area and shot first time. */
+export const CORNER_VOLLEY_GOAL_BASE = 0.05;
+/** Share of non-goal edge-of-area shots that are saved, and that miss. */
+export const CORNER_VOLLEY_SAVE_SHARE = 0.35;
+export const CORNER_VOLLEY_MISS_SHARE = 0.65;
+
 /** Probability that a foul leads to a free kick (foul in attacking third). */
 export const FOUL_LEADS_TO_FREE_KICK = 0.15;
 /** Base goal probability at equal attacker/defender quality for free kicks. */
