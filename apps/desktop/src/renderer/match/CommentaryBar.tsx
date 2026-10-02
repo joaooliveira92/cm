@@ -1,8 +1,15 @@
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import type { CommentaryLineView, MatchSummary } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
-import { COMMENTARY_SPEEDS, setCommentarySpeed, useCommentarySpeed } from "./commentarySpeed.js";
-import { textSoFar } from "./engine/playback.js";
+import {
+  COMMENTARY_HIGHLIGHTS,
+  COMMENTARY_SPEEDS,
+  setCommentaryHighlights,
+  setCommentarySpeed,
+  useCommentaryHighlights,
+  useCommentarySpeed,
+} from "./commentaryPreferences.js";
+import { showsInBar, textSoFar } from "./engine/playback.js";
 import type { PlayingLine } from "./hooks/useCommentaryFeed.js";
 
 /** Blinks a flash line gets, and how long each lasts. */
@@ -45,7 +52,7 @@ const useFlash = (line: CommentaryLineView | null): boolean => {
 /**
  * Championship Manager's commentary bar: the line being played, one at a time, in the colours of the
  * club it is about. A follow-on line grows part by part; once it is revealed the bar holds it until the
- * next line starts. Quiet lines never reach it. Hidden from screen readers, which hear each line from
+ * next line starts. Quiet lines and lines below the chosen highlights never reach it. Hidden from screen readers, which hear each line from
  * the log below when it is revealed.
  */
 export const CommentaryBar = ({
@@ -58,7 +65,8 @@ export const CommentaryBar = ({
   readonly revealed: ReadonlyArray<CommentaryLineView>;
 }) => {
   const speed = useCommentarySpeed();
-  const settled = [...revealed].reverse().find((line) => line.quiet !== true) ?? null;
+  const highlights = useCommentaryHighlights();
+  const settled = [...revealed].reverse().find((line) => showsInBar(line, highlights)) ?? null;
   const line = playing?.line ?? settled;
   const text = playing === null ? settled?.text : textSoFar(playing.parts, playing.shown);
   const flashing = useFlash(playing === null ? settled : null);
@@ -77,20 +85,38 @@ export const CommentaryBar = ({
         {line !== null && <span className="w-10 shrink-0 text-data tabular-nums opacity-75">{line.minute}&apos;</span>}
         <span>{text ?? "Kick-off is coming up..."}</span>
       </div>
-      <div role="group" aria-label="Commentary speed" className="flex items-center gap-1">
-        {COMMENTARY_SPEEDS.map((option) => (
-          <Button
-            key={option.id}
-            type="button"
-            size="sm"
-            variant={speed === option.id ? "secondary" : "ghost"}
-            aria-pressed={speed === option.id}
-            onClick={() => setCommentarySpeed(option.id)}
-          >
-            {option.label}
-          </Button>
-        ))}
+      <div className="flex flex-col justify-center gap-1">
+        <ChoiceGroup label="Commentary speed" options={COMMENTARY_SPEEDS} value={speed} onChange={setCommentarySpeed} />
+        <ChoiceGroup label="Highlights" options={COMMENTARY_HIGHLIGHTS} value={highlights} onChange={setCommentaryHighlights} />
       </div>
     </div>
   );
 };
+
+/** A row of toggle buttons for one commentary preference. */
+const ChoiceGroup = <Id extends string>({
+  label,
+  options,
+  value,
+  onChange,
+}: {
+  readonly label: string;
+  readonly options: ReadonlyArray<{ readonly id: Id; readonly label: string }>;
+  readonly value: Id;
+  readonly onChange: (id: Id) => void;
+}) => (
+  <div role="group" aria-label={label} className="flex items-center gap-1">
+    {options.map((option) => (
+      <Button
+        key={option.id}
+        type="button"
+        size="sm"
+        variant={value === option.id ? "secondary" : "ghost"}
+        aria-pressed={value === option.id}
+        onClick={() => onChange(option.id)}
+      >
+        {option.label}
+      </Button>
+    ))}
+  </div>
+);

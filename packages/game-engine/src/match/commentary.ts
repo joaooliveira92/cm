@@ -5,6 +5,7 @@ import {
   type CommentaryTable,
   type CommentaryTemplateKey,
   type GoalSituation,
+  type HighlightLevel,
   type ShotKind,
 } from "./commentarySections.js";
 
@@ -12,7 +13,9 @@ export {
   ALWAYS_SHOWN,
   COMMENTARY_SECTIONS,
   FOLLOW_ON_DELAY_MS,
+  HIGHLIGHT_LEVELS,
   type CommentaryPlayback,
+  type HighlightLevel,
   type CommentaryTable,
   type CommentaryTemplateKey,
   type Placeholder,
@@ -79,6 +82,7 @@ export interface CommentaryLine {
   readonly quiet: boolean;
   /** The club the line is about, for the bar's colours; null for kick-off, half time and full time. */
   readonly clubId: string | null;
+  readonly level: HighlightLevel;
 }
 
 type ShotEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "ShotOnTarget" | "ShotMissed" }>;
@@ -344,6 +348,7 @@ export const renderCommentary = (
       flash: playback.flash,
       quiet: !shown,
       clubId: "teamClubId" in event ? event.teamClubId : null,
+      level: playback.level,
     };
   });
 };

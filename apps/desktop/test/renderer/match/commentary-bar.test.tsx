@@ -1,12 +1,13 @@
-import { act, cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { CommentaryLineView, MatchSummary } from "@cm-clone/contracts";
 import { CommentaryBar } from "../../../src/renderer/match/CommentaryBar.js";
 import {
+  COMMENTARY_HIGHLIGHTS_STORAGE_KEY,
   COMMENTARY_SPEED_STORAGE_KEY,
   getCommentarySpeed,
-  resetCommentarySpeedCache,
-} from "../../../src/renderer/match/commentarySpeed.js";
+  resetCommentaryPreferencesCache,
+} from "../../../src/renderer/match/commentaryPreferences.js";
 import { MATCH_COLOURS } from "./matchColours.js";
 
 const MATCH = {
@@ -28,7 +29,8 @@ const surface = (text: string) => screen.getByText(text).parentElement!;
 
 beforeEach(() => {
   window.localStorage.removeItem(COMMENTARY_SPEED_STORAGE_KEY);
-  resetCommentarySpeedCache();
+  window.localStorage.removeItem(COMMENTARY_HIGHLIGHTS_STORAGE_KEY);
+  resetCommentaryPreferencesCache();
 });
 
 afterEach(() => {
@@ -98,14 +100,26 @@ describe("CommentaryBar", () => {
     expect(surface("GOAL!").dataset["flashing"]).toBe("false");
   });
 
+  it("at Key highlights, holds the last key line rather than a fuller one (08)", () => {
+    const revealed = [
+      line({ tag: "Goal", text: "GOAL!", level: "key" }),
+      line({ tag: "Foul", text: "A foul.", level: "full" }),
+    ];
+    render(<CommentaryBar match={MATCH} playing={null} revealed={revealed} />);
+    expect(screen.getByText("A foul.")).toBeTruthy();
+    fireEvent.click(within(screen.getByRole("group", { name: "Highlights" })).getByRole("button", { name: "Key" }));
+    expect(screen.queryByText("A foul.")).toBeNull();
+    expect(screen.getByText("GOAL!")).toBeTruthy();
+  });
+
   it("sets the commentary speed, and keeps it for the next match", () => {
     render(<CommentaryBar match={MATCH} playing={null} revealed={[]} />);
     const group = screen.getByRole("group", { name: "Commentary speed" });
     expect(group.querySelector("[aria-pressed=true]")?.textContent).toBe("Normal");
 
-    fireEvent.click(screen.getByRole("button", { name: "Fast" }));
-    expect(screen.getByRole("button", { name: "Fast" }).getAttribute("aria-pressed")).toBe("true");
-    resetCommentarySpeedCache();
+    fireEvent.click(within(group).getByRole("button", { name: "Fast" }));
+    expect(within(group).getByRole("button", { name: "Fast" }).getAttribute("aria-pressed")).toBe("true");
+    resetCommentaryPreferencesCache();
     expect(getCommentarySpeed()).toBe("fast");
   });
 });

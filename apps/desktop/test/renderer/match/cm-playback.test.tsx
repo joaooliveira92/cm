@@ -8,10 +8,12 @@ import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
 import { clearActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import {
+  COMMENTARY_HIGHLIGHTS_STORAGE_KEY,
   COMMENTARY_SPEED_STORAGE_KEY,
-  resetCommentarySpeedCache,
+  resetCommentaryPreferencesCache,
+  setCommentaryHighlights,
   setCommentarySpeed,
-} from "../../../src/renderer/match/commentarySpeed.js";
+} from "../../../src/renderer/match/commentaryPreferences.js";
 import { textSoFar } from "../../../src/renderer/match/engine/playback.js";
 import { MATCH_COLOURS } from "./matchColours.js";
 
@@ -50,6 +52,7 @@ const MATCH: ReadonlyArray<CommentaryLineView> = [
     ],
     flash: true,
     clubId: "home",
+    level: "key",
   },
 ] as ReadonlyArray<CommentaryLineView>;
 
@@ -173,7 +176,8 @@ beforeEach(() => {
   clearActiveMatch(s1);
   resetScopeState();
   window.localStorage.removeItem(COMMENTARY_SPEED_STORAGE_KEY);
-  resetCommentarySpeedCache();
+  window.localStorage.removeItem(COMMENTARY_HIGHLIGHTS_STORAGE_KEY);
+  resetCommentaryPreferencesCache();
   vi.useFakeTimers();
 });
 
@@ -205,13 +209,26 @@ describe("Match day plays commentary like Championship Manager (cm-style-comment
 
   it("scales the authored delays by the speed preference, and remembers it", async () => {
     setCommentarySpeed("fast");
-    resetCommentarySpeedCache();
+    resetCommentaryPreferencesCache();
     mockSave();
     await play();
     await advance(REVEAL_INTERVAL_MS * 2);
     expect(probe()).toBe("2|0|Ada shoots…");
 
     await advance(BUILD_MS * 0.4);
+    expect(probe()).toBe("3|1|");
+  });
+
+  it("at Key highlights, reveals the lines below key at once and plays only the key ones (08)", async () => {
+    setCommentaryHighlights("key");
+    mockSave();
+    await play();
+
+    // Kick-off carries no level, so it counts as full; with the quiet key pass it is revealed on the
+    // first tick without taking any time, and the goal's build-up starts straight away.
+    await advance(REVEAL_INTERVAL_MS);
+    expect(probe()).toBe("2|0|Ada shoots…");
+    await advance(BUILD_MS);
     expect(probe()).toBe("3|1|");
   });
 

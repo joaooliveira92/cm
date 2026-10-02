@@ -9,8 +9,8 @@ import { useMatchContext } from "./MatchProvider.js";
 import { controlledClubId } from "./controlledClub.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { getRevealedEvents } from "./session.js";
-import { getCommentarySpeed, speedFactor } from "./commentarySpeed.js";
-import { playbackParts } from "./engine/playback.js";
+import { getCommentaryHighlights, getCommentarySpeed, speedFactor } from "./commentaryPreferences.js";
+import { playbackParts, showsInBar } from "./engine/playback.js";
 import type { PlayingLine } from "./hooks/useCommentaryFeed.js";
 import { nextPaceDecision, shouldPauseMatch, shouldPollMatch } from "./engine/pace.js";
 
@@ -150,8 +150,9 @@ export const useMatchStreaming = (): void => {
         streamComplete: commMeta.streamCompleteRef.current,
       });
       const next = decision === "reveal" ? commMeta.pendingRef.current.shift() : undefined;
-      if (next !== undefined && next.quiet === true) {
-        // Lost its display-chance draw: revealed at once, never shown in the bar, and it takes no time.
+      if (next !== undefined && !showsInBar(next, getCommentaryHighlights())) {
+        // Lost its display-chance draw, or below the chosen highlights: revealed at once, never shown
+        // in the bar, and it takes no time.
         revealLineRef.current(next);
         tick();
         return;

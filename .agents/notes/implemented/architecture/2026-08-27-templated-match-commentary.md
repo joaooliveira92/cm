@@ -38,7 +38,10 @@ section. A `|` inside a template splits it into follow-on parts,
 so a shot plays its build-up, holds, then its outcome. A line that loses its display-chance draw is quiet:
 it is revealed at once and never shown in the commentary bar, but the log still lists it. Lines that change
 the match (goals, cards, injuries, substitutions, penalties, half and full time) have no display chance and
-always show. The renderer owns the clock: it plays each part for its delay, scaled by a renderer-local speed
+always show. Each section also has a highlight level (`key`, `extended` or `full`), after CM's event
+priority; a player watching Key or Extended highlights gets only lines at or above that level in the
+bar, and the rest are handled like quiet lines. Moments that change the match are always `key`. The
+renderer owns the clock: it plays each part for its delay, scaled by a renderer-local speed
 preference, and reveals a line only when its last part shows, so the score and the injury prompts never
 run ahead of the bar.
 

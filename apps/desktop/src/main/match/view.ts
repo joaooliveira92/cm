@@ -161,6 +161,7 @@ export const buildResumeSimulationView = (
             flash: line.flash,
             quiet: line.quiet,
             clubId: line.clubId === null ? null : ClubId.make(line.clubId),
+            level: line.level,
           }),
       );
 

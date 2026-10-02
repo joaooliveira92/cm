@@ -53,6 +53,8 @@ export class CommentaryLineView extends Schema.Class<CommentaryLineView>("Commen
   quiet: Schema.optional(Schema.Boolean),
   /** The club the line is about, for the bar's colours. */
   clubId: Schema.optional(Schema.NullOr(ClubId)),
+  /** How important the moment is; the bar shows it only at this highlight level or a fuller one. */
+  level: Schema.optional(Schema.Literals(["key", "extended", "full"])),
 }) {}
 
 /** Per-club substitution cap status (ticket 14: 5 subs / 3 windows, halftime doesn't count as a

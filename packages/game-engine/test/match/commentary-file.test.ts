@@ -71,7 +71,7 @@ describe("a player's edited commentary file", () => {
   it("reads delay, flash and chance, and falls back for the settings it isn't given", () => {
     const { table, problems } = edited("[Foul]\ndelay = 500\nflash = yes\nchance = 25\nFoul!\n[Offside]\nOffside!\n");
     expect(problems).toEqual([]);
-    expect(table.playback.Foul).toEqual({ delayMs: 500, flash: true, displayChance: 0.25 });
+    expect(table.playback.Foul).toEqual({ delayMs: 500, flash: true, displayChance: 0.25, level: SHIPPED.playback.Foul.level });
     expect(table.playback.Offside).toEqual(SHIPPED.playback.Offside);
   });
 
@@ -157,5 +157,30 @@ describe("the live pace the shipped file sets (cm-style-commentary 06)", () => {
     // percentile. Delays that drift far from that change how long every live match takes.
     expect(average).toBeGreaterThan(60);
     expect(average).toBeLessThan(120);
+  });
+});
+
+describe("highlight levels (cm-style-commentary 08)", () => {
+  it("reads a section's level and puts it on its lines", () => {
+    const { table, problems } = edited("[Foul]\nlevel = extended\n{player} fouls.\n");
+    expect(problems).toEqual([]);
+    expect(table.playback.Foul.level).toBe("extended");
+    expect(renderCommentary([started, foul], 1, names, table)[1]!.level).toBe("extended");
+  });
+
+  it("keeps every moment that changes the match at key", () => {
+    const { table, problems } = edited("[RedCard]\nlevel = full\n{player} is off.\n[Corner]\nlevel = sometimes\nCorner.\n");
+    expect(table.playback.RedCard.level).toBe("key");
+    expect(problems).toEqual([
+      "line 2: [RedCard] changes the match, so it is always key; level is ignored",
+      "line 5: level must be key, extended or full",
+    ]);
+  });
+
+  it("ships shots at key, build-up at extended and fouls at full", () => {
+    expect(SHIPPED.playback["ShotOnTarget:closeRange"].level).toBe("key");
+    expect(SHIPPED.playback.Counter.level).toBe("extended");
+    expect(SHIPPED.playback["KeyPass:cross"].level).toBe("extended");
+    expect(SHIPPED.playback.Foul.level).toBe("full");
   });
 });

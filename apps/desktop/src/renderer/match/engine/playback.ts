@@ -1,5 +1,16 @@
 import type { CommentaryLineView } from "@cm-clone/contracts";
 import { REVEAL_INTERVAL_MS } from "../../rpc.js";
+import type { CommentaryHighlightsId } from "../commentaryPreferences.js";
+
+const LEVEL_RANK: Readonly<Record<CommentaryHighlightsId, number>> = { key: 0, extended: 1, full: 2 };
+
+/**
+ * Whether a line reaches the commentary bar: it won its display-chance draw and its level is within
+ * the chosen highlights. A line that doesn't is revealed at once, taking no time, and stays in the
+ * log. A line without a level (one the engine sent no playback for) counts as `full`.
+ */
+export const showsInBar = (line: CommentaryLineView, highlights: CommentaryHighlightsId): boolean =>
+  line.quiet !== true && LEVEL_RANK[line.level ?? "full"] <= LEVEL_RANK[highlights];
 
 export interface PlaybackPart {
   readonly text: string;

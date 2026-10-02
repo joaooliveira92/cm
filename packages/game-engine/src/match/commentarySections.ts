@@ -40,6 +40,12 @@ export type CommentaryTemplateKey =
  * `{player2}`/`{team2}` the second player and the other club. */
 export type Placeholder = "player" | "player2" | "team" | "team2" | "score" | "injury" | "side" | "formation";
 
+/** How important a moment is, after Championship Manager's event priority: a player watching Key
+ *  highlights sees only `key` lines in the commentary bar, Extended adds `extended`, Full shows all. */
+export type HighlightLevel = "key" | "extended" | "full";
+
+export const HIGHLIGHT_LEVELS: ReadonlyArray<HighlightLevel> = ["key", "extended", "full"];
+
 /** How a section's lines play, after Championship Manager's per-event playback fields. */
 export interface CommentaryPlayback {
   /** How long the line's last part holds before the next line starts. */
@@ -48,6 +54,7 @@ export interface CommentaryPlayback {
   readonly flash: boolean;
   /** The chance, 0 to 1, that the line shows in the bar at all. */
   readonly displayChance: number;
+  readonly level: HighlightLevel;
 }
 
 /** A parsed commentary file: every section's lines and playback. */
@@ -59,7 +66,7 @@ export interface CommentaryTable {
 /** How long a follow-on part holds before the line continues. */
 export const FOLLOW_ON_DELAY_MS = 1100;
 
-/** Moments that change the match: always shown, whatever a section's `chance` says. */
+/** Moments that change the match: always shown and always `key`, whatever a section says. */
 export const ALWAYS_SHOWN: ReadonlySet<MatchEvent["_tag"]> = new Set<MatchEvent["_tag"]>([
   "MatchStarted",
   "Goal",

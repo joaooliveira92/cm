@@ -1,6 +1,8 @@
 import {
   ALWAYS_SHOWN,
   COMMENTARY_SECTIONS,
+  HIGHLIGHT_LEVELS,
+  type HighlightLevel,
   sectionTag,
   type CommentaryPlayback,
   type CommentaryTable,
@@ -22,11 +24,11 @@ export interface ParsedCommentaryFile {
   readonly problems: ReadonlyArray<string>;
 }
 
-const DEFAULT_PLAYBACK: CommentaryPlayback = { delayMs: 1000, flash: false, displayChance: 1 };
+const DEFAULT_PLAYBACK: CommentaryPlayback = { delayMs: 1000, flash: false, displayChance: 1, level: "full" };
 const MAX_DELAY_MS = 60_000;
 
 const SECTION = /^\[([^\]]+)\]$/;
-const SETTING = /^(delay|flash|chance)\s*=\s*(.*)$/i;
+const SETTING = /^(delay|flash|chance|level)\s*=\s*(.*)$/i;
 const PLACEHOLDER = /\{(\w+)\}/g;
 
 interface SectionDraft {
@@ -34,6 +36,7 @@ interface SectionDraft {
   delayMs?: number;
   flash?: boolean;
   displayChance?: number;
+  level?: HighlightLevel;
 }
 
 const parseFlag = (value: string): boolean | null => {
@@ -68,6 +71,13 @@ const applySetting = (draft: SectionDraft, key: CommentaryTemplateKey, name: str
       const flag = parseFlag(value);
       if (flag === null) return "flash must be yes or no";
       draft.flash = flag;
+      return null;
+    }
+    case "level": {
+      const level = value.toLowerCase() as HighlightLevel;
+      if (!HIGHLIGHT_LEVELS.includes(level)) return "level must be key, extended or full";
+      if (ALWAYS_SHOWN.has(sectionTag(key) as never) && level !== "key") return `[${key}] changes the match, so it is always key; level is ignored`;
+      draft.level = level;
       return null;
     }
     default: {
@@ -143,6 +153,7 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
       delayMs: draft?.delayMs ?? base.delayMs,
       flash: draft?.flash ?? base.flash,
       displayChance: ALWAYS_SHOWN.has(sectionTag(key) as never) ? 1 : (draft?.displayChance ?? base.displayChance),
+      level: ALWAYS_SHOWN.has(sectionTag(key) as never) ? "key" : (draft?.level ?? base.level),
     };
   }
   return { table: { templates, playback }, problems };
