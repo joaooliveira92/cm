@@ -129,8 +129,8 @@ export class BidView extends Schema.Class<BidView>("BidView")({
  *  decides the shape — a boolean `exact` flag that could claim a range is really exact has no place
  *  here, and unknown keys are dropped, so a second figure can never ride along. */
 export const PlayerFigureSchema = Schema.Union([
-  Schema.Struct({ _tag: Schema.Literal("exact"), value: Schema.Finite }),
-  Schema.Struct({ _tag: Schema.Literal("range"), low: Schema.Finite, high: Schema.Finite }),
+  Schema.TaggedStruct("exact", { value: Schema.Finite }),
+  Schema.TaggedStruct("range", { low: Schema.Finite, high: Schema.Finite }),
 ]) satisfies Schema.Schema<KnownFigure>;
 
 /** A player as seen on the transfer market — another club's player (biddable) or a Free Agent

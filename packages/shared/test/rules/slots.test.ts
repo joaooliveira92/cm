@@ -11,6 +11,7 @@ import {
   SLOT_WEIGHTS,
   WEIGHT_TABLES,
   compareSlots,
+  isSlot,
   phaseOfSlot,
   slotLabel,
   weightTableOf,
@@ -28,9 +29,17 @@ const attributes = (overrides: Partial<PlayerAttributes> = {}): PlayerAttributes
 });
 
 describe("slots", () => {
-  it("has the goalkeeper cell plus six rows of five columns", () => {
-    expect(SLOTS).toHaveLength(31);
-    expect(new Set(SLOTS.map((slot) => slotLabel(slot))).size).toBe(31);
+  it("has the goalkeeper and sweeper cells plus five rows of five columns", () => {
+    expect(SLOTS).toHaveLength(27);
+    expect(new Set(SLOTS.map((slot) => slotLabel(slot))).size).toBe(27);
+    expect(SLOTS.filter((slot) => slot.row === "SW").map((slot) => slotLabel(slot))).toEqual(["SW C"]);
+  });
+
+  it("knows a sweeper only in the centre", () => {
+    expect(isSlot({ row: "SW", column: "C" })).toBe(true);
+    expect(isSlot({ row: "SW", column: "LC" })).toBe(false);
+    expect(isSlot({ row: "SW", column: "R" })).toBe(false);
+    expect(isSlot({ row: "D", column: "R" })).toBe(true);
   });
 
   it("labels cells as CM does", () => {

@@ -777,6 +777,8 @@ export const tacticLibrarySlots = sqliteTable(
     check("tactic_library_slots_cell_column", oneOf("cell_column", COLUMNS)),
     check("tactic_library_slots_goalkeeper_first", sql`(slot_index = 0) = (cell_row = 'GK')`),
     check("tactic_library_slots_goalkeeper_column", sql`cell_row <> 'GK' OR cell_column = 'C'`),
+    check("tactic_library_slots_sweeper_column", sql`cell_row <> 'SW' OR cell_column = 'C'`),
+    check("tactic_library_slots_run_sweeper_column", sql`run_row IS NULL OR run_row <> 'SW' OR run_column = 'C'`),
     check("tactic_library_slots_run_pair", sql`(run_row IS NULL) = (run_column IS NULL)`),
     check("tactic_library_slots_run_row", sql.raw(`run_row IS NULL OR run_row IN (${ROWS.filter((row) => row !== "GK").map((row) => `'${row}'`).join(",")})`)),
     check("tactic_library_slots_run_column", sql.raw(`run_column IS NULL OR run_column IN (${COLUMNS.map((column) => `'${column}'`).join(",")})`)),
@@ -793,8 +795,9 @@ export const tacticLibrarySlots = sqliteTable(
 /**
  * The eleven slots of a club's Tactic, in slot order: each one's grid cell, its optional run target,
  * its player, its Player Instructions and its set-piece roles, one column each. Slot 0 is the
- * goalkeeper cell and no other slot may be; the GK cell has no column of its own (`C`); a run is
- * both columns or neither; Distribution is set only on the goalkeeper slot. The distinct-cells rule
+ * goalkeeper cell and no other slot may be; the GK and SW cells have no column of their own (`C`),
+ * as a cell or as a run's target; a run is both columns or neither; Distribution is set only on the
+ * goalkeeper slot. The distinct-cells rule
  * spans rows and is upheld by `validateTactic`.
  *
  * No index: read by the club prefix of its own key.
@@ -827,6 +830,8 @@ export const tacticSlots = sqliteTable(
     check("tactic_slots_cell_column", oneOf("cell_column", COLUMNS)),
     check("tactic_slots_goalkeeper_first", sql`(slot_index = 0) = (cell_row = 'GK')`),
     check("tactic_slots_goalkeeper_column", sql`cell_row <> 'GK' OR cell_column = 'C'`),
+    check("tactic_slots_sweeper_column", sql`cell_row <> 'SW' OR cell_column = 'C'`),
+    check("tactic_slots_run_sweeper_column", sql`run_row IS NULL OR run_row <> 'SW' OR run_column = 'C'`),
     check("tactic_slots_run_pair", sql`(run_row IS NULL) = (run_column IS NULL)`),
     check("tactic_slots_run_row", sql.raw(`run_row IS NULL OR run_row IN (${ROWS.filter((row) => row !== "GK").map((row) => `'${row}'`).join(",")})`)),
     check("tactic_slots_run_column", sql.raw(`run_column IS NULL OR run_column IN (${COLUMNS.map((column) => `'${column}'`).join(",")})`)),

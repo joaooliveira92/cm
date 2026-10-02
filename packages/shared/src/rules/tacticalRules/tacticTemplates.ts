@@ -1,5 +1,5 @@
 import { emptyBench } from "./tactics.js";
-import { DEFAULT_SUB, GOALKEEPER_SLOT, widthOf, type Column, type OutfieldRow, type Slot } from "../positionRules/slots.js";
+import { DEFAULT_SUB, GOALKEEPER_SLOT, isSlot, widthOf, type Column, type OutfieldRow, type Slot } from "../positionRules/slots.js";
 import {
   DEFAULT_PLAYER_INSTRUCTIONS,
   DEFAULT_SET_PIECE_ROLES,
@@ -48,7 +48,9 @@ const PRESET_CELLS: ReadonlyArray<readonly [string, string]> = [
 
 const parseCell = (text: string): Slot => {
   const [row, column] = text.trim().split(" ") as [OutfieldRow, Column];
-  return { row, column };
+  const cell = { row, column };
+  if (!isSlot(cell)) throw new Error(`Built-in template names no such cell: ${text}`);
+  return cell;
 };
 
 export const INSTRUCTION_TEMPLATES = [

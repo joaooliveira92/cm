@@ -68,9 +68,11 @@ describe("cellAt — the cell a drop point on the pitch stands for", () => {
     expect(cellAt(50, 63)).toMatchObject({ row: "DM", column: "C" });
   });
 
-  it("has a sweeper only in the middle: deep on a flank is still D L or D R", () => {
+  it("has a sweeper only in the centre: deep on any other column is still D", () => {
     expect(cellAt(50, 80)).toMatchObject({ row: "SW", column: "C" });
     expect(cellAt(10, 80)).toMatchObject({ row: "D", column: "L" });
+    expect(cellAt(30, 80)).toMatchObject({ row: "D", column: "LC" });
+    expect(cellAt(70, 80)).toMatchObject({ row: "D", column: "RC" });
     expect(cellAt(90, 80)).toMatchObject({ row: "D", column: "R" });
   });
 });

@@ -1,5 +1,5 @@
 /** The shirt-number cell: a starter's slot number on the green chip, a reserve's bench slot (or a
- *  dash) on the blue one. The colour repeats what the label already says, never replaces it. */
+ *  dash) on the graphite one. The colour repeats what the label already says, never replaces it. */
 export const NumberChip = ({
   label,
   starter,

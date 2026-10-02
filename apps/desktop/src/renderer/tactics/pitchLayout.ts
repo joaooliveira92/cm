@@ -1,4 +1,4 @@
-import { COLUMNS, DEFAULT_SUB, ROWS, widthOf, type Column, type Row, type Slot } from "@cm-clone/shared";
+import { COLUMNS, DEFAULT_SUB, ROWS, isSlot, type Column, type Row, type Slot } from "@cm-clone/shared";
 
 /** Where one Tactic slot sits on the pitch diagram, in percent of the pitch box: `x` from the left
  *  touchline, `y` from the opposition goal line (the club attacks up the screen). */
@@ -54,14 +54,12 @@ const columnSpan = (column: Column): Span => spanOf(COLUMN_CENTRES, COLUMNS.inde
 
 const OUTFIELD_CENTRES = OUTFIELD_ROWS.map((row) => ROW_Y[row]);
 
-/** A sweeper plays in the middle, so the flanks have no SW cell: there the D cell runs back to the
- *  keeper's end, and a full-back dropped deep is still a full-back. */
-const isWideSweeper = (row: Row, column: Column): boolean => row === "SW" && widthOf(column) === "wide";
-
+/** The sweeper has only the centre cell (`SWEEPER_SLOT`). On every other column the D cell runs back
+ *  to the keeper's end, so a back line dropped deep is still a back line. */
 const rowSpan = (row: Row, column: Column): Span => {
   if (row === "GK") return { low: KEEPER_END, centre: ROW_Y.GK, high: GOAL_LINE.max };
   const span = spanOf(OUTFIELD_CENTRES, OUTFIELD_ROWS.indexOf(row), { min: GOAL_LINE.min, max: KEEPER_END });
-  return row === "D" && widthOf(column) === "wide" ? { ...span, high: KEEPER_END } : span;
+  return row === "D" && column !== "C" ? { ...span, high: KEEPER_END } : span;
 };
 
 /** A 0-1 sub-position to a point in the span. */
@@ -109,7 +107,7 @@ export const dropZoneAt = (x: number, y: number): DropZone | null => {
   if (y > KEEPER_END) return null;
   const column = COLUMNS[nearest(COLUMNS, (each) => COLUMN_X[each], x)]!;
   const nearestRow = OUTFIELD_ROWS[nearest(OUTFIELD_ROWS, (each) => ROW_Y[each], y)]!;
-  const row = isWideSweeper(nearestRow, column) ? "D" : nearestRow;
+  const row = isSlot({ row: nearestRow, column }) ? nearestRow : "D";
   return {
     cell: { row, column } as Slot,
     subRow: subIn(rowSpan(row, column), y),

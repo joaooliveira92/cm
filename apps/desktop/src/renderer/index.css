@@ -225,14 +225,16 @@
 
   /* --- CM 03/04 tactics chrome -------------------------------------------
      The Tactics editor's period look: yellow panel titles and hint lines,
-     glossy blue pill buttons and dropdowns, a blue column-heading band, and
-     the blue number chip a non-starter wears beside the starters' green. */
+     glossy pill buttons and dropdowns, a column-heading band, and the number
+     chip a non-starter wears beside the starters' green. Only the yellow is
+     CM's own hue; the pills, band and chip are graphite lifted off the base
+     palette, because the owner did not want CM's blue. */
   --color-cm-title: #ffd23f;
-  --color-cm-button-top: #3a86d4;
-  --color-cm-button-bottom: #0f4688;
-  --color-cm-button-border: rgb(160 205 255 / 0.45);
-  --color-cm-band: #1b5aa3;
-  --color-cm-chip-sub: #1d68b8;
+  --color-cm-button-top: color-mix(in oklab, var(--muted) 78%, var(--foreground));
+  --color-cm-button-bottom: color-mix(in oklab, var(--card) 94%, var(--foreground));
+  --color-cm-button-border: color-mix(in oklab, var(--foreground) 22%, transparent);
+  --color-cm-band: color-mix(in oklab, var(--muted) 88%, var(--foreground));
+  --color-cm-chip-sub: color-mix(in oklab, var(--muted) 85%, var(--foreground));
 
   /* --- Shape and depth -------------------------------------------------- */
   --radius-panel: 6px;
@@ -415,7 +417,7 @@
   );
 }
 
-/* The Tactics editor's glossy blue pill: a lit top half over the darker body, as CM drew its buttons. */
+/* The Tactics editor's glossy pill: a lit top half over the darker body, as CM drew its buttons. */
 @utility cm-button-gradient {
   background-image: linear-gradient(
     180deg,

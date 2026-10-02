@@ -8,6 +8,7 @@ import {
   lineupSlotsOf,
   orderOfPlayer,
   playerAt,
+  reseatStarters,
   swapLineupSlots,
   unselectedPlayerIds,
 } from "../../../src/renderer/squad/lineupEdits.js";
@@ -267,5 +268,29 @@ describe("assistantLineupOf", () => {
 
   it("returns null when the squad cannot field the Formation", () => {
     expect(assistantLineupOf(baseTactic(), squad.slice(0, 10))).toBeNull();
+  });
+});
+describe("reseatStarters", () => {
+  /** A player who rates 90 at `cell` alone and 10 everywhere else. */
+  const specialist = (id: string, cell: string) =>
+    ({
+      id: pid(id),
+      cellRatings: Object.fromEntries(SLOTS.map((slot) => [slotLabel(slot), slotLabel(slot) === cell ? 90 : 10])),
+    }) as CellRatingsLike<PlayerId>;
+  const fourThreeThreeCells = BUILT_IN_TEMPLATES.find((t) => t.name === "4-3-3")!.slots.map((s) => s.cell);
+
+  it("keeps the same eleven, each in the new shape's cell he fits best", () => {
+    const squad = fourThreeThreeCells.map((cell, index) => specialist(`p${index}`, slotLabel(cell)));
+    // Picked in the 4-4-2 in reverse, so a by-index carry-over would seat almost nobody where he rates.
+    const assignments = squad.map((player) => player.id).reverse();
+    const next = reseatStarters(assignments, fourThreeThreeCells, squad);
+    expect(new Set(next)).toEqual(new Set(assignments));
+    expect(next).toEqual(squad.map((player) => player.id));
+  });
+
+  it("keeps a partly named eleven slot for slot", () => {
+    const squad = fourThreeThreeCells.map((cell, index) => specialist(`p${index}`, slotLabel(cell)));
+    const assignments = [...squad.slice(0, 10).map((player) => player.id), NO_PLAYER];
+    expect(reseatStarters(assignments, fourThreeThreeCells, squad)).toEqual(assignments);
   });
 });

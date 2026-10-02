@@ -102,8 +102,9 @@ A hidden 1-20 rating of how well a player roams, stored with the Line and Side R
 rules: the compact label's F-or-S choice and the Free Role player instruction.
 
 **Slot**:
-One cell of the tactics grid: the goalkeeper cell, or one of six outfield rows (SW, D, DM, M, AM, F)
-by five columns (L, LC, C, RC, R), written `D RC`. Two centre-backs are two Slots.
+One cell of the tactics grid: the goalkeeper cell, the sweeper cell `SW C`, or one of five outfield
+rows (D, DM, M, AM, F) by five columns (L, LC, C, RC, R), written `D RC`. Two centre-backs are two
+Slots; a team has at most one sweeper.
 _Avoid_: Position (the old ten-value set a Slot replaces on the Tactic)
 
 **Suitability**:
@@ -288,7 +289,8 @@ _Avoid_: Commentary config, language file
 
 **Formation**:
 The arrangement of 11 grid cells (GK + 10 outfield) a Tactic places its players in. CM 03/04's grid
-is 7 rows (GK, SW, D, DM, M, AM, F) by 5 columns (L, LC, C, RC, R), giving up to 31 cells. Built-in
+is 7 rows (GK, SW, D, DM, M, AM, F) by 5 columns (L, LC, C, RC, R), but GK and SW have only the
+centre column, giving 27 cells. Built-in
 presets assign a cell per slot; the manager may move any slot to another cell in the same row or
 between rows (preserving the GK in slot 0). A Tactic derived from a preset whose slots no longer
 match the original's cells reads as "(modified)". A formation's row-count label (e.g. "4-4-2") is

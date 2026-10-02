@@ -1,6 +1,6 @@
 import type { CreationSession } from "../router/createSessionContext.js";
-import type { BottomBarPlan, BottomBarButton, CreationBottomBarInput, StatusItem } from "../chrome/bottom-bar/shell-bottom-bar-state.js";
-import { EMPTY_BOTTOM_BAR, CreationStep, creationCancelButton, describeCreationBottomBar, withShellCancel } from "../chrome/bottom-bar/shell-bottom-bar-state.js";
+import type { BottomBarPlan, CreationBottomBarInput, CreationStep } from "../chrome/bottom-bar/shell-bottom-bar-state.js";
+import { creationCancelButton, describeCreationBottomBar, withShellCancel } from "../chrome/bottom-bar/shell-bottom-bar-state.js";
 import { personalDetailsComplete, pillarsComplete } from "./stepGuards.js";
 import { managerStyleComplete } from "./managerStyle.js";
 import { selectedClubOf } from "./clubSelection.js";

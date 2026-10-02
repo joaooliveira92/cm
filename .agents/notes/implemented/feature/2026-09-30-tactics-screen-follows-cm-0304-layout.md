@@ -5,7 +5,7 @@ Status: implemented
 ## Problem
 
 The rebuilt Tactic (see [A Tactic is a Tactic Template plus players](../architecture/2026-09-29-tactic-templates-and-grid-cell-slots.md))
-carries far more than the v1 screen shows: a 31-cell grid with runs, a template library, nine team
+carries far more than the v1 screen shows: a 27-cell grid with runs, a template library, nine team
 instructions, fifteen per-slot player instructions, six set-piece roles per slot, team set-piece
 instructions per side, and eight ordered taker lists. The screen could present that as tabs, a
 spreadsheet of slots, or CM 03/04's own tactics screen. A prototype built all four
@@ -24,7 +24,7 @@ The Tactics screen follows CM 03/04's tactics screen (prototype variant A):
 - **Team Selection list, always on the left.** Starters in slot order, then substitutes, then
   reserves: shirt number, name, a Capt badge, the compact position label, the slot and its fit tier,
   Condition. Selecting a starter selects his slot; choosing a substitute next swaps him in.
-- **Set Positions.** A vertical pitch with the 31 cells; numbered markers with "Surname, F" labels,
+- **Set Positions.** A vertical pitch with the 27 cells; numbered markers with "Surname, F" labels,
   runs as dotted lines, poor fit marked by more than colour. A selected player moves to an empty cell.
 - **Set Instructions.** Two titled panels, as CM drew them: "Instructions for Surname, F (cell)"
   (or Team Instructions) above, "Set Piece Instructions for …" below. CM's row: a tick box enabling a dropdown. Unticked, the dropdown is disabled

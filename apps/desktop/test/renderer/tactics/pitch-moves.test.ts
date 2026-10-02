@@ -91,9 +91,10 @@ describe("the cells an interaction offers", () => {
 
   it("offers a selected outfield slot every free cell, and none of the keeper's", () => {
     const free = eligibleCells({ row: "D", column: "R" }, occupied);
-    // 28 outfield cells (no SW L or SW R) less the ten the eleven holds.
-    expect(free).toHaveLength(18);
-    expect(free.map(slotLabel)).not.toContain("SW R");
+    // 26 outfield cells (the sweeper only in the centre) less the ten the eleven holds.
+    expect(free).toHaveLength(16);
+    expect(free.map(slotLabel)).toContain("SW C");
+    expect(free.map(slotLabel)).not.toContain("SW RC");
     expect(free.map(slotLabel)).toContain("DM C");
     expect(free.map(slotLabel)).not.toContain("GK");
     expect(free.map(slotLabel)).not.toContain("D R");
@@ -110,7 +111,7 @@ describe("the cells an interaction offers", () => {
 
   it("offers a run every cell but its own, the keeper's row included, since a run crosses lines", () => {
     const targets = runTargetCells({ row: "D", column: "R" });
-    expect(targets).toHaveLength(28);
+    expect(targets).toHaveLength(26);
     expect(targets.map(slotLabel)).toContain("GK");
     expect(targets.map(slotLabel)).not.toContain("D R");
   });
@@ -242,7 +243,7 @@ describe("cellStepMove — Shift+arrow", () => {
 
   it("never moves the keeper, and never off the grid or into its row", () => {
     expect(cellStepMove(0, UP, state)).toBeNull();
-    // Behind D R there is no SW R, since a sweeper only plays in the middle, and then the keeper's row.
+    // Behind D R there is no SW R, since the sweeper only plays in the centre, and then the keeper's row.
     expect(cellStepMove(1, DOWN, state)).toBeNull();
     expect(cellStepMove(1, UP, state)).toMatchObject({ cell: { row: "DM", column: "R" } });
     // R is the rightmost column, so D R's only sideways step is inwards, to a cell 4-4-2 leaves free.
@@ -251,7 +252,7 @@ describe("cellStepMove — Shift+arrow", () => {
     // F C is the furthest forward there is.
     expect(cellStepMove(10, UP, state)).toBeNull();
     // The keeper's row is one step below SW, which no outfield slot may enter.
-    const swSlot = [slot({ row: "SW", column: "R" })];
+    const swSlot = [slot({ row: "SW", column: "C" })];
     expect(cellStepMove(0, DOWN, stateOf(swSlot))).toBeNull();
   });
 });

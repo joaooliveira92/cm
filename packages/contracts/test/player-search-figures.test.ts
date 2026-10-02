@@ -29,7 +29,7 @@ describe("PlayerSearchQuerySchema (ticket 11 — the search wire)", () => {
   });
 
   it("round-trips a query with only the filters the manager set", () => {
-    const decoded = Schema.decodeUnknownSync(PlayerSearchQuerySchema)({
+    const decoded = Schema.decodeSync(PlayerSearchQuerySchema)({
       name: "son",
       minAge: 18,
     });

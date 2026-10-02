@@ -67,7 +67,7 @@ describe("tier-3 remainder — Tactics is driveable with no mouse (Level 1 guara
     ];
     const toolbar = [...document.querySelectorAll<HTMLElement>("header button")];
     const bar = [...document.querySelectorAll<HTMLElement>("footer button")];
-    expect(bar.map((c) => c.dataset.actionId)).toEqual(["clear-tactic-selection", "save-tactic"]);
+    expect(bar.map((c) => c.dataset.actionId)).toEqual(["assistant-pick-tactic-team", "clear-tactic-selection", "save-tactic"]);
 
     const allControls = [...controls, ...toolbar, ...bar];
     for (const control of allControls) {

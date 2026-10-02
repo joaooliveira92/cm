@@ -13,7 +13,11 @@ phase membership) need a key that covers every cell without authoring 31 tables.
 
 - **Slot type.** A slot is its own type, a (row, column) pair, not a Position. Rows: GK, SW, D, DM,
   M, AM, F, the same codes as the Line Ratings they are rated against (WB is a line, never a row).
-  Columns: L, LC, C, RC, R. Displayed as `D RC`, `AM L`; sorted in pitch order.
+  Columns: L, LC, C, RC, R. Displayed as `D RC`, `AM L`; sorted in pitch order. GK and SW have only
+  the centre column, so the grid has 27 cells: a team has one sweeper, behind the middle of the back
+  line, and a player deep on any other column is a defender in it. Five sweeper cells let a back four
+  dropped deep read as four sweepers, which no tactic means (2026-10-02, at Joao's request; see
+  `.scratch/sweeper-centre-only/`).
 - **Position Weights** are keyed by (row, width), where L and R are wide and LC, C, RC are central:
   twelve tables. GK, D wide, D central, DM central, M wide, M central, AM central and F central carry
   over today's GK, DL/DR, DC, DM, ML/MR, MC, AMC and ST weights. SW, DM wide, AM wide and F wide are
@@ -31,7 +35,8 @@ phase membership) need a key that covers every cell without authoring 31 tables.
 
 ## Acceptance criteria
 
-- Every one of the 31 cells resolves to exactly one weights table and one phase.
+- Every one of the 27 cells resolves to exactly one weights table and one phase.
+- A sweeper anywhere but `SW C` is refused by validation, the IPC contract and the DB.
 - No slot is typed as a Position.
 
 ## Risks

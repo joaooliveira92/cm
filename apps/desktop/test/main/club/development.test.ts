@@ -83,7 +83,7 @@ const recordedPlayerDeveloped = (saveId: SaveId) =>
       const sql = yield* SqlClient;
       const rows = yield* sql<{ payload: string }>`
         SELECT payload FROM events WHERE stream_type = 'club' AND tag = 'PlayerDeveloped' LIMIT 1`;
-      return Schema.decodeUnknownSync(PlayerDevelopedEvent)(JSON.parse(rows[0]!.payload));
+      return yield* Schema.decodeUnknownEffect(PlayerDevelopedEvent)(JSON.parse(rows[0]!.payload));
     }),
   );
 

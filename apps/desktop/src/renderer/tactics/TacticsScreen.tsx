@@ -15,7 +15,7 @@ import {
   type Slot,
   type TeamInstructions,
 } from "@cm-clone/shared";
-import { swapLineupSlots } from "../squad/lineupEdits.js";
+import { assistantLineupOf, reseatStarters, swapLineupSlots } from "../squad/lineupEdits.js";
 import { CM_BUTTON_CLASS, CM_PANEL_CLASS, CM_PANEL_TITLE_CLASS } from "./cmChrome.js";
 import { FormationPitch } from "./FormationPitch.js";
 import { SetPrioritiesPanel } from "./SetPrioritiesPanel.js";
@@ -30,21 +30,22 @@ const isModifiedFromTemplate = (tactic: Tactic): boolean => {
   return source !== undefined && isModified(tactic, source);
 };
 
-/** Choosing another template loads its contents over the Tactic: its slots, instructions and
- *  set-piece settings, an empty eleven and no takers (they name players), the bench kept. Picking
- *  the current one again only resets a modified Tactic to its template, keeping every slot's player. */
-const changeTemplate = (tactic: Tactic, name: string): Tactic => {
+/** Choosing another template loads its slots, instructions and set-piece settings over the Tactic.
+ *  The selection survives: the same eleven reseated in the new shape where each fits best, and the
+ *  bench and takers kept. Picking the current one again only resets a modified Tactic to its
+ *  template, keeping every slot's player. */
+const changeTemplate = (tactic: Tactic, name: string, squad: ReadonlyArray<SquadPlayerView>): Tactic => {
   const template = builtInTemplate(name);
   if (template === undefined) return tactic;
-  return name === tactic.sourceTemplate
-    ? new Tactic({ ...tacticFromTemplate(template, tactic.assignments, tactic.bench), takers: tactic.takers })
-    : new Tactic(
-        tacticFromTemplate(
-          template,
-          tactic.assignments.map(() => NO_PLAYER),
-          tactic.bench,
-        ),
-      );
+  const assignments =
+    name === tactic.sourceTemplate
+      ? tactic.assignments
+      : reseatStarters(
+          tactic.assignments,
+          template.slots.map((slot) => slot.cell),
+          squad,
+        );
+  return new Tactic({ ...tacticFromTemplate(template, assignments, tactic.bench), takers: tactic.takers });
 };
 
 /** One slot moved to another outfield cell: the template's shape becomes a modified one. A run that
@@ -272,6 +273,10 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
         registerActionHandler("save-tactic", () => {
           void save();
         }),
+        registerActionHandler("assistant-pick-tactic-team", () => {
+          const next = assistantLineupOf(tactic, squad);
+          if (next !== null) setTactic(next);
+        }),
       );
     }
 
@@ -285,7 +290,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
 
     unregisters.push(
       registerActionHandler("set-formation", (params) =>
-        setTactic(changeTemplate(tactic, (params as { formation: string }).formation)),
+        setTactic(changeTemplate(tactic, (params as { formation: string }).formation, squad)),
       ),
       registerActionHandler("set-mentality", (params) =>
         setTactic(
@@ -316,14 +321,22 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [saveId, tactic, revision, setTactic, save]);
+  }, [saveId, tactic, squad, revision, setTactic, save]);
 
   // Screen bottom bar (normal mode only)
   if (!isInMatch) {
     const selectionPresent = hasSelection(tactic);
+    const canField = squad.length >= tactic.slots.length;
     const bottomBarActions = useMemo(
       () => ({
         buttons: [
+          {
+            id: "assistant-pick-tactic-team",
+            actionId: "assistant-pick-tactic-team",
+            label: "Assistant Picks Team",
+            disabled: !canField,
+            onTrigger: () => void dispatchAction("assistant-pick-tactic-team"),
+          },
           {
             id: "clear-tactic-selection",
             actionId: "clear-tactic-selection",
@@ -340,7 +353,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
           },
         ],
       }),
-      [selectionPresent],
+      [selectionPresent, canField],
     );
     useScreenBottomBarActions(viewResult._tag === "Success" ? bottomBarActions : null);
   }

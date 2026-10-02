@@ -32,10 +32,10 @@ const literalFields = <const T extends Record<string, ReadonlyArray<string>>>(va
 const switchFields = <const K extends ReadonlyArray<string>, V extends Schema.Top>(names: K, schema: V) =>
   Object.fromEntries(names.map((name) => [name, schema])) as { readonly [N in K[number]]: V };
 
-/** One cell of the grid: the goalkeeper's single cell, or an outfield row and a column. */
+/** One cell of the grid: the goalkeeper's or the sweeper's single cell, or another row and a column. */
 export const CellSchema = Schema.Union([
-  Schema.Struct({ row: Schema.Literal("GK"), column: Schema.Literal("C") }),
-  Schema.Struct({ row: Schema.Literals(["SW", "D", "DM", "M", "AM", "F"]), column: Schema.Literals(COLUMNS) }),
+  Schema.Struct({ row: Schema.Literals(["GK", "SW"]), column: Schema.Literal("C") }),
+  Schema.Struct({ row: Schema.Literals(["D", "DM", "M", "AM", "F"]), column: Schema.Literals(COLUMNS) }),
 ]);
 export type Cell = typeof CellSchema.Type;
 

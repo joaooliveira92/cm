@@ -168,6 +168,9 @@ export const ALL_ACTIONS: ReadonlyArray<Action> = [
   { id: "swap-slot-players", label: "Swap two tactics slots' players", scope: "tactics", available: ready, handler: () => undefined },
   { id: "set-slot-cell", label: "Move a tactics slot to another cell", scope: "tactics", available: ready, handler: () => undefined },
   { id: "clear-tactic-selection", label: "Clear the team selection", scope: "tactics", available: ready, handler: () => undefined },
+  // The same assistant pick as Squad's, in the Tactic's current shape; here it only fills the draft,
+  // which the manager still saves.
+  { id: "assistant-pick-tactic-team", label: "Assistant manager picks the team", scope: "tactics", available: ready, handler: () => undefined },
   // training — the schedule screen publishes `trainingScheduleOpen` while mounted, and
   // `trainingScheduleDelegated` while the assistant plans; the Training sub-screens share one scope,
   // so without the first the palette would list verbs no screen handles.

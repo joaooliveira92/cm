@@ -1,5 +1,5 @@
 import type { TacticSlot } from "@cm-clone/contracts";
-import { COLUMNS, DEFAULT_SUB, ROWS, SLOTS, slotLabel, widthOf, type Slot } from "@cm-clone/shared";
+import { COLUMNS, DEFAULT_SUB, ROWS, SLOTS, isSlot, slotLabel, type Slot } from "@cm-clone/shared";
 import { dropZoneAt, type DropZone, type PitchSpot } from "./pitchLayout.js";
 
 /**
@@ -95,13 +95,6 @@ export const intentKey = (intent: DropIntent): string =>
 
 const sameCell = (a: Slot, b: Slot): boolean => a.row === b.row && a.column === b.column;
 
-/** A sweeper plays in the middle: the pitch never offers SW L or SW R, where a full-back drops
- *  deep as D L or D R instead (see `dropZoneAt`). */
-const isWideSweeper = (cell: Slot): boolean => cell.row === "SW" && widthOf(cell.column) === "wide";
-
-/** The 29 grid cells the pitch offers: all 31 but the two wide sweeper cells. */
-const ALL_CELLS: ReadonlyArray<Slot> = SLOTS.filter((cell) => !isWideSweeper(cell));
-
 /** The labels of the cells the eleven stands in, so a rule can ask whether a cell is taken without
  *  walking the slots again. */
 export const occupiedLabels = (slots: ReadonlyArray<TacticSlot>): ReadonlySet<string> =>
@@ -116,7 +109,7 @@ export const eligibleCells = (
 ): ReadonlyArray<Slot> => {
   if (selected === null) return [];
   const current = slotLabel(selected);
-  return ALL_CELLS.filter((cell) => {
+  return SLOTS.filter((cell) => {
     if (cell.row === "GK" && selected.row !== "GK") return false;
     if (cell.row !== "GK" && selected.row === "GK") return false;
     const label = slotLabel(cell);
@@ -127,7 +120,7 @@ export const eligibleCells = (
 /** Every cell a run could be set to but the slot's own. A run crosses lines, so the keeper's row
  *  and the cells the eleven already holds are all fair game for one. */
 export const runTargetCells = (selected: Slot): ReadonlyArray<Slot> =>
-  ALL_CELLS.filter((cell) => slotLabel(cell) !== slotLabel(selected));
+  SLOTS.filter((cell) => slotLabel(cell) !== slotLabel(selected));
 
 /** What a drop at a point would do, given the slot being dragged: swap with the marker under the
  *  pointer (or with the slot holding the cell it falls in, since a cell holds one slot), set the
@@ -171,13 +164,13 @@ export const moveFor = (intent: DropIntent, from: number, state: PitchState): Sl
 };
 
 /** The outfield cell one step from `cell`, or `null` off the grid, into the keeper's row or onto a
- *  wide sweeper cell. */
+ *  sweeper cell other than the centre one. */
 const stepCell = (cell: Slot, step: SlotStep): Slot | null => {
   const row = ROWS[ROWS.indexOf(cell.row) + step.row];
   const column = COLUMNS[COLUMNS.indexOf(cell.column) + step.column];
   if (row === undefined || row === "GK" || column === undefined) return null;
-  const target = { row, column } as Slot;
-  return isWideSweeper(target) ? null : target;
+  const target = { row, column };
+  return isSlot(target) ? target : null;
 };
 
 /** Shift+arrow: the selected slot one cell over, or a swap with the slot already holding that cell. */

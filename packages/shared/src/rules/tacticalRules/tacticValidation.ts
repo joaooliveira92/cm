@@ -1,4 +1,4 @@
-import { SLOTS, slotLabel, type Slot } from "../positionRules/slots.js";
+import { isSlot, slotLabel } from "../positionRules/slots.js";
 import { BENCH_SIZE } from "./tactics.js";
 import {
   PLAYER_OVERRIDE_VALUES,
@@ -40,9 +40,6 @@ export type TacticProblem =
 
 export const STARTERS = 11;
 
-const isCell = (cell: Slot): boolean =>
-  SLOTS.some((known) => known.row === cell.row && known.column === cell.column);
-
 const checkValues = (
   where: string,
   values: Readonly<Record<string, unknown>>,
@@ -58,10 +55,10 @@ const switchOptions = <K extends string>(names: ReadonlyArray<K>, options: Reado
 const slotProblems = (slot: TacticSlot, index: number): ReadonlyArray<TacticProblem> => {
   const where = `slot ${index}`;
   const problems: Array<TacticProblem> = [];
-  if (!isCell(slot.cell)) problems.push({ _tag: "UnknownCell", slot: index });
+  if (!isSlot(slot.cell)) problems.push({ _tag: "UnknownCell", slot: index });
   if (index > 0 && slot.cell.row === "GK") problems.push({ _tag: "GoalkeeperOutsideSlotZero", slot: index });
   if (slot.run !== null && slot.run.row === "GK") problems.push({ _tag: "RunToGoalkeeper", slot: index });
-  if (slot.run !== null && !isCell(slot.run)) problems.push({ _tag: "UnknownCell", slot: index });
+  if (slot.run !== null && !isSlot(slot.run)) problems.push({ _tag: "UnknownCell", slot: index });
   if (slot.cell.row !== "GK" && slot.instructions.distribution !== "default") {
     problems.push({ _tag: "DistributionOffGoalkeeper", slot: index });
   }

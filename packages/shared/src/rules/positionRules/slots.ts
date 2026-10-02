@@ -20,19 +20,30 @@ export const DEFAULT_SUB = 0.5;
 /**
  * One cell of the tactics grid. A slot is its own type, not a Position: two centre-backs are
  * `D LC` and `D RC`, not two copies of one Position. The goalkeeper cell has no column in CM; it is
- * pinned to `C` by the type, so there is exactly one goalkeeper slot, displayed as plain `GK`.
+ * pinned to `C` by the type, so there is exactly one goalkeeper slot, displayed as plain `GK`. The
+ * sweeper is pinned to `C` the same way: a team has one, in the middle behind the back line, and a
+ * player deep on any other column is a defender in it.
  */
 export type OutfieldRow = Exclude<Row, "GK">;
+export type LineRow = Exclude<Row, "GK" | "SW">;
 export type Slot =
   | { readonly row: "GK"; readonly column: "C" }
-  | { readonly row: OutfieldRow; readonly column: Column };
+  | { readonly row: "SW"; readonly column: "C" }
+  | { readonly row: LineRow; readonly column: Column };
 
 export const GOALKEEPER_SLOT: Slot = { row: "GK", column: "C" };
+export const SWEEPER_SLOT: Slot = { row: "SW", column: "C" };
 
-/** All 31 cells: the goalkeeper cell, then each outfield row's five columns, in pitch order. */
+/** Whether a (row, column) pair is a cell of the grid: GK and SW have only their centre column. */
+export const isSlot = (cell: { readonly row: Row; readonly column: Column }): cell is Slot =>
+  (cell.row !== "GK" && cell.row !== "SW") || cell.column === "C";
+
+/** All 27 cells: the goalkeeper cell, the sweeper cell, then each other row's five columns, in pitch
+ *  order. */
 export const SLOTS: ReadonlyArray<Slot> = [
   GOALKEEPER_SLOT,
-  ...ROWS.filter((row): row is OutfieldRow => row !== "GK").flatMap((row) =>
+  SWEEPER_SLOT,
+  ...ROWS.filter((row): row is LineRow => row !== "GK" && row !== "SW").flatMap((row) =>
     COLUMNS.map((column): Slot => ({ row, column })),
   ),
 ];
@@ -66,8 +77,7 @@ export const phaseOfSlot = (slot: Slot): Phase => PHASE_OF_ROW[slot.row];
 
 /**
  * The key of the Position Weights table a slot is rated against: its row and width. GK and SW have
- * one table each: the goalkeeper cell has no column, and CM's presets only ever put a sweeper in the
- * centre, so a wide sweeper cell is still rated as a sweeper. Every other row has a wide and a central
+ * one table each, since each has only its centre cell. Every other row has a wide and a central
  * table. Twelve tables in all.
  */
 export const WEIGHT_TABLES = [

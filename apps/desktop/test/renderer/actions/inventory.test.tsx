@@ -263,6 +263,7 @@ describe("AC-16 — every button on a converted screen dispatches a registered A
     await screen.findByRole("button", { name: /Save Tactic/ });
     const ids = renderedActionIds();
     const expected = [
+      "assistant-pick-tactic-team",
       "clear-tactic-selection",
       "save-tactic",
       "swap-slot-players",

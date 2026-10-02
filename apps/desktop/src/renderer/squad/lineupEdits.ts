@@ -16,6 +16,7 @@ import {
   slotLabel,
   type BenchCandidate,
   type CellRatingsLike,
+  type Slot,
 } from "@cm-clone/shared";
 
 /** One slot in the bar. `playerId` is `null` when the slot is empty. */
@@ -163,6 +164,21 @@ export const assistantLineupOf = (
     assignments: starters,
     bench: selectBench(squad, starters),
   });
+};
+
+/**
+ * The Tactic's starters seated in a new shape: the same eleven, each cell (in slot order) taking the
+ * one who fits it best, the way the assistant fills a shape from the whole squad. A partly named
+ * eleven, or one naming a player the squad no longer carries, keeps every player in his slot index.
+ */
+export const reseatStarters = (
+  assignments: ReadonlyArray<PlayerId>,
+  cells: ReadonlyArray<Slot>,
+  squad: ReadonlyArray<CellRatingsLike<PlayerId>>,
+): ReadonlyArray<PlayerId> => {
+  const starters = assignments.flatMap((playerId) => squad.filter((player) => player.id === playerId));
+  const xi = starters.length === cells.length ? bestXiForCells(cells, starters) : null;
+  return xi === null ? assignments : xi.filled.map((entry) => entry.playerId);
 };
 
 /**

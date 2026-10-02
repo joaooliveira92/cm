@@ -106,12 +106,6 @@ describe("calibrate match engine", () => {
     const yellowsPerMatch = total.yellowCards / n;
     const foulsPerMatch = total.fouls / n;
 
-    console.log(`\n═══ Calibration Results (${n} matches) ═══`);
-    console.log(`  Goals per match:    ${goalsPerMatch.toFixed(2)}  (target: 2.5–2.8)`);
-    console.log(`  Yellows per match:  ${yellowsPerMatch.toFixed(2)}  (target: 3–4)`);
-    console.log(`  Fouls per match:    ${foulsPerMatch.toFixed(1)}  (target: 20–26)`);
-
-    const allMet = goalsPerMatch >= 2.5 && goalsPerMatch <= 2.8 && yellowsPerMatch >= 3 && yellowsPerMatch <= 4 && foulsPerMatch >= 20 && foulsPerMatch <= 26;
-    console.log(allMet ? "  ✓ All targets met\n" : "  ⚠ Some targets not met — adjust tuning constants\n");
+    
   }, 60000);
 });

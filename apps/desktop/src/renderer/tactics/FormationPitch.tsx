@@ -1,4 +1,4 @@
-import { useId, useRef, useState, type DragEvent, type KeyboardEvent } from "react";
+import { useId, useRef, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from "react";
 import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
 import { DEFAULT_SUB, slotLabel, type Slot } from "@cm-clone/shared";
 import { useOptionalClubColours } from "../chrome/CareerStateProvider.js";
@@ -23,7 +23,7 @@ import {
   type PitchState,
   type SlotMove,
 } from "./pitchMoves.js";
-import { pitchLayout } from "./pitchLayout.js";
+import { cellAt, pitchLayout, type PitchSpot } from "./pitchLayout.js";
 
 /** The drag channel a marker's slot index rides in; nothing else is exchanged. */
 const SLOT_DRAG = "application/x-cm-tactic-slot";
@@ -35,7 +35,7 @@ const draggedSlotOf = (event: DragEvent): number | null => {
 
 /** Where on the pitch a drag's pointer is, in the percent box `pitchLayout` draws in, or `null` on a
  *  pitch that has not been laid out yet. */
-const pointOnPitch = (event: DragEvent<HTMLElement>, grab: GrabOffset): PitchPoint | null => {
+const pointOnPitch = (event: MouseEvent<HTMLElement>, grab: GrabOffset): PitchPoint | null => {
   const box = event.currentTarget.getBoundingClientRect();
   if (box.width === 0 || box.height === 0) return null;
   return {
@@ -46,6 +46,51 @@ const pointOnPitch = (event: DragEvent<HTMLElement>, grab: GrabOffset): PitchPoi
   };
 };
 
+/** The run arrows' drawing box: the pitch's own 68:100 shape, so an arrowhead is not skewed the way
+ *  a box stretched from 100x100 would skew it. `x` is percent of the width, scaled into it. */
+const ARROW_BOX_WIDTH = 68;
+
+/** How far short of the target cell's centre an arrow stops, in the box's units: about a disc's
+ *  radius, so the head is not hidden under a marker standing in that cell. */
+const ARROW_GAP = 2.4;
+
+const RunArrow = ({
+  from,
+  to,
+  head,
+  preview = false,
+}: {
+  readonly from: PitchSpot;
+  readonly to: Slot;
+  /** The id of the `<marker>` that draws the arrowhead. */
+  readonly head: string;
+  readonly preview?: boolean;
+}) => {
+  const target = pitchLayout([{ cell: to, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0]!;
+  const x1 = (from.x / 100) * ARROW_BOX_WIDTH;
+  const dx = (target.x / 100) * ARROW_BOX_WIDTH - x1;
+  const dy = target.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= ARROW_GAP) return null;
+  const reach = (length - ARROW_GAP) / length;
+  return (
+    <line
+      data-run-arrow={preview ? "preview" : "set"}
+      x1={x1}
+      y1={from.y}
+      x2={x1 + dx * reach}
+      y2={from.y + dy * reach}
+      stroke="var(--color-pitch-line)"
+      strokeOpacity={preview ? 0.6 : 1}
+      strokeWidth="1.25"
+      strokeDasharray="4 3"
+      markerEnd={`url(#${head})`}
+      // Dashes are kept in screen pixels, so they read the same on any size of pitch.
+      vectorEffect="non-scaling-stroke"
+    />
+  );
+};
+
 /**
  * The Tactic's starting eleven drawn on a pitch, attacking up the screen. The markers are an
  * ordered list in slot order, so a screen reader hears the same eleven the pickers name.
@@ -53,7 +98,8 @@ const pointOnPitch = (event: DragEvent<HTMLElement>, grab: GrabOffset): PitchPoi
  * Extends the existing drag-and-drop with CM 03/04-style interaction:
  * - Clicking a marker selects that slot (highlighted with a ring)
  * - Clicking an empty cell moves the selected slot's player there
- * - Runs are shown as dotted lines
+ * - Runs are shown as dashed arrows; with a slot selected, pressing the right mouse button aims one
+ *   at the cell under the pointer and releasing sets it (releasing on the slot's own cell clears it)
  * - Keyboard: arrows pick a marker, Shift+arrows move it a cell (swapping with a slot already
  *   there, as a drop does), Alt+arrows nudge it within its cell, R sets a run, Escape deselects
  */
@@ -83,6 +129,8 @@ export const FormationPitch = ({
   const [dragging, setDragging] = useState<number | null>(null);
   const [intent, setIntent] = useState<DropIntent>(null);
   const [runMode, setRunMode] = useState(false);
+  /** The cell a right-button press is aiming the selected slot's run at, while the button is held. */
+  const [aim, setAim] = useState<Slot | null>(null);
   const grab = useRef<GrabOffset>(NO_GRAB);
 
   const hasPlayer = (slotIndex: number) => squadById.has(assignments[slotIndex]!);
@@ -119,6 +167,21 @@ export const FormationPitch = ({
       : spots;
 
   const keyHintId = useId();
+  const arrowHeadId = useId();
+
+  const aimAt = (event: MouseEvent<HTMLElement>): Slot | null => {
+    const point = pointOnPitch(event, NO_GRAB);
+    return point === null ? null : cellAt(point.x, point.y);
+  };
+
+  const releaseAim = (event: MouseEvent<HTMLElement>) => {
+    if (selectedSlot === null || aim === null) return;
+    const target = aimAt(event) ?? aim;
+    setAim(null);
+    setRunMode(false);
+    const own = slots[selectedSlot]!.cell;
+    onToggleRun(selectedSlot, target.row === own.row && target.column === own.column ? null : target);
+  };
 
   const handleKeyDown = (event: KeyboardEvent) => {
     if (event.key === "Escape") {
@@ -163,6 +226,21 @@ export const FormationPitch = ({
       tabIndex={0}
       aria-describedby={keyHintId}
       onKeyDown={handleKeyDown}
+      onContextMenu={(event) => event.preventDefault()}
+      onMouseDown={(event) => {
+        if (event.button !== 2 || selectedSlot === null) return;
+        event.preventDefault();
+        setAim(aimAt(event));
+      }}
+      onMouseMove={(event) => {
+        if (aim === null) return;
+        const next = aimAt(event);
+        if (next !== null && slotLabel(next) !== slotLabel(aim)) setAim(next);
+      }}
+      onMouseUp={(event) => {
+        if (event.button === 2) releaseAim(event);
+      }}
+      onMouseLeave={() => setAim(null)}
       onDragOver={(event) => {
         const next = intentAt(pointOnPitch(event, grab.current), dragging, state);
         if (next !== null) {
@@ -184,34 +262,28 @@ export const FormationPitch = ({
     >
       <PitchBackground />
 
-      {/* Runs: dotted lines from base cell to run target */}
-      <svg
-        aria-hidden="true"
-        className="pointer-events-none absolute inset-0 size-full"
-        viewBox="0 0 100 100"
-        preserveAspectRatio="none"
-      >
-        {slots.map((slot, index) => {
-          if (slot.run === null) return null;
-          const from = spots[index]!;
-          const to = pitchLayout([{ cell: slot.run, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
-          if (to === undefined) return null;
-          return (
-            <line
-              key={index}
-              x1={from.x}
-              y1={from.y}
-              x2={to.x}
-              y2={to.y}
-              stroke="var(--color-pitch-line)"
-              strokeWidth="1.5"
-              strokeDasharray="5 4"
-              strokeLinecap="round"
-              // The box is stretched to the pitch, so the stroke is kept in screen pixels or each dash smears.
-              vectorEffect="non-scaling-stroke"
-            />
-          );
-        })}
+      {/* Runs: dashed arrows from each slot to its run target, and the one being aimed */}
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${ARROW_BOX_WIDTH} 100`}>
+        <defs>
+          <marker
+            id={arrowHeadId}
+            viewBox="0 0 4 4"
+            refX="3.5"
+            refY="2"
+            markerWidth="2.2"
+            markerHeight="2.2"
+            markerUnits="userSpaceOnUse"
+            orient="auto"
+          >
+            <path d="M0.5,0.5 L3.5,2 L0.5,3.5" fill="none" stroke="var(--color-pitch-line)" strokeWidth="0.6" strokeLinecap="round" />
+          </marker>
+        </defs>
+        {slots.map((slot, index) =>
+          slot.run === null || (aim !== null && index === selectedSlot) ? null : (
+            <RunArrow key={index} from={spots[index]!} to={slot.run} head={arrowHeadId} />
+          ),
+        )}
+        {aim !== null && selectedSlot !== null && <RunArrow from={spots[selectedSlot]!} to={aim} head={arrowHeadId} preview />}
       </svg>
 
       {/* Empty cells as clickable targets when a slot is selected: unmarked until hovered, so a selection doesn't ring the whole pitch */}
@@ -279,8 +351,12 @@ export const FormationPitch = ({
           const isSelected = selectedSlot === slotIndex;
           const hasRun = slot.run !== null;
 
+          // While dragged, the marker names the cell it would land in and the fit there, so a drop
+          // across a row's boundary shows before the release.
+          const cell = landing && intent?.kind === "place" ? intent.zone.cell : slot.cell;
           // Fit tier as word, never a colour (no raw positional rating)
-          const fitWord = player ? fitTierWord(player, slot.cell) : null;
+          const fitWord = player ? fitTierWord(player, cell) : null;
+          const caption = landing ? [slotLabel(cell), fitWord].filter((part) => part !== null).join(" · ") : fitWord;
 
           return (
             <li
@@ -336,7 +412,7 @@ export const FormationPitch = ({
                       : `${clubColours === null ? "border-cm-title" : ""} ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
                   } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""} ${
                     isSelected ? "ring-2 ring-focus-ring ring-offset-2 ring-offset-bg-base scale-110" : ""
-                  } ${hasRun && !isSelected ? "after:absolute after:bottom-0 after:right-0 after:h-2 after:w-2 after:rounded-full after:bg-text-highlight" : ""}`}
+                  }`}
                 >
                   {slotIndex + 1}
                 </span>
@@ -348,9 +424,9 @@ export const FormationPitch = ({
                     {player === undefined ? slotLabel(slot.cell) : markerName(player)}
                   </span>
                   {/* Fit word as non-colour indicator */}
-                  {fitWord !== null && (
+                  {caption !== null && (
                     <span className="max-w-full truncate text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
-                      {fitWord}
+                      {caption}
                     </span>
                   )}
                 </span>
@@ -360,17 +436,12 @@ export const FormationPitch = ({
         })}
       </ol>
 
-      {/* Mode indicator; also the pitch's keyboard description for a screen reader */}
-      <p
-        id={keyHintId}
-        className={`pointer-events-none absolute inset-x-2 bottom-2 w-fit rounded-control bg-black/60 px-2 py-0.5 text-caption text-text-bright ${
-          selectedSlot === null && !runMode ? "sr-only" : ""
-        }`}
-      >
+      {/* The pitch's keyboard description, for a screen reader only: CM draws no help over the grass */}
+      <p id={keyHintId} className="sr-only">
         {runMode ? (
-          <span className="font-bold text-text-warning">Run mode: click a cell to set the run, Esc to cancel</span>
+          "Run mode: click a cell to set the run, Esc to cancel"
         ) : selectedSlot !== null ? (
-          "Shift+arrows move a cell, Alt+arrows nudge, R sets a run, click a free cell to move there"
+          "Shift+arrows move a cell, Alt+arrows nudge, R sets a run, right-click a cell to aim a run there, click a free cell to move there"
         ) : (
           "Arrow keys pick a player on the pitch"
         )}

@@ -14,7 +14,6 @@ import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { type BottomBarPlan } from "../chrome/bottom-bar/index.js";
 import {
   abandon,
-  blockedReason,
   canStartGeneration,
   commit,
   generationFailed,
@@ -31,7 +30,6 @@ import {
 import { selectedClubOf } from "./clubSelection.js";
 import { selectedFavoriteTeamOf } from "./favoriteTeam.js";
 import { DEFAULT_AVATAR } from "./managerStyleCopy.js";
-import { managerStyleComplete } from "./managerStyle.js";
 import { personalDetailsComplete } from "./personalDetails.js";
 import { setProvisionalCareer } from "./provisionalCareer.js";
 import { suggestedSaveName } from "./suggestedSaveName.js";

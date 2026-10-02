@@ -162,6 +162,16 @@ describe("the formation pitch reshapes the formation", () => {
     await waitFor(() => expect(formationLabel().textContent).toContain("(modified)"));
   });
 
+  it("a dragged marker names the cell it would land in, so a row's boundary shows before the drop", async () => {
+    await mountTactics();
+    const transfer = dataTransfer();
+    fireEvent.dragStart(marker(6), { dataTransfer: transfer });
+    dragAt("dragOver", pitch(), 50, 63, transfer);
+    expect(marker(6).closest("li")!.textContent).toContain("DM C");
+    dragAt("dragOver", pitch(), 50, 80, transfer);
+    expect(marker(6).closest("li")!.textContent).toContain("SW C");
+  });
+
   it("a flank third of a line takes that flank's cell — F RC dropped on free the AM R cell", async () => {
     await mountTactics();
     const transfer = dataTransfer();
