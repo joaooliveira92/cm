@@ -1,6 +1,6 @@
 # Agent Note: Set-piece instructions shape who takes part and how, and defaults change nothing
 
-Status: proposed
+Status: implemented
 
 ## Problem
 
@@ -39,3 +39,8 @@ See [the effort spec](../../../../.scratch/set-piece-roles/spec.md).
 - Seeded tests and saved matches in progress are unaffected until a tactic sets an instruction.
 - Each role's effect is a constant in the simulator's constants file, tunable without touching the rules.
 - Throw-in instructions remain a known no-op until throw-ins are modelled.
+- The resolution lives in `packages/game-engine/src/match/simulate/cornerPlan.ts` and `freeKickPlan.ts`;
+  set-piece events record the delivery that actually happened, so commentary, which only reads what came
+  before a line, never announces a short corner that was then crossed.
+- Per-slot **player instructions** have the same gap and are not fixed by this effort: see
+  [formations-and-instructions 35](../../../../.scratch/formations-and-instructions/issues/35-player-instructions-reach-real-matches.md).

@@ -5,7 +5,13 @@ import type { ChanceType, InjurySeverity, InjuryTrigger, InjuryType, MatchEvent 
 export type ChanceTag = "ThroughBall" | "Cross" | "LongShot" | "RunWithBall" | "HoldUpLayOff" | "Counter";
 
 /** How a shot was struck, read off the set piece or open-play chance that produced it. */
-export type ShotKind = "closeRange" | "header" | "longRange" | "freeKick" | "penalty";
+export type ShotKind = "closeRange" | "header" | "flickOn" | "longRange" | "freeKick" | "penalty";
+
+/** A corner aimed somewhere, or played short or to the edge, as its instructions set it. */
+export type CornerKind = "short" | "edgeOfArea" | "nearPost" | "farPost" | "edgeOfSixYardBox";
+
+/** A free kick that isn't shot directly: crossed into the box, or kept with a short or long ball. */
+export type FreeKickKind = "cross" | "kept";
 
 /** What a goal did to the scoreline, from the scoring side's point of view. */
 export type GoalSituation = "opener" | "equaliser" | "lead" | "extend" | "reply";
@@ -24,7 +30,9 @@ export type CommentaryTemplateKey =
   | "Offside"
   | "BeatenTrap"
   | "Corner"
+  | `Corner:${CornerKind}`
   | "FreeKick"
+  | `FreeKick:${FreeKickKind}`
   | "Penalty"
   | "YellowCard"
   | "RedCard"
@@ -113,7 +121,9 @@ export const ALWAYS_SHOWN: ReadonlySet<MatchEvent["_tag"]> = new Set<MatchEvent[
 
 const CHANCE_TAGS = ["ThroughBall", "Cross", "LongShot", "RunWithBall", "HoldUpLayOff", "Counter"] as const satisfies ReadonlyArray<ChanceTag>;
 const CHANCE_TYPES = ["throughBall", "cross", "longShot", "runWithBall", "holdUpLayOff", "counter"] as const satisfies ReadonlyArray<ChanceType>;
-const SHOT_KINDS = ["closeRange", "header", "longRange", "freeKick", "penalty"] as const satisfies ReadonlyArray<ShotKind>;
+const SHOT_KINDS = ["closeRange", "header", "flickOn", "longRange", "freeKick", "penalty"] as const satisfies ReadonlyArray<ShotKind>;
+const CORNER_KINDS = ["short", "edgeOfArea", "nearPost", "farPost", "edgeOfSixYardBox"] as const satisfies ReadonlyArray<CornerKind>;
+const FREE_KICK_KINDS = ["cross", "kept"] as const satisfies ReadonlyArray<FreeKickKind>;
 const SITUATIONS = ["opener", "equaliser", "lead", "extend", "reply"] as const satisfies ReadonlyArray<GoalSituation>;
 const TRIGGERS = ["contact", "non-contact"] as const satisfies ReadonlyArray<InjuryTrigger>;
 const SEVERITIES = ["light", "medium", "severe"] as const satisfies ReadonlyArray<InjurySeverity>;
@@ -141,6 +151,8 @@ export const COMMENTARY_SECTIONS: ReadonlyMap<CommentaryTemplateKey, ReadonlyArr
   ...SITUATIONS.map((situation) => [`GoalScore:${situation}`, SIDES] as const),
   ...(["Foul", "Offside", "BeatenTrap", "Penalty", "YellowCard", "RedCard"] as const).map((tag) => [tag, PLAYER_MOMENT] as const),
   ...(["Corner", "FreeKick"] as const).map((tag) => [tag, [...PLAYER_MOMENT, "side"]] as const),
+  ...CORNER_KINDS.map((kind) => [`Corner:${kind}`, [...PLAYER_MOMENT, "side"]] as const),
+  ...FREE_KICK_KINDS.map((kind) => [`FreeKick:${kind}`, [...PLAYER_MOMENT, "side"]] as const),
   ...TRIGGERS.flatMap((trigger) =>
     SEVERITIES.map((severity) => [`Injury:${trigger}:${severity}`, [...PLAYER_MOMENT, "injury"]] as const),
   ),

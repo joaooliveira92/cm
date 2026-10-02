@@ -324,7 +324,10 @@ seven instruction templates provide a Set To Preset shortcut, seeding the switch
 
 **Set-Piece Role**:
 Per-slot set-piece duties: Attack and Defend for Free Kicks and Corners, Attacking Throw-Ins (per
-side). Every value has a `default` state. Stored in the Tactic Template per slot.
+side). Every value has a `default` state. Stored in the Tactic Template per slot. In a match the
+attacking roles decide who is in the box and who attacks the ball, the team's set-piece delivery picks
+the target, and the defending roles strengthen or thin the defence; `default` everywhere plays exactly
+as the engine did before roles counted. Throw-in roles have no effect yet: the engine has no throw-ins.
 
 **Taker List**:
 An ordered list of player ids for each of eight set-piece types: Captain, Penalty Taker,

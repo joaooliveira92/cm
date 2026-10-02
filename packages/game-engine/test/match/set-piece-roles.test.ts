@@ -363,3 +363,77 @@ describe("a free kick follows the delivery and the roles", () => {
     expect(kept.filter(({ next }) => next?._tag === "Goal" || next?._tag === "ShotOnTarget" || next?._tag === "ShotMissed")).toEqual([]);
   });
 });
+
+// ─── 05: commentary for the new set-piece outcomes ───────────────────────────
+
+describe("commentary for the set-piece instructions", () => {
+  const names = { clubName: (id: string) => (id === "home" ? "Rovers" : "United"), playerName: (id: string) => `P${id.slice(-3)}` };
+  const pool = (key: keyof typeof SHIPPED.templates) => SHIPPED.templates[key];
+  /** Whether `text` is one of `key`'s lines with its placeholders filled. */
+  const fromPool = (text: string, key: keyof typeof SHIPPED.templates) =>
+    pool(key).some((line) => new RegExp(`^${line.replace(/[.*+?^$()[\]\\]/g, "\\$&").replace(/\|/g, " ").replace(/\{\w+\}/g, ".+")}$`).test(text));
+
+  /** Whole matches where the home side corners near post with a flick-on, plays short free kicks on the
+   *  left and crosses them on the right, and has a short-corner option. */
+  const matches = () =>
+    Array.from({ length: 30 }, (_, index) => index + 1).map((seed) => {
+      const setup = buildTeam(clubId("home"), seed).setup;
+      const outfield = setup.tactic.slots.flatMap((slot, index) => (slot.cell.row === "GK" ? [] : [index]));
+      const role = (index: number): SetPieceRoles["attackCorner"] | undefined =>
+        index === outfield[2] ? "nearPostFlickOn" : index === outfield[3] ? "attackFarPost" : undefined;
+      const slots = setup.tactic.slots.map((slot, index) =>
+        role(index) === undefined ? slot : { ...slot, setPieceRoles: { ...DEFAULT_SET_PIECE_ROLES, attackCorner: role(index)! } },
+      );
+      const home = {
+        ...setup,
+        tactic: {
+          ...setup.tactic,
+          slots,
+          teamSetPieces: { ...setup.tactic.teamSetPieces, cornersLeft: "nearPost", cornersRight: "nearPost", freeKicksLeft: "short", freeKicksRight: "crossFar" },
+        },
+      } as MatchTeamSetup;
+      const events = simulateMatch({ seed, home, away: buildTeam(clubId("away"), seed + 1000).setup });
+      return { events, lines: renderCommentary(events, seed, names, SHIPPED) };
+    });
+
+  it("fills every placeholder and draws each outcome from its own section", () => {
+    let flickOns = 0;
+    let crossedFreeKicks = 0;
+    let keptFreeKicks = 0;
+    let nearPostCorners = 0;
+    for (const { events, lines } of matches()) {
+      for (const [index, line] of lines.entries()) {
+        expect(line.text, line.tag).not.toMatch(/\{\w+\}/);
+        const event = events[index]!;
+        if (event._tag === "Corner" && event.deliveryType === "nearPost") {
+          nearPostCorners += 1;
+          expect(fromPool(line.text, "Corner:nearPost"), line.text).toBe(true);
+        }
+        if (event._tag === "FreeKick" && event.deliveryType === "short") {
+          keptFreeKicks += 1;
+          expect(fromPool(line.text, "FreeKick:kept"), line.text).toBe(true);
+        }
+        if (event._tag === "FreeKick" && event.deliveryType === "crossFar") {
+          crossedFreeKicks += 1;
+          expect(fromPool(line.text, "FreeKick:cross"), line.text).toBe(true);
+        }
+        const previous = events[index - 1];
+        if (
+          (event._tag === "ShotOnTarget" || event._tag === "ShotMissed") &&
+          previous?._tag === "Corner" &&
+          event.assistPlayerId !== undefined &&
+          event.assistPlayerId !== previous.playerId
+        ) {
+          flickOns += 1;
+          expect(fromPool(line.text, `${event._tag}:flickOn`), line.text).toBe(true);
+        }
+      }
+    }
+    expect({ nearPostCorners: nearPostCorners > 5, keptFreeKicks: keptFreeKicks > 0, crossedFreeKicks: crossedFreeKicks > 0, flickOns: flickOns > 0 }).toEqual({
+      nearPostCorners: true,
+      keptFreeKicks: true,
+      crossedFreeKicks: true,
+      flickOns: true,
+    });
+  });
+});

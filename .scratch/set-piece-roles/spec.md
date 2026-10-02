@@ -16,7 +16,7 @@ option, a wall, zonal and man-marking defenders.
 
 ## Decisions
 
-Recorded in [the proposed Agent Note](../../.agents/notes/proposed/feature/2026-10-02-set-piece-instructions-shape-who-and-how.md).
+Recorded in [the Agent Note](../../.agents/notes/implemented/feature/2026-10-02-set-piece-instructions-shape-who-and-how.md).
 
 - **Defaults change nothing.** With every role and delivery at `default`, a match plays bit for bit as
   before: same random draws, same events. Instructions only take effect when set, so pinned seeds and the

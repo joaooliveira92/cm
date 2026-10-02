@@ -2,6 +2,7 @@ import type { ChanceType, MatchEvent } from "./events.js";
 import {
   FOLLOW_ON_DELAY_MS,
   type ChanceTag,
+  type CornerKind,
   type CommentaryTable,
   type CommentaryTemplateKey,
   type GoalSituation,
@@ -111,12 +112,29 @@ const shotKindFor = (event: ShotEvent, previous: MatchEvent | undefined): ShotKi
     if (previous._tag === "Penalty") return "penalty";
     if (previous._tag === "FreeKick") return "freeKick";
   }
-  // A corner is headed, unless it was played back to the edge of the area for a shot from range.
-  if (previous?._tag === "Corner" && previous.teamClubId === event.teamClubId) return event.chanceType === "longShot" ? "longRange" : "header";
+  // A corner is headed, unless it was played back to the edge of the area for a shot from range, or
+  // flicked on at the near post by someone other than the taker.
+  if (previous?._tag === "Corner" && previous.teamClubId === event.teamClubId) {
+    if (event.chanceType === "longShot") return "longRange";
+    const assist = "assistPlayerId" in event ? event.assistPlayerId : undefined;
+    return assist !== undefined && assist !== previous.playerId ? "flickOn" : "header";
+  }
   if (event.chanceType === "cross") return "header";
   if (event.chanceType === "longShot") return "longRange";
   return "closeRange";
 };
+
+/** A corner's or free kick's section, from the delivery its event records. */
+const setPieceKey = (event: Extract<MatchEvent, { readonly _tag: "Corner" | "FreeKick" }>): CommentaryTemplateKey => {
+  const delivery = event.deliveryType ?? "default";
+  if (event._tag === "Corner") {
+    return (CORNER_KINDS as ReadonlySet<string>).has(delivery) ? (`Corner:${delivery}` as CommentaryTemplateKey) : "Corner";
+  }
+  if (delivery === "short" || delivery === "long") return "FreeKick:kept";
+  return delivery === "default" ? "FreeKick" : "FreeKick:cross";
+};
+
+const CORNER_KINDS: ReadonlySet<CornerKind> = new Set<CornerKind>(["short", "edgeOfArea", "nearPost", "farPost", "edgeOfSixYardBox"]);
 
 const goalSituationFor = (scorerGoals: number, otherGoals: number): GoalSituation => {
   if (scorerGoals === 1 && otherGoals === 0) return "opener";
@@ -224,7 +242,7 @@ const drawFor = (
     case "Corner":
     case "FreeKick":
       return {
-        keys: [event._tag],
+        keys: [setPieceKey(event)],
         tokens: { ...clubs(event.teamClubId), ...person(event.playerId), side: phrases[`side.${event.side}`] },
       };
     case "Foul":

@@ -137,14 +137,15 @@ export const resolveCorner = (
   const plan = planCorner(attackingTeam, takerId, deliveryType);
   const defendedBy = defendCornerFactor(defendingTeam, attackingTeam, takerId, deliveryType, plan);
 
-  // Emit the Corner event
+  // Emit the Corner event, with the delivery that actually happened: a short or edge-of-area corner
+  // with nobody there to take it is crossed as usual, and commentary can only read what came before.
   events.push({
     _tag: "Corner",
     minute,
     half,
     teamClubId: attackingTeam.clubId,
     playerId: takerId,
-    deliveryType,
+    deliveryType: plan.kind === "header" && (deliveryType === "short" || deliveryType === "edgeOfArea") ? "default" : deliveryType,
     side,
   });
 
@@ -238,7 +239,8 @@ export const resolveFreeKick = (
     teamClubId: attackingTeam.clubId,
     playerId: takerId,
     side,
-    ...(delivery === "default" ? {} : { deliveryType: delivery }),
+    // The delivery that actually happened: a cross with nobody to head it is shot directly.
+    ...(delivery === "default" || plan.kind === "shot" ? {} : { deliveryType: delivery }),
   });
 
   // Played short or long, the ball is kept: no shot comes straight from it.
