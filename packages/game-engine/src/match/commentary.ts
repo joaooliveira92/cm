@@ -20,7 +20,13 @@ export {
   type CommentaryTemplateKey,
   type Placeholder,
 } from "./commentarySections.js";
-export { parseCommentaryFile, type ParsedCommentaryFile } from "./commentaryFile.js";
+export {
+  missingCommentarySections,
+  parseCommentaryFile,
+  upgradeCommentaryFile,
+  type CommentaryFileUpgrade,
+  type ParsedCommentaryFile,
+} from "./commentaryFile.js";
 export { SHIPPED_COMMENTARY_TEXT } from "./shippedCommentaryText.generated.js";
 
 /**

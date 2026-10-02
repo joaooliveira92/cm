@@ -122,6 +122,7 @@ export {
   getCommentaryFileStatus,
   openCommentaryFile,
   resetCommentaryFile,
+  updateCommentaryFile,
 } from "./rpc/commentaryFile.js";
 
 export {

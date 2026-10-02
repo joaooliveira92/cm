@@ -19,5 +19,10 @@ export const chooseCommentaryFile = (
   name: string,
 ): Effect.Effect<CommentaryFileStatusView, RpcClientError<"chooseCommentaryFile">> => call("chooseCommentaryFile", { name });
 
+/** Brings an older file up to the game's version, adding its new sections or keeping the file as it is. */
+export const updateCommentaryFile = (
+  addNewSections: boolean,
+): Effect.Effect<CommentaryFileStatusView, RpcClientError<"updateCommentaryFile">> => call("updateCommentaryFile", { addNewSections });
+
 export const resetCommentaryFile: Effect.Effect<CommentaryFileStatusView, RpcClientError<"resetCommentaryFile">> =
   call("resetCommentaryFile", undefined);

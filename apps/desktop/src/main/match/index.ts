@@ -21,6 +21,7 @@ export {
   loadCommentaryTable,
   openCommentaryFile,
   resetCommentaryFile,
+  updateCommentaryFile,
   type OpenPath,
 } from "./commentaryFile.js";
 export { getPostMatchSummary } from "./postMatchSummary.js";

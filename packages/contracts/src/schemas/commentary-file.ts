@@ -15,4 +15,7 @@ export class CommentaryFileStatusView extends Schema.Class<CommentaryFileStatusV
   active: Schema.String,
   /** One sentence per line the game skipped or section it replaced, with its line number. */
   problems: Schema.Array(Schema.String),
+  /** The sections the game ships that the file lacks, when the file is from an older release of the
+   *  game's lines (its `version` is lower); empty otherwise (cm-style-commentary 10). */
+  newSections: Schema.Array(Schema.String),
 }) {}

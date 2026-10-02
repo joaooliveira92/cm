@@ -2,10 +2,21 @@ import { useEffect, useState } from "react";
 import { Effect, Result } from "effect";
 import type { CommentaryFileStatusView } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
-import { chooseCommentaryFile, getCommentaryFileStatus, openCommentaryFile, resetCommentaryFile } from "../rpc.js";
+import {
+  chooseCommentaryFile,
+  getCommentaryFileStatus,
+  openCommentaryFile,
+  resetCommentaryFile,
+  updateCommentaryFile,
+} from "../rpc.js";
 import { describeRpcError, type RpcClientError } from "../rpc/errors.js";
 
-type FileMethod = "getCommentaryFileStatus" | "openCommentaryFile" | "resetCommentaryFile" | "chooseCommentaryFile";
+type FileMethod =
+  | "getCommentaryFileStatus"
+  | "openCommentaryFile"
+  | "resetCommentaryFile"
+  | "chooseCommentaryFile"
+  | "updateCommentaryFile";
 
 /**
  * Preferences' Commentary section: where the player-editable commentary file is, buttons to open it
@@ -82,6 +93,23 @@ export const CommentaryFileSection = () => {
           </Button>
         )}
       </div>
+      {status !== null && status.newSections.length > 0 && (
+        <section aria-label="New commentary from the game" className="flex flex-col gap-2">
+          <p className="text-data text-text-highlight">
+            The game has{" "}
+            {status.newSections.length === 1 ? "1 section" : `${status.newSections.length} sections`} of
+            commentary your file doesn't have. Until you add them, the game uses its own lines there.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="secondary" onClick={() => run(updateCommentaryFile(true))}>
+              Add them to my file
+            </Button>
+            <Button type="button" variant="ghost" onClick={() => run(updateCommentaryFile(false))}>
+              Keep my file as it is
+            </Button>
+          </div>
+        </section>
+      )}
       {status !== null && status.problems.length > 0 && (
         <section aria-label="Problems in the commentary file" className="flex flex-col gap-1">
           <p className="text-data text-text-warning">

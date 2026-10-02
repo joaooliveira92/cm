@@ -20,6 +20,10 @@ import {
  */
 export interface ParsedCommentaryFile {
   readonly table: CommentaryTable;
+  /** The file's `version = N`, 0 when it has none (cm-style-commentary 10). */
+  readonly version: number;
+  /** The sections the file itself has, in order of first appearance; the rest come from the fallback. */
+  readonly sections: ReadonlyArray<CommentaryTemplateKey>;
   /** One sentence per skipped line or missing section, with its line number, for the log. */
   readonly problems: ReadonlyArray<string>;
 }
@@ -28,6 +32,7 @@ const DEFAULT_PLAYBACK: CommentaryPlayback = { delayMs: 1000, flash: false, disp
 const MAX_DELAY_MS = 60_000;
 
 const SECTION = /^\[([^\]]+)\]$/;
+const VERSION = /^version\s*=\s*(\d+)$/i;
 const SETTING = /^(delay|flash|chance|level)\s*=\s*(.*)$/i;
 const PLACEHOLDER = /\{(\w+)\}/g;
 
@@ -95,9 +100,10 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
   const problems: Array<string> = [];
   let current: { readonly key: CommentaryTemplateKey; readonly draft: SectionDraft } | null = null;
   let skipping = false;
+  let version = 0;
 
   text
-    .replace(/^﻿/, "")
+    .replace(/^\uFEFF/, "")
     .split(/\r?\n/)
     .forEach((raw, index) => {
       const line = raw.trim();
@@ -123,6 +129,11 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
         return;
       }
       if (current === null) {
+        const versionLine = VERSION.exec(line);
+        if (versionLine !== null && !skipping && drafts.size === 0) {
+          version = Number(versionLine[1]);
+          return;
+        }
         if (!skipping) problems.push(`${at}: comes before any [Section], so it is skipped`);
         return;
       }
@@ -156,5 +167,63 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
       level: ALWAYS_SHOWN.has(sectionTag(key) as never) ? "key" : (draft?.level ?? base.level),
     };
   }
-  return { table: { templates, playback }, problems };
+  return { table: { templates, playback }, problems, version, sections: [...drafts.keys()] };
+};
+
+/** One `[Section]` of a file's text: its header line up to the next header, comments and blank lines
+ *  included, so an appended section reads exactly as it does in the shipped file. */
+const sectionBlocks = (text: string): ReadonlyMap<string, string> => {
+  const blocks = new Map<string, string>();
+  let name: string | null = null;
+  let lines: Array<string> = [];
+  const close = () => {
+    if (name !== null && !blocks.has(name)) blocks.set(name, lines.join("\n").trimEnd());
+  };
+  for (const line of text.replace(/^\uFEFF/, "").split(/\r?\n/)) {
+    const section = SECTION.exec(line.trim());
+    if (section !== null) {
+      close();
+      name = section[1]!.trim();
+      lines = [];
+    }
+    if (name !== null) lines.push(line);
+  }
+  close();
+  return blocks;
+};
+
+export interface CommentaryFileUpgrade {
+  /** The player's text with the missing sections appended and its version raised. */
+  readonly text: string;
+  /** The sections appended, in the shipped file's order. */
+  readonly added: ReadonlyArray<CommentaryTemplateKey>;
+}
+
+/** The sections `shippedText` has and `playerText` lacks, in the shipped file's order. */
+export const missingCommentarySections = (playerText: string, shippedText: string): ReadonlyArray<CommentaryTemplateKey> => {
+  const present = new Set(parseCommentaryFile(playerText).sections);
+  return parseCommentaryFile(shippedText).sections.filter((key) => !present.has(key));
+};
+
+/**
+ * Brings a player's commentary file up to the shipped one's version (cm-style-commentary 10): appends,
+ * word for word, every section the shipped file has and the player's lacks, and sets its `version`.
+ * With `addSections: false` only the version is set, for a player who keeps the file as it is. The
+ * player's own sections, lines, comments and settings are never touched.
+ */
+export const upgradeCommentaryFile = (
+  playerText: string,
+  shippedText: string,
+  { addSections = true }: { readonly addSections?: boolean } = {},
+): CommentaryFileUpgrade => {
+  const shipped = parseCommentaryFile(shippedText);
+  const added = addSections ? missingCommentarySections(playerText, shippedText) : [];
+  const blocks = sectionBlocks(shippedText);
+  const versionLine = `version = ${shipped.version}`;
+  const lines = playerText.replace(/^\uFEFF/, "").split(/\r?\n/);
+  const at = lines.findIndex((line) => VERSION.test(line.trim()));
+  const withVersion = at >= 0 ? lines.map((line, index) => (index === at ? versionLine : line)) : [versionLine, "", ...lines];
+  const appended = added.map((key) => blocks.get(key)!).join("\n\n");
+  const body = withVersion.join("\n").trimEnd();
+  return { text: added.length === 0 ? `${body}\n` : `${body}\n\n${appended}\n`, added };
 };

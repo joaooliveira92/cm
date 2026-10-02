@@ -895,6 +895,14 @@ commitCareer: {
     success: CommentaryFileStatusView,
     error: Schema.Never,
   },
+  /** Brings an older commentary file up to the game's version (cm-style-commentary 10):
+   *  `addNewSections` appends the sections it lacks, word for word; either way its version is raised so
+   *  the offer isn't repeated. The player's own sections are never changed. */
+  updateCommentaryFile: {
+    payload: Schema.Struct({ addNewSections: Schema.Boolean }),
+    success: CommentaryFileStatusView,
+    error: Schema.Never,
+  },
   /** Overwrites `events.cfg` with the game's own lines, discarding the player's edits, and makes it the
    *  file the game reads. Any other `.cfg` in the folder is left alone. */
   resetCommentaryFile: {

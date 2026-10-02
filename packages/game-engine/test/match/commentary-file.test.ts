@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { COMMENTARY_SECTIONS, SHIPPED_COMMENTARY_TEXT, parseCommentaryFile, renderCommentary } from "../../src/match/commentary.js";
+import {
+  COMMENTARY_SECTIONS,
+  SHIPPED_COMMENTARY_TEXT,
+  parseCommentaryFile,
+  renderCommentary,
+  upgradeCommentaryFile,
+} from "../../src/match/commentary.js";
 import type { MatchEvent } from "../../src/match/events.js";
 import { simulateMatch } from "../../src/match/simulate/index.js";
 import { buildTeam, clubId, playerId } from "./fixtures.js";
@@ -182,5 +188,42 @@ describe("highlight levels (cm-style-commentary 08)", () => {
     expect(SHIPPED.playback.Counter.level).toBe("extended");
     expect(SHIPPED.playback["KeyPass:cross"].level).toBe("extended");
     expect(SHIPPED.playback.Foul.level).toBe("full");
+  });
+});
+
+describe("bringing an older file up to date (cm-style-commentary 10)", () => {
+  it("reads the file's version, and 0 when it has none", () => {
+    expect(parseCommentaryFile(SHIPPED_TEXT).version).toBe(1);
+    expect(parseCommentaryFile("[Foul]\nFoul!\n").version).toBe(0);
+    expect(parseCommentaryFile("# mine\nversion = 7\n[Foul]\nFoul!\n")).toMatchObject({ version: 7, problems: expect.any(Array) });
+  });
+
+  it("appends only the sections the player's file lacks, word for word, and raises its version", () => {
+    const mine = "# My commentary\n\n[Foul]\n# my own fouls\ndelay = 400\n{player} hacks him down.\n";
+    const { text, added } = upgradeCommentaryFile(mine, SHIPPED_TEXT);
+    expect(added).toHaveLength(COMMENTARY_SECTIONS.size - 1);
+    expect(added).not.toContain("Foul");
+
+    const upgraded = parseCommentaryFile(text);
+    expect(upgraded.version).toBe(1);
+    expect(upgraded.problems).toEqual([]);
+    expect(upgraded.table.templates.Foul).toEqual(["{player} hacks him down."]);
+    expect(upgraded.table.playback.Foul.delayMs).toBe(400);
+    expect(upgraded.table.templates.Offside).toEqual(SHIPPED.templates.Offside);
+    expect(text.startsWith("version = 1\n\n# My commentary\n\n[Foul]\n# my own fouls\ndelay = 400\n{player} hacks him down.\n")).toBe(true);
+  });
+
+  it("only raises the version for a player who keeps the file as it is", () => {
+    const mine = "[Foul]\nFoul!\n";
+    const { text, added } = upgradeCommentaryFile(mine, SHIPPED_TEXT, { addSections: false });
+    expect(added).toEqual([]);
+    expect(text).toBe("version = 1\n\n[Foul]\nFoul!\n");
+  });
+
+  it("replaces an old version line in place, and adds nothing to a complete file", () => {
+    const old = SHIPPED_TEXT.replace("version = 1", "version = 0");
+    const { text, added } = upgradeCommentaryFile(old, SHIPPED_TEXT);
+    expect(added).toEqual([]);
+    expect(text).toBe(SHIPPED_TEXT);
   });
 });

@@ -80,8 +80,11 @@ cannot change a result.
 - Every `.cfg` in the commentary folder can be chosen in Preferences, as CM shipped `events_eng.cfg`
   and its siblings; the choice is a file name in `commentary/chosen.txt`, and a chosen file that
   disappears falls back to `events.cfg`.
-- A player's copy of the file is not upgraded when the shipped one gains lines; their sections win, and
-  sections new to the game come from the shipped file.
+- A player's copy of the file is never rewritten behind their back when the shipped one changes; their
+  sections win, and sections new to the game come from the shipped file at run time. The shipped file
+  carries `version = N`; when a player's file is older and lacks sections, Preferences offers to append
+  them word for word, or to keep the file as it is. Either answer raises the file's version, so the
+  offer is made once per release. Raise the version whenever the shipped file gains a section.
 - The feed is sparse by design; a quiet match reads as quiet.
 - Commentary can never introduce information the event timeline does not carry. Templates follow from
   that: no assist on a set piece, no man count after a red card, no body part beyond the injury type.

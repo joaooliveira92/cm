@@ -2,7 +2,13 @@ import { mkdir, readFile, readdir, stat, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { Effect } from "effect";
 import { CommentaryFileStatusView } from "@cm-clone/contracts";
-import { SHIPPED_COMMENTARY_TEXT, parseCommentaryFile, type CommentaryTable } from "@cm-clone/game-engine";
+import {
+  SHIPPED_COMMENTARY_TEXT,
+  missingCommentarySections,
+  parseCommentaryFile,
+  upgradeCommentaryFile,
+  type CommentaryTable,
+} from "@cm-clone/game-engine";
 
 /**
  * The player-editable commentary file, after Championship Manager's `events.cfg`: plain text in the
@@ -19,7 +25,8 @@ export const CHOSEN_COMMENTARY_FILE = path.join("commentary", "chosen.txt");
 
 const GAME_FILE_NAME = path.basename(COMMENTARY_FILE);
 
-export const SHIPPED_COMMENTARY: CommentaryTable = parseCommentaryFile(SHIPPED_COMMENTARY_TEXT).table;
+const SHIPPED_PARSE = parseCommentaryFile(SHIPPED_COMMENTARY_TEXT);
+export const SHIPPED_COMMENTARY: CommentaryTable = SHIPPED_PARSE.table;
 
 /** Opens a file with the operating system; resolves to an error message, or "" on success
  *  (Electron's `shell.openPath` contract). */
@@ -30,6 +37,8 @@ interface Loaded {
   readonly files: ReadonlyArray<string>;
   readonly table: CommentaryTable;
   readonly problems: ReadonlyArray<string>;
+  /** Sections the game ships that an older file lacks; empty for a file at the game's version. */
+  readonly newSections: ReadonlyArray<string>;
 }
 
 let cached: (Loaded & { readonly mtimeMs: number }) | null = null;
@@ -74,14 +83,15 @@ const loadCommentary = (userDataDir: string): Effect.Effect<Loaded> =>
     const files = yield* Effect.promise(() => listFiles(userDataDir));
     const file = yield* Effect.promise(() => activeFile(userDataDir, files));
     const mtimeMs = yield* Effect.promise(() => modifiedAt(file));
-    if (mtimeMs === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [] };
+    if (mtimeMs === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [], newSections: [] };
     if (cached !== null && cached.file === file && cached.mtimeMs === mtimeMs) return { ...cached, files };
 
     const text = yield* Effect.promise(() => readFile(file, "utf8").catch(() => null));
-    if (text === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [] };
-    const { table, problems } = parseCommentaryFile(text, SHIPPED_COMMENTARY);
+    if (text === null) return { file, files, table: SHIPPED_COMMENTARY, problems: [], newSections: [] };
+    const { table, problems, version } = parseCommentaryFile(text, SHIPPED_COMMENTARY);
     if (problems.length > 0) yield* Effect.logWarning("commentary file has lines the game skipped", { file, problems });
-    cached = { file, files, mtimeMs, table, problems };
+    const newSections = version < SHIPPED_PARSE.version ? missingCommentarySections(text, SHIPPED_COMMENTARY_TEXT) : [];
+    cached = { file, files, mtimeMs, table, problems, newSections };
     return cached;
   });
 
@@ -92,8 +102,14 @@ export const loadCommentaryTable = (userDataDir: string): Effect.Effect<Commenta
 export const commentaryFileStatus = (userDataDir: string): Effect.Effect<CommentaryFileStatusView> =>
   loadCommentary(userDataDir).pipe(
     Effect.map(
-      ({ file, files, problems }) =>
-        new CommentaryFileStatusView({ file, files: [...files], active: path.basename(file), problems: [...problems] }),
+      ({ file, files, problems, newSections }) =>
+        new CommentaryFileStatusView({
+          file,
+          files: [...files],
+          active: path.basename(file),
+          problems: [...problems],
+          newSections: [...newSections],
+        }),
     ),
   );
 
@@ -128,6 +144,20 @@ export const chooseCommentaryFile = (userDataDir: string, name: string) =>
     const { files } = yield* commentaryFileStatus(userDataDir);
     if (files.includes(name)) yield* writeChoice(userDataDir, name);
     else yield* Effect.logWarning("commentary file to choose is not in the folder", { name });
+    return yield* commentaryFileStatus(userDataDir);
+  });
+
+/** Brings the chosen file up to the game's version: with `addNewSections`, appends the sections it
+ *  lacks; either way raises its version so the offer isn't repeated. */
+export const updateCommentaryFile = (userDataDir: string, addNewSections: boolean) =>
+  Effect.gen(function* () {
+    const { file } = yield* commentaryFileStatus(userDataDir);
+    const failure = yield* Effect.promise(() =>
+      readFile(file, "utf8")
+        .then((text) => writeFile(file, upgradeCommentaryFile(text, SHIPPED_COMMENTARY_TEXT, { addSections: addNewSections }).text, "utf8"))
+        .then(() => null, (error: unknown) => String(error)),
+    );
+    if (failure !== null) yield* Effect.logWarning("commentary file could not be updated", { file, failure });
     return yield* commentaryFileStatus(userDataDir);
   });
 

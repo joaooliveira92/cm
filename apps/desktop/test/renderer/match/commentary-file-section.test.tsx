@@ -6,17 +6,28 @@ import { CommentaryFileSection } from "../../../src/renderer/match/CommentaryFil
  *  what the game skipped in it. */
 const FILE = "/Users/p/Library/Application Support/cm/commentary/events.cfg";
 
-const mockMain = (problems: ReadonlyArray<string>, files: ReadonlyArray<string> = ["events.cfg"]) => {
+/** The `addNewSections` flag of every `updateCommentaryFile` call the last `mockMain` saw. */
+let updates: Array<boolean> = [];
+
+const mockMain = (
+  problems: ReadonlyArray<string>,
+  files: ReadonlyArray<string> = ["events.cfg"],
+  initialNewSections: ReadonlyArray<string> = [],
+) => {
   const calls: Array<string> = [];
+  updates = [];
   let active = "events.cfg";
+  let newSections = initialNewSections;
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {
-    call: async (method: string, payload: { name?: string } | undefined) => {
+    call: async (method: string, payload: { name?: string; addNewSections?: boolean } | undefined) => {
+      if (method === "updateCommentaryFile") updates.push(payload?.addNewSections === true);
       calls.push(method);
       if (method === "chooseCommentaryFile" && payload?.name !== undefined) active = payload.name;
       if (method === "resetCommentaryFile") active = "events.cfg";
+      if (method === "updateCommentaryFile") newSections = [];
       return {
         _tag: "Success",
-        value: { file: FILE, files, active, problems: method === "resetCommentaryFile" ? [] : problems },
+        value: { file: FILE, files, active, newSections, problems: method === "resetCommentaryFile" ? [] : problems },
       };
     },
   };
@@ -74,5 +85,24 @@ describe("the Commentary section of Preferences", () => {
     fireEvent.change(picker, { target: { value: "events_fr.cfg" } });
     await waitFor(() => expect((screen.getByRole("combobox", { name: "File" }) as HTMLSelectElement).value).toBe("events_fr.cfg"));
     expect(calls).toEqual(["getCommentaryFileStatus", "chooseCommentaryFile"]);
+  });
+
+  it("offers the game's new sections to an older file, either way only once", async () => {
+    mockMain([], ["events.cfg"], ["Offside", "KeyPass:solo"]);
+    render(<CommentaryFileSection />);
+    const offer = await screen.findByRole("region", { name: "New commentary from the game" });
+    expect(offer.textContent).toContain("2 sections");
+    fireEvent.click(within(offer).getByRole("button", { name: "Add them to my file" }));
+    await waitFor(() => expect(screen.queryByRole("region", { name: "New commentary from the game" })).toBeNull());
+    expect(updates).toEqual([true]);
+  });
+
+  it("keeps an older file as it is when the player says so", async () => {
+    mockMain([], ["events.cfg"], ["Offside"]);
+    render(<CommentaryFileSection />);
+    const offer = await screen.findByRole("region", { name: "New commentary from the game" });
+    fireEvent.click(within(offer).getByRole("button", { name: "Keep my file as it is" }));
+    await waitFor(() => expect(screen.queryByRole("region", { name: "New commentary from the game" })).toBeNull());
+    expect(updates).toEqual([false]);
   });
 });

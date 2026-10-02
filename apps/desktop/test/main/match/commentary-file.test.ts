@@ -12,6 +12,7 @@ import {
   loadCommentaryTable,
   openCommentaryFile,
   resetCommentaryFile,
+  updateCommentaryFile,
 } from "../../../src/main/match/commentaryFile.js";
 
 /** A fresh user data folder. */
@@ -146,6 +147,41 @@ describe("choosing a commentary file (cm-style-commentary 09)", () => {
       const reset = yield* resetCommentaryFile(dir);
       expect(reset.active).toBe("events.cfg");
       expect(yield* Effect.promise(() => readFile(path.join(dir, "commentary", "community.cfg"), "utf8"))).toBe("[Foul]\nFoul!\n");
+    }),
+  );
+});
+
+describe("an older commentary file (cm-style-commentary 10)", () => {
+  const OLD = "# my commentary, from before versions\n[Foul]\n{player} hacks him down.\n";
+
+  it.effect("lists the sections the game has and an older file lacks, and adds them on request", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      yield* loadCommentaryTable(dir);
+      expect((yield* commentaryFileStatus(dir)).newSections).toEqual([]);
+
+      yield* edit(dir, OLD, 6_000);
+      const older = yield* commentaryFileStatus(dir);
+      expect(older.newSections).toContain("Offside");
+      expect(older.newSections).not.toContain("Foul");
+
+      const updated = yield* updateCommentaryFile(dir, true);
+      expect(updated.newSections).toEqual([]);
+      expect(updated.problems).toEqual([]);
+      const text = yield* Effect.promise(() => readFile(updated.file, "utf8"));
+      expect(text).toContain("[Foul]\n{player} hacks him down.\n");
+      expect(text).toContain("[Offside]");
+    }),
+  );
+
+  it.effect("stops offering once the player keeps the file as it is", () =>
+    Effect.gen(function* () {
+      const dir = yield* userData();
+      yield* loadCommentaryTable(dir);
+      yield* edit(dir, OLD, 7_000);
+      const kept = yield* updateCommentaryFile(dir, false);
+      expect(kept.newSections).toEqual([]);
+      expect(yield* Effect.promise(() => readFile(kept.file, "utf8"))).toBe(`version = 1\n\n${OLD}`);
     }),
   );
 });

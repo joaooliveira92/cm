@@ -37,6 +37,7 @@ import {
   resumeSimulation,
   startMatch,
   submitMatchCommand,
+  updateCommentaryFile,
   type OpenPath,
 } from "../match/index.js";
 import { commitMatchday } from "../season/commitMatchday.js";
@@ -578,6 +579,11 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   getCommentaryFileStatus: (_payload, ctx) => commentaryFileStatus(ctx.userDataDir),
   openCommentaryFile: (_payload, ctx) => openCommentaryFile(ctx.userDataDir, ctx.openPath),
   resetCommentaryFile: (_payload, ctx) => resetCommentaryFile(ctx.userDataDir),
+  updateCommentaryFile: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { addNewSections } = yield* Schema.decodeUnknownEffect(AppRpcs.updateCommentaryFile.payload)(payload);
+      return yield* updateCommentaryFile(ctx.userDataDir, addNewSections);
+    }),
   chooseCommentaryFile: (payload, ctx) =>
     Effect.gen(function* () {
       const { name } = yield* Schema.decodeUnknownEffect(AppRpcs.chooseCommentaryFile.payload)(payload);

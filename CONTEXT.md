@@ -278,6 +278,8 @@ chance, highlight level) comes from, after Championship Manager's `events.cfg`. 
 (`packages/game-engine/data/events.cfg`) and writes a copy to the user data folder for the player to
 edit; a section the player's copy lacks or breaks falls back to the shipped one. Any other `.cfg` the
 player puts in the same folder (a translation, a community file) can be chosen in Preferences instead.
+The file's `version` line says which release of the game's lines it started from; Preferences offers an
+older file the sections it lacks.
 _Avoid_: Commentary config, language file
 
 ### Tactics

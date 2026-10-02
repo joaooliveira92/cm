@@ -346,9 +346,19 @@ describe("the commentary file — cm-style-commentary 04", () => {
       problems: [],
       files: ["events.cfg", "events_fr.cfg"],
       active: "events.cfg",
+      newSections: [],
     };
+    const older = { ...clean, newSections: ["KeyPass:solo", "Goal:header"] };
     const broken = { ...clean, problems: ["line 12: skipped, {player2} isn't available in [Foul]"] };
-    for (const method of ["getCommentaryFileStatus", "openCommentaryFile", "resetCommentaryFile", "chooseCommentaryFile"] as const) {
+    roundTrip(AppRpcs.updateCommentaryFile.payload, { addNewSections: true });
+    for (const method of [
+      "getCommentaryFileStatus",
+      "openCommentaryFile",
+      "resetCommentaryFile",
+      "chooseCommentaryFile",
+      "updateCommentaryFile",
+    ] as const) {
+      roundTrip(AppRpcs[method].success, older);
       roundTrip(AppRpcs[method].success, clean);
       roundTrip(AppRpcs[method].success, broken);
     }
