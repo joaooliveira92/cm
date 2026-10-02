@@ -26,15 +26,15 @@ describe("pitchLayout — where each Tactic slot sits on the pitch diagram", () 
     const spots = pitchLayout(positions);
     const [gk, dR, dL, dRC, dLC] = [0, 1, 2, 3, 4].map((slot) => spots[slot]!);
     expect(gk!.x).toBe(50);
-    expect(gk!.y).toBe(88);
+    expect(gk!.y).toBe(89);
     expect(dR!.x).toBe(89);
-    expect(dR!.y).toBe(69);
+    expect(dR!.y).toBe(73);
     expect(dL!.x).toBe(11);
-    expect(dL!.y).toBe(69);
+    expect(dL!.y).toBe(73);
     expect(dRC!.x).toBe(70);
-    expect(dRC!.y).toBe(69);
+    expect(dRC!.y).toBe(73);
     expect(dLC!.x).toBe(30);
-    expect(dLC!.y).toBe(69);
+    expect(dLC!.y).toBe(73);
   });
 
   it("puts the keeper deepest and the strikers highest", () => {
@@ -61,7 +61,17 @@ describe("cellAt — the cell a drop point on the pitch stands for", () => {
   });
 
   it("takes no outfield cell in the keeper's end", () => {
-    expect(cellAt(50, 85)).toBeNull();
+    expect(cellAt(50, 87)).toBeNull();
+  });
+
+  it("reads the band just in front of the back line as DM, not D", () => {
+    expect(cellAt(50, 63)).toMatchObject({ row: "DM", column: "C" });
+  });
+
+  it("has a sweeper only in the middle: deep on a flank is still D L or D R", () => {
+    expect(cellAt(50, 80)).toMatchObject({ row: "SW", column: "C" });
+    expect(cellAt(10, 80)).toMatchObject({ row: "D", column: "L" });
+    expect(cellAt(90, 80)).toMatchObject({ row: "D", column: "R" });
   });
 });
 
@@ -72,7 +82,7 @@ describe("dropZoneAt — the nearest cell and the point as a sub-position within
   });
 
   it("returns null in the keeper's end", () => {
-    expect(dropZoneAt(50, 85)).toBeNull();
+    expect(dropZoneAt(50, 87)).toBeNull();
   });
 });
 describe("sub-positions — 0-1 fractions within the cell, as the Tactic stores them", () => {

@@ -1,4 +1,4 @@
-import { COLUMNS, DEFAULT_SUB, ROWS, type Column, type Row, type Slot } from "@cm-clone/shared";
+import { COLUMNS, DEFAULT_SUB, ROWS, widthOf, type Column, type Row, type Slot } from "@cm-clone/shared";
 
 /** Where one Tactic slot sits on the pitch diagram, in percent of the pitch box: `x` from the left
  *  touchline, `y` from the opposition goal line (the club attacks up the screen). */
@@ -8,8 +8,10 @@ export interface PitchSpot {
   readonly y: number;
 }
 
-/** Each row's line up the pitch, forward first. The goalkeeper row is drawn but never a drop target. */
-const ROW_Y: Record<Row, number> = { F: 13, AM: 27, M: 41, DM: 55, D: 69, SW: 79, GK: 88 };
+/** Each row's line up the pitch, forward first. The goalkeeper row is drawn but never a drop target.
+ *  DM and D sit deep enough that the band in front of the back line, between it and the halfway
+ *  line, reads as DM rather than D. */
+const ROW_Y: Record<Row, number> = { F: 13, AM: 27, M: 41, DM: 57, D: 73, SW: 81, GK: 89 };
 
 /** Each column's place across the pitch, left flank to right flank. */
 const COLUMN_X: Record<Column, number> = { L: 11, LC: 30, C: 50, RC: 70, R: 89 };
@@ -51,10 +53,16 @@ const COLUMN_CENTRES = COLUMNS.map((column) => COLUMN_X[column]);
 const columnSpan = (column: Column): Span => spanOf(COLUMN_CENTRES, COLUMNS.indexOf(column), TOUCHLINE);
 
 const OUTFIELD_CENTRES = OUTFIELD_ROWS.map((row) => ROW_Y[row]);
-const rowSpan = (row: Row): Span =>
-  row === "GK"
-    ? { low: KEEPER_END, centre: ROW_Y.GK, high: GOAL_LINE.max }
-    : spanOf(OUTFIELD_CENTRES, OUTFIELD_ROWS.indexOf(row), { min: GOAL_LINE.min, max: KEEPER_END });
+
+/** A sweeper plays in the middle, so the flanks have no SW cell: there the D cell runs back to the
+ *  keeper's end, and a full-back dropped deep is still a full-back. */
+const isWideSweeper = (row: Row, column: Column): boolean => row === "SW" && widthOf(column) === "wide";
+
+const rowSpan = (row: Row, column: Column): Span => {
+  if (row === "GK") return { low: KEEPER_END, centre: ROW_Y.GK, high: GOAL_LINE.max };
+  const span = spanOf(OUTFIELD_CENTRES, OUTFIELD_ROWS.indexOf(row), { min: GOAL_LINE.min, max: KEEPER_END });
+  return row === "D" && widthOf(column) === "wide" ? { ...span, high: KEEPER_END } : span;
+};
 
 /** A 0-1 sub-position to a point in the span. */
 const pointIn = ({ low, centre, high }: Span, sub: number): number =>
@@ -71,7 +79,7 @@ const subIn = ({ low, centre, high }: Span, at: number): number => {
  *  right. Both at `DEFAULT_SUB` is the cell's centre — the row's line and the column's place. */
 export const spotOf = (cell: Slot, subRow = DEFAULT_SUB, subCol = DEFAULT_SUB): { readonly x: number; readonly y: number } => ({
   x: pointIn(columnSpan(cell.column), subCol),
-  y: pointIn(rowSpan(cell.row), subRow),
+  y: pointIn(rowSpan(cell.row, cell.column), subRow),
 });
 
 /** An input for pitch layout computation: a cell and its visual offset. */
@@ -99,11 +107,12 @@ const nearest = <T>(items: ReadonlyArray<T>, at: (item: T) => number, target: nu
 
 export const dropZoneAt = (x: number, y: number): DropZone | null => {
   if (y > KEEPER_END) return null;
-  const row = OUTFIELD_ROWS[nearest(OUTFIELD_ROWS, (each) => ROW_Y[each], y)]!;
   const column = COLUMNS[nearest(COLUMNS, (each) => COLUMN_X[each], x)]!;
+  const nearestRow = OUTFIELD_ROWS[nearest(OUTFIELD_ROWS, (each) => ROW_Y[each], y)]!;
+  const row = isWideSweeper(nearestRow, column) ? "D" : nearestRow;
   return {
     cell: { row, column } as Slot,
-    subRow: subIn(rowSpan(row), y),
+    subRow: subIn(rowSpan(row, column), y),
     subCol: subIn(columnSpan(column), x),
   };
 };

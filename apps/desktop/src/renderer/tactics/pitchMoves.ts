@@ -1,5 +1,5 @@
 import type { TacticSlot } from "@cm-clone/contracts";
-import { COLUMNS, DEFAULT_SUB, ROWS, slotLabel, type Slot } from "@cm-clone/shared";
+import { COLUMNS, DEFAULT_SUB, ROWS, SLOTS, slotLabel, widthOf, type Slot } from "@cm-clone/shared";
 import { dropZoneAt, type DropZone, type PitchSpot } from "./pitchLayout.js";
 
 /**
@@ -95,13 +95,12 @@ export const intentKey = (intent: DropIntent): string =>
 
 const sameCell = (a: Slot, b: Slot): boolean => a.row === b.row && a.column === b.column;
 
-/** The 31 grid cells, each that is empty of any slot. */
-const ALL_CELLS: ReadonlyArray<Slot> = [
-  { row: "GK", column: "C" },
-  ...(["SW", "D", "DM", "M", "AM", "F"] as const).flatMap((row) =>
-    (["L", "LC", "C", "RC", "R"] as const).map((column) => ({ row, column } as Slot)),
-  ),
-];
+/** A sweeper plays in the middle: the pitch never offers SW L or SW R, where a full-back drops
+ *  deep as D L or D R instead (see `dropZoneAt`). */
+const isWideSweeper = (cell: Slot): boolean => cell.row === "SW" && widthOf(cell.column) === "wide";
+
+/** The 29 grid cells the pitch offers: all 31 but the two wide sweeper cells. */
+const ALL_CELLS: ReadonlyArray<Slot> = SLOTS.filter((cell) => !isWideSweeper(cell));
 
 /** The labels of the cells the eleven stands in, so a rule can ask whether a cell is taken without
  *  walking the slots again. */
@@ -171,11 +170,14 @@ export const moveFor = (intent: DropIntent, from: number, state: PitchState): Sl
   return { kind: "place", slotIndex: from, cell, subRow, subCol };
 };
 
-/** The outfield cell one step from `cell`, or `null` off the grid or into the keeper's row. */
+/** The outfield cell one step from `cell`, or `null` off the grid, into the keeper's row or onto a
+ *  wide sweeper cell. */
 const stepCell = (cell: Slot, step: SlotStep): Slot | null => {
   const row = ROWS[ROWS.indexOf(cell.row) + step.row];
   const column = COLUMNS[COLUMNS.indexOf(cell.column) + step.column];
-  return row === undefined || row === "GK" || column === undefined ? null : ({ row, column } as Slot);
+  if (row === undefined || row === "GK" || column === undefined) return null;
+  const target = { row, column } as Slot;
+  return isWideSweeper(target) ? null : target;
 };
 
 /** Shift+arrow: the selected slot one cell over, or a swap with the slot already holding that cell. */
