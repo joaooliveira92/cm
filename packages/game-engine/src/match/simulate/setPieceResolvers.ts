@@ -141,7 +141,7 @@ const gkReflexes = (defender: TeamRuntimeState): number => {
  *  best crosser), and the best header among the other outfield players attacks it. The header outcome
  *  is his heading + strength vs the defence's positioning + bravery, and the taker is his assist.
  *  Both picks are deterministic, so a corner draws no more random numbers than it did when the taker
- *  headed his own corner (cm-style-commentary 11). */
+ *  headed his own corner. */
 export const resolveCorner = (
   attackingTeam: TeamRuntimeState,
   defendingTeam: TeamRuntimeState,

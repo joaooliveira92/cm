@@ -1,33 +1,23 @@
 import {
-  ALWAYS_SHOWN,
   COMMENTARY_SECTIONS,
+  changesTheMatch,
   HIGHLIGHT_LEVELS,
   isHighlightLevel,
   PHRASES,
   PHRASES_SECTION,
   type PhraseName,
   type HighlightLevel,
-  sectionTag,
   type CommentaryPlayback,
   type CommentaryTable,
   type CommentaryTemplateKey,
 } from "./commentarySections.js";
 
-/**
- * Reads a commentary file: the plain-text, player-editable `events.cfg` format, after Championship
- * Manager's file of the same name. The format is documented in the shipped file's header
- * (`packages/game-engine/data/events.cfg`).
- *
- * Nothing in a player's file can break a match: a line the game can't use is skipped and reported,
- * and a section that ends up with no lines, or a setting that's missing, takes `fallback`'s (the
- * shipped file's). Without a fallback a missing section is reported and left empty.
- */
 /** A `[Section]` name: a moment of a match, or the phrases. */
 export type CommentarySectionName = CommentaryTemplateKey | typeof PHRASES_SECTION;
 
 export interface ParsedCommentaryFile {
   readonly table: CommentaryTable;
-  /** The file's `version = N`, 0 when it has none (cm-style-commentary 10). */
+  /** The file's `version = N`, 0 when it has none. */
   readonly version: number;
   /** The sections the file itself has, in order of first appearance; the rest come from the fallback. */
   readonly sections: ReadonlyArray<CommentarySectionName>;
@@ -41,6 +31,11 @@ const MAX_DELAY_MS = 60_000;
 const SECTION = /^\[([^\]]+)\]$/;
 const VERSION = /^version\s*=\s*(\d+)$/i;
 const PHRASE = /^([\w.]+)\s*=\s*(.*)$/;
+const SETTING = /^(delay|flash|chance|level)\s*=\s*(.*)$/i;
+const PLACEHOLDER = /\{(\w+)\}/g;
+
+/** A section setting; `SETTING` matches exactly these names. */
+type SettingName = "delay" | "flash" | "chance" | "level";
 
 /** Why `name = value` can't be a phrase, or null when it can. */
 const phraseProblem = (name: string, value: string): string | null => {
@@ -56,8 +51,6 @@ const phraseProblem = (name: string, value: string): string | null => {
   }
   return null;
 };
-const SETTING = /^(delay|flash|chance|level)\s*=\s*(.*)$/i;
-const PLACEHOLDER = /\{(\w+)\}/g;
 
 interface SectionDraft {
   readonly lines: Array<string>;
@@ -87,7 +80,7 @@ const lineProblem = (key: CommentaryTemplateKey, line: string): string | null =>
 };
 
 /** Applies one `name = value` setting to `draft`, or says why it can't. */
-const applySetting = (draft: SectionDraft, key: CommentaryTemplateKey, name: string, value: string): string | null => {
+const applySetting = (draft: SectionDraft, key: CommentaryTemplateKey, name: SettingName, value: string): string | null => {
   switch (name) {
     case "delay": {
       const ms = Number(value);
@@ -104,20 +97,31 @@ const applySetting = (draft: SectionDraft, key: CommentaryTemplateKey, name: str
     case "level": {
       const level = value.toLowerCase();
       if (!isHighlightLevel(level)) return `level must be ${HIGHLIGHT_LEVELS.slice(0, -1).join(", ")} or ${HIGHLIGHT_LEVELS.at(-1)}`;
-      if (ALWAYS_SHOWN.has(sectionTag(key) as never) && level !== "key") return `[${key}] changes the match, so it is always key; level is ignored`;
+      if (changesTheMatch(key) && level !== "key") return `[${key}] changes the match, so it is always key; level is ignored`;
       draft.level = level;
       return null;
     }
-    default: {
+    case "chance": {
       const percent = Number(value);
       if (!Number.isFinite(percent) || percent < 0 || percent > 100) return "chance must be a percentage from 0 to 100";
-      if (ALWAYS_SHOWN.has(sectionTag(key) as never)) return `[${key}] changes the match, so it always shows; chance is ignored`;
+      if (changesTheMatch(key)) return `[${key}] changes the match, so it always shows; chance is ignored`;
       draft.displayChance = percent / 100;
       return null;
     }
+    default:
+      return name satisfies never;
   }
 };
 
+/**
+ * Reads a commentary file in the plain-text, player-editable `events.cfg` format, after Championship
+ * Manager's file of the same name. The shipped file's header documents the format
+ * (`packages/game-engine/data/events.cfg`).
+ *
+ * Nothing in a player's file can break a match. A line the game can't use is skipped and reported, and
+ * a section left with no lines, or a missing setting, takes the `fallback`'s, which is the shipped
+ * file's. Without a fallback a missing section is reported and left empty.
+ */
 export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): ParsedCommentaryFile => {
   const drafts = new Map<CommentaryTemplateKey, SectionDraft>();
   const problems: Array<string> = [];
@@ -128,69 +132,67 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
   const sections: Array<CommentarySectionName> = [];
   const phrases = new Map<PhraseName, string>();
 
-  text
-    .replace(/^\uFEFF/, "")
-    .split(/\r?\n/)
-    .forEach((raw, index) => {
-      const line = raw.trim();
-      const at = `line ${index + 1}`;
-      if (line === "" || line.startsWith("#")) return;
+  const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/);
+  for (const [index, raw] of lines.entries()) {
+    const line = raw.trim();
+    const at = `line ${index + 1}`;
+    if (line === "" || line.startsWith("#")) continue;
 
-      const section = SECTION.exec(line);
-      if (section !== null) {
-        const name = section[1]!.trim();
-        inPhrases = name === PHRASES_SECTION;
-        if (inPhrases) {
-          if (!sections.includes(PHRASES_SECTION)) sections.push(PHRASES_SECTION);
-          current = null;
-          skipping = false;
-          return;
-        }
-        const key = name as CommentaryTemplateKey;
-        if (!COMMENTARY_SECTIONS.has(key)) {
-          problems.push(`${at}: there is no section [${section[1]}]; its lines are skipped`);
-          current = null;
-          skipping = true;
-          return;
-        }
-        if (!sections.includes(key)) sections.push(key);
-        let draft = drafts.get(key);
-        if (draft === undefined) {
-          draft = { lines: [] };
-          drafts.set(key, draft);
-        }
-        current = { key, draft };
-        skipping = false;
-        return;
-      }
+    const section = SECTION.exec(line);
+    if (section !== null) {
+      const name = section[1]!.trim();
+      inPhrases = name === PHRASES_SECTION;
       if (inPhrases) {
-        const phrase = PHRASE.exec(line);
-        const problem = phrase === null ? "a phrase is written name = text" : phraseProblem(phrase[1]!, phrase[2]!.trim());
-        if (problem === null) phrases.set(phrase![1]! as PhraseName, phrase![2]!.trim());
-        else problems.push(`${at}: skipped, ${problem}`);
-        return;
+        if (!sections.includes(PHRASES_SECTION)) sections.push(PHRASES_SECTION);
+        current = null;
+        skipping = false;
+        continue;
       }
-      if (current === null) {
-        const versionLine = VERSION.exec(line);
-        if (versionLine !== null && !skipping && sections.length === 0) {
-          version = Number(versionLine[1]);
-          return;
-        }
-        if (!skipping) problems.push(`${at}: comes before any [Section], so it is skipped`);
-        return;
+      const key = name as CommentaryTemplateKey;
+      if (!COMMENTARY_SECTIONS.has(key)) {
+        problems.push(`${at}: there is no section [${section[1]}]; its lines are skipped`);
+        current = null;
+        skipping = true;
+        continue;
       }
-
-      const setting = SETTING.exec(line);
-      if (setting !== null) {
-        const problem = applySetting(current.draft, current.key, setting[1]!.toLowerCase(), setting[2]!.trim());
-        if (problem !== null) problems.push(`${at}: ${problem}`);
-        return;
+      if (!sections.includes(key)) sections.push(key);
+      let draft = drafts.get(key);
+      if (draft === undefined) {
+        draft = { lines: [] };
+        drafts.set(key, draft);
       }
-
-      const problem = lineProblem(current.key, line);
-      if (problem === null) current.draft.lines.push(line);
+      current = { key, draft };
+      skipping = false;
+      continue;
+    }
+    if (inPhrases) {
+      const phrase = PHRASE.exec(line);
+      const problem = phrase === null ? "a phrase is written name = text" : phraseProblem(phrase[1]!, phrase[2]!.trim());
+      if (problem === null) phrases.set(phrase![1]! as PhraseName, phrase![2]!.trim());
       else problems.push(`${at}: skipped, ${problem}`);
-    });
+      continue;
+    }
+    if (current === null) {
+      const versionLine = VERSION.exec(line);
+      if (versionLine !== null && !skipping && sections.length === 0) {
+        version = Number(versionLine[1]);
+        continue;
+      }
+      if (!skipping) problems.push(`${at}: comes before any [Section], so it is skipped`);
+      continue;
+    }
+
+    const setting = SETTING.exec(line);
+    if (setting !== null) {
+      const problem = applySetting(current.draft, current.key, setting[1]!.toLowerCase() as SettingName, setting[2]!.trim());
+      if (problem !== null) problems.push(`${at}: ${problem}`);
+      continue;
+    }
+
+    const problem = lineProblem(current.key, line);
+    if (problem === null) current.draft.lines.push(line);
+    else problems.push(`${at}: skipped, ${problem}`);
+  }
 
   const templates = {} as Record<CommentaryTemplateKey, ReadonlyArray<string>>;
   const playback = {} as Record<CommentaryTemplateKey, CommentaryPlayback>;
@@ -205,8 +207,8 @@ export const parseCommentaryFile = (text: string, fallback?: CommentaryTable): P
     playback[key] = {
       delayMs: draft?.delayMs ?? base.delayMs,
       flash: draft?.flash ?? base.flash,
-      displayChance: ALWAYS_SHOWN.has(sectionTag(key) as never) ? 1 : (draft?.displayChance ?? base.displayChance),
-      level: ALWAYS_SHOWN.has(sectionTag(key) as never) ? "key" : (draft?.level ?? base.level),
+      displayChance: changesTheMatch(key) ? 1 : (draft?.displayChance ?? base.displayChance),
+      level: changesTheMatch(key) ? "key" : (draft?.level ?? base.level),
     };
   }
   const phraseTable = {} as Record<PhraseName, string>;
@@ -254,10 +256,10 @@ export const missingCommentarySections = (playerText: string, shippedText: strin
 };
 
 /**
- * Brings a player's commentary file up to the shipped one's version (cm-style-commentary 10): appends,
- * word for word, every section the shipped file has and the player's lacks, and sets its `version`.
- * With `addSections: false` only the version is set, for a player who keeps the file as it is. The
- * player's own sections, lines, comments and settings are never touched.
+ * Brings a player's commentary file up to the shipped one's version. It appends, word for word, every
+ * section the shipped file has and the player's lacks, and sets its `version`. With `addSections: false`
+ * only the version is set, for a player who keeps the file as it is. The player's own sections, lines,
+ * comments and settings are never touched.
  */
 export const upgradeCommentaryFile = (
   playerText: string,

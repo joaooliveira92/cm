@@ -51,8 +51,7 @@ export type Placeholder =
   | "assist"
   | PronounPlaceholder;
 
-/** Pronouns for a line's `{player}` (cm-style-commentary 13), so no file hard-codes one. Capitalised
- *  forms start a sentence. */
+/** Pronouns for a line's `{player}`, so no file hard-codes one. Capitalised forms start a sentence. */
 export type PronounPlaceholder = "he" | "him" | "his" | "He" | "His";
 
 const PRONOUNS: ReadonlyArray<Placeholder> = ["he", "him", "his", "He", "His"];
@@ -70,8 +69,8 @@ export interface CommentaryPlayback {
   readonly level: HighlightLevel;
 }
 
-/** The words the commentary builds its placeholders from, set in the file's `[Phrases]` section
- *  (cm-style-commentary 12) so a translated file can translate them too: `{injury}` from
+/** The words the commentary builds its placeholders from, set in the file's `[Phrases]` section so a
+ *  translated file can translate them too: `{injury}` from
  *  `injury.<type>`, `{score}` from `score`, `{side}` from `side.left` and `side.right`. */
 export type PhraseName = `injury.${InjuryType}` | "score" | "side.left" | "side.right";
 
@@ -154,5 +153,8 @@ export const COMMENTARY_SECTIONS: ReadonlyMap<CommentaryTemplateKey, ReadonlyArr
   ["TacticsChanged:instructions", ["team", "team2"]],
 ]);
 
-/** The Match Event tag a section narrates, for its always-shown rule. */
-export const sectionTag = (key: CommentaryTemplateKey): string => key.split(":")[0]!;
+/** Whether a section's moment changes the match, so its lines always show and are always `key`. A
+ *  section is named after the Match Event it narrates (`Goal:header` narrates `Goal`), except the
+ *  `GoalScore` sentences, which never change anything on their own. */
+export const changesTheMatch = (key: CommentaryTemplateKey): boolean =>
+  (ALWAYS_SHOWN as ReadonlySet<string>).has(key.split(":")[0]!);
