@@ -115,9 +115,9 @@ describe("commentary reads the events around a line", () => {
       goal(50, away, 3, 2),
     ]);
     expect(opener).toContain("Home 1-0 Away");
-    expect(opener).toMatch(/lead|opener|in front/);
-    expect(equaliser).toMatch(/level|equaliser|square/);
-    expect(lead).toMatch(/ahead|lead/);
+    expect(opener).toMatch(/lead|opener|in front|first blood/i);
+    expect(equaliser).toMatch(/level|equaliser|square|back in it/);
+    expect(lead).toMatch(/ahead|lead|turn it around/);
     expect(extend).toMatch(/extend|pulling away|Another/);
     expect(reply).toMatch(/back|reply/);
   });
@@ -246,9 +246,11 @@ describe("pronouns (cm-style-commentary 13)", () => {
     const offenders = Object.entries(COMMENTARY_TEMPLATES).flatMap(([key, pool]) =>
       pool.filter((line) => bare.test(line)).map((line) => `[${key}] ${line}`),
     );
-    // The referee's pocket and the manager's area are theirs, not a player's.
+    // The referee's pocket and watch, and the manager's area, are theirs, not a player's.
     expect(offenders).toEqual([
       "[YellowCard] The referee goes to his pocket: a yellow for {player}.",
+      "[YellowCard] Yellow card for {player}. The referee reaches for his pocket.",
+      "[HalfTimeReached] The referee checks his watch and blows. {score}.",
       "[TacticsChanged:instructions] The {team} manager is on the edge of his area, changing the approach.",
     ]);
   });
