@@ -1,4 +1,5 @@
 import type { TeamRuntimeState } from "./teamState.js";
+import type { TacticalState } from "./tacticalAdapter.js";
 import type { MatchEvent, MatchHalf } from "../events.js";
 import type { RandomSource } from "@cm-clone/shared";
 import {
@@ -25,6 +26,8 @@ export class EventResolver {
   static resolveEvents(
     attacker: TeamRuntimeState,
     defender: TeamRuntimeState,
+    attackerTactical: TacticalState,
+    defenderTactical: TacticalState,
     attackerEff: { attack: number; midfield: number; defense: number },
     defenderEff: { attack: number; midfield: number; defense: number },
     minute: number,
@@ -38,7 +41,7 @@ export class EventResolver {
     const eventCountBeforeSlice = events.length;
 
     // Mentality effect from ResolvedInstructions (attack factor boosts attack attempts)
-    const mentalityAttackBias = attacker.resolved.instructions.attack;
+    const mentalityAttackBias = attackerTactical.instructions.attack;
 
     const attackDefenseTotal = attackerEff.attack * mentalityAttackBias + defenderEff.defense;
     const attackDefenseRatio = attackDefenseTotal > 0
@@ -59,7 +62,7 @@ export class EventResolver {
     resolveOffside(attacker, defender, minute, half, random, events);
 
     // Beaten trap check: when defending team uses offside trap and the attacker beats it
-    if (defender.resolved.teamModifiers.offsideTrapActive > 0 && random.next() < 0.25) {
+    if (defenderTactical.teamModifiers.offsideTrapActive > 0 && random.next() < 0.25) {
       const beatenPlayerId = pickPlayerId(attacker, random, true);
       if (beatenPlayerId) {
         events.push({

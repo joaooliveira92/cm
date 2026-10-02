@@ -17,10 +17,11 @@ import {
   decayConditions,
   initTeamState,
   pickPlayerId,
+  tacticalView,
   type TeamRuntimeState,
 } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
-import { reconcileTacticalChange, viewTacticalState, type AiTacticalChange } from "./tacticalAdapter.js";
+import { reconcileTacticalChange, viewTacticalState, type AiTacticalChange, type TacticalState } from "./tacticalAdapter.js";
 
 export type { AiTacticalChange };
 
@@ -102,14 +103,21 @@ export const resolveSlice = (
   decayConditions(home);
   decayConditions(away);
 
+  // Create tactical state once per slice — the loop reads TacticalState,
+  // not raw teamModifiers/instructions fields (ADR-0002).
+  const homeTactical = tacticalView(home);
+  const awayTactical = tacticalView(away);
+
   // Phase strength + possession resolution
   const { attacker, defender, attackerEff, defenderEff, homeHasPossession } =
-    PhaseStrengthResolver.resolve(home, away, minute, random);
+    PhaseStrengthResolver.resolve(home, away, homeTactical, awayTactical, minute, random);
 
   // Event resolution
   const eventsEmitted = EventResolver.resolveEvents(
     attacker,
     defender,
+    homeHasPossession ? homeTactical : awayTactical,
+    homeHasPossession ? awayTactical : homeTactical,
     attackerEff,
     defenderEff,
     minute,

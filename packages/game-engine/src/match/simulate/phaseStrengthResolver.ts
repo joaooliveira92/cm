@@ -1,4 +1,5 @@
 import type { TeamRuntimeState, TeamStrengths } from "./teamState.js";
+import type { TacticalState } from "./tacticalAdapter.js";
 import type { PhaseStrengths } from "../types.js";
 import type { RandomSource } from "@cm-clone/shared";
 import {
@@ -39,6 +40,8 @@ export class PhaseStrengthResolver {
   static resolve(
     home: TeamRuntimeState,
     away: TeamRuntimeState,
+    homeTactical: TacticalState,
+    awayTactical: TacticalState,
     minute: number,
     random: RandomSource,
   ): PhaseStrengthResult {
@@ -52,12 +55,12 @@ export class PhaseStrengthResolver {
     const awayEff = effectiveStrengths(awayStrengths, minute, awayCondition, false);
 
     // Possession based on midfield & passing behaviour, plus counter-attack & focus passing adjustments
-    const homePossessionModifier = home.resolved.teamModifiers.possessionBias
-      * home.resolved.teamModifiers.counterPossessionPenalty
-      * home.resolved.teamModifiers.focusPossessionBias;
-    const awayPossessionModifier = away.resolved.teamModifiers.possessionBias
-      * away.resolved.teamModifiers.counterPossessionPenalty
-      * away.resolved.teamModifiers.focusPossessionBias;
+    const homePossessionModifier = homeTactical.teamModifiers.possessionBias
+      * homeTactical.teamModifiers.counterPossessionPenalty
+      * homeTactical.teamModifiers.focusPossessionBias;
+    const awayPossessionModifier = awayTactical.teamModifiers.possessionBias
+      * awayTactical.teamModifiers.counterPossessionPenalty
+      * awayTactical.teamModifiers.focusPossessionBias;
 
     // GK distribution effect on possession retention (ticket 28)
     const gkRetention = (team: TeamRuntimeState): number => {
@@ -79,6 +82,8 @@ export class PhaseStrengthResolver {
     const awayPossessionStrengths = computeTeamStrengths(away, !homeHasPossession);
     const attacker = homeHasPossession ? home : away;
     const defender = homeHasPossession ? away : home;
+    const attackerTactical = homeHasPossession ? homeTactical : awayTactical;
+    const defenderTactical = homeHasPossession ? awayTactical : homeTactical;
     const attackerEff = effectiveStrengths(
       homeHasPossession ? homePossessionStrengths : awayPossessionStrengths,
       minute,
@@ -93,7 +98,7 @@ export class PhaseStrengthResolver {
     );
 
     // Mentality effect from ResolvedInstructions (attack factor boosts attack attempts)
-    const mentalityAttackBias = attacker.resolved.instructions.attack;
+    const mentalityAttackBias = attackerTactical.instructions.attack;
 
     const attackDefenseTotal = attackerEff.attack * mentalityAttackBias + defenderEff.defense;
     const attackDefenseRatio = attackDefenseTotal > 0

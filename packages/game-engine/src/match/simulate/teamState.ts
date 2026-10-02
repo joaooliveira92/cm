@@ -12,7 +12,18 @@ import {
 import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifiers } from "../types.js";
 import { HOME_ADVANTAGE_MULTIPLIER, clamp } from "./constants.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import { resolveTeamTactics, type ResolvedTeamTactics } from "./tacticalAdapter.js";
+import { resolveTeamTactics, viewTacticalState, type ResolvedTeamTactics, type TacticalState } from "./tacticalAdapter.js";
+
+/**
+ * Convenience: extract a {@link TacticalState} view from a team's runtime state.
+ * The loop calls this once per minute-slice so resolvers read tactical fields
+ * through the adapter instead of accessing raw `team.resolved.*` fields.
+ */
+export const tacticalView = (team: TeamRuntimeState): TacticalState =>
+  viewTacticalState(
+    team.clubId, team.teamInstructions, team.playersById,
+    team.resolved.teamModifiers, team.resolved.instructions, team.resolved.slots.length,
+  );
 
 
 /**
