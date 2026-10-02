@@ -1,4 +1,4 @@
-import { type Page } from "@playwright/test";
+import { expect, type Page } from "@playwright/test";
 
 /** A club is picked by name, or as the first club in the table that isn't the named one. */
 export type ClubPick = string | { readonly not: string };
@@ -10,6 +10,10 @@ export type ClubPick = string | { readonly not: string };
  *
  * `surface` is the tail of the control's accessible name: `"scout report"`, `"club squad"`, ...
  * Returns the club's name, for callers that pick "any rival" and assert on it afterwards.
+ *
+ * The card opens after a hover delay, and a row re-rendering under the pointer (a standings refresh)
+ * drops the hover, so the card can simply never open. One hover then a click left the click waiting
+ * out its 30s on a loaded machine; the hover is retried until the control shows instead.
  */
 export const openClubSurface = async (
   page: Page,
@@ -27,7 +31,11 @@ export const openClubSurface = async (
           .first();
   const label = (await staffButton.getAttribute("aria-label")) ?? "";
   const clubName = label.slice(0, -" — club staff".length);
-  await staffButton.hover();
-  await page.getByRole("button", { name: `${clubName} — ${surface}`, exact: true }).click();
+  const control = page.getByRole("button", { name: `${clubName} — ${surface}`, exact: true });
+  await expect(async () => {
+    await staffButton.hover();
+    await expect(control).toBeVisible({ timeout: 2_000 });
+  }).toPass({ timeout: 20_000 });
+  await control.click();
   return clubName;
 };
