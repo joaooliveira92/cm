@@ -132,7 +132,10 @@ describe("commentary reads the events around a line", () => {
         ],
         seed,
       );
-      const penaltyMisses = COMMENTARY_TEMPLATES["ShotMissed:penalty"].map((t) => t.replace("{player}", "P One").replace("|", " "));
+      const filled = { player: "P One", he: "he", him: "him", his: "his", He: "He", His: "His" } as Record<string, string>;
+      const penaltyMisses = COMMENTARY_TEMPLATES["ShotMissed:penalty"].map((t) =>
+        t.replace(/\{(\w+)\}/g, (_, name: string) => filled[name] ?? name).replace("|", " "),
+      );
       expect(penaltyMisses).toContain(shot);
     }
   });
@@ -220,5 +223,33 @@ describe("commentary playback, after Championship Manager's events file", () => 
     for (const [key, playback] of Object.entries(SHIPPED.playback)) {
       if (ALWAYS_SHOWN.has(key.split(":")[0] as never)) expect(playback.displayChance, key).toBe(1);
     }
+  });
+});
+
+describe("pronouns (cm-style-commentary 13)", () => {
+  const home = clubId("home");
+  const started: MatchEvent = { _tag: "MatchStarted", seed: 1, homeClubId: home, awayClubId: clubId("away") };
+  const foul: MatchEvent = { _tag: "Foul", minute: 3, half: 1, teamClubId: home, playerId: playerId("p1"), isYellowCard: false };
+  const { table } = parseCommentaryFile("[Foul]\n{He} catches {his} man, and {player} knows {he} was late. Book {him}.\n", SHIPPED);
+
+  it("fills he, him and his for the line's player, capitalised where the line asks", () => {
+    expect(renderWith([started, foul], 1, names, table)[1]!.text).toBe("He catches his man, and P One knows he was late. Book him.");
+  });
+
+  it("asks the resolver for a player's pronouns when it has them", () => {
+    const withPronouns = { ...names, pronounsOf: () => ({ he: "she", him: "her", his: "her" }) };
+    expect(renderWith([started, foul], 1, withPronouns, table)[1]!.text).toBe("She catches her man, and P One knows she was late. Book her.");
+  });
+
+  it("leaves no bare he, him or his about a player in the shipped file", () => {
+    const bare = /(?<!\{)\b(he|him|his|He|His)\b(?!\})/;
+    const offenders = Object.entries(COMMENTARY_TEMPLATES).flatMap(([key, pool]) =>
+      pool.filter((line) => bare.test(line)).map((line) => `[${key}] ${line}`),
+    );
+    // The referee's pocket and the manager's area are theirs, not a player's.
+    expect(offenders).toEqual([
+      "[YellowCard] The referee goes to his pocket: a yellow for {player}.",
+      "[TacticsChanged:instructions] The {team} manager is on the edge of his area, changing the approach.",
+    ]);
   });
 });

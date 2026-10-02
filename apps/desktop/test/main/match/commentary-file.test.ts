@@ -72,7 +72,7 @@ describe("Preferences' view of the commentary file (cm-style-commentary 04)", ()
 
       yield* edit(dir, "[Foul]\n{player} fouls {player2}.\n{player} fouls.\n", 4_000);
       expect((yield* commentaryFileStatus(dir)).problems).toEqual([
-        "line 2: skipped, {player2} isn't available in [Foul] (it has {player}, {team}, {team2})",
+        expect.stringMatching(/^line 2: skipped, \{player2\} isn't available in \[Foul\] \(it has \{player\}, /),
       ]);
     }),
   );

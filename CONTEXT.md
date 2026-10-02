@@ -264,8 +264,9 @@ _Avoid_: Commentary (fine as the general feed/feature name; Commentary Line is o
 **Commentary Template**:
 One phrasing in the pool of a Commentary File section (e.g. one of several ways to phrase a header
 `Goal`), with placeholders: `{player}` and `{team}` for the player and club a moment is about,
-`{player2}` and `{team2}` for the second player and the other club, and `{score}`, `{injury}`,
-`{side}` or `{formation}` where the section offers them. A `|` splits it into follow-on parts. A
+`{player2}` and `{team2}` for the second player and the other club, `{he}`, `{him}` and `{his}` for
+the player's pronouns, and `{score}`, `{injury}`, `{side}` or `{formation}` where the section offers
+them. A `|` splits it into follow-on parts. A
 Commentary Line is a Commentary Template with its placeholders filled from the source Match Event and
 the events before it; the match simulation never reads them. This is display data, not simulation
 state.

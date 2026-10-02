@@ -64,7 +64,20 @@ const CHANCE_TAGS: ReadonlySet<string> = new Set<ChanceTag>([
 export interface CommentaryNameResolver {
   readonly clubName: (clubId: string) => string;
   readonly playerName: (playerId: string) => string;
+  /** A player's pronouns, for `{he}`, `{him}` and `{his}`. Every league is men's today, so callers
+   *  leave this out and get he/him/his; a competition that needs others supplies them here. */
+  readonly pronounsOf?: (playerId: string) => Pronouns;
 }
+
+export interface Pronouns {
+  readonly he: string;
+  readonly him: string;
+  readonly his: string;
+}
+
+const HE: Pronouns = { he: "he", him: "him", his: "his" };
+
+const capitalised = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 /** One follow-on part of a line, and how long it holds before the line goes on. */
 export interface CommentaryPart {
@@ -144,6 +157,11 @@ const drawFor = (
   const clubs = (clubId: string) =>
     clubId === homeClubId ? { team: homeName, team2: awayName } : { team: names.clubName(clubId), team2: homeName };
   const sides = { team: homeName, team2: awayName };
+  /** `{player}` and his pronouns. */
+  const person = (playerId: string): Record<string, string> => {
+    const { he, him, his } = names.pronounsOf?.(playerId) ?? HE;
+    return { player: names.playerName(playerId), he, him, his, He: capitalised(he), His: capitalised(his) };
+  };
   /** `{player2}` on a goal or a save: the goalkeeper, when the event names one. */
   const keeper = (keeperId: string | undefined): Record<string, string> =>
     keeperId === undefined ? {} : { player2: names.playerName(keeperId) };
@@ -159,11 +177,11 @@ const drawFor = (
     case "Counter":
       return {
         keys: [event._tag],
-        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.assistPlayerId ?? event.playerId) },
+        tokens: { ...clubs(event.teamClubId), ...person(event.assistPlayerId ?? event.playerId) },
       };
     case "KeyPass": {
       const chance = chanceBefore(previous);
-      const tokens = { ...clubs(event.teamClubId), player: names.playerName(event.playerId) };
+      const tokens = { ...clubs(event.teamClubId), ...person(event.playerId) };
       if (chance === null || chance.assistPlayerId !== event.playerId || !CHANCE_TYPES.has(event.chanceType)) {
         return { keys: ["KeyPass"], tokens };
       }
@@ -182,7 +200,7 @@ const drawFor = (
         tokens: {
           ...clubs(event.teamClubId),
           ...keeper(event.keeperId),
-          player: names.playerName(event.playerId),
+          ...person(event.playerId),
           score: score(event.homeScore, event.awayScore),
         },
       };
@@ -190,18 +208,18 @@ const drawFor = (
     case "ShotOnTarget":
       return {
         keys: [`ShotOnTarget:${shotKindFor(event, previous)}`],
-        tokens: { ...clubs(event.teamClubId), ...keeper(event.keeperId), player: names.playerName(event.playerId) },
+        tokens: { ...clubs(event.teamClubId), ...keeper(event.keeperId), ...person(event.playerId) },
       };
     case "ShotMissed":
       return {
         keys: [`ShotMissed:${shotKindFor(event, previous)}`],
-        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId) },
+        tokens: { ...clubs(event.teamClubId), ...person(event.playerId) },
       };
     case "Corner":
     case "FreeKick":
       return {
         keys: [event._tag],
-        tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId), side: phrases[`side.${event.side}`] },
+        tokens: { ...clubs(event.teamClubId), ...person(event.playerId), side: phrases[`side.${event.side}`] },
       };
     case "Foul":
     case "Offside":
@@ -209,13 +227,13 @@ const drawFor = (
     case "Penalty":
     case "YellowCard":
     case "RedCard":
-      return { keys: [event._tag], tokens: { ...clubs(event.teamClubId), player: names.playerName(event.playerId) } };
+      return { keys: [event._tag], tokens: { ...clubs(event.teamClubId), ...person(event.playerId) } };
     case "Injury":
       return {
         keys: [`Injury:${event.trigger}:${event.severity}`],
         tokens: {
           ...clubs(event.teamClubId),
-          player: names.playerName(event.playerId),
+          ...person(event.playerId),
           injury: phrases[`injury.${event.type}`],
         },
       };
@@ -224,7 +242,7 @@ const drawFor = (
         keys: [event.forcedByInjury ? "Substitution:forced" : "Substitution"],
         tokens: {
           ...clubs(event.teamClubId),
-          player: names.playerName(event.inPlayerId),
+          ...person(event.inPlayerId),
           player2: names.playerName(event.outPlayerId),
         },
       };

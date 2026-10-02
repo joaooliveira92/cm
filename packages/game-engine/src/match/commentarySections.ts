@@ -38,7 +38,22 @@ export type CommentaryTemplateKey =
 
 /** The placeholders a line may use. `{player}`/`{team}` are the player and club a moment is about;
  * `{player2}`/`{team2}` the second player and the other club. */
-export type Placeholder = "player" | "player2" | "team" | "team2" | "score" | "injury" | "side" | "formation";
+export type Placeholder =
+  | "player"
+  | "player2"
+  | "team"
+  | "team2"
+  | "score"
+  | "injury"
+  | "side"
+  | "formation"
+  | PronounPlaceholder;
+
+/** Pronouns for a line's `{player}` (cm-style-commentary 13), so no file hard-codes one. Capitalised
+ *  forms start a sentence. */
+export type PronounPlaceholder = "he" | "him" | "his" | "He" | "His";
+
+const PRONOUNS: ReadonlyArray<Placeholder> = ["he", "him", "his", "He", "His"];
 
 /** How important a moment is, after Championship Manager's event priority: a player watching Key
  *  highlights sees only `key` lines in the commentary bar, Extended adds `extended`, Full shows all. */
@@ -106,8 +121,8 @@ const SITUATIONS = ["opener", "equaliser", "lead", "extend", "reply"] as const s
 const TRIGGERS = ["contact", "non-contact"] as const satisfies ReadonlyArray<InjuryTrigger>;
 const SEVERITIES = ["light", "medium", "severe"] as const satisfies ReadonlyArray<InjurySeverity>;
 
-const PLAYER_MOMENT: ReadonlyArray<Placeholder> = ["player", "team", "team2"];
-const TWO_PLAYERS: ReadonlyArray<Placeholder> = ["player", "player2", "team", "team2"];
+const PLAYER_MOMENT: ReadonlyArray<Placeholder> = ["player", "team", "team2", ...PRONOUNS];
+const TWO_PLAYERS: ReadonlyArray<Placeholder> = ["player", "player2", "team", "team2", ...PRONOUNS];
 const SIDES: ReadonlyArray<Placeholder> = ["team", "team2", "score"];
 
 /** Every section, with the placeholders its lines may use. */
