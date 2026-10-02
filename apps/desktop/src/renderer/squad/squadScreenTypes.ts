@@ -87,7 +87,6 @@ export interface SquadScreenActions {
   readonly setView: (viewId: SquadViewId) => void;
   readonly toggleOneColumn: (columnId: string) => void;
   readonly clearFilterCommand: () => void;
-  readonly clearSortCommand: () => void;
   readonly refreshSquad: () => void;
   /** Encode the current list state into URL search params so back/forward restores it. */
   readonly captureForNavigation: (state: Partial<DecodedListState>) => void;
