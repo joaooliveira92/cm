@@ -5,8 +5,13 @@ export {
   simulateMatch,
   simulateMatchWithCondition,
   simulateMatchWithCounts,
+  resolveSlice,
   type AiTacticalChange,
   type AiTacticalController,
   type MatchPlayerCountEntry,
   type SimulateMatchInput,
 } from "./loop.js";
+
+export * from "./phaseStrengthResolver.js";
+export * from "./eventResolver.js";
+export * from "./setPieceResolver.js";

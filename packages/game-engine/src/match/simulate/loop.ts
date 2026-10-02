@@ -3,27 +3,18 @@ import type { MatchCommand } from "../commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "../events.js";
 import type { MatchTeamSetup } from "../types.js";
 import {
-  BASE_ATTACK_EVENT_CHANCE,
   HALF_LENGTH_MINUTES,
   STOPPAGE_MAX_MINUTES,
   STOPPAGE_MIN_MINUTES,
   clamp,
 } from "./constants.js";
-import {
-  resolveAttackingEvent,
-  resolveCards,
-  resolveContactDuels,
-  resolveNonContactInjuries,
-  resolveOffside,
-} from "./resolvers.js";
-import { resolveSetPieces } from "./setPieceResolvers.js";
+import { PhaseStrengthResolver } from "./phaseStrengthResolver.js";
+import { EventResolver } from "./eventResolver.js";
+import { SetPieceResolver } from "./setPieceResolver.js";
 import {
   applyCommand,
   applyForcedOff,
-  computeTeamStrengths,
-  conditionStaminaEquivalent,
   decayConditions,
-  effectiveStrengths,
   initTeamState,
   pickPlayerId,
   type TeamRuntimeState,
@@ -51,11 +42,8 @@ export type AiTacticalController = (state: {
   readonly justHadGoal: boolean;
   readonly homeClubId: string;
   readonly awayClubId: string;
-  /** The team's current mentality. */
   readonly currentMentality: string;
-  /** Whether this team has Men Behind The Ball active. */
   readonly currentMenBehindTheBall: boolean;
-  /** The club ID that this AI controller manages. */
   readonly aiClubId: string;
 }) => ReadonlyArray<AiTacticalChange>;
 
@@ -63,16 +51,10 @@ export interface SimulateMatchInput {
   readonly seed: number;
   readonly home: MatchTeamSetup;
   readonly away: MatchTeamSetup;
-  /** The home club's Regimen pillar value (1-5). Defaults to 3 (neutral). */
   readonly homeRegimen?: number;
-  /** The away club's Regimen pillar value (1-5). Defaults to 3 (neutral). */
   readonly awayRegimen?: number;
-  /** Commands applied at the start of the given absolute minute (1-90), before that minute's Minute-Slice resolves. */
   readonly commandsByMinute?: ReadonlyMap<number, ReadonlyArray<MatchCommand>>;
-  /** Commands applied at halftime — doesn't consume a substitution window (ticket 12). */
   readonly halftimeCommands?: ReadonlyArray<MatchCommand>;
-  /** Optional AI tactical controller callback, called every 5 minutes + after goals and red cards.
-   *  Implemented outside the engine; the controller is deterministic when its seed matches. */
   readonly aiController?: AiTacticalController;
 }
 
@@ -96,7 +78,27 @@ export interface TeamStats {
   readonly chancesByType: Record<string, number>;
 }
 
-const resolveSlice = (
+/** A per-minute on-pitch head-count snapshot for both clubs (ticket 11). */
+export interface MatchPlayerCountEntry {
+  readonly half: MatchHalf;
+  readonly minute: number;
+  readonly homeCount: number;
+  readonly awayCount: number;
+}
+
+/** Internal result of the simulation loop. */
+interface SimulationResult {
+  readonly events: ReadonlyArray<MatchEvent>;
+  readonly home: TeamRuntimeState;
+  readonly away: TeamRuntimeState;
+  readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
+}
+
+/**
+ * One minute-slice of match resolution: conditions decay, phase strengths and possession are
+ * computed, all events are resolved, and set pieces are resolved from the slice's events.
+ */
+export const resolveSlice = (
   home: TeamRuntimeState,
   away: TeamRuntimeState,
   minute: number,
@@ -105,167 +107,48 @@ const resolveSlice = (
   random: RandomSource,
   events: Array<MatchEvent>,
 ): void => {
+  // Condition decay
   decayConditions(home);
   decayConditions(away);
 
-  // Compute base phase strengths (no possession adjustment) for possession probability
-  const homeStrengths = computeTeamStrengths(home, false);
-  const awayStrengths = computeTeamStrengths(away, false);
-  const homeCondition = conditionStaminaEquivalent(home);
-  const awayCondition = conditionStaminaEquivalent(away);
+  // Phase strength + possession resolution
+  const { attacker, defender, attackerEff, defenderEff, homeHasPossession } =
+    PhaseStrengthResolver.resolve(home, away, minute, random);
 
-  const homeEff = effectiveStrengths(homeStrengths, minute, homeCondition, true);
-  const awayEff = effectiveStrengths(awayStrengths, minute, awayCondition, false);
-
-  // Possession based on midfield & passing behaviour, plus counter-attack & focus passing adjustments
-  const homePossessionModifier = home.resolved.teamModifiers.possessionBias
-    * home.resolved.teamModifiers.counterPossessionPenalty
-    * home.resolved.teamModifiers.focusPossessionBias;
-  const awayPossessionModifier = away.resolved.teamModifiers.possessionBias
-    * away.resolved.teamModifiers.counterPossessionPenalty
-    * away.resolved.teamModifiers.focusPossessionBias;
-
-  // GK distribution effect on possession retention (ticket 28)
-  const gkRetention = (team: TeamRuntimeState): number => {
-    const gkSlot = team.resolved.slots.find((s) => s.isGoalkeeper);
-    return gkSlot?.behaviour.possessionRetention ?? 1.0;
-  };
-  const homeGKRet = gkRetention(home);
-  const awayGKRet = gkRetention(away);
-
-  const homeEffMid = homeEff.midfield * homePossessionModifier * homeGKRet;
-  const awayEffMid = awayEff.midfield * awayPossessionModifier * awayGKRet;
-  const totalMidfield = homeEffMid + awayEffMid;
-  const homePossessionProbability = totalMidfield > 0 ? homeEffMid / totalMidfield : 0.5;
-  const homeHasPossession = random.next() < homePossessionProbability;
-
-  // Re-compute phase strengths WITH run adjustments based on who has possession
-  // Runners count in their run target's phase when their team has the ball
-  const homePossessionStrengths = computeTeamStrengths(home, homeHasPossession);
-  const awayPossessionStrengths = computeTeamStrengths(away, !homeHasPossession);
-  const attacker = homeHasPossession ? home : away;
-  const defender = homeHasPossession ? away : home;
-  const attackerEff = effectiveStrengths(
-    homeHasPossession ? homePossessionStrengths : awayPossessionStrengths,
+  // Event resolution
+  const eventsEmitted = EventResolver.resolveEvents(
+    attacker,
+    defender,
+    attackerEff,
+    defenderEff,
     minute,
-    homeHasPossession ? homeCondition : awayCondition,
+    half,
+    score,
     homeHasPossession,
-  );
-  const defenderEff = effectiveStrengths(
-    homeHasPossession ? awayPossessionStrengths : homePossessionStrengths,
-    minute,
-    homeHasPossession ? awayCondition : homeCondition,
-    !homeHasPossession,
+    random,
+    events,
   );
 
-  // Mentality effect from ResolvedInstructions (attack factor boosts attack attempts)
-  const mentalityAttackBias = attacker.resolved.instructions.attack;
-
-  const attackDefenseTotal = attackerEff.attack * mentalityAttackBias + defenderEff.defense;
-  const attackDefenseRatio = attackDefenseTotal > 0 ? (attackerEff.attack * mentalityAttackBias) / attackDefenseTotal : 0.5;
-  const eventProbability = clamp(
-    BASE_ATTACK_EVENT_CHANCE * attackDefenseRatio * 2,
-    0,
-    0.6,
-  );
-
-  // Snapshot event count before this slice's events so we can detect set-piece triggers
-  const eventCountBeforeSlice = events.length;
-
-  if (random.next() < eventProbability) {
-    resolveAttackingEvent(attacker, defender, minute, half, score, attacker === home, random, events);
-  }
-
-  // Offside check for the attacking team
-  resolveOffside(attacker, defender, minute, half, random, events);
-
-  // Beaten trap check: when defending team uses offside trap and the attacker beats it
-  if (defender.resolved.teamModifiers.offsideTrapActive > 0 && random.next() < 0.25) {
-    const beatenPlayerId = pickPlayerId(attacker, random, true);
-    if (beatenPlayerId) {
-      events.push({
-        _tag: "BeatenTrap",
-        minute,
-        half,
-        teamClubId: attacker.clubId,
-        playerId: beatenPlayerId,
-      });
-    }
-  }
-
-  // Cards now come through resolveCards (which calls resolveFoul internally)
-  resolveCards(defender, minute, half, random, events);
-  resolveContactDuels(attacker, defender, minute, half, random, events);
-  resolveNonContactInjuries(home, minute, half, random, events);
-  resolveNonContactInjuries(away, minute, half, random, events);
-
-  // Resolve set pieces from events emitted in this slice (corners from saved/blocked shots
-  // and cleared crosses; free kicks and penalties from fouls).
-  resolveSetPieces(
+  // Set piece resolution from events emitted in this slice
+  SetPieceResolver.resolve({
     attacker,
     defender,
     minute,
     half,
     score,
-    attacker === home,
+    attackerIsHome: attacker === home,
     home,
     away,
-    eventCountBeforeSlice,
+    eventCountBeforeSlice: events.length - eventsEmitted,
     random,
-    events,
-  );
+  }, events);
 };
 
-const applyScheduledCommands = (
-  home: TeamRuntimeState,
-  away: TeamRuntimeState,
-  minute: number,
-  half: MatchHalf,
-  commands: ReadonlyArray<MatchCommand> | undefined,
-  isHalftime: boolean,
-  events: Array<MatchEvent>,
-): void => {
-  if (!commands) return;
-  for (const command of commands) {
-    const team = command.clubId === home.clubId ? home : command.clubId === away.clubId ? away : undefined;
-    if (!team) continue;
-    if (command._tag === "ForceOff") {
-      applyForcedOff(team, command.playerId, minute, half, events);
-      continue;
-    }
-    const result = applyCommand(team, command, minute, half, isHalftime);
-    if (result.accepted && command._tag === "MakeSubstitution") {
-      events.push({
-        _tag: "Substitution",
-        minute,
-        half,
-        teamClubId: team.clubId,
-        outPlayerId: command.outPlayerId,
-        inPlayerId: command.inPlayerId,
-        forcedByInjury: false,
-      });
-    }
-  }
-};
-
-const stoppageLength = (causingEventCount: number, random: RandomSource): number =>
-  Math.round(clamp(STOPPAGE_MIN_MINUTES + causingEventCount * 0.5 + random.next() * 2, STOPPAGE_MIN_MINUTES, STOPPAGE_MAX_MINUTES));
-
-/** One per-minute on-pitch head-count snapshot for both clubs — the read-model's live 10-men /
- * empty-slot surface (ticket 11). `homeCount`/`awayCount` are `resolved.slots.length`, so an empty
- * slot (forced off / red card) is a dropped count and a last-GK stand-in still nets one fewer. */
-export interface MatchPlayerCountEntry {
-  readonly half: MatchHalf;
-  readonly minute: number;
-  readonly homeCount: number;
-  readonly awayCount: number;
-}
-
-/** The shared body of `simulateMatch`/`simulateMatchWithCondition` — runs the full Minute-Slice /
- * Stoppage-Slice loop and returns the state so callers can read what `simulateMatch` folds away. */
-const runSimulation = (
-  input: SimulateMatchInput,
-): { readonly events: ReadonlyArray<MatchEvent>; readonly home: TeamRuntimeState; readonly away: TeamRuntimeState; readonly counts: ReadonlyArray<MatchPlayerCountEntry> } => {
+/**
+ * The shared body of the `simulateMatch*` entry points: runs the full Minute-Slice /
+ * Stoppage-Slice loop and returns the state so callers can read what each wrapper folds away.
+ */
+const runSimulation = (input: SimulateMatchInput): SimulationResult => {
   const random = createSeededRng(input.seed);
   const events: Array<MatchEvent> = [];
   const home = initTeamState(input.home, input.homeRegimen ?? 3);
@@ -302,7 +185,6 @@ const runSimulation = (
           team.teamInstructions = { ...team.teamInstructions, ...change.teamOverrides };
         }
         if (change.mentality || change.teamOverrides) {
-          // Re-resolve team-level modifiers and instructions
           const newTeamModifiers = resolveTeamModifiers(team.teamInstructions);
           team.resolved.teamModifiers = newTeamModifiers;
           team.resolved.instructions = resolveTeamInstructions(
@@ -333,11 +215,14 @@ const runSimulation = (
     const halfStartEventCount = events.length;
     for (let minuteInHalf = 1; minuteInHalf <= HALF_LENGTH_MINUTES; minuteInHalf++) {
       const minute = half === 1 ? minuteInHalf : HALF_LENGTH_MINUTES + minuteInHalf;
+
       applyScheduledCommands(home, away, minute, half, input.commandsByMinute?.get(minute), false, events);
+
       if (input.aiController && minute - lastAiMinute >= 5) {
         invokeAiController(minute, half, false, false);
         lastAiMinute = minute;
       }
+
       resolveSlice(home, away, minute, half, score, random, events);
       snapshotCounts(minute, half);
     }
@@ -345,11 +230,12 @@ const runSimulation = (
     const causingEventCount = events
       .slice(halfStartEventCount)
       .filter((event) => STOPPAGE_CAUSING_TAGS.has(event._tag)).length;
-    const addedMinutes = stoppageLength(causingEventCount, random);
+    const addedMinutes = Math.round(clamp(STOPPAGE_MIN_MINUTES + causingEventCount * 0.5 + random.next() * 2, STOPPAGE_MIN_MINUTES, STOPPAGE_MAX_MINUTES));
     const stoppageMinute = half === 1 ? HALF_LENGTH_MINUTES + addedMinutes : HALF_LENGTH_MINUTES * 2 + addedMinutes;
     if (causingEventCount > 0 && input.aiController) {
       invokeAiController(stoppageMinute, half, false, true);
     }
+
     resolveSlice(home, away, stoppageMinute, half, score, random, events);
     snapshotCounts(stoppageMinute, half);
 
@@ -371,18 +257,11 @@ const runSimulation = (
   return { events, home, away, counts };
 };
 
-/**
- * Resolves a full match from `MatchStarted` to `FullTimeWhistle` via the Minute-Slice / Stoppage-
- * Slice loop (ticket 12). Fully deterministic from `input.seed` and the supplied commands — the
- * same inputs always produce an identical `MatchEvent` timeline.
- */
+/** Deterministic match simulation from seed + input. Fully deterministic: same inputs always produce the same `MatchEvent` timeline. */
 export const simulateMatch = (input: SimulateMatchInput): ReadonlyArray<MatchEvent> =>
   runSimulation(input).events;
 
-/** Deterministic twin of `simulateMatch` that also exposes each player's Condition (%) at full time —
- * the read-model's per-player Condition surface (ticket 02). Keyed by playerId across both teams;
- * substitutes and forced-off players carry their last live Condition. Same inputs, same `events`
- * array as `simulateMatch`. */
+/** Deterministic twin of `simulateMatch` that also exposes each player's Condition (%) at full time — the read-model's per-player Condition surface (ticket 02). */
 export const simulateMatchWithCondition = (
   input: SimulateMatchInput,
 ): { readonly events: ReadonlyArray<MatchEvent>; readonly conditions: ReadonlyMap<PlayerId, number> } => {
@@ -390,9 +269,7 @@ export const simulateMatchWithCondition = (
   return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]) };
 };
 
-/** Deterministic twin of `simulateMatch` that also returns each player's full-time Condition and the
- * per-minute on-pitch head-count timeline for both clubs (ticket 11's 10-men / empty-slot / GK-stand-in
- * surface). Same inputs, same `events`/`conditions` as `simulateMatchWithCondition`. */
+/** Deterministic twin of `simulateMatch` that also returns each player's full-time Condition and the per-minute on-pitch head-count timeline for both clubs (ticket 11). */
 export const simulateMatchWithCounts = (
   input: SimulateMatchInput,
 ): {
@@ -402,4 +279,36 @@ export const simulateMatchWithCounts = (
 } => {
   const { events, home, away, counts } = runSimulation(input);
   return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]), counts };
+};
+
+const applyScheduledCommands = (
+  home: TeamRuntimeState,
+  away: TeamRuntimeState,
+  minute: number,
+  half: MatchHalf,
+  commands: ReadonlyArray<MatchCommand> | undefined,
+  isHalftime: boolean,
+  events: Array<MatchEvent>,
+): void => {
+  if (!commands) return;
+  for (const command of commands) {
+    const team = command.clubId === home.clubId ? home : command.clubId === away.clubId ? away : undefined;
+    if (!team) continue;
+    if (command._tag === "ForceOff") {
+      applyForcedOff(team, command.playerId, minute, half, events);
+      continue;
+    }
+    const result = applyCommand(team, command, minute, half, isHalftime);
+    if (result.accepted && command._tag === "MakeSubstitution") {
+      events.push({
+        _tag: "Substitution",
+        minute,
+        half,
+        teamClubId: team.clubId,
+        outPlayerId: command.outPlayerId,
+        inPlayerId: command.inPlayerId,
+        forcedByInjury: false,
+      });
+    }
+  }
 };
