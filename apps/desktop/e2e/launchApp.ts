@@ -268,6 +268,8 @@ const NAV_PATH = {
   "match day": ["analysis", "analysis-match"],
   "season summary": ["analysis", "analysis-season"],
   manager: ["club", "club-manager"],
+  news: ["news", "news-inbox"],
+  coaching: ["training", "training-coaching"],
   "club staff": ["club", "club-staff"],
   "club information": ["club", "club-information"],
   "club finances": ["club", "club-finances"],

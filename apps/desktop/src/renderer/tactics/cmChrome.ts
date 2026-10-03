@@ -25,8 +25,5 @@ export const CM_BUTTON_CLASS = `cm-button-gradient inline-flex items-center gap-
 /** A pill-styled native dropdown, sized by its caller. Disabled, it fades as CM's unticked rows did. */
 export const CM_SELECT_CLASS = `cm-button-gradient rounded-control border border-cm-button-border px-2 py-0.5 text-label font-semibold text-white shadow-chrome disabled:cursor-not-allowed disabled:opacity-45 [&>option]:bg-popover [&>option]:text-popover-foreground ${FOCUS}`;
 
-/** The tick box, in the pill colour, with a white tick. */
-export const CM_TICK_CLASS = "size-4 cursor-pointer accent-cm-button-top disabled:cursor-not-allowed";
-
 /** The yellow line a ticked setting shows in its control column. */
 export const CM_HINT_CLASS = "truncate text-label font-semibold text-cm-title";

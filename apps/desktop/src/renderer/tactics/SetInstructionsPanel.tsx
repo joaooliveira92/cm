@@ -8,7 +8,7 @@
  * stepping through players here are the same selection.
  */
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 import { Tactic, type SquadPlayerView } from "@cm-clone/contracts";
 import {
   PLAYER_OVERRIDE_VALUES,
@@ -30,6 +30,15 @@ import {
   type TeamSetPieces,
   type TeamSwitch,
 } from "@cm-clone/shared";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "../components/ui/command.js";
+import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.js";
 import { FOCUS_RING } from "../focus.js";
 import { CM_BUTTON_CLASS, CM_SELECT_CLASS } from "./cmChrome.js";
 import {
@@ -296,6 +305,72 @@ const TEMPLATE_LABEL: Record<InstructionTemplate, string> = {
 const playerLabel = (player: SquadPlayerView | undefined, index: number): string =>
   player ? `${player.lastName}, ${player.firstName.slice(0, 1)}` : `Slot ${index + 1}`;
 
+/** The title's player switcher: a searchable list of the starting XI, as Set Priorities' Add picker. */
+const SlotPicker = ({
+  tactic,
+  squadById,
+  starterCount,
+  currentName,
+  onSelectSlot,
+}: {
+  readonly tactic: Tactic;
+  readonly squadById: ReadonlyMap<string, SquadPlayerView>;
+  readonly starterCount: number;
+  readonly currentName: string;
+  readonly onSelectSlot: (slotIndex: number) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger
+        aria-label="Select player slot"
+        className={`ml-1 inline-flex cursor-pointer items-center gap-1 rounded-control px-1 font-bold text-cm-title hover:bg-white/10 ${FOCUS_RING.join(" ")}`}
+      >
+        {currentName}
+        <ChevronDown className="size-4" />
+      </PopoverTrigger>
+      <PopoverContent align="start" className="w-72 p-0">
+        <Command>
+          <CommandInput placeholder="Search players…" aria-label="Search players" />
+          <CommandList>
+            <CommandEmpty>No players found</CommandEmpty>
+            <CommandGroup heading="Starting XI">
+              {tactic.slots.slice(0, starterCount).map((slot, index) => {
+                const player = squadById.get(tactic.assignments[index] ?? "");
+                const position = slotLabel(slot.cell);
+                return (
+                  <CommandItem
+                    key={index}
+                    value={String(index)}
+                    keywords={player ? [player.lastName, player.firstName, position] : [position]}
+                    onSelect={() => {
+                      onSelectSlot(index);
+                      setOpen(false);
+                    }}
+                  >
+                    <span className="flex-1 truncate">
+                      {player ? (
+                        <>
+                          <span className="font-semibold">{player.lastName}</span>
+                          <span className="text-text-secondary">, {player.firstName}</span>
+                        </>
+                      ) : (
+                        `Slot ${index + 1}`
+                      )}
+                    </span>
+                    <span className="text-caption text-text-muted">{position}</span>
+                  </CommandItem>
+                );
+              })}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+};
+
 export const SetInstructionsPanel = ({
   tactic,
   squadById,
@@ -389,18 +464,13 @@ export const SetInstructionsPanel = ({
         title={
           <>
             <span>Instructions for</span>
-            <select
-              value={slotIndex}
-              onChange={(e) => onSelectSlot(Number(e.target.value))}
-              className={`ml-1 cursor-pointer rounded-control bg-transparent pr-1 font-bold text-cm-title hover:bg-white/10 [&>option]:bg-popover [&>option]:text-popover-foreground ${FOCUS_RING.join(" ")}`}
-              aria-label="Select player slot"
-            >
-              {tactic.slots.slice(0, starterCount).map((slot, index) => (
-                <option key={index} value={index}>
-                  {`${playerLabel(squadById.get(tactic.assignments[index] ?? ""), index)} (${slotLabel(slot.cell)})`}
-                </option>
-              ))}
-            </select>
+            <SlotPicker
+              tactic={tactic}
+              squadById={squadById}
+              starterCount={starterCount}
+              currentName={currentName}
+              onSelectSlot={onSelectSlot}
+            />
           </>
         }
         controls={

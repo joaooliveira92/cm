@@ -1,4 +1,4 @@
-import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressItemKey, test } from "./launchApp.js";
 import { savesDir, seedBeforeSeasonEnd } from "./seedSaves.js";
 
 /**
@@ -51,4 +51,59 @@ test("a competition's overview links to its table, fixtures and results", async 
 
   await sections.getByRole("button", { name: "Results" }).click();
   await expect(page.getByRole("main", { name: "Competition Results" })).toBeVisible();
+});
+
+/**
+ * `g 8 q` reaches the Competitions browse list by keyboard through the World
+ * section. Competitions is the World section's first (and only) item, so the
+ * two-level prefix gesture navigates to the screen and the router lands focus.
+ */
+test("g 8 q reaches Competitions by keyboard with semantic focus", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedBeforeSeasonEnd(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-season-end");
+
+  await pressItemKey(page, "world", "world-competitions");
+
+  await expect(page.getByRole("main", { name: "Competitions" })).toBeVisible();
+  await expect(page.locator('[data-focus-id="competitions"]')).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+/**
+ * The Competitions browse list shows at least one competition row on a
+ * before-season-end seed, and each row's heading names the competition rather
+ * than a raw id. The browse list is the gate to the overview and competition
+ * sub-screens, so it must render real data, not a placeholder.
+ */
+test("the Competitions browse list shows at least one competition with a readable name", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedBeforeSeasonEnd(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: before-season-end");
+
+  await goto(page, "competitions");
+  const browse = page.getByRole("list", { name: "Competition browse" });
+  await expect(browse).toBeVisible();
+
+  const rows = browse.getByRole("listitem");
+  await expect(rows.first()).toBeVisible();
+  const count = await rows.count();
+  expect(count).toBeGreaterThan(0);
+
+  // Each row is headed by the competition's display name, never a raw comp_ id.
+  await Promise.all(
+    (await rows.all()).map((row) =>
+      expect(row.getByRole("heading", { level: 2 })).not.toHaveText(/^comp_/),
+    ),
+  );
+
+  // Every competition row has an overview link.
+  const overviewLinks = page.getByRole("button", { name: /— overview$/ });
+  await expect(overviewLinks).toHaveCount(count);
+
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

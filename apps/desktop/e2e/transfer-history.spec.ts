@@ -1,5 +1,5 @@
-import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
-import { savesDir, seedTransferred } from "./seedSaves.js";
+import { continueSeededCareer, expect, goto, pressItemKey, test } from "./launchApp.js";
+import { savesDir, seedFresh, seedTransferred } from "./seedSaves.js";
 
 /**
  * Transfer History's reachable path (Screen 146, group-j ticket 07): the Recruitment submenu opens
@@ -41,5 +41,42 @@ test("Recruitment opens Transfer History with the club's transfers newest first"
   await expect(rows.nth(1).getByRole("cell").nth(4)).toHaveText("3,000,000 Credits");
   await expect(rows.nth(1).getByRole("cell").nth(2)).not.toHaveText("Free Agent");
 
+  await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+/**
+ * A fresh career has no transfer history. The screen renders the heading and the
+ * empty-state sentence rather than a blank page or an error.
+ */
+test("a fresh career shows no transfer history with the empty state sentence", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedFresh(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: fresh");
+
+  await goto(page, "transfer history");
+  await expect(page.getByRole("heading", { name: "Transfer History", level: 1 })).toBeVisible();
+  await expect(page.getByText("This club has completed no transfer yet.")).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
+});
+
+/**
+ * `g 4 w` reaches Transfer History by the two-level prefix through the
+ * Recruitment section. Transfer History is the second Recruitment item (w),
+ * so the keyboard gesture navigates to the screen and the router lands focus.
+ */
+test("g 4 w reaches Transfer History by keyboard with semantic focus", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedTransferred(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: transferred");
+
+  await pressItemKey(page, "recruitment", "recruitment-transfer-history");
+
+  await expect(page.getByRole("heading", { name: "Transfer History", level: 1 })).toBeVisible();
+  await expect(page.locator('[data-focus-id="transferHistory"]')).toBeFocused();
+  await expect(page.getByRole("table", { name: "Transfer History" })).toBeVisible();
   await expect(page.getByRole("alert")).toHaveCount(0);
 });

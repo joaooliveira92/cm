@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { PlayerId, Tactic } from "@cm-clone/contracts";
 import {
@@ -120,7 +120,7 @@ describe("SetInstructionsPanel — team sub-mode", () => {
       (cb) => cb.getAttribute("aria-label") === "Tick to specify passing type",
     );
     expect(passingCheckbox).toBeTruthy();
-    expect((passingCheckbox! as HTMLInputElement).checked).toBe(false);
+    expect(passingCheckbox!.getAttribute("aria-checked")).toBe("false");
 
     // Tick it
     fireEvent.click(passingCheckbox!);
@@ -145,8 +145,7 @@ describe("SetInstructionsPanel — player sub-mode", () => {
     expect(screen.getByRole("region", { name: "Player Instructions" }).textContent).toContain("Instructions for");
     expect(screen.getByRole("group", { name: "Overrides" })).toBeTruthy();
     // The slot selector shows the player name
-    const selectEl = screen.getByLabelText("Select player slot") as HTMLSelectElement;
-    expect(selectEl.value).toBe("0");
+    expect(screen.getByRole("button", { name: "Select player slot" }).textContent).toContain("Last0");
   });
 
   it("shows overrides section", async () => {
@@ -309,15 +308,14 @@ describe("SetInstructionsPanel — slot selector", () => {
       />,
     );
 
-    const selectEl = screen.getByLabelText("Select player slot") as HTMLSelectElement;
-    expect(selectEl).toBeTruthy();
-    // Should show the first player in the dropdown
-    expect(selectEl.value).toBe("0");
+    // The trigger names the first player; opening it lists the starting XI
+    fireEvent.click(screen.getByRole("button", { name: "Select player slot" }));
+    expect(within(screen.getByRole("listbox")).getAllByRole("option")).toHaveLength(11);
   });
 });
 
 describe("SetInstructionsPanel — player selection", () => {
-  it("the slot selector and the step buttons select through the screen", () => {
+  it("the slot selector and the step buttons select through the screen", async () => {
     const selected: Array<number> = [];
     render(
       <SetInstructionsPanel
@@ -329,7 +327,8 @@ describe("SetInstructionsPanel — player selection", () => {
       />,
     );
 
-    fireEvent.change(screen.getByLabelText("Select player slot"), { target: { value: "7" } });
+    fireEvent.click(screen.getByRole("button", { name: "Select player slot" }));
+    fireEvent.click(await screen.findByRole("option", { name: /Last7/ }));
     fireEvent.click(screen.getByRole("button", { name: "Previous player" }));
     fireEvent.click(screen.getByRole("button", { name: "Next player" }));
     expect(selected).toEqual([7, 2, 4]);
@@ -353,7 +352,7 @@ describe("SetInstructionsPanel — player selection", () => {
 });
 
 describe("SetInstructionsPanel — keyboard reachability", () => {
-  it("all controls are native buttons, checkboxes or selects", async () => {
+  it("all controls are native buttons or selects, or focusable checkboxes", async () => {
     const tactic = defaultTactic();
     render(
       <SetInstructionsPanel
@@ -371,6 +370,9 @@ describe("SetInstructionsPanel — keyboard reachability", () => {
     expect(controls.length).toBeGreaterThan(10);
     for (const control of controls) {
       expect(["INPUT", "SELECT", "BUTTON"]).toContain(control.tagName);
+    }
+    for (const tick of screen.getAllByRole("checkbox")) {
+      expect(tick.tabIndex).toBe(0);
     }
   });
 });

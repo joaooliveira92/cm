@@ -9,8 +9,8 @@ import {
   CM_PANEL_CLASS,
   CM_PANEL_TITLE_CLASS,
   CM_SELECT_CLASS,
-  CM_TICK_CLASS,
 } from "./cmChrome.js";
+import { Checkbox } from "../components/ui/checkbox.js";
 
 /** camelCase id to Title Case with spaces, eg "closingDown" → "Closing Down". */
 export const displayName = (key: string): string =>
@@ -63,12 +63,10 @@ export const TickChoiceRow = ({
 
   return (
     <div className={ROW_CLASS}>
-      <input
+      <Checkbox
         id={id}
-        type="checkbox"
         checked={isTicked}
-        onChange={() => onChange(isTicked ? offValue : options[0]!)}
-        className={CM_TICK_CLASS}
+        onCheckedChange={() => onChange(isTicked ? offValue : options[0]!)}
         aria-label={tickHint}
         disabled={disabled}
       />
@@ -115,12 +113,10 @@ export const TickFlagRow = ({
   const id = useId();
   return (
     <div className={ROW_CLASS}>
-      <input
+      <Checkbox
         id={id}
-        type="checkbox"
         checked={enabled}
-        onChange={(e) => onChange(e.target.checked)}
-        className={CM_TICK_CLASS}
+        onCheckedChange={(checked) => onChange(checked)}
         aria-label={tickHint}
         disabled={disabled}
       />
