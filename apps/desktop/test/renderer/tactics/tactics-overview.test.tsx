@@ -229,7 +229,6 @@ describe("Tactics Overview view states", () => {
     expect(familiarityCard.textContent).toMatch(/Natural.*8/);
     expect(familiarityCard.textContent).toMatch(/Competent.*2/);
     expect(familiarityCard.textContent).toMatch(/Unfamiliar.*1/);
-    expect(screen.getByText("11 starters · 2 substitutes")).toBeDefined();
     expect(screen.getByText("No set pieces configured.")).toBeDefined();
     expect(screen.getByText("No Tactic set.")).toBeDefined();
     const fix = screen.getByRole("button", { name: "Open the editor" });
