@@ -65,6 +65,10 @@ const ownCount = (event: MatchEvent): keyof Counted | null => {
     case "HoldUpLayOff":
     case "Counter":
     case "Foul":
+    case "Tackle":
+    case "Interception":
+    case "HeaderDuel":
+    case "PossessionTally":
     case "Offside":
     case "BeatenTrap":
     case "KeyPass":
@@ -135,7 +139,12 @@ export const rateSide = (
     if (event._tag === "Goal") {
       for (const playerId of onNow) bump(event.teamClubId === clubId ? goalsFor : goalsAgainst, playerId);
     }
-    if (event._tag === "MatchStarted" || event._tag === "HalfTimeReached" || event._tag === "FullTimeWhistle") continue;
+    if (
+      event._tag === "MatchStarted" ||
+      event._tag === "HalfTimeReached" ||
+      event._tag === "FullTimeWhistle" ||
+      event._tag === "PossessionTally"
+    ) continue;
     if (event.teamClubId !== clubId) continue;
     if (event._tag === "Substitution") {
       if (!starters.has(event.inPlayerId) && !cameOn.has(event.inPlayerId)) cameOn.set(event.inPlayerId, event.minute);

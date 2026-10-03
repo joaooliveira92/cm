@@ -38,6 +38,7 @@ describe("the shipped commentary file", () => {
         away: buildTeam(clubId("away"), seed + 1000).setup,
       });
       for (const line of renderCommentary(events, seed, names, SHIPPED)) {
+        if (line.silent) continue;
         expect(line.text, line.tag).not.toMatch(/\{\w+\}/);
         expect(line.text.trim(), line.tag).not.toBe("");
       }

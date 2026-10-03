@@ -98,6 +98,42 @@ export interface CounterEvent extends TeamPlayerEvent {
 export interface FoulEvent extends TeamPlayerEvent {
   readonly _tag: "Foul";
   readonly isYellowCard: boolean;
+  /** The player brought down: a possession-side player, picked on the attribution stream when the
+   *  foul is recorded. Optional so timelines stored before it decode; the fold counts Fld only where
+   *  it is present. */
+  readonly fouledPlayerId?: PlayerId;
+}
+
+/** The credited winning defender on a slice where the side in possession created no attack. */
+export interface TackleEvent extends TeamPlayerEvent {
+  readonly _tag: "Tackle";
+}
+
+/** The credited defender who read the ball on a slice where the side in possession created no attack. */
+export interface InterceptionEvent extends TeamPlayerEvent {
+  readonly _tag: "Interception";
+}
+
+/** An aerial duel decided by the engine's header rule. `attacking` is true when the winner is the
+ *  header shooter; `teamClubId` is the attacking side's club. Attempted is credited for both players,
+ *  won for the winner. */
+export interface HeaderDuelEvent extends BaseMatchEvent {
+  readonly _tag: "HeaderDuel";
+  readonly half: MatchHalf;
+  readonly teamClubId: ClubId;
+  readonly winnerId: PlayerId;
+  readonly loserId: PlayerId;
+  readonly attacking: boolean;
+}
+
+/** The cumulative count of Minute-Slices each side has had the ball so far. Emitted at the end of
+ *  every eventful slice and always at half time and full time; a live cut reads the last one at or
+ *  before the revealed position. */
+export interface PossessionTallyEvent extends BaseMatchEvent {
+  readonly _tag: "PossessionTally";
+  readonly half: MatchHalf;
+  readonly homeSlices: number;
+  readonly awaySlices: number;
 }
 
 /** A corner kick awarded after a saved/blocked shot or a cleared cross. The taker delivers from this event. */
@@ -195,6 +231,10 @@ export type MatchEvent =
   | HoldUpLayOffEvent
   | CounterEvent
   | FoulEvent
+  | TackleEvent
+  | InterceptionEvent
+  | HeaderDuelEvent
+  | PossessionTallyEvent
   | OffsideEvent
   | BeatenTrapEvent
   | KeyPassEvent

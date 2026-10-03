@@ -23,7 +23,8 @@ export class EventResolver {
    * Resolves the complete set of events for one minute-slice.
    * Called from the simulation loop after phase strengths have been computed.
    *
-   * Returns the number of events emitted during this slice (for set-piece trigger detection).
+   * Returns the number of events emitted during this slice (for set-piece trigger detection) and
+   * whether the side in possession produced an attack (the fact the attribution pass credits).
    */
   static resolveEvents(
     attacker: TeamRuntimeState,
@@ -38,7 +39,7 @@ export class EventResolver {
     attackerIsHome: boolean,
     random: RandomSource,
     events: Array<MatchEvent>,
-  ): number {
+  ): { readonly eventsEmitted: number; readonly attackCreated: boolean } {
     // Snapshot event count before this slice's events so we can detect set-piece triggers
     const eventCountBeforeSlice = events.length;
 
@@ -56,8 +57,10 @@ export class EventResolver {
     );
 
     // Resolve attacking event based on probability
+    let attackCreated = false;
     if (random.next() < eventProbability) {
       resolveAttackingEvent(attacker, defender, minute, half, score, attackerIsHome, random, events);
+      attackCreated = true;
     }
 
     // Offside check for the attacking team
@@ -83,6 +86,6 @@ export class EventResolver {
     resolveNonContactInjuries(attacker, minute, half, random, events);
     resolveNonContactInjuries(defender, minute, half, random, events);
 
-    return events.length - eventCountBeforeSlice;
+    return { eventsEmitted: events.length - eventCountBeforeSlice, attackCreated };
   }
 }

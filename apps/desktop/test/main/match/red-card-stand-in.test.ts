@@ -28,13 +28,12 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * Seed 645: the human club's only goalkeeper is sent off at minute `RED_CARD_MINUTE` (line
- * `RED_CARD_LINE`), and the engine drags an outfield player into goal as the very next event. Found by
- * enumerating seeds over `deriveMatchEvents` with the kickoff setups; the first such seed for the
+ * Seed 645: the human club's only goalkeeper is sent off at minute `RED_CARD_MINUTE` (its RedCard
+ * Commentary Line), and the engine drags an outfield player into goal as the very next event. Found
+ * by enumerating seeds over `deriveMatchEvents` with the kickoff setups; the first such seed for the
  * human club. Re-pinned 2026-09-29 when players gained CM line and side ratings. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
 const KEEPER_SENT_OFF_SEED = 645;
-const RED_CARD_LINE = 46;
 const RED_CARD_MINUTE = 56;
 const repin = `repin KEEPER_SENT_OFF_SEED (${KEEPER_SENT_OFF_SEED})`;
 
@@ -59,12 +58,13 @@ const seeded = Effect.gen(function* () {
   ok(tactic !== null);
   const keeper = squad.find((player) => player.id === tactic.assignments[0]!)!;
   const lines = yield* drainLines(save.id, match.matchId);
-  const red = lines[RED_CARD_LINE];
+  const redCardLine = lines.findIndex((line) => line.tag === "RedCard");
+  const red = lines[redCardLine];
   strictEqual(red?.tag, "RedCard", repin);
   strictEqual(red.minute, RED_CARD_MINUTE, repin);
   ok(red.text.includes(`${keeper.firstName} ${keeper.lastName}`), `the human goalkeeper is sent off — ${repin}`);
-  strictEqual(lines[RED_CARD_LINE + 1]?.tag, "Substitution", `the stand-in follows the red card — ${repin}`);
-  return { save, fixtureId, match, keeper, clubId: humanClubOf(match), starters: [...tactic.assignments] };
+  strictEqual(lines[redCardLine + 1]?.tag, "Substitution", `the stand-in follows the red card — ${repin}`);
+  return { save, fixtureId, match, keeper, clubId: humanClubOf(match), starters: [...tactic.assignments], redCardLine };
 });
 
 it.effect("the pitch has an outfield stand-in in goal and ten men, and no substitution is spent", () =>
@@ -76,11 +76,11 @@ it.effect("the pitch has an outfield stand-in in goal and ten men, and no substi
         pitch: s.match.isHome ? view.homePitch : view.awayPitch,
       }));
 
-    const before = yield* pitchAt(RED_CARD_LINE);
+    const before = yield* pitchAt(s.redCardLine);
     strictEqual(before.pitch.onPitch.length, 11);
     strictEqual(before.pitch.onPitch.find((slot) => slot.position === "GK")?.playerId, s.keeper.id);
 
-    const after = yield* pitchAt(RED_CARD_LINE + 2);
+    const after = yield* pitchAt(s.redCardLine + 2);
     const inGoal = after.pitch.onPitch.filter((slot) => slot.position === "GK");
     strictEqual(after.pitch.onPitch.length, 10);
     strictEqual(inGoal.length, 1, "someone stands in goal");

@@ -53,6 +53,12 @@ export const DUEL_CHECK_BASE = 0.06;
 /** The `BaseCollision` constant in the contact injury risk formula (ticket 05/06). */
 export const BASE_COLLISION = 0.05;
 
+// ─── Attribution constants ──────────────────────────────────────────────────
+
+/** Share of no-attack slices on which the defence is credited with a tackle or interception. Tuned so
+ *  tackles won and interceptions land in the researched per-team ranges (tickets 05/06). */
+export const ATTRIBUTION_CREDIT_RATE = 0.55;
+
 export const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
 /** Attribute effect scaling constant — how much a 1-point attribute difference shifts probability. */

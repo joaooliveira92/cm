@@ -1,4 +1,4 @@
-import { createSeededRng, type RandomSource } from "@cm-clone/shared";
+import { createSeededRng, deriveSeed, type RandomSource } from "@cm-clone/shared";
 import type { MatchCommand } from "../commands.js";
 import { STOPPAGE_CAUSING_TAGS, type MatchEvent, type MatchHalf } from "../events.js";
 import type { MatchTeamSetup } from "../types.js";
@@ -12,6 +12,7 @@ import {
 import { PhaseStrengthResolver } from "./phaseStrengthResolver.js";
 import { EventResolver } from "./eventResolver.js";
 import { resolveSetPieceFor } from "./setPieceResolvers.js";
+import { resolveAttribution, type AttributionState } from "./attributionResolver.js";
 import {
   applyCommand,
   applyForcedOff,
@@ -32,6 +33,9 @@ export interface SimulateMatchInput {
   readonly commandsByMinute?: ReadonlyMap<number, ReadonlyArray<MatchCommand>>;
   readonly halftimeCommands?: ReadonlyArray<MatchCommand>;
   readonly aiControllers?: ReadonlyArray<AiController>;
+  /** When false, the attribution pass and possession tallies are omitted. The guarantee test uses it
+   *  to recover the timeline a recording change must leave untouched. Defaults to true. */
+  readonly recordAttribution?: boolean;
 }
 
 /** Match statistics accumulated during simulation. */
@@ -82,10 +86,13 @@ export const resolveSlice = (
   score: { home: number; away: number },
   random: RandomSource,
   events: Array<MatchEvent>,
+  attribution: AttributionState | null,
 ): void => {
   // Condition decay
   decayConditions(home);
   decayConditions(away);
+
+  const sliceStart = events.length;
 
   // Create tactical state once per slice — the loop reads TacticalState,
   // not raw teamModifiers/instructions fields (ADR-0002).
@@ -97,7 +104,7 @@ export const resolveSlice = (
     PhaseStrengthResolver.resolve(home, away, homeTactical, awayTactical, minute, random);
 
   // Event resolution
-  const eventsEmitted = EventResolver.resolveEvents(
+  const { attackCreated } = EventResolver.resolveEvents(
     attacker,
     defender,
     homeHasPossession ? homeTactical : awayTactical,
@@ -122,9 +129,42 @@ export const resolveSlice = (
     attackerIsHome: attacker === home,
     home,
     away,
-    eventCountBeforeSlice: events.length - eventsEmitted,
+    eventCountBeforeSlice: sliceStart,
     random,
   }, events);
+
+  // A slice counts as eventful from its own play, before attribution adds its events.
+  const sliceHadEvents = events.length > sliceStart;
+
+  if (attribution !== null) {
+    resolveAttribution(home, attacker, defender, minute, half, attackCreated, sliceStart, events, attribution);
+    if (sliceHadEvents) {
+      events.push({
+        _tag: "PossessionTally",
+        minute,
+        half,
+        homeSlices: attribution.homeSlices,
+        awaySlices: attribution.awaySlices,
+      });
+    }
+  }
+};
+
+/** Push the cumulative possession tally at a half boundary, when attribution is recorded. */
+const pushPossessionTally = (
+  events: Array<MatchEvent>,
+  attribution: AttributionState | null,
+  minute: number,
+  half: MatchHalf,
+): void => {
+  if (attribution === null) return;
+  events.push({
+    _tag: "PossessionTally",
+    minute,
+    half,
+    homeSlices: attribution.homeSlices,
+    awaySlices: attribution.awaySlices,
+  });
 };
 
 /**
@@ -133,6 +173,10 @@ export const resolveSlice = (
  */
 const runSimulation = (input: SimulateMatchInput): SimulationResult => {
   const random = createSeededRng(input.seed);
+  const attribution: AttributionState | null =
+    input.recordAttribution === false
+      ? null
+      : { random: createSeededRng(deriveSeed(input.seed, "attribution")), homeSlices: 0, awaySlices: 0 };
   const events: Array<MatchEvent> = [];
   const home = initTeamState(input.home, input.homeRegimen ?? 3);
   const away = initTeamState(input.away, input.awayRegimen ?? 3);
@@ -203,7 +247,7 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
         lastAiMinute = minute;
       }
 
-      resolveSlice(home, away, minute, half, score, random, events);
+      resolveSlice(home, away, minute, half, score, random, events, attribution);
       snapshotCounts(minute, half);
     }
 
@@ -216,14 +260,16 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
       invokeAiController(stoppageMinute, half, false, true);
     }
 
-    resolveSlice(home, away, stoppageMinute, half, score, random, events);
+    resolveSlice(home, away, stoppageMinute, half, score, random, events, attribution);
     snapshotCounts(stoppageMinute, half);
 
     if (half === 1) {
+      pushPossessionTally(events, attribution, HALF_LENGTH_MINUTES, 1);
       events.push({ _tag: "HalfTimeReached", minute: HALF_LENGTH_MINUTES, homeScore: score.home, awayScore: score.away });
       applyScheduledCommands(home, away, HALF_LENGTH_MINUTES, 1, input.halftimeCommands, true, events);
       snapshotCounts(HALF_LENGTH_MINUTES, 1);
     } else {
+      pushPossessionTally(events, attribution, HALF_LENGTH_MINUTES * 2, 2);
       events.push({
         _tag: "FullTimeWhistle",
         minute: HALF_LENGTH_MINUTES * 2,

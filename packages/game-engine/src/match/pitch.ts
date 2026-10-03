@@ -46,6 +46,10 @@ const minuteStart = (events: ReadonlyArray<MatchEvent>, command: PersistedForced
       case "HoldUpLayOff":
       case "Counter":
       case "Foul":
+      case "Tackle":
+      case "Interception":
+      case "HeaderDuel":
+      case "PossessionTally":
       case "Offside":
       case "BeatenTrap":
       case "KeyPass":

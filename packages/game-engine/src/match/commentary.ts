@@ -6,9 +6,9 @@ import {
   type CommentaryTemplateKey,
   type GoalSituation,
   type HighlightLevel,
-  type ShotKind,
 } from "./commentarySections.js";
 import type { ChanceType, MatchEvent } from "./events.js";
+import { shotKindFor } from "./shotKind.js";
 
 /**
  * Renders the Match Event timeline into Commentary Lines (see
@@ -36,6 +36,14 @@ const CHANCE_TAGS: ReadonlySet<string> = new Set<ChanceTag>([
   "RunWithBall",
   "HoldUpLayOff",
   "Counter",
+]);
+
+/** Events the engine records for a figure, not for the feed: each still yields one silent line. */
+const SILENT_TAGS: ReadonlySet<string> = new Set([
+  "Tackle",
+  "Interception",
+  "HeaderDuel",
+  "PossessionTally",
 ]);
 
 export interface CommentaryNameResolver {
@@ -71,36 +79,18 @@ export interface CommentaryLine {
   readonly flash: boolean;
   /** Lost its display-chance draw. It is revealed, but never shown in the commentary bar. */
   readonly quiet: boolean;
+  /** A recorded-but-unspoken event. It is revealed at once with no text and no delay, never drawn in
+   *  the feed, and never counts as a highlight. Keeps the one-line-per-event invariant the live cut
+   *  depends on. */
+  readonly silent: boolean;
   /** The club the line is about, for the bar's colours; null for kick-off, half time and full time. */
   readonly clubId: string | null;
   readonly level: HighlightLevel;
 }
 
-type ShotEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "ShotOnTarget" | "ShotMissed" }>;
-
 /**
- * How a shot was struck. A set-piece shot follows its Corner/FreeKick/Penalty event directly and
- * carries a placeholder `chanceType`, so the set piece wins; an open-play shot reads its own. A free
- * kick or penalty is struck by its taker; a corner is headed by someone else, the taker's assist.
+ * A corner's or free kick's section, from the delivery its event records.
  */
-const shotKindFor = (event: ShotEvent, previous: MatchEvent | undefined): ShotKind => {
-  if (previous !== undefined && "playerId" in previous && previous.playerId === event.playerId) {
-    if (previous._tag === "Penalty") return "penalty";
-    if (previous._tag === "FreeKick") return "freeKick";
-  }
-  // A corner is headed, unless it was played back to the edge of the area for a shot from range, or
-  // flicked on at the near post by someone other than the taker.
-  if (previous?._tag === "Corner" && previous.teamClubId === event.teamClubId) {
-    if (event.chanceType === "longShot") return "longRange";
-    const assist = "assistPlayerId" in event ? event.assistPlayerId : undefined;
-    return assist !== undefined && assist !== previous.playerId ? "flickOn" : "header";
-  }
-  if (event.chanceType === "cross") return "header";
-  if (event.chanceType === "longShot") return "longRange";
-  return "closeRange";
-};
-
-/** A corner's or free kick's section, from the delivery its event records. */
 const setPieceKey = (event: Extract<MatchEvent, { readonly _tag: "Corner" | "FreeKick" }>): CommentaryTemplateKey => {
   const delivery = event.deliveryType ?? "default";
   if (event._tag === "Corner") {
@@ -222,12 +212,38 @@ const drawFor = (
         tokens: { ...clubs(event.teamClubId), ...person(event.playerId), side: phrases[`side.${event.side}`] },
       };
     case "Foul":
+      return {
+        keys: ["Foul"],
+        tokens: {
+          ...clubs(event.teamClubId),
+          ...person(event.playerId),
+          ...(event.fouledPlayerId === undefined ? {} : { fouled: names.playerName(event.fouledPlayerId) }),
+        },
+      };
+    case "Penalty":
+      return {
+        keys: ["Penalty"],
+        tokens: {
+          ...clubs(event.teamClubId),
+          ...person(event.playerId),
+          // The player brought down is the preceding Foul's victim, so a penalty line can name both.
+          ...(previous?._tag === "Foul" && previous.fouledPlayerId !== undefined
+            ? { fouled: names.playerName(previous.fouledPlayerId) }
+            : {}),
+        },
+      };
     case "Offside":
     case "BeatenTrap":
-    case "Penalty":
     case "YellowCard":
     case "RedCard":
       return { keys: [event._tag], tokens: { ...clubs(event.teamClubId), ...person(event.playerId) } };
+    case "Tackle":
+    case "Interception":
+      return { keys: [], tokens: {} };
+    case "HeaderDuel":
+      return { keys: [], tokens: {} };
+    case "PossessionTally":
+      return { keys: [], tokens: {} };
     case "Injury":
       return {
         keys: [`Injury:${event.trigger}:${event.severity}`],
@@ -368,19 +384,35 @@ export const renderCommentary = (
   };
 
   return events.map((event, index): CommentaryLine => {
+    const minute = "minute" in event ? event.minute : 0;
+    const clubId = "teamClubId" in event ? event.teamClubId : null;
+    if (SILENT_TAGS.has(event._tag)) {
+      return {
+        minute,
+        tag: event._tag,
+        text: "",
+        parts: [],
+        flash: false,
+        quiet: true,
+        silent: true,
+        clubId,
+        level: "full",
+      };
+    }
     const { keys, tokens } = drawFor(event, events[index - 1], match, names, table.phrases);
     const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key, tokens), tokens)));
     // A line plays by its first section's settings, so a goal plays by its Goal section, not its GoalScore.
     const playback = table.playback[keys[0]!];
     const shown = playback.displayChance >= 1 || hash(matchSeed, `show:${index}`) / 0x100000000 < playback.displayChance;
     return {
-      minute: "minute" in event ? event.minute : 0,
+      minute,
       tag: event._tag,
       text: texts.join(" "),
       parts: texts.map((text, part) => ({ text, delayMs: part === texts.length - 1 ? playback.delayMs : FOLLOW_ON_DELAY_MS })),
       flash: playback.flash,
       quiet: !shown,
-      clubId: "teamClubId" in event ? event.teamClubId : null,
+      silent: false,
+      clubId,
       level: playback.level,
     };
   });

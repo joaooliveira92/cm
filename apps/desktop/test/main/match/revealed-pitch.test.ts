@@ -31,16 +31,13 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * A match seed on the first Fixture of `WORLD_SEED` where the human club has a starter sent off
- * (line `RED_CARD_LINE`) and later a severe Injury to another starter (`INJURY_LINE`) forces a
- * substitution from outside the starting XI (`FORCED_SUB_LINE`). Found by enumerating seeds over
- * `deriveMatchEvents` with the kickoff setups. The test re-checks each part of the property from the
- * Commentary Lines and names this constant when one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
+ * A match seed on the first Fixture of `WORLD_SEED` where the human club has a starter sent off and
+ * later a severe Injury to another starter forces a substitution from outside the starting XI. Found
+ * by enumerating seeds over `deriveMatchEvents` with the kickoff setups. The test locates each line at
+ * runtime and re-checks each part of the property from the Commentary Lines, naming this constant when
+ * one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
 const RED_CARD_THEN_FORCED_SUB_SEED = 334;
-const RED_CARD_LINE = 8;
-const INJURY_LINE = 40;
-const FORCED_SUB_LINE = 41;
 
 const repin = `repin RED_CARD_THEN_FORCED_SUB_SEED (${RED_CARD_THEN_FORCED_SUB_SEED})`;
 
@@ -83,22 +80,27 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
 
     // One Commentary Line per Match Event, so a line's index is its event's timeline position.
     const lines = yield* drainLines(save.id, match.matchId);
-    strictEqual(lines[RED_CARD_LINE]?.tag, "RedCard", repin);
-    strictEqual(lines[INJURY_LINE]?.tag, "Injury", repin);
-    strictEqual(lines[FORCED_SUB_LINE]?.tag, "Substitution", repin);
-    const sentOff = playerNamedIn(squad, lines[RED_CARD_LINE]);
-    const injured = playerNamedIn(squad, lines[INJURY_LINE]);
+    const redCardLine = lines.findIndex((line) => line.tag === "RedCard");
+    const forcedSubLine = lines.findIndex(
+      (line, index) => line.tag === "Substitution" && lines[index - 1]?.tag === "Injury" && lines[index - 1]!.minute === line.minute,
+    );
+    const injuryLine = forcedSubLine - 1;
+    strictEqual(lines[redCardLine]?.tag, "RedCard", repin);
+    strictEqual(lines[injuryLine]?.tag, "Injury", repin);
+    strictEqual(lines[forcedSubLine]?.tag, "Substitution", repin);
+    const sentOff = playerNamedIn(squad, lines[redCardLine]);
+    const injured = playerNamedIn(squad, lines[injuryLine]);
     ok(sentOff && startingXi.has(sentOff.id), `a human starter is sent off — ${repin}`);
     ok(injured && startingXi.has(injured.id) && injured.id !== sentOff.id, `another human starter is injured — ${repin}`);
     const replacement = squad.find(
-      (player) => outsideXi.includes(player.id) && lines[FORCED_SUB_LINE]!.text.includes(`${player.firstName} ${player.lastName}`),
+      (player) => outsideXi.includes(player.id) && lines[forcedSubLine]!.text.includes(`${player.firstName} ${player.lastName}`),
     );
     ok(replacement, `the forced substitution brings on a player from outside the XI — ${repin}`);
 
     const at = (revealedEvents: number) => resumeSimulation(savesDir, save.id, match.matchId, 0, revealedEvents);
 
     // Before the red card: the kickoff XI, and the named bench, in bench order, may come on (ticket 35).
-    const kickoff = yield* at(RED_CARD_LINE);
+    const kickoff = yield* at(redCardLine);
     deepStrictEqual(
       humanPitch(kickoff, match).onPitch.map(({ playerId, position }) => ({ playerId, position })),
       tactic.slots.map((slot, index) => ({ playerId: tactic.assignments[index]!, position: legacyPositionOf(slot.cell) })),
@@ -106,24 +108,24 @@ it.effect("the pitch reflects a revealed red card and forced injury substitution
     deepStrictEqual(humanPitch(kickoff, match).substitutes, bench);
 
     // The red card revealed: ten on the pitch, and the sent-off player cannot come back on.
-    const afterRed = yield* at(RED_CARD_LINE + 1);
+    const afterRed = yield* at(redCardLine + 1);
     strictEqual(onPitchIds(afterRed, match).length, 10);
     ok(!onPitchIds(afterRed, match).includes(sentOff.id));
     ok(!humanPitch(afterRed, match).substitutes.includes(sentOff.id));
 
     // The Injury revealed but not yet its forced substitution: the injured player is still on.
-    const injuredOnly = yield* at(FORCED_SUB_LINE);
+    const injuredOnly = yield* at(forcedSubLine);
     ok(onPitchIds(injuredOnly, match).includes(injured.id), "an unrevealed forced substitution has not happened");
     ok(humanPitch(injuredOnly, match).substitutes.includes(replacement.id));
 
     // Once the replacement is on: exactly the bench players who have not been on, in bench order.
     deepStrictEqual(
-      humanPitch(yield* at(FORCED_SUB_LINE + 1), match).substitutes,
+      humanPitch(yield* at(forcedSubLine + 1), match).substitutes,
       bench.filter((id) => id !== replacement.id),
     );
 
     // The forced substitution revealed: the injured player is off, the replacement in their slot.
-    const afterSub = yield* at(FORCED_SUB_LINE + 1);
+    const afterSub = yield* at(forcedSubLine + 1);
     const injuredSlot = tactic.slots[tactic.assignments.indexOf(injured.id)]!;
     ok(!onPitchIds(afterSub, match).includes(injured.id), "the injured player is no longer offered off");
     ok(
@@ -145,10 +147,11 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
     ok(tactic !== null);
     const clubId = humanClubOf(match);
     const lines = yield* drainLines(save.id, match.matchId);
-    strictEqual(lines[RED_CARD_LINE]?.tag, "RedCard", repin);
-    const sentOff = playerNamedIn(squad, lines[RED_CARD_LINE]);
+    const redCardLine = lines.findIndex((line) => line.tag === "RedCard");
+    strictEqual(lines[redCardLine]?.tag, "RedCard", repin);
+    const sentOff = playerNamedIn(squad, lines[redCardLine]);
     ok(sentOff && tactic.assignments.includes(sentOff.id), `a human starter is sent off — ${repin}`);
-    const redMinute = lines[RED_CARD_LINE]!.minute;
+    const redMinute = lines[redCardLine]!.minute;
 
     // The redraft names the kickoff eleven, the sent-off player included, with a bench player in
     // place of another starter, and changes the Mentality.
@@ -160,7 +163,7 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
       bench: tactic.bench.map((id) => (id === benchPlayer ? benched : id)),
       team: { ...tactic.team, mentality: tactic.team.mentality === "attacking" ? "defensive" : "attacking" },
     });
-    const changed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, RED_CARD_LINE + 1, redMinute + 1, false, {
+    const changed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, redCardLine + 1, redMinute + 1, false, {
       _tag: "ChangeTactics",
       clubId,
       tactic: redrafted,
@@ -176,7 +179,7 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
 
     // The engine accepts the substitution the picker offers: the bench player on for the starter
     // the redraft had benched.
-    const subbed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, RED_CARD_LINE + 1, redMinute + 2, false, {
+    const subbed = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, redCardLine + 1, redMinute + 2, false, {
       _tag: "MakeSubstitution",
       clubId,
       outPlayerId: benched,
@@ -189,9 +192,9 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
 
     // The engine agrees: the sent-off player takes no further part in the re-derived match.
     const replayed = yield* drainLines(save.id, match.matchId);
-    deepStrictEqual(replayed.slice(0, RED_CARD_LINE + 1), lines.slice(0, RED_CARD_LINE + 1), "revealed play is unchanged");
+    deepStrictEqual(replayed.slice(0, redCardLine + 1), lines.slice(0, redCardLine + 1), "revealed play is unchanged");
     ok(
-      replayed.slice(RED_CARD_LINE + 1).every((line) => !line.text.includes(`${sentOff.firstName} ${sentOff.lastName}`)),
+      replayed.slice(redCardLine + 1).every((line) => !line.text.includes(`${sentOff.firstName} ${sentOff.lastName}`)),
       "the sent-off player is not put back on",
     );
   }),
@@ -199,13 +202,12 @@ it.effect("a live ChangeTactics after a red card naming a different XI changes n
 
 /**
  * A match seed on the first Fixture of `WORLD_SEED` where, once the manager has used all three
- * substitution windows at minutes 1-3, the human club's first severe Injury (line
- * `UNREPLACED_INJURY_LINE`, minute 20) leaves no substitution behind it: the engine refuses the
- * forced substitution and the player goes off to ten men. Found by enumerating seeds over
- * `deriveMatchEvents` with those three commands; the test re-checks it. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
+ * substitution windows at minutes 1-3, the human club's first severe Injury (its Injury line, minute
+ * 20) leaves no substitution behind it: the engine refuses the forced substitution and the player
+ * goes off to ten men. Found by enumerating seeds over `deriveMatchEvents` with those three commands;
+ * the test locates the line at runtime and re-checks it. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
 const RED_INJURY_WITHOUT_WINDOWS_SEED = 19;
-const UNREPLACED_INJURY_LINE = 30;
 
 it.effect("a severe Injury with no substitution left takes the player off from the moment it is revealed", () =>
   Effect.gen(function* () {
@@ -228,14 +230,17 @@ it.effect("a severe Injury with no substitution left takes the player off from t
 
     const lines = yield* drainLines(save.id, match.matchId);
     const pinned = `repin RED_INJURY_WITHOUT_WINDOWS_SEED (${RED_INJURY_WITHOUT_WINDOWS_SEED})`;
-    strictEqual(lines[UNREPLACED_INJURY_LINE]?.tag, "Injury", pinned);
-    strictEqual(lines[UNREPLACED_INJURY_LINE + 1]?.tag === "Substitution", false, pinned);
-    const injured = playerNamedIn(squad, lines[UNREPLACED_INJURY_LINE]);
+    const unreplacedInjuryLine = lines.findIndex(
+      (line, index) => line.tag === "Injury" && lines[index + 1]?.tag !== "Substitution",
+    );
+    strictEqual(lines[unreplacedInjuryLine]?.tag, "Injury", pinned);
+    strictEqual(lines[unreplacedInjuryLine + 1]?.tag === "Substitution", false, pinned);
+    const injured = playerNamedIn(squad, lines[unreplacedInjuryLine]);
     ok(injured, `the Injury is the human club's — ${pinned}`);
 
-    const before = yield* resumeSimulation(savesDir, save.id, match.matchId, 0, UNREPLACED_INJURY_LINE);
+    const before = yield* resumeSimulation(savesDir, save.id, match.matchId, 0, unreplacedInjuryLine);
     ok(onPitchIds(before, match).includes(injured.id), `the injured player is on the pitch until then — ${pinned}`);
-    const after = yield* resumeSimulation(savesDir, save.id, match.matchId, 0, UNREPLACED_INJURY_LINE + 1);
+    const after = yield* resumeSimulation(savesDir, save.id, match.matchId, 0, unreplacedInjuryLine + 1);
     ok(!onPitchIds(after, match).includes(injured.id), "the injured player is no longer offered off");
     strictEqual(onPitchIds(after, match).length, onPitchIds(before, match).length - 1);
     ok(!humanPitch(after, match).substitutes.includes(injured.id));

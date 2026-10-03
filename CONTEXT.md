@@ -200,10 +200,15 @@ _Avoid_: Injury time, added time (fine as in-fiction commentary language, not as
 term)
 
 **Match Event**:
-One entry in a match's emitted timeline: `MatchStarted`, `Goal`, `ShotOnTarget`, `ShotMissed`,
-`BigChance`, `YellowCard`, `RedCard`, `Injury`, `Substitution`, `HalfTimeReached`, or
-`FullTimeWhistle`. These are what the event-sourced game-engine persists and what commentary narrates
-from — not a separate commentary-only representation.
+One entry in a match's emitted timeline. The vocabulary is the `MatchEvent` union in
+`packages/game-engine/src/match/events.ts`: chance and shot events (`ThroughBall`, `Cross`,
+`LongShot`, `RunWithBall`, `HoldUpLayOff`, `Counter`, `KeyPass`, `Goal`, `ShotOnTarget`,
+`ShotMissed`), set pieces (`Corner`, `FreeKick`, `Penalty`), discipline and injuries (`Foul` —
+which carries an optional `fouledPlayerId` — `Offside`, `BeatenTrap`, `YellowCard`, `RedCard`,
+`Injury`, `Substitution`), the recorded involvement the CM columns read (`Tackle`, `Interception`,
+`HeaderDuel`, `PossessionTally`), and the boundaries (`MatchStarted`, `HalfTimeReached`,
+`FullTimeWhistle`, `TacticsChanged`). These are what the event-sourced game-engine persists and what
+commentary narrates from — not a separate commentary-only representation.
 
 **Match Rating**:
 A player's 1–10 rating for one match, to one decimal, derived from the match's stored timeline and
@@ -216,15 +221,25 @@ _Avoid_: rating on its own (see Position Rating, Overall Rating), player rating,
 
 **Match Player Line**:
 One matchday-squad member's part in a match, folded from the Match Event stream: key passes,
-offsides, fouls, assists, shots, shots on target, saves and goals, plus the cards and the
-substitution note. It is the unit the Home/Away Stats table draws, one per squad member in slot then
-bench order. The fold lives in `packages/shared/src/rules/matchPlayerLine.ts`, so the live table, the
-post-match table and the stored line behind the Form tab can never disagree. Only events back a
-count: a column the stream does not record (passes, tackles, headers, interceptions, runs) is not
-drawn at all. An unused substitute has a line with every count zero, drawn blank and dimmed — never
-`0`, which would claim they did nothing rather than did not play. The Match Rating and the full-time
-Condition ride the line on the read, never the stored form.
+offsides, fouls, fouls suffered, tackles won, headers attempted and won, interceptions, runs,
+assists, shots, shots on target, saves and goals, plus the cards and the substitution note. It is the
+unit the Home/Away Stats table draws, one per squad member in slot then bench order. The fold lives in
+`packages/shared/src/rules/matchPlayerLine.ts`, so the live table, the post-match table and the stored
+line behind the Form tab can never disagree. Only a fact the stream records is drawn: passes and
+completions are absent because nothing in the engine decides a pass. An unused substitute has a line
+with every count zero, drawn blank and dimmed — never `0`, which would claim they did nothing rather
+than did not play. The Match Rating and the full-time Condition ride the line on the read, never the
+stored form.
 _Avoid_: player match stats (the screen's label), player line
+
+**Possession** (match statistic):
+The share of Minute-Slices a side had the ball, carried as the cumulative `homeSlices`/`awaySlices` of
+a `PossessionTally`. The engine rolls which side has the ball each Minute-Slice; the tally records it.
+Shown with its definition, "Share of minutes with the ball", at whole-percentage grain. It is null
+before the first tally and never 50–50, and a timeline stored before tallies existed shows it as
+unavailable rather than zero.
+_Avoid_: attack share (the separate chance-creation proxy, labelled Attacks), ball possession model
+(which the engine still lacks)
 
 **Injury** (match event):
 A Match Event carrying a trigger (`contact` | `non-contact`), a Severity (`light` | `medium` |

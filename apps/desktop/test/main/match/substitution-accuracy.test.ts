@@ -11,6 +11,7 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, ok, strictEqual } from "node:assert";
 import type {
+  ClubId,
   CommentaryLineView,
   InjuryView,
   MatchId,
@@ -84,10 +85,39 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
   return line?.text.includes(`${player.firstName} ${player.lastName}`) === true;
 };
 
+/** The next spoken Commentary Line after `index`: a silent attribution line carries no text. */
+const nextSpokenLine = (
+  lines: ReadonlyArray<CommentaryLineView>,
+  index: number,
+): CommentaryLineView | undefined => lines.slice(index + 1).find((line) => line.text !== "");
+
+/** The index of the forced Substitution for an Injury of `minute`: a Substitution line directly after
+ *  an Injury line of the same minute. */
+const forcedSubLineAt = (lines: ReadonlyArray<CommentaryLineView>, minute: number): number =>
+  lines.findIndex(
+    (line, index) =>
+      line.tag === "Substitution" &&
+      line.minute === minute &&
+      lines[index - 1]?.tag === "Injury" &&
+      lines[index - 1]!.minute === minute,
+  );
+
+/** The index of the human club's severe Injury whose forced Substitution is the next line. */
+const severeInjuryLine = (
+  lines: ReadonlyArray<CommentaryLineView>,
+  injuries: ReadonlyArray<InjuryView>,
+  clubId: ClubId,
+): number =>
+  lines.findIndex((line, index) => {
+    if (line.tag !== "Injury" || lines[index + 1]?.tag !== "Substitution" || lines[index + 1]!.minute !== line.minute) return false;
+    const injury = injuries[lines.slice(0, index).filter((other) => other.tag === "Injury").length];
+    return injury?.tier === "red" && injury.teamClubId === clubId;
+  });
+
 /**
  * Seed 942: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
  * bench in `STAND_IN_BENCH_ORDER`) and a minute-3 bring-off of the only goalkeeper, which drags an
- * outfield player into goal, that stand-in suffers a severe Injury (`STAND_IN_INJURY_LINE`). No
+ * outfield player into goal, that stand-in suffers a severe Injury. No
  * substitution is left, so a second outfield player is dragged into goal. Found by enumerating seeds
  * and bench orders over `deriveMatchEvents`; under the orders 0-1-2, 0-2-1, 1-0-2 and 1-2-0 no seed
  * up to 6000 injures the stand-in the drag picks. Re-pinned for group-g-match-day ticket 35, when the
@@ -95,7 +125,6 @@ const named = (squad: ReadonlyArray<SquadPlayerView>, line: CommentaryLineView |
  * Condition decay and Injury severity (it had been seed 978 under the order 1-0-2).
  */
 const GOALKEEPER_STAND_IN_SEED = 942;
-const STAND_IN_INJURY_LINE = 76;
 /** Which bench entries come on at minutes 1, 2 and 3. */
 const STAND_IN_BENCH_ORDER = [2, 0, 1] as const;
 
@@ -114,18 +143,19 @@ it.effect(
       strictEqual(humanSubs(keeperOff, s.match).used, 3, "dragging a player into goal after a bring-off is not a substitution");
 
       const { lines, injuries } = yield* drain(s.save.id, s.match.matchId);
-      const injuryLine = lines[STAND_IN_INJURY_LINE];
+      const standInInjuryLine = severeInjuryLine(lines, injuries, s.clubId);
+      const injuryLine = lines[standInInjuryLine];
       strictEqual(injuryLine?.tag, "Injury", repin);
-      strictEqual(lines[STAND_IN_INJURY_LINE + 1]?.tag, "Substitution", repin);
-      strictEqual(lines[STAND_IN_INJURY_LINE + 1]?.minute, injuryLine.minute, repin);
-      const injuryIndex = lines.slice(0, STAND_IN_INJURY_LINE).filter((line) => line.tag === "Injury").length;
+      strictEqual(lines[standInInjuryLine + 1]?.tag, "Substitution", repin);
+      strictEqual(lines[standInInjuryLine + 1]?.minute, injuryLine.minute, repin);
+      const injuryIndex = lines.slice(0, standInInjuryLine).filter((line) => line.tag === "Injury").length;
       const injury = injuries[injuryIndex]!;
       ok(injury.tier === "red" && injury.teamClubId === s.clubId, `the human club's severe Injury — ${repin}`);
       ok(
         lines.some((line) => line.tag === "Substitution" && line.minute === 3 && named(s.squad, line, s.goalkeeper) && named(s.squad, line, injury.playerId)),
         `the injured player is the one the bring-off dragged into goal — ${repin}`,
       );
-      ok(named(s.squad, lines[STAND_IN_INJURY_LINE + 1], injury.playerId), `the next line takes the injured stand-in off — ${repin}`);
+      ok(named(s.squad, lines[standInInjuryLine + 1], injury.playerId), `the next line takes the injured stand-in off — ${repin}`);
 
       const whole = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, null);
       const subs = humanSubs(whole, s.match);
@@ -148,12 +178,13 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
     }
     strictEqual((yield* s.command(3, false, { _tag: "ForceOff", playerId: s.goalkeeper })).forceOffApplied, true, repin);
     const { lines, injuries } = yield* drain(s.save.id, s.match.matchId);
-    const injuryLine = lines[STAND_IN_INJURY_LINE];
+    const standInInjuryLine = severeInjuryLine(lines, injuries, s.clubId);
+    const injuryLine = lines[standInInjuryLine];
     strictEqual(injuryLine?.tag, "Injury", repin);
-    const injury = injuries[lines.slice(0, STAND_IN_INJURY_LINE).filter((line) => line.tag === "Injury").length]!;
+    const injury = injuries[lines.slice(0, standInInjuryLine).filter((line) => line.tag === "Injury").length]!;
     ok(injury.tier === "red" && injury.teamClubId === s.clubId, `the human club's severe Injury — ${repin}`);
-    strictEqual(lines[STAND_IN_INJURY_LINE + 1]?.tag, "Substitution", repin);
-    strictEqual(lines[STAND_IN_INJURY_LINE + 1]?.minute, injuryLine.minute, repin);
+    strictEqual(lines[standInInjuryLine + 1]?.tag, "Substitution", repin);
+    strictEqual(lines[standInInjuryLine + 1]?.minute, injuryLine.minute, repin);
 
     yield* commitMatchday(savesDir, s.save.id, s.fixtureId);
     const report = yield* getMatchReport(savesDir, s.save.id, s.match.matchId);
@@ -185,21 +216,21 @@ it.effect("the Match Report lists goalkeeper stand-ins as moves into goal, and i
 );
 
 /**
- * Seed 70: the human club's only substitution is forced by a severe Injury (`FORCED_SUB_INJURY_LINE`)
+ * Seed 70: the human club's only substitution is forced by a severe Injury
  * in the second half, right after it, and the club also takes a knock in the second half; with the
  * manager's three early substitutions, no other human substitution comes before half time. Pinned
  * for ticket 18 and 19 specs. Re-pinned 2026-09-29 when players gained CM line and side ratings. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
 const FORCED_SUB_SEED = 70;
-const FORCED_SUB_INJURY_LINE = 36;
 
 it.effect("a severe Injury a substitute came on for reads replaced", () =>
   Effect.gen(function* () {
     const s = yield* seeded(FORCED_SUB_SEED);
     const { lines, injuries } = yield* drain(s.save.id, s.match.matchId);
-    strictEqual(lines[FORCED_SUB_INJURY_LINE]?.tag, "Injury", "repin FORCED_SUB_SEED");
-    strictEqual(lines[FORCED_SUB_INJURY_LINE + 1]?.tag, "Substitution", "repin FORCED_SUB_SEED");
-    const injury = injuries[lines.slice(0, FORCED_SUB_INJURY_LINE).filter((line) => line.tag === "Injury").length]!;
+    const forcedInjuryLine = lines.findIndex((line, index) => line.tag === "Injury" && lines[index + 1]?.tag === "Substitution");
+    strictEqual(lines[forcedInjuryLine]?.tag, "Injury", "repin FORCED_SUB_SEED");
+    strictEqual(lines[forcedInjuryLine + 1]?.tag, "Substitution", "repin FORCED_SUB_SEED");
+    const injury = injuries[lines.slice(0, forcedInjuryLine).filter((line) => line.tag === "Injury").length]!;
     strictEqual(injury.tier, "red");
     strictEqual(injury.replaced, true);
     ok(injuries.filter((other) => other.tier === "orange").every((other) => other.replaced === false), "a knock replaces no one");
@@ -219,7 +250,7 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
         injury.teamClubId === s.clubId &&
         line.minute > 45 &&
         line.minute < 90 &&
-        before.lines[index + 1]!.minute > line.minute
+        nextSpokenLine(before.lines, index)!.minute > line.minute
       );
     });
     ok(knockLine !== -1, repin);
@@ -229,30 +260,30 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
     const response = yield* s.command(knocked.minute + 1, false, s.sub(knocked.playerId, s.bench[0]!));
     strictEqual(response.substitutionApplied, true, repin);
     const { lines, injuries } = yield* drain(s.save.id, s.match.matchId);
-    strictEqual(lines[knockLine + 1]?.tag, "Substitution", `the substitution is the next Match Event — ${repin}`);
+    strictEqual(nextSpokenLine(lines, knockLine)?.tag, "Substitution", `the substitution is the next Match Event — ${repin}`);
     strictEqual(injuries[knockIndex]?.playerId, knocked.playerId, repin);
     strictEqual(injuries[knockIndex]?.replaced, false);
   }),
 );
 
-/** Seed 8: the human club's first substitution is forced by an Injury in regular minute 45 (line
- *  `MINUTE_45_FORCED_SUB_LINE`), before half time. Re-pinned for group-g-match-day ticket 26, when a
+/** Seed 8: the human club's first substitution is forced by an Injury in regular minute 45, before
+ *  half time. Re-pinned for group-g-match-day ticket 26, when a
  *  forced substitution started drawing on the named bench. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. */
 const MINUTE_45_FORCED_SUB_SEED = 8;
-const MINUTE_45_FORCED_SUB_LINE = 40;
 
 it.effect("a forced substitution in regular minute 45 spends a window", () =>
   Effect.gen(function* () {
     const s = yield* seeded(MINUTE_45_FORCED_SUB_SEED);
     const repin = `repin MINUTE_45_FORCED_SUB_SEED (${MINUTE_45_FORCED_SUB_SEED})`;
     const { lines } = yield* drain(s.save.id, s.match.matchId);
-    const forced = lines[MINUTE_45_FORCED_SUB_LINE];
+    const minute45ForcedSubLine = forcedSubLineAt(lines, 45);
+    const forced = lines[minute45ForcedSubLine];
     strictEqual(forced?.tag, "Substitution", repin);
     strictEqual(forced.minute, 45, repin);
-    strictEqual(lines[MINUTE_45_FORCED_SUB_LINE - 1]?.tag, "Injury", repin);
-    ok(lines.findIndex((line) => line.tag === "HalfTimeReached") > MINUTE_45_FORCED_SUB_LINE, `before half time — ${repin}`);
+    strictEqual(lines[minute45ForcedSubLine - 1]?.tag, "Injury", repin);
+    ok(lines.findIndex((line) => line.tag === "HalfTimeReached") > minute45ForcedSubLine, `before half time — ${repin}`);
 
-    const after = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, MINUTE_45_FORCED_SUB_LINE + 1);
+    const after = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, minute45ForcedSubLine + 1);
     strictEqual(humanSubs(after, s.match).used, 1, repin);
     strictEqual(humanSubs(after, s.match).windowsUsed, 1);
   }),
@@ -303,21 +334,21 @@ it.effect("a minute-45 command the window cap refuses leaves a halftime instruct
 
 /**
  * Seed 4381: the human club's only substitution is forced by an Injury at minute 49 of first-half
- * stoppage (line `STOPPAGE_FORCED_SUB_LINE`). The engine opens a window whenever a substitution's
+ * stoppage. The engine opens a window whenever a substitution's
  * minute differs from the last window's, so manager substitutions at second-half minutes 48 and 49
  * open two more. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. No seed up to 6000 forces one at minute 48 any more.
  */
 const STOPPAGE_FORCED_SUB_SEED = 4381;
-const STOPPAGE_FORCED_SUB_LINE = 40;
 
 it.effect("windows follow the engine's last-window minute, not the set of distinct minutes", () =>
   Effect.gen(function* () {
     const s = yield* seeded(STOPPAGE_FORCED_SUB_SEED);
     const repin = `repin STOPPAGE_FORCED_SUB_SEED (${STOPPAGE_FORCED_SUB_SEED})`;
     const before = yield* drain(s.save.id, s.match.matchId);
-    strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.tag, "Substitution", repin);
-    strictEqual(before.lines[STOPPAGE_FORCED_SUB_LINE]?.minute, 49, repin);
-    ok(before.lines.findIndex((line) => line.tag === "HalfTimeReached") > STOPPAGE_FORCED_SUB_LINE, `first-half stoppage — ${repin}`);
+    const stoppageForcedSubLine = forcedSubLineAt(before.lines, 49);
+    strictEqual(before.lines[stoppageForcedSubLine]?.tag, "Substitution", repin);
+    strictEqual(before.lines[stoppageForcedSubLine]?.minute, 49, repin);
+    ok(before.lines.findIndex((line) => line.tag === "HalfTimeReached") > stoppageForcedSubLine, `first-half stoppage — ${repin}`);
     // The forced substitution takes an early bench entry, so the manager's come from the end of it.
     strictEqual(s.bench.length, 7, "the bench is full");
 

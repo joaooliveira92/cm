@@ -22,17 +22,13 @@ beforeEach(() => {
 afterEach(() => rm(savesDir, { recursive: true, force: true }));
 
 /**
- * A match seed on the first Fixture of `WORLD_SEED` where the opening chunk (up to half time at
- * `HALF_TIME_LINE`) holds the match's only Goal at `GOAL_LINE`, and the chunk read from
- * `RED_CARD_LINE` opens with the human club's red card to an outfielder and holds the match's two
- * Injuries. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. A score or head-count read from the end
- * of the chunk would show each before its line. The tests re-check the property from the Commentary
- * Lines and name this constant when it no longer holds. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
+ * A match seed on the first Fixture of `WORLD_SEED` where the opening chunk (up to half time) holds
+ * the match's only Goal, and the human club's red card opens a chunk with both of the match's
+ * Injuries falling after it. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. A score or head-count read from the end
+ * of the chunk would show each before its line. The tests locate each line at runtime and re-check
+ * the property from the Commentary Lines, naming this constant when one no longer holds. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
  */
 const SEED = 1301;
-const GOAL_LINE = 3;
-const HALF_TIME_LINE = 26;
-const RED_CARD_LINE = 29;
 
 const repin = `repin SEED (${SEED})`;
 
@@ -50,6 +46,24 @@ const drainLines = (saveId: SaveId, matchId: MatchId) =>
     return lines;
   });
 
+/** Drain every chunk from `cursor`, concatenating its lines and injuries: a chunk holds at most 40
+ *  lines, so a match region can span more than one. */
+const drainChunks = (saveId: SaveId, matchId: MatchId, cursor: number, revealedEvents: number | null) =>
+  Effect.gen(function* () {
+    const lines: Array<CommentaryLineView> = [];
+    const injuries: Array<ResumeSimulationView["injuries"][number]> = [];
+    let next = cursor;
+    let isComplete = false;
+    while (!isComplete) {
+      const chunk = yield* resumeSimulation(savesDir, saveId, matchId, next, revealedEvents);
+      lines.push(...chunk.lines);
+      injuries.push(...chunk.injuries);
+      next = chunk.cursor;
+      isComplete = chunk.isComplete;
+    }
+    return { lines, injuries };
+  });
+
 const humanCount = (view: ResumeSimulationView, summary: MatchSummary): number =>
   summary.isHome ? view.homeOnPitchCount : view.awayOnPitchCount;
 
@@ -62,26 +76,29 @@ const seededMatch = Effect.gen(function* () {
   const { save, fixtureId } = yield* atFirstFixture(savesDir);
   const match = yield* startSeededMatch(savesDir, save.id, fixtureId, SEED);
   const lines = yield* drainLines(save.id, match.matchId);
-  strictEqual(lines[GOAL_LINE]?.tag, "Goal", repin);
+  const goalLine = lines.findIndex((line) => line.tag === "Goal");
+  strictEqual(lines[goalLine]?.tag, "Goal", repin);
   strictEqual(lines.filter((line) => line.tag === "Goal").length, 1, repin);
-  strictEqual(lines[HALF_TIME_LINE]?.tag, "HalfTimeReached", repin);
-  strictEqual(lines[RED_CARD_LINE]?.tag, "RedCard", repin);
-  strictEqual(lines[RED_CARD_LINE]!.clubId, match.isHome ? match.homeClubId : match.awayClubId, `the red card is the human club's — ${repin}`);
-  return { save, match, lines };
+  const halfTimeLine = lines.findIndex((line) => line.tag === "HalfTimeReached");
+  strictEqual(lines[halfTimeLine]?.tag, "HalfTimeReached", repin);
+  const redCardLine = lines.findIndex((line) => line.tag === "RedCard");
+  strictEqual(lines[redCardLine]?.tag, "RedCard", repin);
+  strictEqual(lines[redCardLine]!.clubId, match.isHome ? match.homeClubId : match.awayClubId, `the red card is the human club's — ${repin}`);
+  return { save, match, lines, goalLine, halfTimeLine, redCardLine };
 });
 
 it.effect("a response's score counts only the goals revealed, not those later in its chunk", () =>
   Effect.gen(function* () {
-    const { save, match, lines } = yield* seededMatch;
+    const { save, match, lines, goalLine } = yield* seededMatch;
     const at = (cursor: number, revealedEvents: number | null) =>
       resumeSimulation(savesDir, save.id, match.matchId, cursor, revealedEvents);
 
     // The opening chunk carries the goal's line, but the goal is not yet revealed.
-    const opening = yield* at(0, GOAL_LINE);
-    ok(opening.lines.length > GOAL_LINE, `the opening chunk holds the goal line — ${repin}`);
+    const opening = yield* at(0, goalLine);
+    ok(opening.lines.length > goalLine, `the opening chunk holds the goal line — ${repin}`);
     strictEqual(goals(opening), 0, "the score does not run ahead of the goal's line");
 
-    const afterGoal = yield* at(0, GOAL_LINE + 1);
+    const afterGoal = yield* at(0, goalLine + 1);
     strictEqual(goals(afterGoal), 1);
 
     // Null is the whole match; every line revealed reads the same.
@@ -91,27 +108,27 @@ it.effect("a response's score counts only the goals revealed, not those later in
     deepStrictEqual([whole.homeScore, whole.awayScore], [afterGoal.homeScore, afterGoal.awayScore]);
 
     // A command response reads the same cut. A bring-off of a player not in the squad changes nothing.
-    const commanded = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, GOAL_LINE, 1, false, {
+    const commanded = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, goalLine, 1, false, {
       _tag: "ForceOff",
       clubId: humanClubOf(match),
       playerId: "not-a-player" as never,
     });
-    strictEqual(commanded.lines[GOAL_LINE]?.tag, "Goal", `the no-op command leaves the goal in place — ${repin}`);
+    strictEqual(commanded.lines[goalLine]?.tag, "Goal", `the no-op command leaves the goal in place — ${repin}`);
     strictEqual(goals(commanded), 0, "a command response does not show the unrevealed goal either");
   }),
 );
 
 it.effect("a response's on-pitch count reflects a red card only once revealed, whatever chunk it reads", () =>
   Effect.gen(function* () {
-    const { save, match } = yield* seededMatch;
+    const { save, match, redCardLine } = yield* seededMatch;
 
     // Reading the second chunk, which opens with the red card, before revealing it.
-    const beforeRed = yield* resumeSimulation(savesDir, save.id, match.matchId, RED_CARD_LINE, RED_CARD_LINE);
+    const beforeRed = yield* resumeSimulation(savesDir, save.id, match.matchId, redCardLine, redCardLine);
     ok(beforeRed.lines[0]?.tag === "RedCard", `the chunk holds the red card — ${repin}`);
     strictEqual(humanCount(beforeRed, match), 11);
     strictEqual(humanCount(beforeRed, match), humanPitchSize(beforeRed, match));
 
-    const afterRed = yield* resumeSimulation(savesDir, save.id, match.matchId, RED_CARD_LINE, RED_CARD_LINE + 1);
+    const afterRed = yield* resumeSimulation(savesDir, save.id, match.matchId, redCardLine, redCardLine + 1);
     strictEqual(humanCount(afterRed, match), 10);
     strictEqual(humanCount(afterRed, match), humanPitchSize(afterRed, match));
 
@@ -122,7 +139,7 @@ it.effect("a response's on-pitch count reflects a red card only once revealed, w
 
 it.effect("a chunk's injuries are its own Injury lines, one per line in order, revealed or not", () =>
   Effect.gen(function* () {
-    const { save, match } = yield* seededMatch;
+    const { save, match, redCardLine } = yield* seededMatch;
 
     // Injuries travel with the lines they belong to: the renderer pairs them and reveals both together.
     const opening = yield* resumeSimulation(savesDir, save.id, match.matchId, 0, 0);
@@ -130,9 +147,9 @@ it.effect("a chunk's injuries are its own Injury lines, one per line in order, r
     deepStrictEqual(opening.injuries, []);
     deepStrictEqual(opening.injuredClubIds, []);
 
-    const second = yield* resumeSimulation(savesDir, save.id, match.matchId, RED_CARD_LINE, RED_CARD_LINE);
+    const second = yield* drainChunks(save.id, match.matchId, redCardLine, redCardLine);
     const injuryLines = second.lines.filter((line) => line.tag === "Injury");
-    ok(injuryLines.length === 2, `the second chunk holds two Injury lines — ${repin}`);
+    strictEqual(injuryLines.length, 2, `the chunks after the red card hold two Injury lines — ${repin}`);
     deepStrictEqual(second.injuries.map((injury) => injury.minute), injuryLines.map((line) => line.minute));
   }),
 );

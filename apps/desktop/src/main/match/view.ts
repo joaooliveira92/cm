@@ -68,6 +68,13 @@ const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
         ...("assistPlayerId" in event && event.assistPlayerId !== undefined ? [event.assistPlayerId] : []),
         ...("keeperId" in event && event.keeperId !== undefined ? [event.keeperId] : []),
       ];
+    case "Tackle":
+    case "Interception":
+      return [event.playerId];
+    case "HeaderDuel":
+      return [event.winnerId, event.loserId];
+    case "PossessionTally":
+      return [];
     case "Substitution":
       return [event.outPlayerId, event.inPlayerId];
     case "MatchStarted":
