@@ -11,8 +11,8 @@ mounted once in the match route shell, reading the attack share the statistics r
 
 **Blocked by:** None (can start immediately)
 
-**Status:** claimed
+**Status:** resolved
 
-- [ ] The bar renders on every live and post-match tab and on no pre-match tab.
-- [ ] Both percentages are visible text; "No attacks yet" before the first attack.
-- [ ] No renderer string labels a number "Possession".
+- [x] The bar renders on every live and post-match tab and on no pre-match tab.
+- [x] Both percentages are visible text; "No attacks yet" before the first attack.
+- [x] No renderer string labels a number "Possession".
