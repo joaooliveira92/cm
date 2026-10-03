@@ -451,7 +451,6 @@ export class MatchOverviewView extends Schema.Class<MatchOverviewView>("MatchOve
   matchId: MatchId,
   homeClubName: Schema.String,
   awayClubName: Schema.String,
-  throughMinute: Schema.NullOr(Schema.Finite),
   home: MatchTeamIncidents,
   away: MatchTeamIncidents,
   halfTimeHomeScore: Schema.NullOr(Schema.Finite),

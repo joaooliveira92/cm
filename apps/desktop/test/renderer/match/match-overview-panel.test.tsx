@@ -1,8 +1,12 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
-import { SaveId } from "@cm-clone/contracts";
+import { MatchId, SaveId } from "@cm-clone/contracts";
 import { MatchOverviewPanel } from "../../../src/renderer/match/MatchOverviewPanel.js";
-import { clearActiveMatch } from "../../../src/renderer/match/session.js";
+import {
+  clearActiveMatch,
+  recordRevealedLines,
+  setActiveMatch,
+} from "../../../src/renderer/match/session.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
 const s1 = SaveId.make("s1");
@@ -11,7 +15,6 @@ const view = (overrides: Record<string, unknown> = {}) => ({
   matchId: "m1",
   homeClubName: "Home FC",
   awayClubName: "Away FC",
-  throughMinute: null,
   home: {
     scorers: [{ playerId: "p1", playerName: "Alice Okoronkwo", goals: [{ minute: 12, half: 1, penalty: true }, { minute: 70, half: 2, penalty: false }] }],
     sendOffs: [],
@@ -81,5 +84,42 @@ describe("MatchOverviewPanel (map ticket 15)", () => {
     mount({ halfTimeHomeScore: null, halfTimeAwayScore: null });
     await screen.findByRole("region", { name: "Match incidents" });
     expect(screen.queryByText(/Score at half time/)).toBeNull();
+  });
+
+  it("re-reads as the live match reveals, so the incidents follow the feed", async () => {
+    const calls: Array<Record<string, unknown>> = [];
+    setActiveMatch({
+      saveId: s1,
+      match: {
+        matchId: MatchId.make("m1"),
+        fixtureId: 1,
+        homeClubId: "home",
+        homeClubName: "Home FC",
+        awayClubId: "away",
+        awayClubName: "Away FC",
+        isHome: true,
+      },
+      phase: "live",
+    } as never);
+    recordRevealedLines(s1, MatchId.make("m1"), Array.from({ length: 3 }, (_, minute) => ({ minute, tag: "ShotMissed", text: "Wide." })));
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string, payload: Record<string, unknown>) => {
+        if (method === "getLeagueTable") {
+          return { _tag: "Success", value: { season: { ...leagueTable.season, awaitingFixture: null }, standings: [] } };
+        }
+        calls.push(payload);
+        return { _tag: "Success", value: view() };
+      },
+    };
+    render(
+      <RegistryProvider>
+        <MatchOverviewPanel saveId={s1} />
+      </RegistryProvider>,
+    );
+    await waitFor(() => expect(calls.length).toBeGreaterThanOrEqual(1));
+    expect(calls[0]).toMatchObject({ matchId: "m1", revealedEvents: 3 });
+
+    recordRevealedLines(s1, MatchId.make("m1"), Array.from({ length: 9 }, (_, minute) => ({ minute, tag: "ShotMissed", text: "Wide." })));
+    await waitFor(() => expect(calls.at(-1)).toMatchObject({ matchId: "m1", revealedEvents: 9 }));
   });
 });

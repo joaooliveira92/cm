@@ -34,7 +34,8 @@ import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut } from "./stream.js";
 import { matchEventsOf } from "./timeline.js";
 
 /** Whether the Goal at `index` is a penalty: the event directly before it is the same player's
- *  Penalty, the engine's emission order in `resolvePenalty`. */
+ *  Penalty, the engine's emission order in `resolvePenalty`. Mirrors the penalty arm of
+ *  `shotKindFor` in game-engine's `commentary.ts`; both read the one adjacency rule. */
 const penaltyGoal = (events: ReadonlyArray<MatchEvent>, index: number): boolean => {
   const goal = events[index];
   const previous = events[index - 1];
@@ -102,7 +103,7 @@ export const matchOverviewView = (
   matchId: MatchId,
   stream: ReadonlyArray<StreamEvent>,
   events: ReadonlyArray<MatchEvent>,
-  clubName: (clubId: string) => string,
+  displayName: (id: string) => string,
   nameOf: (playerId: PlayerId) => string,
   fixture: MatchFixturePanel,
   revealedEvents: number | null,
@@ -110,12 +111,10 @@ export const matchOverviewView = (
   const started = matchStartedOf(stream);
   const included = events.slice(0, revealedCut(events, revealedEvents));
   const halfTime = included.find((event) => event._tag === "HalfTimeReached");
-  const last = included[included.length - 1];
   return new MatchOverviewView({
     matchId,
-    homeClubName: clubName(started.homeClubId),
-    awayClubName: clubName(started.awayClubId),
-    throughMinute: revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
+    homeClubName: displayName(started.homeClubId),
+    awayClubName: displayName(started.awayClubId),
     home: sideIncidents(included, started.homeClubId, nameOf),
     away: sideIncidents(included, started.awayClubId, nameOf),
     halfTimeHomeScore: halfTime?._tag === "HalfTimeReached" ? halfTime.homeScore : null,

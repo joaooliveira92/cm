@@ -1,8 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Effect, Result } from "effect";
 import type { MatchId, SaveId } from "@cm-clone/contracts";
 import { leagueTableAtom, useAtomValue } from "../rpc.js";
-import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "./session.js";
+import { getActiveMatch, getRevealedEvents, revealedToFullTime, subscribeActiveMatch } from "./session.js";
 
 /** Which match a per-match read shows, and how much of it. */
 export interface MatchBinding {
@@ -17,7 +17,8 @@ export type BoundMatchState<A> =
   | { readonly _tag: "ready"; readonly view: A | null };
 
 /**
- * A per-match read (Match Statistics, Match Ratings) bound to one match in this order:
+ * A per-match read (Match Statistics, Match Ratings, Match Player Stats, Match Overview) bound to
+ * one match in this order:
  *
  * 1. a live match — cut after the Match Events Match day has revealed, so the screen never runs ahead
  *    of the commentary;
@@ -41,6 +42,9 @@ export const useBoundMatchRead = <A, E>(
   // played match, and that reply could land after the right one. A read being refreshed (after Accept
   // result, say) may still name a match no longer awaited, so it is waited for too.
   const seasonKnown = (tableResult._tag === "Success" || tableResult._tag === "Failure") && !tableResult.waiting;
+  // The revealed count, so a live read re-runs as Match day reveals each event rather than freezing at
+  // kickoff. Subscribed the way the Attacks bar is; the active-match store notifies on every reveal.
+  const revealedEvents = useSyncExternalStore(subscribeActiveMatch, () => getRevealedEvents(saveId));
 
   const load = useCallback(async () => {
     const session = getActiveMatch(saveId);
@@ -51,7 +55,7 @@ export const useBoundMatchRead = <A, E>(
         saveId,
         matchId: live ? session.match.matchId : awaitingMatchId,
         revealedEvents: live
-          ? getRevealedEvents(saveId)
+          ? revealedEvents
           : awaitingMatchId !== null && !revealedToFullTime(saveId, awaitingMatchId)
             ? 0
             : null,
@@ -62,7 +66,7 @@ export const useBoundMatchRead = <A, E>(
         ? { _tag: "failed", message: describe(outcome.failure) }
         : { _tag: "ready", view: outcome.success },
     );
-  }, [saveId, awaitingMatchId, read, describe]);
+  }, [saveId, awaitingMatchId, read, describe, revealedEvents]);
 
   useEffect(() => {
     if (seasonKnown) void load();
