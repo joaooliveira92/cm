@@ -48,7 +48,7 @@ The screen must link to `Resign` instead when that better matches the user's int
 |                                                                          |
 | [ ] I understand that this manager cannot be resumed after retirement.   |
 |                                                                          |
-| [Cancel] [Resign Instead]                             [Retire Manager]   |
+| [Cancel] [Resign Instead]                               [Retire Manager] |
 +--------------------------------------------------------------------------+
 ```
 

@@ -52,7 +52,18 @@ export const useDialogKeyboard = ({
   const onKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
       event.preventDefault();
+      // The dialog is the topmost layer, so Escape belongs to it alone. Without this the keystroke
+      // keeps bubbling to the document, where a layer *beneath* (a transient overlay's global Escape
+      // binding) would also close on the same press.
+      event.stopPropagation();
       onEscapeRef.current(event);
+      return;
+    }
+    if (event.key === "Enter") {
+      // Same ownership for Enter: keep it from reaching a global Enter binding on a layer beneath
+      // (the palette dispatches on a bare Enter). Deliberately no `preventDefault` — the focused
+      // control still activates from the key's own default action.
+      event.stopPropagation();
       return;
     }
     if (event.key !== "Tab") return;

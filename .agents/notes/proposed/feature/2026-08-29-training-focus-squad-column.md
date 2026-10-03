@@ -145,7 +145,7 @@ While pending, the row's control is disabled and duplicate submissions for that 
 the rest of the Squad screen stays live. If the screen unmounts mid-request, remounting reloads
 authoritative row state rather than trusting abandoned local state. Failure preserves or reloads the
 last authoritative value and surfaces typed persistent text associated with the control - not a toast,
-per [Continue as the global career loop](2026-08-29-continue-as-global-career-loop.md) - translated
+per [Continue as the global career loop](../../implemented/feature/2026-08-29-continue-as-global-career-loop.md) - translated
 into player-facing language that never exposes raw error class names. Success needs no toast: the
 returned value appearing and the pending indicator ending is the confirmation.
 

@@ -7,17 +7,21 @@
  *
  * UI vocabulary lives here, never in CONTEXT.md (a pure game-domain glossary).
  */
+import type { Attribute } from "@cm-clone/shared";
 
 /** The rover of table ids — hand-rendered bid tables and the League Table keep
  *  an id for naming, even though they stay off TanStack (note's adoption
  *  boundary). */
 export type TableId =
   | "squad"
+  | "club-squad"
   | "transfer-market"
   | "free-agents"
   | "incoming-bids"
   | "outgoing-bids"
-  | "league-table";
+  | "league-table"
+  | "player-search"
+  | "match-player-stats";
 
 /** A column's stable id within its table (attribute keys double as column ids). */
 export type ColumnId = string;
@@ -31,17 +35,30 @@ export interface SortState {
 }
 
 /** A domain filter clause. Name search is a substring over the display name;
- *  position matches any position in the player's `positions` array. */
+ *  position matches when the filter is among the player's `canPlay` filters
+ *  (Suitability 15 or more for its cell). Status
+ *  carries a reserved-status ABBREVIATION (`"Tir"`), matched through the status
+ *  vocabulary's `statusesOf` — never compared as display text, and never
+ *  against raw Condition. Attribute keeps rows whose EXACT figure for one
+ *  Attribute is at least `min` (1–20); a banded figure never matches, so the
+ *  clause cannot read through a knowledge limit (group-e 03). */
 export type FilterClause =
   | { readonly _tag: "nameSearch"; readonly query: string }
-  | { readonly _tag: "position"; readonly position: string };
+  | { readonly _tag: "position"; readonly position: string }
+  | { readonly _tag: "status"; readonly status: string }
+  | { readonly _tag: "attribute"; readonly attribute: Attribute; readonly min: number };
 
 /** The row shape every TanStack table in this layer is built over. */
 export interface TableRowShape {
   readonly id: string;
   readonly firstName: string;
   readonly lastName: string;
-  readonly positions: ReadonlyArray<{ readonly position: string }>;
+  /** CM's compact position label (`D/DM RC`). */
+  readonly positionLabel: string;
+  /** The position filters the player can play. */
+  readonly canPlay: ReadonlyArray<string>;
+  /** Pitch-order sort key for the position column. */
+  readonly positionOrder: number;
 }
 
 /** The five explicit result states (note: Empty and result states). */

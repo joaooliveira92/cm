@@ -47,6 +47,14 @@ The screen must preserve the active manager, career revision, navigation history
 +------------------------------------------------------------------------------+
 ```
 
+![image](../../images/16627118-championship-manager-season-0304-windows-who-needs-mourinho.png)
+
+![image](../../images/16626416-championship-manager-season-0304-windows-reports-from-other-big-.png)
+
+![image](../../images/16627127-championship-manager-season-0304-windows-media-speculation-plays.png)
+
+![image](../../images/16627121-championship-manager-season-0304-windows-injuries.png)
+
 The diagram defines information hierarchy and behavior rather than exact pixel placement.
 
 ## 5. Information architecture

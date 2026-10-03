@@ -221,8 +221,4 @@ artwork, exact wording, source code, logos, or databases.
 
 **Screen 23: Continue and Advance Time**
 
-## Suggested Git commit
-
-```text
-docs(game-ui): specify global application shell
-```
+##

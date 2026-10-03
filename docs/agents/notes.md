@@ -1,6 +1,12 @@
 # Agent Notes
 
-An Agent Note records a decision made while planning or building a feature — the *why* and *what was given up* — that outlives the ticket that produced it. This doc defines where they live, when `cm-wayfinder` and `cm-implement` write them, and the format they follow. Adapted from a companion project's Agent Notes system, trimmed to prose-only enforcement (no verification script, no CI gate, no hash-pinned manifest) for v1.
+An Agent Note records a decision made while planning or building a feature — the *why* and *what was given up* — that outlives the ticket that produced it. This doc defines when to write one, where they live, and the format they follow. Adapted from a companion project's Agent Notes system, trimmed to prose-only enforcement (no verification script, no CI gate, no hash-pinned manifest) for v1.
+
+## When to write one
+
+Only for a decision a future contributor would plausibly undo without it: a choice, design, or convention whose reasoning the code doesn't show. Routine work (bug fixes, UI changes on an existing screen, refactors, tests) gets no note; its rationale goes in the commit body. See the threshold in [AGENTS.md](../../AGENTS.md) § When to use the process.
+
+A note that the code has since contradicted is worse than no note. Whoever changes the behaviour updates or deletes the note in the same change.
 
 ## Layout and naming
 
@@ -9,7 +15,7 @@ Every Agent Note's path encodes two axes: `.agents/notes/{lifecycle}/{class}/yyy
 **Lifecycle** (top-level folder):
 
 - `proposed/` — decided but not yet built. `cm-wayfinder` writes here when a resolved ticket asserts a choice, design, or convention.
-- `implemented/` — the decision shipped. `cm-implement` promotes a note here from `proposed/` in the same commit that ships the code.
+- `implemented/` — the decision shipped. A note moves here from `proposed/` when someone touches it after the code ships, or in a `cm-archive-notes` pass. Promotion is optional and need not share the commit that ships the code.
 - `rejected/` — considered and declined; kept only while its rationale prevents a plausible re-litigation, otherwise deleted.
 - `archived/` — a low-future-value `implemented/` note, frozen. See `cm-archive-notes`.
 
@@ -34,7 +40,7 @@ There is now no distinction to maintain between "durable enough for an ADR" and 
 
 **Historical citations.** `ADR-0001` … `ADR-0012` still appear in roughly 110 source and test comments, and in some older notes and reports. They were deliberately left in place rather than rewritten in bulk. Read such a citation as a stable historical identifier pointing at the note that absorbed it; `.ai/TRACEABILITY.md` maps every one. Two ADRs were absorbed into notes that already stated their content rather than migrated to new files: ADR-0001 into `proposed/architecture/2026-08-29-player-ratings-are-derived-projections`, and ADR-0012 into `implemented/architecture/2026-08-29-action-model`.
 
-**A re-run of `cm-setup` would undo part of this.** The setup skill's `domain.md` template still describes the generic `CONTEXT.md` + `docs/adr/` convention, and installing it would overwrite [domain.md](domain.md) with ADR guidance. The templates were left generic on purpose — abolishing ADRs is this repo's call, not a universal one — so if `cm-setup` is ever re-run here, re-apply the ADR removal to `docs/agents/domain.md` afterwards.
+**A re-run of `cm-setup` would undo part of this.** The setup skill's `domain.md` template still describes the generic `CONTEXT.md` + `docs/adr/` convention, and installing it would overwrite [domain.md](domain.md) with ADR guidance. Its `notes.md` template would also overwrite this file, putting back the same-commit promotion rule and dropping *When to write one*. The templates were left generic on purpose — abolishing ADRs is this repo's call, not a universal one — so if `cm-setup` is ever re-run here, re-apply the ADR removal to `docs/agents/domain.md` and restore this file afterwards.
 
 ## The file format
 

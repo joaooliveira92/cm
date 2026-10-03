@@ -1,0 +1,402 @@
+diff --git a/apps/desktop/src/main/match/pitch.ts b/apps/desktop/src/main/match/pitch.ts
+index f032cf6..82b80c8 100644
+--- a/apps/desktop/src/main/match/pitch.ts
++++ b/apps/desktop/src/main/match/pitch.ts
+@@ -79,7 +79,7 @@ const appliedAt = (events: ReadonlyArray<MatchEvent>, commands: ReadonlyArray<Li
+ interface PitchFold {
+   readonly slots: ReadonlyArray<{ readonly playerId: PlayerId; readonly position: PitchSlotView["position"] }>;
+   readonly beenOn: ReadonlySet<PlayerId>;
+-  /** The forced Substitutions after a severe Injury when no one but the injured player was off the pitch. */
++  /** The forced Substitutions made when every squad player had already been on the pitch. */
+   readonly benchless: ReadonlySet<SubstitutionEvent>;
+   /** Each of the club's bring-offs, by position in the journaled lineup commands, and whether the
+    *  player was on the pitch when it was applied. */
+@@ -112,13 +112,14 @@ const foldPitch = (
+   };
+ 
+   const substitute = (event: SubstitutionEvent): void => {
++    // The engine emitted it, so the player has been on even where the fold lost track of the slot.
++    beenOn.add(event.inPlayerId);
+     const outIndex = slots.findIndex((slot) => slot.playerId === event.outPlayerId);
+     if (outIndex === -1) return;
+     // A goalkeeper stand-in is already on the pitch: they move into the vacated slot, leaving their own empty.
+     slots = slots
+       .map((slot, index) => (index === outIndex ? { ...slot, playerId: event.inPlayerId } : slot))
+       .filter((slot, index) => index === outIndex || slot.playerId !== event.inPlayerId);
+-    beenOn.add(event.inPlayerId);
+   };
+ 
+   for (let index = 0; index <= events.length; index++) {
+@@ -153,9 +154,9 @@ const foldPitch = (
+       event._tag === "Substitution" &&
+       event.forcedByInjury &&
+       event.teamClubId === clubId &&
+-      setup.squad.every((player) => player.id === event.outPlayerId || isOn(player.id))
++      setup.squad.every((player) => beenOn.has(player.id))
+     ) {
+-      // `forcePlayerOff` looks for a bench player before trying a substitution.
++      // `forcePlayerOff` looks for a squad player who has never been on before trying a substitution.
+       benchless.add(event);
+     }
+     if (
+@@ -204,8 +205,14 @@ export interface LineupFacts {
+   /**
+    * The forced Substitutions with no one left on the bench: the one input to telling a goalkeeper
+    * stand-in apart (`classifySubstitutions` in `substitutions.ts`) the engine's counters cannot give.
+-   * A squad of more than twelve always has someone on the bench in both the engine and the fold, so
+-   * there it cannot drift from the engine after a live tactics change.
++   * The bench is the engine's: the squad players who have never been on the pitch (`beenOn` in
++   * `teamState.ts`), not the Tactic's named bench.
++   *
++   * The engine also counts players a live tactics change puts on as having been on, which this fold
++   * does not follow (decision request 01). Classification only reads `benchless` while the caps still
++   * allow a substitution, so at most 11 starters and 4 substitutes have been on: a squad of sixteen or
++   * more always has someone on the bench in both, unless a live tactics change put on players who had
++   * not played.
+    */
+   readonly benchless: ReadonlySet<SubstitutionEvent>;
+   /** Whether each journaled bring-off took its player off the pitch, by position in the lineup commands. */
+diff --git a/apps/desktop/src/main/match/substitutions.ts b/apps/desktop/src/main/match/substitutions.ts
+index 87ec72a..995b59d 100644
+--- a/apps/desktop/src/main/match/substitutions.ts
++++ b/apps/desktop/src/main/match/substitutions.ts
+@@ -92,8 +92,9 @@ export interface SubstitutionRoles {
+  * A forced Substitution comes from one of two places. A severe Injury calls `forcePlayerOff`, which
+  * records the Injury and then, as the very next event, either the bench substitution or, when that is
+  * refused, the stand-in `emptySlot` drags into goal. So one right after its player's severe Injury is
+- * a stand-in when the caps refuse the bench path, or when no one was left on the bench — the one fact
+- * the counters cannot give, taken from the pitch fold (`benchless`). Any other forced Substitution is
++ * a stand-in when the caps refuse the bench path, or when every squad player had already been on the
++ * pitch, so no one was left to bring on — the one fact the counters cannot give, taken from the pitch
++ * fold (`benchless`). Any other forced Substitution is
+  * a bring-off's stand-in: `applyForcedOff` never tries the bench. Reading this off the counters
+  * rather than off who the fold has on the pitch keeps it right after a live tactics change moves
+  * players the fold does not follow.
+diff --git a/apps/desktop/test/main/match/substitution-accuracy.test.ts b/apps/desktop/test/main/match/substitution-accuracy.test.ts
+index e444485..e35e514 100644
+--- a/apps/desktop/test/main/match/substitution-accuracy.test.ts
++++ b/apps/desktop/test/main/match/substitution-accuracy.test.ts
+@@ -179,10 +179,12 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
+   }),
+ );
+ 
+-/** Seed 1292: the human club's only substitution is forced by an Injury in regular minute 45 (the
+- *  11th Match Event), before half time. */
+-const MINUTE_45_FORCED_SUB_SEED = 1292;
+-const MINUTE_45_FORCED_SUB_LINE = 10;
++/** Seed 2023: the human club's only substitution is forced by an Injury in regular minute 45 (the
++ *  9th Match Event), before half time. Re-searched for group-g-match-day ticket 26: seed 1292 held
++ *  this until a forced substitution stopped choosing its replacement by squad row order, which
++ *  changed that match's replay. */
++const MINUTE_45_FORCED_SUB_SEED = 2023;
++const MINUTE_45_FORCED_SUB_LINE = 8;
+ 
+ it.effect("a forced substitution in regular minute 45 spends a window", () =>
+   Effect.gen(function* () {
+diff --git a/apps/desktop/test/main/match/substitutions.test.ts b/apps/desktop/test/main/match/substitutions.test.ts
+index ba08a89..1449fc3 100644
+--- a/apps/desktop/test/main/match/substitutions.test.ts
++++ b/apps/desktop/test/main/match/substitutions.test.ts
+@@ -4,9 +4,10 @@
+  * one the engine can emit (`packages/game-engine/src/match/simulate/teamState.ts`, `loop.ts`).
+  */
+ import type { ClubId, PlayerId } from "@cm-clone/contracts";
+-import type { MatchEvent, MatchHalf, SubstitutionEvent } from "@cm-clone/game-engine";
++import type { MatchEvent, MatchHalf, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
++import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
+ import { describe, expect, it } from "vitest";
+-import type { LineupCommand } from "../../../src/main/match/pitch.js";
++import { lineupFacts, type LineupCommand } from "../../../src/main/match/pitch.js";
+ import {
+   classifySubstitutions,
+   countedSubstitutions,
+@@ -71,10 +72,11 @@ const read = (
+ };
+ 
+ describe("classifySubstitutions — goalkeeper stand-ins by the engine's rule, not the pitch fold", () => {
+-  it("a bench player forced on twice is a substitution both times (a live tactics change put the first off again)", () => {
++  it("a bench player forced on and then severely injured himself is replaced by another: both are substitutions", () => {
++    // The engine never forces the same player on twice (ticket 26), so the second brings on someone new.
+     const first = sub(70, "p", "b", true);
+-    const second = sub(80, "q", "b", true);
+-    const { standIns, status } = read([started, halfTime, severe(70, "p"), first, severe(80, "q"), second, fullTime]);
++    const second = sub(80, "b", "c", true);
++    const { standIns, status } = read([started, halfTime, severe(70, "p"), first, severe(80, "b"), second, fullTime]);
+     expect(standIns.size).toBe(0);
+     expect(status).toMatchObject({ used: 2, windowsUsed: 2, capReached: false });
+   });
+@@ -158,3 +160,49 @@ describe("classifySubstitutions — halftime instructions and windows", () => {
+     expect(status).toMatchObject({ used: 2, windowsUsed: 1 });
+   });
+ });
++
++/** Eleven starters, `gk` in goal, and one more squad player, `b`: a squad with a bench of one. */
++const twelve: MatchTeamSetup = {
++  clubId: club,
++  squad: ["gk", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "b"].map((id) => ({
++    id: player(id),
++    attributes: {} as PlayerAttributes,
++  })),
++  tactic: {
++    formation: "4-4-2",
++    slots: FORMATION_SLOTS["4-4-2"].map((position, index) => ({
++      position,
++      role: POSITION_ROLES[position],
++      playerId: player(index === 0 ? "gk" : `s${index}`),
++    })),
++    bench: [null, null, null, null, null, null, null],
++    mentality: "balanced",
++    tempo: "normal",
++    pressing: "medium",
++  },
++};
++
++describe("lineupFacts — the bench is the squad players who have never been on (the engine's `forcePlayerOff`)", () => {
++  it("a squad player not yet on is a bench: the forced Substitution after a severe Injury is not benchless", () => {
++    const replaced = sub(80, "s5", "b", true);
++    const { benchless } = lineupFacts([twelve], [started, halfTime, severe(80, "s5"), replaced, fullTime], []);
++    expect(benchless.size).toBe(0);
++  });
++
++  it("a player substituted on and off again is not a bench: the last goalkeeper's severe Injury drags a stand-in", () => {
++    // `b` has been on and is off again, so the engine has no one to bring on and drags `s1` into goal.
++    const drag = sub(80, "gk", "s1", true);
++    const events = [started, halfTime, sub(60, "s5", "b", false), sub(60, "b", "s5", false), severe(80, "gk"), drag, fullTime];
++    const { benchless } = lineupFacts([twelve], events, [command(60, "s5", "b"), command(60, "b", "s5")]);
++    expect([...benchless]).toEqual([drag]);
++    expect(read(events, [command(60, "s5", "b"), command(60, "b", "s5")], benchless).status).toMatchObject({ used: 2, windowsUsed: 1 });
++  });
++
++  it("a player sent off is not a bench either", () => {
++    const drag = sub(80, "gk", "s1", true);
++    const sentOff: MatchEvent = { _tag: "RedCard", minute: 30, half: 1, teamClubId: club, playerId: player("b") };
++    const events = [started, severe(20, "s5"), sub(20, "s5", "b", true), sentOff, halfTime, severe(80, "gk"), drag, fullTime];
++    const { benchless } = lineupFacts([twelve], events, []);
++    expect([...benchless]).toEqual([drag]);
++  });
++});
+diff --git a/packages/game-engine/src/match/simulate/teamState.ts b/packages/game-engine/src/match/simulate/teamState.ts
+index e0f63d6..20fcb7d 100644
+--- a/packages/game-engine/src/match/simulate/teamState.ts
++++ b/packages/game-engine/src/match/simulate/teamState.ts
+@@ -35,6 +35,9 @@ export interface TeamRuntimeState {
+   readonly penalties: Set<PlayerId>;
+   /** Players currently standing in as goalkeeper (shot-stopping treated as 1) after a red GK is off (ticket 07). */
+   readonly gkStandIns: Set<PlayerId>;
++  /** Everyone who has been on the pitch: the starting XI and every player since put in a slot. A
++   *  forced substitution never brings one of them back on (group-g-match-day ticket 26). */
++  readonly beenOn: Set<PlayerId>;
+ }
+ 
+ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
+@@ -47,6 +50,7 @@ export const initTeamState = (setup: MatchTeamSetup): TeamRuntimeState => ({
+   conds: newConditionLedger(setup.squad.map((player) => player.id), setup.squad),
+   penalties: new Set(),
+   gkStandIns: new Set(),
++  beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
+ });
+ 
+ /** Applies one `MatchCommand` to team state. Rejects (no-op on runtime state) on roster/cap/window violations. */
+@@ -58,6 +62,7 @@ export const applyCommand = (
+ ): { readonly accepted: boolean; readonly reason?: string } => {
+   if (command._tag === "ChangeTactics") {
+     team.resolved = resolveTeamTactics(command.tactic);
++    for (const slot of team.resolved.slots) team.beenOn.add(slot.playerId);
+     return { accepted: true };
+   }
+ 
+@@ -82,6 +87,7 @@ export const applyCommand = (
+   const slot = team.resolved.slots[index]!;
+   team.resolved.slots[index] = { ...slot, playerId: command.inPlayerId };
+   team.substitutionsUsed += 1;
++  team.beenOn.add(command.inPlayerId);
+   // A substitute comes on fresh.
+   team.conds.set(command.inPlayerId, START_CONDITION);
+   return { accepted: true };
+@@ -162,7 +168,11 @@ export const pickPlayerId = (team: TeamRuntimeState, random: RandomSource, prefe
+ };
+ 
+ /** Red (Severe) forced-off semantics (ticket 07): substitute from the bench if any, otherwise empty
+- *  the slot (team plays with 10); a red GK with no sub forces an outfield into the goal at gk=1. */
++ *  the slot (team plays with 10); a red GK with no sub forces an outfield into the goal at gk=1.
++ *
++ *  The bench here is every squad player who has never been on the pitch (`beenOn`), not the Tactic's
++ *  named bench (decision request 04). The replacement is the first of them by player id, so it does
++ *  not depend on the order the squad was loaded in (ticket 26). */
+ export const forcePlayerOff = (
+   team: TeamRuntimeState,
+   playerId: PlayerId,
+@@ -174,9 +184,9 @@ export const forcePlayerOff = (
+   if (slotIndex === -1) return;
+   const slot = team.resolved.slots[slotIndex]!;
+ 
+-  const benchId = [...team.playersById.keys()].find(
+-    (id) => !team.resolved.slots.some((s) => s.playerId === id) && id !== playerId,
+-  );
++  const benchId = [...team.playersById.keys()]
++    .filter((id) => !team.beenOn.has(id))
++    .reduce<PlayerId | undefined>((first, id) => (first === undefined || id < first ? id : first), undefined);
+   if (benchId) {
+     const result = applyCommand(
+       team,
+@@ -247,8 +257,10 @@ const normalizeGoalkeeper = (team: TeamRuntimeState, playerId: PlayerId): void =
+ };
+ 
+ /** A manager `ForceOff` (ticket 11's bring-off) drains an on-pitch player's slot so the team plays
+- *  with 10 — reuses the red path's `emptySlot` (including the last-GK outfield stand-in fallback)
+- *  and consumes no substitution/window. Returns false if the player isn't on the pitch. */
++ *  with 10 through `emptySlot` — the fallback a severe Injury takes when `forcePlayerOff` finds no
++ *  substitute — including its last-GK outfield stand-in, and consumes no substitution/window.
++ *  Returns false if the player isn't on the pitch. A red card does not come through here:
++ *  `resolveCards` removes the slot itself, with no stand-in (decision request 06). */
+ export const applyForcedOff = (
+   team: TeamRuntimeState,
+   playerId: PlayerId,
+diff --git a/packages/game-engine/test/match/forced-substitution.test.ts b/packages/game-engine/test/match/forced-substitution.test.ts
+new file mode 100644
+index 0000000..0cef49c
+--- /dev/null
++++ b/packages/game-engine/test/match/forced-substitution.test.ts
+@@ -0,0 +1,142 @@
++import { describe, expect, it } from "vitest";
++import type { MatchEvent, SubstitutionEvent } from "../../src/match/events.js";
++import { simulateMatch } from "../../src/match/simulate/index.js";
++import { applyCommand, forcePlayerOff, initTeamState, type TeamRuntimeState } from "../../src/match/simulate/teamState.js";
++import type { MatchTeamSetup } from "../../src/match/types.js";
++import { buildTeam, clubId as makeClubId } from "./fixtures.js";
++import type { PlayerId } from "@cm-clone/contracts";
++
++/**
++ * Who a forced substitution brings on (group-g-match-day ticket 26): a squad player who has never
++ * been on the pitch, the first by player id, whatever order the squad arrives in.
++ */
++const HOME = makeClubId("home");
++
++const onPitch = (team: TeamRuntimeState): ReadonlyArray<PlayerId> => team.resolved.slots.map((slot) => slot.playerId);
++
++const forcedSubstitutions = (events: ReadonlyArray<MatchEvent>): ReadonlyArray<SubstitutionEvent> =>
++  events.filter((event): event is SubstitutionEvent => event._tag === "Substitution" && event.forcedByInjury);
++
++/** The squad players who have never been on the pitch, in player id order. */
++const neverOn = (setup: MatchTeamSetup, beenOn: ReadonlyArray<PlayerId>): ReadonlyArray<PlayerId> =>
++  setup.squad
++    .map((player) => player.id)
++    .filter((id) => !setup.tactic.slots.some((slot) => slot.playerId === id) && !beenOn.includes(id))
++    .sort((a, b) => (a < b ? -1 : a > b ? 1 : 0));
++
++/** Seed 7's generated squad: 11 starters and a bench to choose from. */
++const setupOf = (): MatchTeamSetup => buildTeam(HOME, 7).setup;
++
++const outfielder = (setup: MatchTeamSetup, index: number): PlayerId => setup.tactic.slots[index]!.playerId;
++
++describe("forcePlayerOff's replacement", () => {
++  it("brings on the first never-on squad player by player id", () => {
++    const setup = setupOf();
++    const team = initTeamState(setup);
++    const events: Array<MatchEvent> = [];
++
++    forcePlayerOff(team, outfielder(setup, 5), 30, 1, events);
++
++    expect(forcedSubstitutions(events).map((event) => event.inPlayerId)).toEqual([neverOn(setup, [])[0]]);
++  });
++
++  it("does not bring back a player the manager substituted off", () => {
++    const setup = setupOf();
++    const team = initTeamState(setup);
++    const substitutedOff = outfielder(setup, 5);
++    const first = neverOn(setup, [])[0]!;
++    // The first candidate comes on and goes off again in one window: the pitch is back to its starters.
++    expect(applyCommand(team, { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: substitutedOff, inPlayerId: first }, 20, false).accepted).toBe(true);
++    expect(applyCommand(team, { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: first, inPlayerId: substitutedOff }, 20, false).accepted).toBe(true);
++    const events: Array<MatchEvent> = [];
++
++    forcePlayerOff(team, outfielder(setup, 6), 30, 1, events);
++
++    const [forced] = forcedSubstitutions(events);
++    expect(forced?.inPlayerId).not.toBe(first);
++    expect(forced?.inPlayerId).toBe(neverOn(setup, [first])[0]);
++  });
++
++  it("does not bring on a player who was sent off or injured off", () => {
++    const setup = setupOf();
++    const team = initTeamState(setup);
++    const first = neverOn(setup, [])[0]!;
++    const events: Array<MatchEvent> = [];
++    // The first candidate comes on for a severe injury and is then sent off: the next forced
++    // substitution must skip both him and the injured player he replaced.
++    forcePlayerOff(team, outfielder(setup, 5), 30, 1, events);
++    expect(onPitch(team)).toContain(first);
++    // A red card removes the slot outright (`resolveCards`); model that the same way.
++    team.resolved.slots = team.resolved.slots.filter((slot) => slot.playerId !== first);
++    forcePlayerOff(team, outfielder(setup, 6), 31, 1, events);
++
++    const inPlayers = forcedSubstitutions(events).map((event) => event.inPlayerId);
++    expect(inPlayers).toEqual([first, neverOn(setup, [first])[0]]);
++    expect(inPlayers).not.toContain(outfielder(setup, 5));
++  });
++
++  it("picks the same replacement whatever order the squad is in", () => {
++    const setup = setupOf();
++    const reversed: MatchTeamSetup = { ...setup, squad: [...setup.squad].reverse() };
++    const rotated: MatchTeamSetup = { ...setup, squad: [...setup.squad.slice(7), ...setup.squad.slice(0, 7)] };
++
++    const replacements = [setup, reversed, rotated].map((variant) => {
++      const team = initTeamState(variant);
++      const events: Array<MatchEvent> = [];
++      forcePlayerOff(team, outfielder(variant, 5), 30, 1, events);
++      return forcedSubstitutions(events).map((event) => event.inPlayerId);
++    });
++
++    expect(replacements[1]).toEqual(replacements[0]);
++    expect(replacements[2]).toEqual(replacements[0]);
++  });
++
++  it("leaves the slot empty when every squad player has been on", () => {
++    const setup = setupOf();
++    const starters = new Set(setup.tactic.slots.map((slot) => slot.playerId));
++    // Twelve players: the eleven starters and one substitute, who has already come on and gone off.
++    const substitute = neverOn(setup, [])[0]!;
++    const small: MatchTeamSetup = { ...setup, squad: setup.squad.filter((p) => starters.has(p.id) || p.id === substitute) };
++    const team = initTeamState(small);
++    expect(applyCommand(team, { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: outfielder(small, 5), inPlayerId: substitute }, 20, false).accepted).toBe(true);
++    expect(applyCommand(team, { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: substitute, inPlayerId: outfielder(small, 5) }, 20, false).accepted).toBe(true);
++    const events: Array<MatchEvent> = [];
++
++    forcePlayerOff(team, outfielder(small, 6), 30, 1, events);
++
++    expect(events).toEqual([]);
++    expect(onPitch(team)).toHaveLength(10);
++    expect(onPitch(team)).not.toContain(outfielder(small, 6));
++    expect(team.substitutionsUsed).toBe(2);
++  });
++});
++
++describe("a simulated match with a forced substitution", () => {
++  /** The first seed whose match forces a substitution for the home side. */
++  const seedWithForcedSubstitution = (): number => {
++    for (let seed = 1; seed < 2000; seed++) {
++      const events = simulateMatch({ seed, home: buildTeam(HOME, seed).setup, away: buildTeam(makeClubId("away"), seed + 1000).setup });
++      if (forcedSubstitutions(events).some((event) => event.teamClubId === HOME)) return seed;
++    }
++    throw new Error("no seed forces a home substitution");
++  };
++
++  it("replays identically with the squads in any order", () => {
++    const seed = seedWithForcedSubstitution();
++    const home = buildTeam(HOME, seed).setup;
++    const away = buildTeam(makeClubId("away"), seed + 1000).setup;
++
++    const inOrder = simulateMatch({ seed, home, away });
++    const reversed = simulateMatch({
++      seed,
++      home: { ...home, squad: [...home.squad].reverse() },
++      away: { ...away, squad: [...away.squad].reverse() },
++    });
++
++    expect(reversed).toEqual(inOrder);
++    const starters = new Set(home.tactic.slots.map((slot) => slot.playerId));
++    for (const event of forcedSubstitutions(inOrder).filter((e) => e.teamClubId === HOME)) {
++      expect(starters.has(event.inPlayerId)).toBe(false);
++    }
++  });
++});

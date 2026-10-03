@@ -1,0 +1,107 @@
+import { flexRender } from "@tanstack/react-table";
+import type { AppTable } from "./tableFeatures.js";
+import {
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "../components/ui/table.js";
+import { FOCUS_RING } from "../focus.js";
+import { useTableCtx } from "./DataTableContext.js";
+import { denseGridHeadClass } from "./denseGrid.js";
+import type { SortState, TableRowShape } from "./types.js";
+import { cycleSort } from "./features/sorting.js";
+
+export interface DataTableHeaderProps<Row extends TableRowShape> {
+  readonly table: AppTable<Row>;
+}
+
+export const DataTableHeader = <Row extends TableRowShape>(
+  props: DataTableHeaderProps<Row>,
+) => {
+  const { table } = props;
+  const { onSortChange, scrolledFromLeft, denseGrid } = useTableCtx();
+
+  const cycleSortHeader = (columnId: string): void => {
+    const current = table.atoms.sorting.get()[0];
+    const currentSort: SortState | null =
+      current === undefined
+        ? null
+        : { columnId: current.id, direction: current.desc ? "desc" : "asc" };
+    onSortChange(cycleSort(currentSort, columnId));
+  };
+
+  return (
+    <TableHeader>
+      {table.getHeaderGroups().map((headerGroup) => (
+        <TableRow
+          key={headerGroup.id}
+          className="border-panel-border hover:bg-transparent"
+        >
+          {headerGroup.headers.map((header) => {
+            const sortable = header.column.getCanSort();
+            const sortState = header.column.getIsSorted();
+            const label = flexRender(
+              header.column.columnDef.header,
+              header.getContext(),
+            );
+            return (
+              <TableHead
+                key={header.id}
+                aria-sort={
+                  sortable && sortState === "asc"
+                    ? "ascending"
+                    : sortable && sortState === "desc"
+                      ? "descending"
+                      : undefined
+                }
+                className={`whitespace-nowrap ${denseGrid ? denseGridHeadClass : ""} ${header.column.getIsPinned() !== false && scrolledFromLeft ? "bg-bg-base" : ""}`}
+                style={pinnedStyle(header.column)}
+              >
+                {sortable ? (
+                  // Preflight resets a button's text-transform, so without the
+                  // inherit a sortable header would not take the head's case.
+                  <button
+                    type="button"
+                    className={`flex items-center gap-1 [text-transform:inherit] ${FOCUS_RING.join(" ")}`}
+                    onClick={() => cycleSortHeader(header.column.id)}
+                  >
+                    <span>{label}</span>
+                    <span
+                      aria-hidden="true"
+                      className="text-caption text-text-secondary"
+                    >
+                      {sortState === "asc"
+                        ? "▲"
+                        : sortState === "desc"
+                          ? "▼"
+                          : "↕"}
+                    </span>
+                  </button>
+                ) : (
+                  label
+                )}
+              </TableHead>
+            );
+          })}
+        </TableRow>
+      ))}
+    </TableHeader>
+  );
+};
+
+const pinnedStyle = (column: {
+  readonly getIsPinned: () => false | "start" | "end";
+  readonly getStart: (position?: "start" | "center" | "end") => number;
+  readonly getSize: () => number;
+}): React.CSSProperties | undefined => {
+  if (column.getIsPinned() !== "start") return undefined;
+  const width = column.getSize();
+  return {
+    position: "sticky",
+    left: column.getStart("start"),
+    zIndex: 1,
+    width,
+    minWidth: width,
+    maxWidth: width,
+  };
+};

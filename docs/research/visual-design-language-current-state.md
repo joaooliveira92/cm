@@ -1,12 +1,12 @@
 # Current visual state of the cm-clone desktop renderer
 
 **Question:** What is the current visual state of the `@cm-clone/desktop` renderer,
-catalogued against the CM 03/04 UI reference at `docs/ui-elements.md`?
+catalogued against the CM 03/04 UI reference at `docs/design/ui-elements.md`?
 
 **Sources:**
 - Primary: every file under `apps/desktop/src/renderer/` (10 screen files, 1 CSS,
   1 App shell, ~15 match-screen component files)
-- Reference: `docs/ui-elements.md` (CM 03/04 UI analysis, 533 lines)
+- Reference: `docs/design/ui-elements.md` (CM 03/04 UI analysis, 533 lines)
 - Context: `CONTEXT.md`, `.scratch/visual-design-language/map.md`
 
 ---
@@ -102,7 +102,7 @@ stack (`ui-sans-serif, system-ui, ...`).
 
 ### Comparison to CM 03/04
 
-CM 03/04 used "small typography intended for 1024×768" (docs/ui-elements.md:23).
+CM 03/04 used "small typography intended for 1024×768" (docs/design/ui-elements.md:23).
 The original game rendered at 1024×768 and used small, compact fonts (likely
 MS Sans Serif / Tahoma equivalents at 8–11pt). The clone's `text-sm` (14px) on modern
 high-DPI displays produces roughly equivalent apparent size, but the default sans-serif
@@ -343,25 +343,15 @@ CM 03/04 supported multiple skins (traditional, Ter) with configurable:
 
 ### Current clones
 
-**No dedicated icon set or icon font.** The renderer uses:
-
-- **Unicode arrows:** `◀` and `▶` for match-screen nav buttons (Sidebar.tsx:54,63)
-- **Emoji:** Only in the match-screen component — ⚽ (goal), 🟨 (yellow card), 🟥 (red card),
-  🔄 (substitution), 🤕 (injury), 🎯 (penalty missed), 📌 (other), 👤 (manager), 🏆 (competitions),
-  ⚽ (nations), 📊 (history), ⚙️ (options), ⚠️ (pillar warning in CreationStep1.tsx:192)
-- **Colored text** for status differentiation (green for points/ready, amber for warnings,
-  red for errors)
-- **No SVG icons, no icon component, no icon library**
+use https://lucide.dev/ icons
 
 ### Comparison to CM 03/04
 
 CM 03/04 used "limited use of iconography" — icons and color augmented text but did not
-replace it. The clone's use of emoji in match-screen is perhaps the closest approximation,
-but it's confined to that component. The main screens use no icons at all — all information
+replace it.  The main screens use no icons at all — all information
 is text-only.
 
-**Judgment:** (b) modern/modified — minimal icon use via emoji in one component,
-otherwise text-only like CM but without CM's color-coded comparison highlighting.
+**Judgment:** use icons not emojis
 
 ---
 
@@ -377,7 +367,7 @@ otherwise text-only like CM but without CM's color-coded comparison highlighting
 | 6. Navigation | (c) no equivalent | Flat tab bar of peer screens. No hierarchical context, no date/Continue bar, no contextual menus, no screen history. |
 | 7. Status & data display | (c) no equivalent | No status abbreviations, morale, fitness, form indicators. Raw numeric display only. |
 | 8. Skins & theming | (c) no equivalent | No theme system, no CSS variables in main app, no runtime switching. Single fixed palette. |
-| 9. Icons & visual markers | (b) modern/modified | Emoji-only in match-screen component. No icon library, no SVGs, no color-coded comparison. |
+| 9. Icons & visual markers | (b) modern/modified | Lucide icons in match-screen component. No emojis. |
 
 ---
 
@@ -410,7 +400,7 @@ otherwise text-only like CM but without CM's color-coded comparison highlighting
 ## Gaps
 
 - **Font rendering differences.** I could not verify the exact font family or rendering of
-  CM 03/04's UI on original hardware. The `docs/ui-elements.md` describes "small typography
+  CM 03/04's UI on original hardware. The `docs/design/ui-elements.md` describes "small typography
   intended for 1024×768" but does not specify the exact font. A CM 03/04 installation or
   screenshot analysis at pixel level would be needed.
 - **CM 03/04 button appearance at pixel level.** The reference document says "rectangular,

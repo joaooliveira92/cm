@@ -1,0 +1,115 @@
+/**
+ * Player Profile (Screen 50) — the tab a player's name opens on.
+ *
+ * CM 03/04 drew it as three side-by-side Attribute columns (Technical, Mental, Physical) with the
+ * derived, non-1-to-20 readings tinted at the foot of the last one, then the Selection Details
+ * strip beneath. This is that layout over the data this game actually models: every Attribute in
+ * its Category, Overall Rating and Transfer Value as the derived pair, and Positions with their
+ * Familiarity Tier in place of CM's per-position grid.
+ *
+ * Below Fully Scouted the profile reads by the manager's Scouting Progress on the player (Agent
+ * Note 2026-09-19, ticket 10): every Attribute, Overall Rating and Transfer Value renders as the
+ * `low–high` Attribute Range the market publishes, exact only at Fully Scouted.
+ *
+ * The panels only report. The one command reachable from here is Scout Player, in the career bar
+ * (`ScoutPlayerAction`, group-i 13), because scouting is how a manager narrows the ranges this
+ * screen shows; every other command lives on the surface that owns it (Training Focus on
+ * Development, bids on Transfers).
+ */
+import { type PlayerId, type PlayerProfileView, type SaveId } from "@cm-clone/contracts";
+import {
+  CATEGORY_ATTRIBUTES,
+  type Attribute,
+  type Category,
+} from "@cm-clone/shared";
+import { formatFigure, formatFigureCredits } from "../format.js";
+import { attributeLabel } from "../playerCoachReport/developmentProgress.js";
+import { injuryLabel } from "../player/injury.js";
+import { PlayerPanel, PlayerRow } from "../player/panels.js";
+import { PlayerScreenFrame } from "../player/PlayerScreenFrame.js";
+import { PlayerProfileActions } from "./PlayerProfileActions.js";
+
+const CATEGORY_LABELS: Record<Category, string> = {
+  goalkeeping: "Goalkeeping",
+  mental: "Mental",
+  physical: "Physical",
+  technical: "Technical",
+};
+
+/**
+ * One Category's column. Goalkeeping Attributes are absent — not zero — for an outfield player
+ * (CONTEXT.md), so a Category whose Attributes the profile does not carry draws no panel at all
+ * rather than a column of blanks.
+ */
+const AttributeColumn = ({
+  category,
+  attributes,
+  children,
+}: {
+  readonly category: Category;
+  readonly attributes: PlayerProfileView["attributes"];
+  readonly children?: React.ReactNode;
+}) => {
+  const present = CATEGORY_ATTRIBUTES[category].filter(
+    (attribute) => attributes[attribute] !== undefined,
+  );
+  if (present.length === 0) return null;
+  return (
+    <PlayerPanel title={CATEGORY_LABELS[category]}>
+      {present.map((attribute: Attribute) => {
+        const figure = attributes[attribute];
+        return figure === undefined ? null : (
+          <PlayerRow key={attribute} label={attributeLabel(attribute)} value={formatFigure(figure)} />
+        );
+      })}
+      {children}
+    </PlayerPanel>
+  );
+};
+
+/** The positions panel: CM's compact label, and every position filter the player can play
+ *  (Suitability 15 or more). Never the ratings behind them, which no screen shows. */
+const PositionsPanel = ({ profile }: { readonly profile: PlayerProfileView }) => (
+  <PlayerPanel title="Positions">
+    <PlayerRow label="Position" value={profile.positionLabel === "" ? "None recorded" : profile.positionLabel} />
+    <PlayerRow label="Can play" value={profile.canPlay.length === 0 ? "None" : profile.canPlay.join(", ")} />
+  </PlayerPanel>
+);
+
+export const PlayerProfileScreen = ({
+  saveId,
+  playerId,
+}: {
+  readonly saveId: SaveId;
+  readonly playerId: PlayerId;
+}) => (
+  <PlayerScreenFrame saveId={saveId} playerId={playerId} tab="playerProfile">
+    {(profile) => (
+      <>
+        <PlayerProfileActions saveId={saveId} playerId={playerId} profile={profile} />
+        <div className="mt-3 grid gap-3 lg:grid-cols-3">
+          <AttributeColumn category="technical" attributes={profile.attributes} />
+          <AttributeColumn category="mental" attributes={profile.attributes} />
+          <AttributeColumn category="physical" attributes={profile.attributes}>
+            {/* CM's tinted tail: the readings that are not 1-20 Attributes, kept in the last
+                column so the three Attribute lists stay the same kind of thing throughout. */}
+            <PlayerRow label="Overall Rating" value={formatFigure(profile.overallRating)} emphasis />
+            <PlayerRow label="Transfer Value" value={formatFigureCredits(profile.transferValue)} emphasis />
+          </AttributeColumn>
+          <AttributeColumn category="goalkeeping" attributes={profile.attributes} />
+        </div>
+
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <PositionsPanel profile={profile} />
+          <PlayerPanel title="Selection Details">
+            <PlayerRow
+              label="Injuries"
+              value={injuryLabel(profile.injuryStatus)}
+            />
+            <PlayerRow label="Contract Expires" value={profile.contractExpiry} />
+          </PlayerPanel>
+        </div>
+      </>
+    )}
+  </PlayerScreenFrame>
+);

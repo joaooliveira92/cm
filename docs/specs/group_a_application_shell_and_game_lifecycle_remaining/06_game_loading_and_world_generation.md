@@ -129,7 +129,7 @@ Before starting, the application must verify:
 |                                                                                |
 | Elapsed: 02:14                  Estimated remaining: 01:30 to 02:40            |
 |                                                                                |
-| [Show Details]                                              [Cancel Generation]|
+| [Show Details]                                            [Cancel Generation]  |
 +--------------------------------------------------------------------------------+
 ```
 

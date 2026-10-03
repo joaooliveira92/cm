@@ -1,0 +1,84 @@
+# 07: Match Player Ratings component (96/101 shared)
+
+**What to build:** A shared `MatchRatingsView` component for both live and post-match player ratings. No ratings computation exists yet. This ticket delivers:
+- A player ratings projection in the domain layer
+- A shared React component that renders per-player ratings
+- RPC endpoint or view model for the renderer to consume
+
+**Blocked by:** [decision request 03](../decision-request-03-match-player-rating-formula.md) (the rating formula)
+
+**Status:** resolved
+
+- [x] Player ratings projection computes a rating (1-10) per player based on match events
+- [x] Ratings are available via a view or RPC endpoint
+- [x] `MatchRatingsView` component renders per-player ratings in a list/table
+- [x] Component works in both live-match and post-match contexts
+- [x] Loading and error states are handled
+
+## Comments
+
+**From ticket 08 review.** The Post-Match Summary links here through a destination that carries only
+`saveId` (`navigation/destinations.ts`). The match session is cleared at full time, so this screen
+cannot learn which match to show from the session: add `matchId` to its destination (and route) when
+building it, and update the summary's link in `match/PostMatchSummary.tsx`.
+
+**From ticket 09.** Ticket 09 did not add `matchId` to its route; that is recorded as a deviation on
+[ticket 09](09-match-statistics-component.md), not a settled pattern. Its screen binds, in order: the
+live session's match, cut after `getRevealedEvents` (a timeline position — minutes repeat across
+stoppage time and half time, so never cut a live view by minute); the started Fixture awaiting its
+result (`season.awaitingFixture.matchId`) — in full only when `reachedFullTime` says this renderer saw
+it finish, otherwise cut at zero, since that id is set from kickoff and survives a restart; else `matchId: null`, which the main process resolves to the
+controlled club's latest played match. A ratings or report screen that follows it inherits the same
+limitation when reached from history after later matches.
+
+**Parked (2026-09-14).** No rating formula exists in CONTEXT.md, the Agent Notes or the engine, and
+choosing inputs and weights is a balance decision. The Match Events name only shooters, card and
+injury recipients and substituted players, so an event-only formula would give goalkeepers and most
+defenders the same rating every match. Options and a recommendation are in
+[decision request 03](../decision-request-03-match-player-rating-formula.md). Every criterion here
+serves or renders the rating, so no part ships until that is answered. The ticket 08 note above about
+adding `matchId` to the destination still applies.
+
+**Triaged 2026-09-27: `ready-for-agent`.** [Decision request 03](../decision-request-03-match-player-rating-formula.md)
+was answered 2026-09-19 with Option B: a **Match Rating** is a base of 6.0, adjusted by the player's own
+events and by the phase outcomes their unit was on the pitch for. It is a pure function of the stored
+timeline, with base and weights as named constants in one module. Agent Note:
+[the match model shows only what it produces](../../../.agents/notes/implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md).
+The **Match Rating** term still has to be added to `CONTEXT.md`, and the ticket-08 note above about
+`matchId` on the destination still applies.
+
+## Answer
+
+Resolved 2026-09-27.
+
+- **The formula** is `matchRating` in `packages/shared/src/rules/matchRating.ts`. It starts from a base
+  of 6.0 and adds the player's own events: goal +1.0, shot on target +0.3, big chance +0.1, shot missed
+  −0.1, yellow −0.5, red −1.5. Each goal scored or conceded while the player was on the pitch adds a
+  share for their phase (the engine's `PHASE_POSITIONS`, keeper in defense). A clean sheet counts for
+  a player who started and was still on at full time. The score adds a result share. The total is
+  clamped to 1–10 and rounded to one decimal. Every weight is a named constant.
+  - **One call beyond decision request 03:** the clean sheet is awarded only once the match is over.
+    Without that, a live match rated every defender 6.8 at kickoff for a clean sheet nobody had kept yet.
+- **The fold** is `apps/desktop/src/main/match/ratings.ts`. It reads the stored timeline
+  (`matchEventsOf`) and a new `pitchBeforeEachEvent` (a timeline-order snapshot from `pitch.ts`'s
+  existing fold), so a goal is charged only to the players on the pitch when it went in. Only players
+  who were on the pitch get a row. Each row carries the minutes the player came on and went off, and
+  whether they were sent off or injured. The weights are never sent.
+- **The read** is `getMatchRatings`, bound and cut exactly like `getMatchStatistics`.
+- **The screen** is `MatchRatingsScreen`, replacing the WIP placeholder, with the shared
+  `MatchRatingsView`. Its match binding moved out of `MatchStatsScreen` into `useBoundMatchRead`, which
+  both screens now use.
+- **Term:** **Match Rating** is in `CONTEXT.md`. The Agent Note moved `proposed/` → `implemented/`.
+
+**Deviation, the same one ticket 09 recorded:** `matchId` was not added to the `matchRatings` destination
+or the Post-Match Summary's link. The screen binds to the live match, the awaiting one, or else the
+club's last played match. That is right when it is reached from the summary, but a ratings screen
+reached from history after later matches shows the latest one. Adding `matchId` to both review
+destinations is one change for Statistics and Ratings together, and is left for that.
+
+**Known limits, from review:**
+
+- The screen loads once rather than refreshing as the live reveal advances (as Match Statistics does).
+- An orange Injury shows "Injured" for a player who stayed on.
+- A live cut rates a manager's substitution from its event, so for one reveal tick it can lag the
+  substitution panel.

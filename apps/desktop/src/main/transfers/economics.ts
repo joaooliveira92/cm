@@ -1,0 +1,132 @@
+import { MarketPlayerView, type ClubId, type PlayerId } from "@cm-clone/contracts";
+import {
+  positionSummaryOf,
+  ALL_ATTRIBUTES,
+  ageOn,
+  figureByProgress,
+  overallRatingOverCells,
+  projectLegacyPositions,
+  transferValueFigureByProgress,
+  type PlayerAttributes,
+  type PlayerPosition,
+  type PositionalRatings,
+} from "@cm-clone/shared";
+import { Effect } from "effect";
+import { SqlClient } from "effect/unstable/sql/SqlClient";
+import { displayNames } from "../world/displayNames.js";
+import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
+
+// ---------------------------------------------------------------------------
+// Player economics: Overall Rating / age / Potential Ability -> Transfer Value / wage
+// ---------------------------------------------------------------------------
+
+const attributeSelectList = (prefix: string) =>
+  ALL_ATTRIBUTES.map(
+    (attribute) => `${prefix}${attribute.replace(/[A-Z]/g, (c) => `_${c.toLowerCase()}`)} as "${attribute}"`,
+  ).join(", ");
+
+interface PlayerEconRow extends PositionalRatingRow {
+  readonly id: PlayerId;
+  readonly clubId: ClubId | null;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly dateOfBirth: string;
+  readonly potentialAbility: number;
+  readonly nationality: string;
+  readonly [attribute: string]: unknown;
+}
+
+export interface PlayerEcon {
+  readonly id: PlayerId;
+  readonly clubId: ClubId | null;
+  readonly clubName: string | null;
+  readonly firstName: string;
+  readonly lastName: string;
+  readonly age: number;
+  readonly overallRating: number;
+  readonly potentialAbility: number;
+  /** The player's true Attributes, as stored — every outfield Attribute, goalkeeping Attributes
+   *  only where the player has them (Goalkeeping Attributes are absent, not zero, for an outfield
+   *  player; CONTEXT.md). Not itself a published figure: reads gate it through the Scouting
+   *  Progress rule (Agent Note 2026-09-19). */
+  readonly attributes: PlayerAttributes;
+  /** The player's twelve positional ratings. Main-process only: no view built from a `PlayerEcon`
+   *  may carry them, since no screen shows raw positional ratings. */
+  readonly positionalRatings: PositionalRatings;
+  /** The canonical nation id (`nation_*`), as every wire name of a player's nation is — the
+   *  renderer resolves it through `nationName`. */
+  readonly nationality: string;
+  readonly positions: ReadonlyArray<PlayerPosition>;
+}
+
+/** Every player in the save, ratings included, club-agnostic (Free Agents have `clubId: null`) —
+ * assumes a `SqlClient` for the save's SQLite file in context. Backs both the market screen and
+ * the wage/Transfer Value formulas used by Bid/Sign/Renew commands. Exported for `aiClubs.ts`
+ * (ticket 17), which needs the same league-wide player pool to scout weak-slot targets.
+ *
+ * Ages are measured on `on`, the game date the caller stands on (see `loadGameDate`), so a price
+ * never depends on the machine's clock. */
+export const loadAllPlayersEcon = (on: string) => Effect.gen(function* () {
+  const sql = yield* SqlClient;
+  const nameOf = yield* displayNames;
+  const playerRows = yield* sql.unsafe<PlayerEconRow>(
+    `SELECT p.id, p.club_id as "clubId", p.first_name as "firstName", p.last_name as "lastName",
+            p.date_of_birth as "dateOfBirth", p.potential_ability as "potentialAbility",
+            p.nationality as "nationality", ${attributeSelectList("p.")}, ${positionalRatingSelectList("p.")}
+     FROM players p`,
+    [],
+  );
+  return playerRows.map((row): PlayerEcon => {
+    const positionalRatings = positionalRatingsOf(row);
+    // Transitional: the ten-Position list readers still expect, derived from the stored ratings.
+    const positions: ReadonlyArray<PlayerPosition> = projectLegacyPositions(positionalRatings);
+    const attributes = Object.fromEntries(
+      ALL_ATTRIBUTES.map((attribute) => [attribute, row[attribute] ?? undefined]),
+    ) as PlayerAttributes;
+    return {
+      id: row.id,
+      clubId: row.clubId,
+      // A Free Agent has no club and so no club name; every other name is the pack's.
+      clubName: row.clubId === null ? null : nameOf(row.clubId),
+      firstName: row.firstName,
+      lastName: row.lastName,
+      age: ageOn(row.dateOfBirth, on),
+      overallRating: overallRatingOverCells(attributes, positionalRatings),
+      potentialAbility: row.potentialAbility,
+      attributes,
+      positionalRatings,
+      nationality: row.nationality,
+      positions,
+    };
+  });
+});
+
+export const loadPlayerEcon = (playerId: PlayerId, on: string) =>
+  Effect.gen(function* () {
+    const players = yield* loadAllPlayersEcon(on);
+    return players.find((player) => player.id === playerId) ?? null;
+  });
+
+/** A player as seen on the transfer market — another club's player (biddable) or a Free Agent
+ * (`clubId`/`clubName` null, signable for Credits 0 via the normal signing flow, no Bid step). The
+ * figures are read by the human club's Scouting Progress on him: ranges until Fully Scouted, exact
+ * at it (ticket 09 / Agent Note 2026-09-19); an unscouted player reads at his widest. Own-squad
+ * players never appear here — `buildTransfersScreenView` filters them out. */
+export const toMarketPlayerView = (player: PlayerEcon, scoutingProgress: number): MarketPlayerView =>
+  new MarketPlayerView({
+    id: player.id,
+    firstName: player.firstName,
+    lastName: player.lastName,
+    age: player.age,
+    clubId: player.clubId,
+    clubName: player.clubName,
+    ...positionSummaryOf(player.positionalRatings),
+    overallRating: figureByProgress(player.overallRating, scoutingProgress),
+    transferValue: transferValueFigureByProgress(
+      player.overallRating,
+      player.age,
+      player.potentialAbility,
+      scoutingProgress,
+    ),
+    positions: player.positions.map((p) => ({ position: p.position, familiarity: p.familiarity })),
+  });

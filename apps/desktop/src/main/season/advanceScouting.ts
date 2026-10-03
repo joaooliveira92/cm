@@ -1,0 +1,1 @@
+export { accrueScoutingProgress as advanceScouting } from "../club/scouting.js";

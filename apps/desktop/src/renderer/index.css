@@ -1,1 +1,566 @@
 @import "tailwindcss";
+@import "./appearance/palettes.css";
+
+/* Styles that apply only under the Neutral theme color, where `text-highlight` is a grey and a
+   highlight tint would not separate from the chrome. An unset attribute is Neutral too (first launch). */
+@custom-variant theme-neutral {
+  :root[data-theme-color="neutral"] &,
+  :root:not([data-theme-color]) & {
+    @slot;
+  }
+}
+
+/*
+ * The renderer's bundled font. Vendored under src/assets/fonts/ (Outside the
+ * Vite renderer root, but url() resolves fine relative to this stylesheet).
+ */
+@font-face {
+  font-family: "Jakarta Sans";
+  src: url("../assets/fonts/JakartaSans/JakartaSans.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Jakarta Sans";
+  src: url("../assets/fonts/JakartaSans/JakartaSans-Italic.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "Inter";
+  src: url("../assets/fonts/Inter/inter.ttf") format("truetype");
+  font-weight: 100 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/*
+ * The renderer's design tokens — role names mapped onto the shadcn palette.
+ *
+ * Every colour below resolves through the bare shadcn variables declared in
+ * `appearance/palettes.css` (`--background`, `--card`, `--primary`, ...), which
+ * the user's base color and theme color select. A role either IS a shadcn
+ * variable or is a `color-mix` of two of them; none carries a literal hue, so
+ * changing either axis repaints the whole renderer. The exceptions are domain
+ * colours with no shadcn counterpart: the status hues and the pitch.
+ *
+ * One `@theme` block, deliberately NOT `@theme inline`: in the default mode
+ * Tailwind emits every token as a real custom property on `:root` *and*
+ * generates utilities that reference it through `var()`. That keeps both
+ * consumption idioms alive at once — screens keep composing utility classes,
+ * and a future skin re-declares these properties under a scope to repaint the
+ * whole renderer without touching a single class. `@theme inline` would bake
+ * the values into the utilities and cost us that.
+ *
+ * Token names state the ROLE, never the hue. A name that asserts today's
+ * colour is a lie after the first palette change.
+ *
+ * The `--color-slate-*` migration alias layer that carried the repaint is gone:
+ * the backlog reached zero (`scripts/slate-baseline.json` is `{}`) and every
+ * call site now names a role. The guard stays on to keep it that way.
+ */
+@theme {
+  /* --- Typography ------------------------------------------------------- */
+  --font-sans: "Inter", "Jakarta Sans", "Trebuchet MS", "Segoe UI", Arial, sans-serif;
+
+  /* The type scale, by ROLE, the way the colours below are. A screen asks for
+     `text-heading`, never `text-sm font-semibold`, so the same kind of text is
+     the same size and weight on every screen. Each token carries its line
+     height and, where the role has one, its weight and tracking; an explicit
+     `font-*`/`leading-*`/`tracking-*` class still overrides those, because
+     Tailwind emits them as `var(--tw-font-weight, <token>)` fallbacks.
+     Tailwind's numeric sizes (`text-xs` … `text-3xl`) are banned in the
+     renderer by the `no-raw-text-size` rule in `scripts/effect-lint.ts`, and
+     `lib/utils.ts` teaches tailwind-merge that these names are sizes, not
+     colours. The primitives in `components/ui` pick the role for their kind of
+     text (a table cell, a tab, a key-value key); `no-role-override` stops a
+     screen re-sizing one through `className`. Retuning a role here retunes it
+     everywhere. */
+
+  /* The one hero line on a pre-career shell (the main menu's game title). */
+  --text-display: 24px;
+  --text-display--line-height: 1.2;
+  --text-display--font-weight: 700;
+  --text-display--letter-spacing: -0.025em;
+  /* A screen's title: its <h1>, the club name in the career header. One per screen. */
+  --text-title: 18px;
+  --text-title--line-height: 1.25;
+  --text-title--font-weight: 700;
+  /* A key number standing on its own: a score, a budget figure, a rating. */
+  --text-figure: 20px;
+  --text-figure--line-height: 1.1;
+  --text-figure--font-weight: 700;
+  /* A panel, card, section, or dialog heading. */
+  --text-heading: 14px;
+  --text-heading--line-height: 1.3;
+  --text-heading--font-weight: 600;
+  /* Prose: descriptions, messages, dialog copy, menu entries. The body default. */
+  --text-body: 14px;
+  --text-body--line-height: 1.5;
+  /* Dense data: table cells, stat lists, form fields, anything read in rows. */
+  --text-data: 12px;
+  --text-data--line-height: 1.3;
+  /* The name of a value: form labels, key-value keys, buttons, tabs. */
+  --text-label: 12px;
+  --text-label--line-height: 1.3;
+  --text-label--font-weight: 500;
+  /* Secondary detail: status abbreviations, breadcrumbs, hints, badges, keycaps. */
+  --text-caption: 11px;
+  --text-caption--line-height: 1.3;
+  /* A small uppercase group label or column header. Pair it with `uppercase`,
+     which a font-size token cannot carry. */
+  --text-overline: 11px;
+  --text-overline--line-height: 1.3;
+  --text-overline--font-weight: 600;
+  --text-overline--letter-spacing: 0.05em;
+
+  /* --- Page and surface ramp -------------------------------------------- */
+  --color-bg-base: var(--background);
+  --color-bg-raised: var(--card);
+  --color-surface: var(--muted);
+  --color-surface-raised: color-mix(in oklab, var(--muted) 85%, var(--foreground));
+  --color-border-subtle: var(--border);
+
+  /* --- Panels ----------------------------------------------------------- */
+  /* Translucent so the backdrop photograph reads through a content panel; the
+     strong variant is opaque, as a shadcn card or dialog is. */
+  --color-panel-bg: color-mix(in oklab, var(--card) 72%, transparent);
+  --color-panel-bg-strong: var(--card);
+  --color-panel-border: var(--border);
+  --color-panel-border-dark: rgb(0 0 0 / 0.4);
+
+  /* --- Chrome (the gradient treatment: title bars, panel headers, modal
+         bands). A faint lift off the card surface, not a hue: the theme
+         color belongs to `primary`, which the primary buttons paint. -------- */
+  --color-chrome-top: color-mix(in oklab, var(--card) 90%, var(--foreground));
+  --color-chrome-mid: var(--card);
+  --color-chrome-bottom: var(--card);
+
+  /* --- Text ------------------------------------------------------------- */
+  /* A ladder between shadcn's two text roles, `foreground` and
+     `muted-foreground`, with one step below for the least important text. */
+  --color-text-primary: var(--foreground);
+  --color-text-bright: var(--foreground);
+  --color-text-strong: color-mix(in oklab, var(--foreground) 80%, var(--muted-foreground));
+  --color-text-soft: color-mix(in oklab, var(--foreground) 45%, var(--muted-foreground));
+  --color-text-secondary: var(--muted-foreground);
+  --color-text-muted: color-mix(in oklab, var(--muted-foreground) 75%, var(--background));
+
+  /* --- Dense-table row states -------------------------------------------
+     Four states must stay separable: neutral (no fill), hover, selection, and
+     the keyboard focus ring (which lives on the row's name button, not here).
+     Both fills are OPAQUE rather than translucent, because the pinned identity
+     columns sit on their own stacking context and have to paint an opaque
+     background to hide the columns scrolling beneath them; a translucent fill
+     would compose differently there than on the rest of the row. Mixing two
+     opaque palette colours keeps them opaque: `row-selected` is a low-opacity
+     `primary` flattened over `bg-base`, so it follows the theme color. */
+  --color-row-hover: color-mix(in oklab, var(--muted) 50%, var(--background));
+  --color-row-selected: color-mix(in oklab, var(--primary) 16%, var(--background));
+
+  /* --- Semantic status --------------------------------------------------
+     `highlight` (section titles, key figures) is the theme's lightest chart
+     step: a readable tint of the theme color, and a light grey under Neutral.
+     The other three are domain hues with no shadcn counterpart. */
+  --color-text-highlight: var(--chart-1);
+  --color-text-warning: #ff7200;
+  --color-text-danger: #ff4444;
+  --color-text-success: #8ae860;
+
+  /* --- Controls --------------------------------------------------------- */
+  /* `accent` is claimed by the shadcn role bridge below (a hover surface, not
+     a hue). The former green pair lived here and had no consumers. */
+  /* Fields are opaque on purpose: typed characters must read against an
+     unwashed surface, not through a semi-transparent panel. */
+  /* shadcn's dark field is `bg-input/30` over the page; this is the same
+     wash, flattened so it stays opaque. */
+  --color-field-bg: color-mix(in oklab, var(--foreground) 4.5%, var(--background));
+  --color-focus-ring: var(--ring);
+
+  /* --- Career header (club-coloured) ------------------------------------
+     The top band paints itself in the user club's PRIMARY pair. These are
+     declared as roles with the existing neutral chrome as their default, so
+     every shell that has no club — the main menu, the save list, the creation
+     flow — renders exactly as before and nothing about them changes.
+
+     Only the two base roles live here. The derived ones (border, muted text,
+     hover) are declared by the `club-header` utility instead, NOT in this
+     block: a custom property's `var()` references are substituted at
+     computed-value time on the element that declares it, so a derivation
+     written here would resolve against `:root`'s neutral values once and stay
+     resolved no matter what a descendant overrides. Declaring them on the same
+     element that carries the club override is what makes them track it. */
+  --color-header-bg: var(--color-bg-raised);
+  --color-header-fg: var(--color-text-primary);
+  /* The derived three are declared here too, at their neutral values, purely so
+     Tailwind generates `border-header-border` / `text-header-muted` /
+     `bg-header-hover`. `club-header` re-declares them as club-tracking mixes on
+     the element that carries the override; these are what every shell without
+     a club resolves to. */
+  --color-header-border: var(--color-border-subtle);
+  --color-header-muted: var(--color-text-secondary);
+  --color-header-hover: var(--color-surface-raised);
+
+  /* --- Scoreboard (match-day only) ---------------------------------------
+     The one match-only token family: the score boxes of the header scoreboard.
+     Each half of the board paints in its club's colours through the header
+     roles, so the boxes are fixed white-on-dark rather than theme-tracking —
+     they sit on whatever two clubs are playing, never on the theme's surface. */
+  --color-scoreboard-box: #ffffff;
+  --color-scoreboard-box-text: #111111;
+
+  /* --- Pitch (tactics diagram) ------------------------------------------
+     The formation pitch on the Tactics editor: two mown-stripe greens, white
+     markings, and the starter marker. The GK marker is the one position the
+     diagram singles out, so it gets its own fill. */
+  --color-pitch-grass: #3b7529;
+  --color-pitch-stripe: #43813a;
+  --color-pitch-line: rgb(255 255 255 / 0.82);
+  --color-pitch-marker: #152a8a;
+  --color-pitch-marker-gk: #0f7a36;
+
+  /* --- CM 03/04 tactics chrome -------------------------------------------
+     The Tactics editor's period look: yellow panel titles and hint lines,
+     glossy pill buttons and dropdowns, a column-heading band, and the number
+     chip a non-starter wears beside the starters' green. Only the yellow is
+     CM's own hue; the pills, band and chip are graphite lifted off the base
+     palette, because the owner did not want CM's blue. */
+  --color-cm-title: #ffd23f;
+  --color-cm-button-top: color-mix(in oklab, var(--muted) 78%, var(--foreground));
+  --color-cm-button-bottom: color-mix(in oklab, var(--card) 94%, var(--foreground));
+  --color-cm-button-border: color-mix(in oklab, var(--foreground) 22%, transparent);
+  --color-cm-band: color-mix(in oklab, var(--muted) 88%, var(--foreground));
+  --color-cm-chip-sub: color-mix(in oklab, var(--muted) 85%, var(--foreground));
+
+  /* --- Shape and depth -------------------------------------------------- */
+  --radius-panel: 6px;
+  --radius-control: 4px;
+  --shadow-panel:
+    inset 0 1px 0 rgb(255 255 255 / 0.08), 0 2px 4px rgb(0 0 0 / 0.3);
+  --shadow-chrome:
+    inset 0 1px 0 rgb(255 255 255 / 0.15), 0 1px 3px rgb(0 0 0 / 0.4);
+
+  /* --- shadcn/Base UI role bridge ---------------------------------------
+     The vendored components in `components/ui/` are written against
+     shadcn's role names (`bg-background`, `text-muted-foreground`,
+     `ring-ring`, ...). Rather than rewrite ~35 upstream files — which would
+     forfeit every future `shadcn add` and re-diff — each role name is
+     declared here and resolves to the palette variable of the same name.
+     `card` is the one exception: it stays the translucent panel surface, so
+     a shadcn card over the backdrop photograph reads the way a `PANEL` does. */
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--color-panel-bg);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+
+  /* Sidebar family. `sidebar.tsx` also reads some of these as bare
+     `var(--sidebar-*)` in inline styles, which the palette declares. */
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+/*
+ * The page background: a dark gradient, the base every shell falls back to.
+ * Photography does not go here — it is a `<Backdrop>` layer inside the shell
+ * (see `backdrop/Backdrop.tsx` and the `backdrop-*` utilities below), because
+ * CSS cannot filter a background-image and an unfiltered photo breaks the
+ * semi-transparent panels' contrast.
+ */
+@layer base {
+  /* A bare `border` otherwise falls back to currentColor, a near-white line on the dark palettes. */
+  *,
+  ::before,
+  ::after {
+    border-color: var(--color-border);
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    background-color: var(--color-bg-base);
+    background-image: linear-gradient(180deg, var(--color-bg-base) 0%, var(--color-bg-raised) 100%);
+    color: var(--color-text-primary);
+    font-family: var(--font-sans);
+    /* Unsized text is body text, not the browser's 16px. */
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+  }
+}
+
+/*
+ * The chrome gradient. A utility rather than a token because it is a
+ * three-stop gradient, not a colour — but it reads the same tokens, so a skin
+ * override repaints it too. `chrome-gradient-inverted` is the active/pressed
+ * state of a primary button and the framed-locus treatment of the active tab.
+ */
+@utility chrome-gradient {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-chrome-top),
+    var(--color-chrome-mid),
+    var(--color-chrome-bottom)
+  );
+}
+
+/* The chrome gradient tinted with the highlight colour: a raised chip that still reads as "selected". */
+@utility chrome-gradient-highlight {
+  background-image: linear-gradient(
+    180deg,
+    color-mix(in oklab, var(--color-text-highlight) 30%, var(--color-chrome-top)),
+    color-mix(in oklab, var(--color-text-highlight) 15%, var(--color-chrome-mid)),
+    color-mix(in oklab, var(--color-text-highlight) 10%, var(--color-chrome-bottom))
+  );
+}
+
+@utility chrome-gradient-inverted {
+  background-image: linear-gradient(
+    0deg,
+    var(--color-chrome-top),
+    var(--color-chrome-mid),
+    var(--color-chrome-bottom)
+  );
+}
+
+/*
+ * The match-day stadium wash — a CSS-only grandstand glow, no image dependency.
+ * A radial "pitch light" rises from the centre while the panel-dark overlay
+ * keeps the surface readable (match-day note AC-3). It inherits the palette, so
+ * a skin override repaints it too; a real stadium photograph, when one lands,
+ * goes in a `<Backdrop>` behind this section instead.
+ */
+@utility stadium-wash {
+  background-image: radial-gradient(
+    ellipse 120% 80% at 50% 0%,
+    var(--color-chrome-bottom) 0%,
+    color-mix(in oklab, var(--color-chrome-bottom) 45%, var(--color-panel-bg) 55%) 55%,
+    var(--color-panel-bg) 100%
+  );
+}
+
+/*
+ * The backdrop photograph's treatment (`backdrop/Backdrop.tsx`). A raw photo is
+ * never shown: text sits on it directly (screen titles) and through the 72%
+ * panels, so the image is pushed down to a dim, mostly grey plate first.
+ *
+ * - `backdrop-photo` desaturates (the retro duotone look starts from grey),
+ *   darkens to half brightness, and blurs just enough to kill fine detail that
+ *   competes with 12px table text. The blur samples transparency past the
+ *   image edge, so the photo is scaled up 4% to push that soft rim out of view.
+ * - `backdrop-wash` lays a chrome tint under a dark vertical fade. The
+ *   fade is lighter at the top, where the photo reads, and near-opaque at the
+ *   bottom, where dense tables usually run. Both read palette tokens, so a
+ *   skin override repaints the wash with the rest of the chrome.
+ *
+ * Worst case, a pure-white source pixel at the top edge lands near #2f3944
+ * before any panel goes over it: about 10:1 for `text-primary` there, and
+ * darker everywhere below.
+ */
+@utility backdrop-photo {
+  filter: grayscale(0.65) brightness(0.5) contrast(1.05) blur(2px);
+  transform: scale(1.04);
+}
+
+@utility backdrop-wash {
+  background-image:
+    linear-gradient(
+      180deg,
+      color-mix(in oklab, var(--color-bg-base) 50%, transparent) 0%,
+      color-mix(in oklab, var(--color-bg-base) 70%, transparent) 55%,
+      color-mix(in oklab, var(--color-bg-base) 88%, transparent) 100%
+    ),
+    linear-gradient(
+      color-mix(in oklab, var(--color-chrome-bottom) 40%, transparent),
+      color-mix(in oklab, var(--color-chrome-bottom) 40%, transparent)
+    );
+}
+
+/*
+ * The Tactics editor's pitch: horizontal mown stripes, twelve bands goal to goal, under a fine
+ * turf grain and a floodlit falloff that leaves the middle brightest and darkens toward the
+ * corners. All background layers, so the browser rasterizes them once and a drag above never
+ * repaints them.
+ */
+@utility pitch-grass {
+  background-color: var(--color-pitch-grass);
+  background-image:
+    radial-gradient(ellipse 75% 60% at 50% 50%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.3) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.1 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      180deg,
+      var(--color-pitch-grass) 0 calc(100% / 12),
+      var(--color-pitch-stripe) calc(100% / 12) calc(100% / 6)
+    );
+}
+
+/* The Tactics editor's glossy pill: a lit top half over the darker body, as CM drew its buttons. */
+@utility cm-button-gradient {
+  background-image: linear-gradient(
+    180deg,
+    var(--color-cm-button-top) 0%,
+    color-mix(in oklab, var(--color-cm-button-top) 55%, var(--color-cm-button-bottom)) 50%,
+    var(--color-cm-button-bottom) 51%,
+    var(--color-cm-button-bottom) 100%
+  );
+}
+
+/*
+ * The career header's club paint.
+ *
+ * The element carrying this also carries the club's primary pair as two inline
+ * custom properties (see `Navbar`), which is the whole override: everything
+ * below resolves through `--color-header-*`, so one scope repaints the band and
+ * no descendant names a colour. Without the club override it renders in the
+ * neutral defaults from `@theme`, which is what the pre-career shells get.
+ *
+ * The three derived roles are declared HERE rather than in `@theme` so they
+ * recompute against whatever pair this element was given — see the note there.
+ * They are mixes toward the club's own foreground rather than fixed greys,
+ * because a fixed border is invisible on half the palette and a fixed muted
+ * grey is illegible on the other half.
+ */
+@utility club-header {
+  --color-header-border: color-mix(in oklab, var(--color-header-fg) 26%, var(--color-header-bg));
+  --color-header-muted: color-mix(in oklab, var(--color-header-fg) 70%, var(--color-header-bg));
+  --color-header-hover: color-mix(in oklab, var(--color-header-fg) 14%, var(--color-header-bg));
+}
+
+/*
+ * The renderer's one native View Transition integration (the Active Leagues
+ * grid's rows). It rides the browser's View Transitions API: a `::view-transition-*`
+ * snapshot animates while a transition is in flight and then goes away. Under
+ * `prefers-reduced-motion` every one of those snapshot animations is switched
+ * off rather than shortened — the same switch-off-wholesale policy the motion
+ * component this replaced applied per element.
+ */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+/* The shell bottom bar's status marquee (`StatusMarquee`): the track holds two
+   copies of its items, so shifting it by half its width lands exactly where it
+   started. The component sets the duration from the measured copy width, so
+   the speed is constant whatever the window or the text. */
+@keyframes bottom-bar-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/*
+ * The sidebar's section flyout (`SectionFlyout`), animated the way shadcn's
+ * navigation menu is: the panel fades and scales in from its row, and moving to
+ * another section glides the one panel to the new row, resizes it to the new
+ * list, and slides the old list out and the new one in along the direction of
+ * travel. Base UI drives every step through data attributes; this is only the
+ * CSS each one transitions. `data-instant` marks an open or close Base UI wants
+ * unanimated (a dismissal, for one).
+ */
+[data-section-flyout="positioner"] {
+  transition-property: top, left, right, bottom, transform;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-section-flyout="popup"] {
+  width: var(--popup-width, auto);
+  height: var(--popup-height, auto);
+  transform-origin: var(--transform-origin);
+  transition-property: width, height, opacity, scale;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+[data-section-flyout="popup"][data-starting-style],
+[data-section-flyout="popup"][data-ending-style] {
+  opacity: 0;
+  scale: 0.96;
+}
+
+[data-section-flyout="viewport"] {
+  position: relative;
+  overflow: clip;
+  width: 100%;
+  height: 100%;
+}
+
+[data-section-flyout="viewport"] > [data-current],
+[data-section-flyout="viewport"] > [data-previous] {
+  translate: 0;
+  opacity: 1;
+  transition:
+    translate 250ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 125ms ease;
+}
+
+[data-section-flyout="viewport"][data-activation-direction~="down"] > [data-current][data-starting-style],
+[data-section-flyout="viewport"][data-activation-direction~="up"] > [data-previous][data-ending-style] {
+  translate: 0 2rem;
+  opacity: 0;
+}
+
+[data-section-flyout="viewport"][data-activation-direction~="up"] > [data-current][data-starting-style],
+[data-section-flyout="viewport"][data-activation-direction~="down"] > [data-previous][data-ending-style] {
+  translate: 0 -2rem;
+  opacity: 0;
+}
+
+[data-section-flyout][data-instant],
+[data-section-flyout][data-instant] > * {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-section-flyout],
+  [data-section-flyout] > * {
+    transition: none !important;
+  }
+}
+
+/* Main menu entrance: items fade and glide upward in sequence. The component
+   sets each item's animation delay from its index. */
+@keyframes menu-fade-in {
+  from {
+    opacity: 0;
+    translate: 0 0.375rem;
+  }
+}

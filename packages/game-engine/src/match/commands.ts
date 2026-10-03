@@ -1,6 +1,12 @@
 import type { MatchTactic } from "./types.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 
+/**
+ * A live tactics change. Only the Tactic's team Mentality takes effect, through the transitional
+ * adapter (`resolveTeamInstructions`); its slots, other instructions and bench are ignored. The kickoff Tactic is
+ * `MatchTeamSetup.tactic`, and personnel changes go through substitutions and bring-offs (decision
+ * request 01).
+ */
 export interface ChangeTacticsCommand {
   readonly _tag: "ChangeTactics";
   readonly clubId: ClubId;

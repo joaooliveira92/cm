@@ -7,64 +7,80 @@
 import { readFileSync } from "node:fs";
 import path from "node:path";
 import {
+  closeOrKill,
   dismissTeachingSplash,
   expect,
-  launchApp,
   pressPrimary,
+  saveEntry,
   test,
 } from "./launchApp.js";
 import { savesDir, seedNamed } from "./seedSaves.js";
 
 test("a rebind applied in the help overlay survives an app restart (AC-34)", async ({
   userDataDir,
+  launchExtraApp,
 }) => {
   // A fixed-name seeded save so both sessions can find the career by label.
   await seedNamed(savesDir(userDataDir), "Rebind Career");
 
-  const firstApp = await launchApp(userDataDir);
+  const firstApp = await launchExtraApp();
   const firstWindow = await firstApp.firstWindow();
-  await firstWindow.getByRole("button", { name: "Rebind Career" }).click();
-  await dismissTeachingSplash(firstWindow);
+  await firstWindow.getByRole("button", { name: "Load Career" }).click();
+  await saveEntry(firstWindow, "Rebind Career").click();
   await expect(firstWindow.getByText(/players$/)).toBeVisible();
+  await dismissTeachingSplash(firstWindow);
 
   // Primary+/ opens the help overlay — the rebinding surface (AC-36).
   await pressPrimary(firstWindow, "/");
   const help = firstWindow.getByRole("dialog", { name: "Keyboard shortcuts" });
   await expect(help).toBeVisible();
 
-  // Rebind "Go to Transfers" (coded default `g t`) to the free bare key `n`:
+  // Rebind "Go to Recruitment" (coded default `g 4`) to the free bare key `n`:
   // the two-step prefix rebinds as one entry, per the binding-overrides note.
-  const rebind = help.getByRole("button", { name: "Rebind Go to Transfers" });
+  const rebind = help.getByRole("button", { name: "Rebind Go to Recruitment" });
   await rebind.focus();
   await expect(rebind).toBeFocused();
   await firstWindow.keyboard.press("Enter");
   await expect(help.getByText("Press a key… (Escape cancels)")).toBeVisible();
   await firstWindow.keyboard.press("n");
-  await expect(help.getByText("Go to Transfers is now bound to n.")).toBeVisible();
+  await expect(help.getByText("Go to Recruitment is now bound to n.")).toBeVisible();
 
   // Close the overlay and confirm the override is live this session: `n`
-  // navigates to Transfers from any career screen.
+  // navigates to Transfers, Recruitment's default destination, from any career screen.
   await firstWindow.keyboard.press("Escape");
   await expect(help).not.toBeVisible();
   await firstWindow.keyboard.press("n");
   await expect(firstWindow.getByRole("heading", { name: /Transfers/ })).toBeVisible();
 
-  await firstApp.close();
-
   // The override was persisted under userData, sibling of saves/ (never in the
-  // save or the event stream).
-  const stored = JSON.parse(
-    readFileSync(path.join(userDataDir, "keybindings.json"), "utf8"),
-  ) as Record<string, string>;
-  expect(stored["go-to-transfers"]).toBe("n");
+  // save or the event stream). Main writes the file on the rebind RPC itself, not
+  // at shutdown, so it is polled for here, while the first app is still running:
+  // the file is proven written before shutdown starts, so the relaunch below reads
+  // what the rebind wrote rather than anything a clean quit might flush.
+  const storedBinding = (): string | undefined => {
+    try {
+      const stored = JSON.parse(
+        readFileSync(path.join(userDataDir, "keybindings.json"), "utf8"),
+      ) as Record<string, string>;
+      return stored["go-to-recruitment"];
+    } catch {
+      return undefined; // Not written yet.
+    }
+  };
+  await expect.poll(storedBinding).toBe("n");
+
+  // Not `firstApp.close()`, which never resolves: Playwright closes by calling `app.quit()`,
+  // which the quit guard's `before-quit` handler cancels to ask the player to confirm, and
+  // nobody answers. `closeOrKill` confirms the guard first, so the app quits cleanly.
+  await closeOrKill(firstApp);
+  expect(storedBinding()).toBe("n");
 
   // Relaunch against the same userDataDir: the binding still applies.
-  const relaunched = await launchApp(userDataDir);
+  const relaunched = await launchExtraApp();
   const relaunchedWindow = await relaunched.firstWindow();
-  await relaunchedWindow.getByRole("button", { name: "Rebind Career" }).click();
+  await relaunchedWindow.getByRole("button", { name: "Load Career" }).click();
+  await saveEntry(relaunchedWindow, "Rebind Career").click();
   await expect(relaunchedWindow.getByText(/players$/)).toBeVisible();
   await relaunchedWindow.keyboard.press("n");
   await expect(relaunchedWindow.getByRole("heading", { name: /Transfers/ })).toBeVisible();
-
-  await relaunched.close();
 });
