@@ -54,6 +54,9 @@ question. Plan only: no code in this effort.
   shared dense look, abbreviations with full accessible names, one rating-tone helper.
 - [Reconcile records found stale while charting](issues/11-reconcile-records-found-while-charting.md):
   eleven comments, records and notes, each assigned to the change that makes it stale.
+- 2026-10-03: the user approved every recommendation. The attack-share half of 03 shipped as
+  `241584d0`. [Spec published](spec.md); implementation tickets 12–20 sliced under [issues/](issues/).
+  Frontier: 12, 14, 15, 16, 17.
 
 ## Not yet specified
 
