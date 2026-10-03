@@ -291,6 +291,32 @@ describe("F-2 — the dirty-discard Keep/Discard dialog owns the keyboard (focus
     expect((screen.getByLabelText("Your bid:") as HTMLInputElement).value).toBe("450000");
   });
 });
+describe("F-2 — an open dialog owns Escape and Enter; neither reaches a global binding beneath", () => {
+  it("Escape and Enter on the counter-offer dialog do not bubble to the document", async () => {
+    await mountTransfers(transfersView());
+    fireEvent.click(await findIncomingCounter());
+    const dialog = screen.getByRole("dialog", { name: "Counter Incoming" });
+
+    const seen: string[] = [];
+    const listener = (event: KeyboardEvent): void => {
+      seen.push(event.key);
+    };
+    document.addEventListener("keydown", listener);
+    try {
+      fireEvent.keyDown(dialog, { key: "Escape" });
+      fireEvent.click(await findIncomingCounter());
+      fireEvent.keyDown(screen.getByRole("dialog", { name: "Counter Incoming" }), { key: "Enter" });
+    } finally {
+      document.removeEventListener("keydown", listener);
+    }
+
+    // The hook stops both at the dialog, so a global Escape/Enter binding on a layer beneath (the
+    // palette's dispatch) never sees the press.
+    expect(seen).not.toContain("Escape");
+    expect(seen).not.toContain("Enter");
+  });
+});
+
 describe("the tables sit in tabs, and focus-bid finds the Market from any of them", () => {
   it("focus-bid from the Incoming Bids tab switches to Market and focuses its first row", async () => {
     await mountTransfers(transfersView());
