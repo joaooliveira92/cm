@@ -11,7 +11,7 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   MatchNotFoundError,
-  MatchPlayerStatRow,
+  MatchPlayerLineRow,
   MatchPlayerStatsView,
   MatchPlayerTeamStats,
   type MatchId,
@@ -31,7 +31,7 @@ import { playerNames } from "./playerNames.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
 import { matchRatingsView } from "./ratings.js";
 import { lastPlayedMatchId } from "./statistics.js";
-import { MATCH_STREAM_TYPE, matchStartedOf } from "./stream.js";
+import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut } from "./stream.js";
 import { matchEventsOf } from "./timeline.js";
 
 /** A matchday-squad member in draw order: the kickoff slots in slot order, then the named bench. */
@@ -67,7 +67,7 @@ const sideStats = (
     const folded = counts.get(String(playerId));
     const line = folded ?? EMPTY_MATCH_PLAYER_LINE_COUNTS;
     const played = starter || folded !== undefined;
-    return new MatchPlayerStatRow({
+    return new MatchPlayerLineRow({
       playerId,
       playerName: nameOf(playerId),
       number,
@@ -89,7 +89,12 @@ const sideStats = (
       rating: played ? ratings.get(playerId) ?? null : null,
     });
   });
-  return new MatchPlayerTeamStats({ clubId: setup.clubId, clubName: clubName(setup.clubId), rows });
+  return new MatchPlayerTeamStats({
+    clubId: setup.clubId,
+    clubName: clubName(setup.clubId),
+    showSaves: rows.some((row) => row.saves > 0),
+    rows,
+  });
 };
 
 export const matchPlayerStatsView = (
@@ -109,14 +114,12 @@ export const matchPlayerStatsView = (
   const counts = foldMatchPlayerLineCounts(starters, events, revealedEvents);
   const ratings = matchRatingsView(matchId, stream, events, clubName, nameOf, revealedEvents);
   const ratingById = new Map<PlayerId, number>([...ratings.home, ...ratings.away].map((row) => [row.playerId, row.rating]));
-  const showSaves = [...counts.values()].some((line) => line.saves > 0);
-  const last = events[(revealedEvents === null ? events.length : Math.max(0, revealedEvents)) - 1];
+  const last = events[revealedCut(events, revealedEvents) - 1];
   return new MatchPlayerStatsView({
     matchId,
     homeClubName: clubName(started.homeClubId),
     awayClubName: clubName(started.awayClubId),
     throughMinute: revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
-    showSaves,
     home: sideStats(started.homeSetup, counts, ratingById, conditions, clubName, nameOf),
     away: sideStats(started.awaySetup, counts, ratingById, conditions, clubName, nameOf),
   });

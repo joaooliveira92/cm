@@ -96,6 +96,12 @@ export const hashString = (value: string): number => {
 export const matchStartedOf = (stream: ReadonlyArray<StreamEvent>): PersistedMatchStarted =>
   stream[0]!.payload as PersistedMatchStarted;
 
+/** How many of a timeline's events `revealedEvents` includes (null: all of them), never past its end.
+ *  The one cut law for every reader: a position, not a minute, clamped so an over-long reveal still
+ *  names the last real event rather than indexing past it. */
+export const revealedCut = (events: ReadonlyArray<MatchEvent>, revealedEvents: number | null): number =>
+  revealedEvents === null ? events.length : Math.min(events.length, Math.max(0, revealedEvents));
+
 /** The manager's journaled substitutions and bring-offs, in journal order — the order the engine
  * applies a minute's commands in. A bring-off leaves no Match Event of its own. */
 export const journaledLineupCommands = (

@@ -9,7 +9,6 @@ import {
 const event = (tag: string, extra: Partial<MatchPlayerLineEvent> = {}): MatchPlayerLineEvent => ({
   _tag: tag,
   minute: 10,
-  teamClubId: "home",
   ...extra,
 });
 

@@ -30,15 +30,15 @@ const row = (overrides: Record<string, unknown>) => ({
   ...overrides,
 });
 
-const view = {
+const view = (homeShowSaves = true) => ({
   matchId: "m1",
   homeClubName: "Home FC",
   awayClubName: "Away FC",
   throughMinute: null,
-  showSaves: true,
   home: {
     clubId: "home",
     clubName: "Home FC",
+    showSaves: homeShowSaves,
     rows: [
       row({ playerId: "p1", playerName: "Alice Keeper", number: "1", captain: true, card: "yellow", keyPasses: 2, assists: 1, shots: 3, shotsOnTarget: 2, saves: 4, goals: 1, condition: 88, rating: 7.8 }),
       row({ playerId: "p2", playerName: "Bob Bench", number: "SB1", started: false, played: false, rating: null }),
@@ -47,21 +47,22 @@ const view = {
   away: {
     clubId: "away",
     clubName: "Away FC",
+    showSaves: false,
     rows: [row({ playerId: "p3", playerName: "Away Star", number: "1", card: "red", started: true, played: true, goals: 2, shots: 2, shotsOnTarget: 2, rating: 8.1 })],
   },
-};
+});
 
 const leagueTable = {
   season: { seasonNumber: 1, currentDate: "2026-08-01", phase: "in_season", awaitingFixture: null },
   standings: [],
 };
 
-const mount = () => {
+const mount = (homeShowSaves = true) => {
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {
     call: async (method: string) =>
       method === "getLeagueTable"
         ? { _tag: "Success", value: leagueTable }
-        : { _tag: "Success", value: view },
+        : { _tag: "Success", value: view(homeShowSaves) },
   };
   render(
     <RegistryProvider>
@@ -100,9 +101,15 @@ describe("Match Player Stats screen (map ticket 12)", () => {
     expect(cells.some((text) => text === "0")).toBe(false);
   });
 
-  it("shows the saves column only when a goalkeeper has one", async () => {
-    mount();
+  it("shows the saves column only when a goalkeeper has one, per side", async () => {
+    mount(true);
     await screen.findByRole("table");
     expect(screen.queryByRole("columnheader", { name: /Saves/ })).toBeTruthy();
+  });
+
+  it("drops the saves column for a side whose keeper made none", async () => {
+    mount(false);
+    await screen.findByRole("table");
+    expect(screen.queryByRole("columnheader", { name: /Saves/ })).toBeNull();
   });
 });

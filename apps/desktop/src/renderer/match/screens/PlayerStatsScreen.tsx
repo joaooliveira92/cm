@@ -129,7 +129,7 @@ const PlayerStats = ({ view, side }: { readonly view: MatchPlayerStatsView; read
       </p>
       <PlayerStatsTable
         rows={rows}
-        showSaves={view.showSaves}
+        showSaves={team.showSaves}
         label={`${team.clubName} player stats`}
         screen={side === "home" ? "matchHomeStats" : "matchAwayStats"}
       />

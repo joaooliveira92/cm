@@ -22,15 +22,15 @@ Suggested: one `MatchTeamSheetScreen` parameterised by side, reading through an 
 screens. Decide first whether each tab should show only its own side; that is a behaviour
 change, not a refactor.
 
-### 1.2 Eleven copy-pasted placeholder screens
+### 1.2 Ten copy-pasted placeholder screens
 
 These files are the same 13-line `<main>` with a "WIP — Placeholder screen" line:
 `squadHistory`, `squadStaff`, `squadInformation`, `squadFinances`, `matchLiveTable`,
-`matchLatestScores`, `matchOppositionInstructions`, `matchPlayerStats`, `matchReplays`,
+`matchLatestScores`, `matchOppositionInstructions`, `matchReplays`,
 `staffSearch`, `shortlist/ShortlistScreen.tsx`.
 
 Suggested: one `PlaceholderScreen({ focusId, label, title })` component. The router can
-instantiate it directly, so the eleven one-file directories go away.
+instantiate it directly, so the ten one-file directories go away.
 
 ### 1.3 Screen shell boilerplate
 

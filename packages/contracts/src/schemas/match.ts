@@ -361,7 +361,7 @@ export type MatchPlayerCard = Schema.Schema.Type<typeof MatchPlayerCard>;
  * same number the Team Selection grid shows; the model has no separate shirt number. `condition` is
  * the full-time per-player Condition, null while live (no per-cut condition surface exists).
  */
-export class MatchPlayerStatRow extends Schema.Class<MatchPlayerStatRow>("MatchPlayerStatRow")({
+export class MatchPlayerLineRow extends Schema.Class<MatchPlayerLineRow>("MatchPlayerLineRow")({
   playerId: PlayerId,
   playerName: Schema.String,
   number: Schema.String,
@@ -386,17 +386,19 @@ export class MatchPlayerStatRow extends Schema.Class<MatchPlayerStatRow>("MatchP
 export class MatchPlayerTeamStats extends Schema.Class<MatchPlayerTeamStats>("MatchPlayerTeamStats")({
   clubId: ClubId,
   clubName: Schema.String,
-  rows: Schema.Array(MatchPlayerStatRow),
+  /** True when one of this side's rows has a save, so an outfield-only side drops the column rather
+   *  than drawing it empty. Per side, because the screen renders one side at a time. */
+  showSaves: Schema.Boolean,
+  rows: Schema.Array(MatchPlayerLineRow),
 }) {}
 
 /** The per-player stats read for one match: both sides, in matchday-squad order. The screen picks
- *  a side. `showSaves` is true when any row has a save, so an outfield-only view drops the column. */
+ *  a side. */
 export class MatchPlayerStatsView extends Schema.Class<MatchPlayerStatsView>("MatchPlayerStatsView")({
   matchId: MatchId,
   homeClubName: Schema.String,
   awayClubName: Schema.String,
   throughMinute: Schema.NullOr(Schema.Finite),
-  showSaves: Schema.Boolean,
   home: MatchPlayerTeamStats,
   away: MatchPlayerTeamStats,
 }) {}

@@ -21,11 +21,15 @@ describe("getMatchPlayerStats over a seeded match", () => {
       const match = yield* startSeededMatch(savesDir, save.id, fixtureId, 7);
       let cursor = 0;
       let complete = false;
+      let homeScore = 0;
+      let awayScore = 0;
       while (!complete) {
         // oxlint-disable-next-line no-await-in-loop -- sequential by design: each chunk starts at the last cursor
         const chunk = yield* resumeSimulation(savesDir, save.id, match.matchId, cursor, null);
         cursor = chunk.cursor;
         complete = chunk.isComplete;
+        homeScore = chunk.homeScore;
+        awayScore = chunk.awayScore;
       }
 
       const full = (yield* getMatchPlayerStats(savesDir, save.id, match.matchId, null))!;
@@ -33,6 +37,7 @@ describe("getMatchPlayerStats over a seeded match", () => {
       for (const side of [full.home, full.away]) {
         expect(side.rows.filter((row) => row.started)).toHaveLength(11);
         expect(new Set(side.rows.map((row) => row.playerId)).size).toBe(side.rows.length);
+        expect(side.showSaves).toBe(side.rows.some((row) => row.saves > 0));
         for (const row of side.rows) {
           if (!row.played) {
             expect(row.rating).toBeNull();
@@ -43,11 +48,11 @@ describe("getMatchPlayerStats over a seeded match", () => {
           }
         }
       }
+      // The fold reconciles with the committed score, side by side: every goal belongs to a scorer.
       const goals = full.home.rows.reduce((total, row) => total + row.goals, 0);
       const awayGoals = full.away.rows.reduce((total, row) => total + row.goals, 0);
-      expect(full.home.rows.some((row) => row.played)).toBe(true);
-      expect(goals + awayGoals).toBeGreaterThanOrEqual(0);
-      expect(full.showSaves).toBe(full.home.rows.some((row) => row.saves > 0) || full.away.rows.some((row) => row.saves > 0));
+      expect(goals).toBe(homeScore);
+      expect(awayGoals).toBe(awayScore);
     }),
   );
 

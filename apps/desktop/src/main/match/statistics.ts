@@ -19,7 +19,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { MATCH_STREAM_TYPE } from "./stream.js";
+import { MATCH_STREAM_TYPE, revealedCut } from "./stream.js";
 import { matchEventsOf } from "./timeline.js";
 import { countedSubstitutions, substitutionLedger } from "./substitutions.js";
 
@@ -92,7 +92,7 @@ const countedFor = (
 /** The events a cut includes: the first `revealedEvents` of the timeline, or all of it. Position, not
  *  minute — first-half stoppage runs past 45, half time is stamped 45 and the second half restarts at 46. */
 const includedEvents = (events: ReadonlyArray<MatchEvent>, revealedEvents: number | null) =>
-  revealedEvents === null ? events : events.slice(0, Math.max(0, revealedEvents));
+  events.slice(0, revealedCut(events, revealedEvents));
 
 /**
  * Pure: fold the timeline into per-side totals, counting only the included events. Substitutions are

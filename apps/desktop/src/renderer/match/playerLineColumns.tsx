@@ -6,7 +6,7 @@
  */
 import type { AppColumnDef } from "../table/tableFeatures.js";
 import type { TableRowShape } from "../table/types.js";
-import type { MatchPlayerCard, MatchPlayerStatRow } from "@cm-clone/contracts";
+import type { MatchPlayerCard, MatchPlayerLineRow } from "@cm-clone/contracts";
 import { ratingTone } from "./ratingTone.js";
 
 /** The abbreviation glossary: each header's short label and the full name it carries. */
@@ -83,7 +83,7 @@ export interface PlayerLineRow extends TableRowShape {
   readonly rating: number | null;
 }
 
-export const playerLineRowOf = (row: MatchPlayerStatRow): PlayerLineRow => ({
+export const playerLineRowOf = (row: MatchPlayerLineRow): PlayerLineRow => ({
   id: String(row.playerId),
   firstName: row.playerName,
   lastName: "",
@@ -111,7 +111,7 @@ export const playerLineRowOf = (row: MatchPlayerStatRow): PlayerLineRow => ({
 /** An empty cell for a player who did not play; a counted value otherwise. Never `0` for no-show. */
 const countCell = (played: boolean, value: number) => (played ? String(value) : "");
 
-const muted = (played: boolean, extra = ""): string => (played ? extra : `text-text-muted ${extra}`.trim());
+const muted = (played: boolean): string => (played ? "" : "text-text-muted");
 
 export const playerLineColumns = (showSaves: boolean): ReadonlyArray<AppColumnDef<PlayerLineRow>> => {
   const numeric = (
@@ -167,7 +167,7 @@ export const playerLineColumns = (showSaves: boolean): ReadonlyArray<AppColumnDe
       header: () => <AbbrHeader short="Inf." full={PLAYER_LINE_GLOSSARY.substitution} />,
       enableSorting: false,
       cell: (info) => (
-        <span className={`whitespace-nowrap text-text-secondary ${muted(info.row.original.played)}`}>
+        <span className={`whitespace-nowrap ${info.row.original.played ? "text-text-secondary" : "text-text-muted"}`}>
           {substitutionNote(info.row.original)}
         </span>
       ),

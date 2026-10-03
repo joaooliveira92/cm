@@ -24,7 +24,7 @@ import { displayNames } from "../world/displayNames.js";
 import { HALFTIME_MINUTE, pitchBeforeEachEvent } from "./pitch.js";
 import { playerNames } from "./playerNames.js";
 import { lastPlayedMatchId } from "./statistics.js";
-import { MATCH_STREAM_TYPE, journaledLineupCommands, matchStartedOf, type PersistedForcedOff } from "./stream.js";
+import { MATCH_STREAM_TYPE, journaledLineupCommands, matchStartedOf, revealedCut, type PersistedForcedOff } from "./stream.js";
 import { matchEventsOf } from "./timeline.js";
 
 type Counted = Pick<MatchInvolvement, "goals" | "shotsOnTarget" | "bigChances" | "shotsMissed" | "yellowCards" | "redCards">;
@@ -208,7 +208,7 @@ export const matchRatingsView = (
   revealedEvents: number | null,
 ): MatchRatingsView => {
   const started = matchStartedOf(stream);
-  const cut = revealedEvents === null ? events.length : Math.min(events.length, Math.max(0, revealedEvents));
+  const cut = revealedCut(events, revealedEvents);
   const commands = journaledLineupCommands(stream);
   const rate = (setup: MatchTeamSetup, isHome: boolean) =>
     rateSide(

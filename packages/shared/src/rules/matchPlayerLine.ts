@@ -20,7 +20,6 @@
 export interface MatchPlayerLineEvent {
   readonly _tag: string;
   readonly minute?: number;
-  readonly teamClubId?: string;
   readonly playerId?: string;
   readonly assistPlayerId?: string;
   readonly keeperId?: string;
