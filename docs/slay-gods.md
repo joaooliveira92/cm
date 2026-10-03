@@ -10,9 +10,30 @@ Transform a single oversized React component into:
 - Multiple focused Child Components
 - Custom hooks where appropriate
 - Shared utility functions when logic is reused
-- Separate files for every component
+- Separate files for every component, unless the writable scope forbids new files (see Precedence)
 
 The application behavior, UI, and public API MUST remain identical.
+
+---
+
+## Precedence
+
+When these instructions conflict, resolve in this order:
+
+1. repository-level, package-level, and task-level instructions, and any explicitly given writable scope;
+2. this skill.
+
+An explicit writable scope wins over the file-organization rules. If scope forbids creating files, still apply the decomposition within the files you may write: co-locate child components and hooks in the parent module, following the repository's own colocation convention, rather than manufacturing files you were not authorized to create. Say so in the final deliverable.
+
+---
+
+## Discovery and baseline
+
+Before editing:
+
+- Read the existing specs for the target component, its consumers, stories, and public exports.
+- Run those specs unchanged and keep the result as the behavioral baseline. The same specs must pass unchanged after the refactor. If none exist, say so in the final report rather than adding tests to fit the new shape.
+- Record the non-obvious contracts the code relies on -- deliberately incomplete hook dependencies, registration or slot ordering, path-keyed lint exemptions -- so the refactor can preserve them.
 
 ---
 
@@ -100,7 +121,7 @@ Examples:
 - memoized calculations
 - event handling
 
-Hooks should never return JSX.
+A hook must not own a DOM subtree. Return data, callbacks, and derived values, not rendered markup. This is a rule about ownership, not shape: a parent may still build a JSX memo from hook outputs, and a hook may return a value the parent renders into a registry or slot.
 
 ---
 
@@ -116,7 +137,7 @@ Examples:
 - validation
 - helper functions
 
-Utilities must have no React imports.
+Utilities must be pure: no React imports when they live in their own file, and no use of React APIs (hooks, elements, context) in any case. When scope forces a utility to share a module with components, "pure function, no React use" is the rule that matters.
 
 ---
 
@@ -156,6 +177,8 @@ Use when justified:
 
 Do NOT memoize everything blindly.
 
+Preserve the existing memoization contracts. Extraction must not change *when* a callback reads a value. If a `useMemo`/`useCallback` dependency array was deliberately incomplete -- a stale-closure contract the code relies on -- keep that semantic when moving the logic into a hook or child. Do not "fix" dependency gaps as part of a refactor: that is a behavior change, not a cleanup.
+
 ---
 
 ### 9. TypeScript
@@ -167,6 +190,8 @@ Avoid:
 - any
 - unknown unless justified
 - type assertions
+
+Scope these bans to code you add. Do not strip an existing assertion, `any`, or cast unless your refactor removes the need for it; unrelated type cleanup belongs in a separate change.
 
 Extract shared interfaces into dedicated types files when multiple components use them.
 
@@ -197,6 +222,8 @@ types.ts
 index.ts
 
 Adapt this structure to the component's needs rather than following it mechanically.
+
+Respect the repository's own conventions and gates over this example. A file move can silently break rules that typecheck cannot see: source-file length ceilings, import or dependency boundaries keyed on file paths, and lint rules keyed on path or filename. Check for those before splitting or moving files.
 
 ---
 
@@ -237,12 +264,13 @@ This is a refactoring, not a redesign.
 
 ## Deliverables
 
-1. Explain the proposed component decomposition.
-2. Justify each extracted component.
-3. Show the resulting folder structure.
-4. Implement the refactoring.
-5. Ensure all imports are updated.
-6. Ensure the project builds without TypeScript errors.
-7. Remove obsolete code after extraction.
-8. Verify there is no duplicated logic between components.
-9. Confirm that the parent component is now primarily an orchestrator rather than a rendering-heavy component.
+Implement first; do not stop after proposing a decomposition. The report below is written **after** the implementation, not as a plan awaiting approval.
+
+1. Explain the resulting component decomposition: the parent's remaining responsibilities and each extracted component, hook, and utility with its justification.
+2. Show the resulting folder structure.
+3. Report the behavioral baseline from Discovery and confirm the existing specs still pass unchanged.
+4. Confirm all imports are updated and obsolete code is removed.
+5. Confirm the project builds without TypeScript errors, and report every validation command run with its outcome.
+6. Verify there is no duplicated logic between components.
+7. Confirm that the parent component is now primarily an orchestrator rather than a rendering-heavy component.
+8. List any import or file change outside the writable scope, or state that there were none.
