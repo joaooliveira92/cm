@@ -15,7 +15,7 @@ import {
 import { Schema } from "effect";
 
 /**
- * Route parameters decoded at the boundary. Routes validate *navigation
+ * Route parameters encoded and decoded at the boundary. Routes validate *navigation
  * structure* only — they never load domain data. A well-formed `saveId` for a
  * save that does not exist stays a typed RPC failure through the seam; only a
  * parameter that cannot decode to the parameter's schema is a route concern.
@@ -88,6 +88,17 @@ export const decodePlayerIds = (raw: string): RouteParamDecode<ReadonlyArray<Pla
   }
   return { _tag: "Success", success: decoded };
 };
+
+/**
+ * The canonical `:playerIds` route slug, and the comparison atom's key. Both the address and the
+ * atom must name the same comparison set the same way, no matter the order the manager selected
+ * the Players in, so one definition serves both: every id, de-duplicated and code-unit sorted,
+ * joined by commas. `careerRoute` in `destinations.ts` builds the slug from it and
+ * `rpc/playerComparisonQueries.ts` keys its named-set atom on it, so a comparison set always
+ * resolves to one route and one atom — and re-selecting the same Players from a search cannot mint
+ * a second atom. `decodePlayerIds` above decodes it back. */
+export const playerComparisonKey = (playerIds: ReadonlyArray<PlayerId>): string =>
+  [...new Set(playerIds.map(String))].sort().join(",");
 
 /** Decode the `:nationId` path parameter into the contract's branded `NationId`. */
 export const decodeNationId = (raw: string): RouteParamDecode<NationId> => {

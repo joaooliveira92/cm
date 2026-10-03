@@ -23,7 +23,7 @@ import {
 } from "@cm-clone/contracts";
 import { Schema } from "effect";
 import { Atom } from "effect/unstable/reactivity";
-import { playerComparisonKey } from "../navigation/destinations.js";
+import { playerComparisonKey } from "../navigation/params.js";
 import { call } from "./call.js";
 import { managementReadPolicy } from "./policy.js";
 import { saveKey, squadKey } from "./keys.js";

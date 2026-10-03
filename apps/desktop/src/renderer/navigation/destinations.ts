@@ -1,4 +1,5 @@
 import type { ClubId, CompetitionId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
+import { playerComparisonKey } from "./params.js";
 
 /**
  * Typed navigation destinations. The keyboard spine (ticket 17), the command
@@ -251,18 +252,6 @@ export const careerDestination = (
   type: SaveScopedCareerDestinationType,
   saveId: SaveId,
 ): CareerDestination => ({ type, saveId }) as CareerDestination;
-
-/**
- * The canonical `:playerIds` route slug, and the comparison atom's key. Both the address and the
- * atom must name the same comparison set the same way, no matter the order the manager selected
- * the Players in, so one definition serves both: every id, de-duplicated and code-unit sorted,
- * joined by commas. `careerRoute` builds the slug from it and
- * `rpc/playerComparisonQueries.ts` keys its named-set atom on it, so a comparison set always
- * resolves to one route and one atom — and re-selecting the same Players from a search cannot mint
- * a second atom. `decodePlayerIds` in `params.ts` decodes it back.
- */
-export const playerComparisonKey = (playerIds: ReadonlyArray<PlayerId>): string =>
-  [...new Set(playerIds.map(String))].sort().join(",");
 
 /**
  * A resolved destination: the router `to`/`params` the adapter passes to
