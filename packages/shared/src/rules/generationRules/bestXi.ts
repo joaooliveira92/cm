@@ -1,4 +1,4 @@
-import { compareCodeUnits } from "../../order.js";
+import { compareCodeUnits } from "@cm-clone/content";
 import { BENCH_SIZE } from "../tacticalRules/tactics.js";
 import type { Position } from "../positionRules/positions.js";
 import type { PlayerPosition } from "../playerRatings/ratings.js";

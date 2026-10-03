@@ -34,19 +34,20 @@ import {
   type AdvancedOptionsState,
 } from "./advancedOptions.js";
 import {
+  catalogueName,
   competitionIndex,
+  MIGRATION_LINKS,
   nationIndex,
   type LeagueSetupIndex,
+  type NationCode,
   type NationNode,
-} from "./leagueSetup.js";
+} from "@cm-clone/content";
 import { MATCH_COST, SQUAD_SIZE, STAFF_PER_CLUB } from "./careerScopeEstimate.js";
 import {
   type ActiveLeaguesProjection,
   type NationSelectionIntent,
   type ResolvedSelection,
 } from "./leagueSelection/index.js";
-import { catalogueName } from "../content/contentPack.js";
-import { MIGRATION_LINKS, type NationCode } from "../content/nations.js";
 import { modeFromDepth } from "./simulation.js";
 
 // ---------------------------------------------------------------------------

@@ -8,10 +8,10 @@ import {
   packCoverage,
   resolutionPackForWorld,
   type ContentPack,
-} from "../../src/content/contentPack.js";
-import { BRAZIL_SERIES_A_PACK } from "../../src/content/brazilSeriesA.js";
-import { ENGLISH_PREMIER_LEAGUE_PACK } from "../../src/content/englishPremierLeague.js";
-import { SPANISH_LA_LIGA_PACK } from "../../src/content/spanishLaLiga.js";
+} from "../src/contentPack.js";
+import { BRAZIL_SERIES_A_PACK } from "../src/brazilSeriesA.js";
+import { ENGLISH_PREMIER_LEAGUE_PACK } from "../src/englishPremierLeague.js";
+import { SPANISH_LA_LIGA_PACK } from "../src/spanishLaLiga.js";
 
 const pack: ContentPack = {
   id: "test-pack",

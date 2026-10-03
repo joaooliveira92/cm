@@ -6,12 +6,12 @@
  */
 
 import {
+  catalogueName,
   competitionIndex,
   nationIndex,
   scopeOptionIndex,
   type LeagueSetupIndex,
-} from "../leagueSetup.js";
-import { catalogueName } from "../../content/contentPack.js";
+} from "@cm-clone/content";
 import { depthFromMode, type SimulationDepth } from "../simulation.js";
 import { issue, type SelectionIssue } from "./issues.js";
 import type { ResolvedSelection } from "./selection.js";

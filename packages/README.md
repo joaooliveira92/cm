@@ -14,6 +14,7 @@ through the `AppRpcs` contract:
 | Package | Role |
 |---|---|
 | [contracts/](contracts/) | The `@effect/rpc`-shaped `AppRpcs` `RpcGroup` plus every `Schema.Class` payload/view/error the renderer and main process share. Depends only on `shared`. |
+| [content/](content/) | The static content catalogue — league packs, clubs, cities, nations, name pools, the league-setup data and its read helpers (`canonicalId`, `contentPack`, the setup index accessors) plus `compareCodeUnits`. Depends on nothing; `shared` depends on it. |
 | [game-engine/](game-engine/) | Pure, DB-agnostic decider/projector/match-sim logic, unit-testable without Electron. Depends on `contracts` and `shared`. |
 | [shared/](shared/) | Game-design constants and pure functions with no Effect/Node dependency: Position/Role taxonomy, Attribute weights, ratings math, world generation. Imported by both the main process and the renderer. |
 

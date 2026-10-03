@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createSeededRng } from "../../src/random.js";
-import { NAME_POOLS, nationsWithEmptyPools, poolCombinations } from "../../src/content/namePools.js";
-import { NATION_CODES, migrationLink } from "../../src/content/nations.js";
+import { NAME_POOLS, NATION_CODES, migrationLink, nationsWithEmptyPools, poolCombinations } from "@cm-clone/content";
 import { drawNationality, generateSquad } from "../../src/rules/generationRules/generation.js";
 import type { ClubStrength } from "../../src/rules/generationRules/clubGeneration.js";
 

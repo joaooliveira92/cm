@@ -1,4 +1,4 @@
-import { compareCodeUnits } from "../order.js";
+import { compareCodeUnits } from "./order.js";
 import type { CanonicalId } from "./canonicalId.js";
 import type { ClubColours } from "./clubColours.js";
 import type { NationCode } from "./nations.js";

@@ -11,7 +11,7 @@ import {
   type NationNode,
   type NationSelectionState,
   type SimulationMode,
-} from "../leagueSetup.js";
+} from "@cm-clone/content";
 import type { IntentSource, NationSelectionIntent, ResolvedSelection } from "./selection.js";
 
 export const nationSelectionState = (

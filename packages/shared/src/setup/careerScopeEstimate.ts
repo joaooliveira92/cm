@@ -6,7 +6,7 @@
  * selection layer whose answer depends on the machine rather than on the catalogue.
  */
 
-import { competitionIndex, type LeagueSetupIndex, type SimulationMode } from "./leagueSetup.js";
+import { competitionIndex, type LeagueSetupIndex, type SimulationMode } from "@cm-clone/content";
 import type { IssueCode, IssueLevel, ResolvedSelection, SelectionIssue } from "./leagueSelection/index.js";
 
 /** Local mirror of `leagueSelection`'s private constructor: estimate issues are the same shape,

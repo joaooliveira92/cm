@@ -1,8 +1,6 @@
-import type { StatureTier } from "../content/clubs.js";
+import { NAME_POOLS, poolCombinations, type NationCode, type StatureTier } from "@cm-clone/content";
 import { createSeededRng, pickRandom, type RandomSource } from "../random.js";
-import { NAME_POOLS, poolCombinations } from "../content/namePools.js";
 import { deriveSeed } from "../seed.js";
-import type { NationCode } from "../content/nations.js";
 
 /**
  * A club's backroom, in exactly five roles across two kinds.

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { clubColours, fallbackClubColours, type ClubColours } from "../../src/content/clubColours.js";
-import { BASE_CONTENT_PACK } from "../../src/content/contentPack.js";
+import { clubColours, fallbackClubColours, type ClubColours } from "../src/clubColours.js";
+import { BASE_CONTENT_PACK } from "../src/contentPack.js";
 
 const authored: ClubColours = {
   primary: { foreground: "#ffffff", background: "#000000" },

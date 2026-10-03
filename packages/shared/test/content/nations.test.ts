@@ -1,20 +1,18 @@
 import { describe, expect, it } from "vitest";
 import {
   CONFEDERATION_BY_ID,
+  LEAGUE_SETUP_INDEX,
   MIGRATION_LINKS,
   NATION_CODES,
   NATION_PROFILES,
+  allCompetitions,
+  catalogueName,
+  competitionIndex,
   migrationLink,
   nationProfile,
-  type NationCode,
-} from "../../src/content/nations.js";
-import { LEAGUE_SETUP_INDEX } from "../../src/content/leagueSetupCatalogue.js";
-import {
-  allCompetitions,
-  competitionIndex,
   scopeOptionIndex,
-} from "../../src/setup/leagueSetup.js";
-import { catalogueName } from "../../src/content/contentPack.js";
+  type NationCode,
+} from "@cm-clone/content";
 
 const PRIOR_FIELDS = [
   "footballImportance",

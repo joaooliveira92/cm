@@ -32,7 +32,7 @@ The starting survey (2026-10-03) found five candidates. Two of them collide with
 ## Decisions so far
 
 - [01 — Lift pure match projections](issues/01-lift-match-projections-into-game-engine.md): resolved 2026-10-03. `stream`, `pitch`, `substitutions` and `StreamEvent` moved into `packages/game-engine`; the mock seam in `committed-timeline.test.ts` retargeted to `deriveMatchEvents`.
-- [02 — Extract content package](issues/02-extract-content-package.md): _open_.
+- [02 — Extract content package](issues/02-extract-content-package.md): resolved 2026-10-03. `@cm-clone/content` owns the catalogue (content/*, `order.ts`, `leagueSetup.ts`); `shared` depends on it and re-exports it. The planned `leagueSetup.ts` type/logic split was dropped — the whole file moved.
 - [03 — Extract rpc-client package](issues/03-extract-rpc-client-package.md): _open_.
 - [04 — DB package](issues/04-extract-db-package.md): **blocked** by the `db/schema.ts` rule.
 - [05 — UI package](issues/05-extract-ui-package.md): **blocked** by the `components/ui` rule and the pure-packages posture.

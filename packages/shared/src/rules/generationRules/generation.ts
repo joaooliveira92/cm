@@ -12,9 +12,7 @@ import type { PositionalRatings } from "../playerRatings/positionalRatings.js";
 import { drawPositionalRatings, primarySlotOf, type Archetype } from "./positionalGeneration.js";
 import { SLOT_WEIGHTS, weightTableOf } from "../positionRules/slots.js";
 import { potentialAbilityRange, type ClubStrength } from "./clubGeneration.js";
-import { CITIES_BY_NATION, type City } from "../../content/cities.js";
-import { NAME_POOLS } from "../../content/namePools.js";
-import { MIGRATION_LINKS, type NationCode } from "../../content/nations.js";
+import { CITIES_BY_NATION, MIGRATION_LINKS, NAME_POOLS, type City, type NationCode } from "@cm-clone/content";
 
 /**
  * How many players of each archetype a squad is generated with: 25, enough for every common shape

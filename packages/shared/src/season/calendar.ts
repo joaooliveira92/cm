@@ -1,4 +1,4 @@
-import { compareCodeUnits } from "../order.js";
+import { compareCodeUnits } from "@cm-clone/content";
 /**
  * The season's slot template: where a Round's date comes from.
  *

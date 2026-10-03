@@ -1,12 +1,12 @@
 import { describe, expect, it } from "vitest";
-import { NATION_CODES, canonicalNationId, type NationCode } from "../../src/content/nations.js";
+import { NATION_CODES, canonicalNationId, type NationCode } from "../src/nations.js";
 import {
   CITIES,
   CITIES_BY_NATION,
   CITY_IDS,
   POPULATION_BANDS,
   canonicalCityId,
-} from "../../src/content/cities.js";
+} from "../src/cities.js";
 
 describe("city catalogue", () => {
   it("curates at least one city for every nation in the code's nation list", () => {

@@ -1,4 +1,4 @@
-import type { StatureTier } from "../content/clubs.js";
+import type { StatureTier } from "@cm-clone/content";
 
 /**
  * Fixed Transfer Budget per Stature Tier (Credits) — a per-Season spend-down pool, no

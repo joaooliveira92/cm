@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { CITIES_BY_NATION, canonicalCityId } from "../../src/content/cities.js";
-import { SPANISH_LA_LIGA_PACK } from "../../src/content/spanishLaLiga.js";
-import { canonicalClubId, displayName } from "../../src/content/contentPack.js";
+import { CITIES_BY_NATION, canonicalCityId } from "../src/cities.js";
+import { SPANISH_LA_LIGA_PACK } from "../src/spanishLaLiga.js";
+import { canonicalClubId, displayName } from "../src/contentPack.js";
 
 /** The twenty slots `comp_esp_1` names — the elite league this pack is licensed for. */
 const LA_LIGA_CLUB_IDS = Array.from({ length: 20 }, (_, slot) =>

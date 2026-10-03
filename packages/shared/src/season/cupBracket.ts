@@ -1,4 +1,4 @@
-import { compareCodeUnits } from "../order.js";
+import { compareCodeUnits } from "@cm-clone/content";
 import { createSeededRng } from "../random.js";
 
 /**

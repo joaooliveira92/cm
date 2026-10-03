@@ -1,5 +1,5 @@
 {
-  "name": "@cm-clone/shared",
+  "name": "@cm-clone/content",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -8,9 +8,6 @@
   "scripts": {
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
-  },
-  "dependencies": {
-    "@cm-clone/content": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

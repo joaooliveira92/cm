@@ -3,8 +3,9 @@ import {
   CUP_ENTRANTS,
   EXCHANGE_LINKS,
   LEAGUE_SETUP_INDEX,
-} from "../../src/content/leagueSetupCatalogue.js";
-import { allCompetitions, competitionIndex } from "../../src/setup/leagueSetup.js";
+  allCompetitions,
+  competitionIndex,
+} from "@cm-clone/content";
 import { resolveSelection } from "../../src/setup/leagueSelection/index.js";
 import { resolveWorld } from "../../src/setup/resolvedWorld.js";
 import type { NationSelectionIntent } from "../../src/setup/leagueSelection/index.js";

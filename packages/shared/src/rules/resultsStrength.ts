@@ -1,6 +1,6 @@
 import { createSeededRng } from "../random.js";
 import { deriveSeed } from "../seed.js";
-import type { StatureTier } from "../content/clubs.js";
+import type { StatureTier } from "@cm-clone/content";
 
 /**
  * Results Strength: what stands in for a squad at a club that has none.

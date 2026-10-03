@@ -1,4 +1,4 @@
-import type { SimulationMode } from "./leagueSetup.js";
+import type { SimulationMode } from "@cm-clone/content";
 
 /**
  * Simulation depth: the per-competition grain the active-leagues screen is built around.

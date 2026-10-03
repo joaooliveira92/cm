@@ -11,7 +11,7 @@
  */
 import { createSeededRng, pickRandom } from "../../random.js";
 import { deriveSeed } from "../../seed.js";
-import type { StatureTier } from "../../content/clubs.js";
+import type { StatureTier } from "@cm-clone/content";
 import { bestXiForCells, selectBestTemplateXI, selectBench, type BestXiCell, type CellRatingsLike, type BenchCandidate } from "./bestXi.js";
 import { slotLabel } from "../positionRules/slots.js";
 import {

@@ -11,9 +11,7 @@ import {
   generateStaff,
   type ClubPersonRole,
 } from "../../src/rules/staff.js";
-import { STATURE_TIERS, type StatureTier } from "../../src/content/clubs.js";
-import { NAME_POOLS } from "../../src/content/namePools.js";
-import { NATION_CODES, type NationCode } from "../../src/content/nations.js";
+import { NAME_POOLS, NATION_CODES, STATURE_TIERS, type NationCode, type StatureTier } from "@cm-clone/content";
 import { deriveSeed } from "../../src/seed.js";
 import {
   PLAYER_DEVELOPMENT_FRACTION,

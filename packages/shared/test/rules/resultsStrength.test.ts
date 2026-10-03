@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import type { StatureTier } from "../../src/content/clubs.js";
+import type { StatureTier } from "@cm-clone/content";
 import {
   RESULTS_STRENGTH_CALIBRATION,
   collapseSquadStrength,

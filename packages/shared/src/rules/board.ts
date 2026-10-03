@@ -1,4 +1,4 @@
-import type { StatureTier } from "../content/clubs.js";
+import type { StatureTier } from "@cm-clone/content";
 
 /**
  * Board Objective vocabulary (ADR-0006 / ticket 06): a per-club League-position band, a sibling

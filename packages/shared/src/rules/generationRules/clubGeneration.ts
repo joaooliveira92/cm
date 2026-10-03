@@ -1,8 +1,12 @@
-import { compareCodeUnits } from "../../order.js";
-import { CITIES_BY_NATION, type City, type PopulationBand } from "../../content/cities.js";
-import type { StatureTier } from "../../content/clubs.js";
+import {
+  CITIES_BY_NATION,
+  compareCodeUnits,
+  type City,
+  type NationCode,
+  type PopulationBand,
+  type StatureTier,
+} from "@cm-clone/content";
 import type { RandomSource } from "../../random.js";
-import type { NationCode } from "../../content/nations.js";
 
 /**
  * How a club is generated: its standing, its home town, its ground, and how strong its squad

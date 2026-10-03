@@ -15,8 +15,8 @@ infrastructure, so the implementator knows which screens are grounded and which 
 - Primary: `packages/contracts/src/schemas/season.ts` (view/event schemas)
 - Primary: `packages/shared/src/rules/board.ts` (board objective bands, verdict logic)
 - Primary: `packages/shared/src/news/newsCopy.ts` (event → message copy table)
-- Primary: `packages/shared/src/setup/leagueSetup.ts` (ExchangeLink type)
-- Primary: `packages/shared/src/content/leagueSetupCatalogue.ts` (EXCHANGE_LINKS data)
+- Primary: `packages/content/src/leagueSetup.ts` (ExchangeLink type)
+- Primary: `packages/content/src/leagueSetupCatalogue.ts` (EXCHANGE_LINKS data)
 - Primary: `packages/shared/src/setup/continueReadiness.ts` (Continue blockers)
 - Primary: `packages/shared/src/setup/continueOutcome.ts` (Continue outcome descriptions)
 
@@ -267,7 +267,7 @@ export const SEASON_PHASES = ["pre_season", "in_season", "mid_window_open", "sea
 - `competition_links` table (schema.ts line 282): one row per link, with `higher_competition_id`,
   `lower_competition_id`, `slots` (integer ≥ 1). Both endpoints always exist in this save (closed
   world — the lowest loaded division never relegates out).
-- `ExchangeLink` interface (`packages/shared/src/setup/leagueSetup.ts`, line 129):
+- `ExchangeLink` interface (`packages/content/src/leagueSetup.ts`, line 129):
   ```typescript
   interface ExchangeLink {
     higherCompetitionId: string;
@@ -276,7 +276,7 @@ export const SEASON_PHASES = ["pre_season", "in_season", "mid_window_open", "sea
   }
   ```
 
-**Exchange Link data** (`packages/shared/src/content/leagueSetupCatalogue.ts`, line 438):
+**Exchange Link data** (`packages/content/src/leagueSetupCatalogue.ts`, line 438):
 - England: comp_eng_1 ↔ comp_eng_2 (3 slots), comp_eng_2 ↔ comp_eng_3 (3 slots), comp_eng_3 ↔
   comp_eng_4 (3 slots)
 - Spain: comp_esp_1 ↔ comp_esp_2n (1 slot), comp_esp_1 ↔ comp_esp_2s (1 slot) — parallel

@@ -12,7 +12,7 @@ import type {
   CupEntrant,
   ExchangeLink,
   LeagueSetupIndex,
-} from "../setup/leagueSetup.js";
+} from "./leagueSetup.js";
 
 const league = (
   nationId: string,

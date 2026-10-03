@@ -13,7 +13,7 @@ import {
   type LeagueScopeOption,
   type LeagueSetupIndex,
   type NationNode,
-} from "./leagueSetup.js";
+} from "@cm-clone/content";
 import { resolveSelection, type NationSelectionIntent } from "./leagueSelection/index.js";
 import {
   DEFAULT_SYSTEM_PROFILE,

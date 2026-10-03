@@ -1,14 +1,15 @@
-import { compareCodeUnits } from "../order.js";
-import { canonicalClubId } from "../content/contentPack.js";
-import { CUP_ENTRANTS, EXCHANGE_LINKS } from "../content/leagueSetupCatalogue.js";
 import {
+  CUP_ENTRANTS,
+  EXCHANGE_LINKS,
   allCompetitions,
+  canonicalClubId,
+  compareCodeUnits,
   competitionIndex,
   type CompetitionKind,
   type CupEntrant,
   type ExchangeLink,
   type LeagueSetupIndex,
-} from "./leagueSetup.js";
+} from "@cm-clone/content";
 import { projectActiveLeagues, type ResolvedSelection } from "./leagueSelection/index.js";
 import type { SimulationDepth } from "./simulation.js";
 

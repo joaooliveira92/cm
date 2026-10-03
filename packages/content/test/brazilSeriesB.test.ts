@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { CITIES_BY_NATION, canonicalCityId } from "../../src/content/cities.js";
-import { BRAZIL_SERIES_B_PACK } from "../../src/content/brazilSeriesB.js";
-import { canonicalClubId, displayName } from "../../src/content/contentPack.js";
+import { CITIES_BY_NATION, canonicalCityId } from "../src/cities.js";
+import { BRAZIL_SERIES_B_PACK } from "../src/brazilSeriesB.js";
+import { canonicalClubId, displayName } from "../src/contentPack.js";
 
 /** The twenty slots `comp_bra_2` names — the second tier this pack is licensed for. */
 const SERIE_B_CLUB_IDS = Array.from({ length: 20 }, (_, slot) =>

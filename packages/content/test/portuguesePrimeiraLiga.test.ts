@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { CITIES_BY_NATION, canonicalCityId } from "../../src/content/cities.js";
-import { PORTUGUESE_PRIMEIRA_LIGA_PACK } from "../../src/content/portuguesePrimeiraLiga.js";
-import { canonicalClubId, displayName } from "../../src/content/contentPack.js";
+import { CITIES_BY_NATION, canonicalCityId } from "../src/cities.js";
+import { PORTUGUESE_PRIMEIRA_LIGA_PACK } from "../src/portuguesePrimeiraLiga.js";
+import { canonicalClubId, displayName } from "../src/contentPack.js";
 
 const PRIMEIRA_LIGA_CLUB_IDS = Array.from({ length: 18 }, (_, slot) =>
   canonicalClubId("comp_prt_1", slot + 1),

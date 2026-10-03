@@ -15,7 +15,7 @@
  * reverse.
  */
 
-import type { ConfederationId, NationCode } from "../content/nations.js";
+import type { ConfederationId, NationCode } from "./nations.js";
 
 /** §9. How much of a Competition the simulation carries. Ordered least- to most-detailed use is
  *  `not_loaded` < `view_only` < `background` < `playable`; `MODE_RANK` is that order as a number. */

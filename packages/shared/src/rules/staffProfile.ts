@@ -1,6 +1,4 @@
-import type { StatureTier } from "../content/clubs.js";
-import { NATION_CODES, type NationCode } from "../content/nations.js";
-import { compareCodeUnits } from "../order.js";
+import { NATION_CODES, compareCodeUnits, type NationCode, type StatureTier } from "@cm-clone/content";
 import { createSeededRng, pickRandom, type RandomSource } from "../random.js";
 import { deriveSeed } from "../seed.js";
 import type { IsoDate } from "../season/calendar.js";

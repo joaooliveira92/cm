@@ -1,4 +1,14 @@
-import { compareCodeUnits } from "../../order.js";
+import {
+  MODE_RANK,
+  compareCodeUnits,
+  competitionIndex,
+  nationIndex,
+  scopeOptionIndex,
+  strongerMode,
+  type CompetitionNode,
+  type LeagueSetupIndex,
+  type SimulationMode,
+} from "@cm-clone/content";
 /**
  * Intent, dependency closure, and the effective selection (§12, §19, §34).
  *
@@ -6,16 +16,6 @@ import { compareCodeUnits } from "../../order.js";
  * **intents** and the **effective selection** they resolve to once dependencies are closed over.
  */
 
-import {
-  competitionIndex,
-  MODE_RANK,
-  nationIndex,
-  scopeOptionIndex,
-  strongerMode,
-  type CompetitionNode,
-  type LeagueSetupIndex,
-  type SimulationMode,
-} from "../leagueSetup.js";
 import { issue, type SelectionIssue } from "./issues.js";
 
 /** Where an intent came from. Carried so the summary can say *why* something is selected — a

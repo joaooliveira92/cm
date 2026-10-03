@@ -6,8 +6,7 @@
  * not a decision about it.
  */
 
-import { type LeagueSetupIndex, type NationSelectionState } from "./leagueSetup.js";
-import { catalogueName } from "../content/contentPack.js";
+import { catalogueName, type LeagueSetupIndex, type NationSelectionState } from "@cm-clone/content";
 
 // ---------------------------------------------------------------------------
 // Search and filtering (§10)
