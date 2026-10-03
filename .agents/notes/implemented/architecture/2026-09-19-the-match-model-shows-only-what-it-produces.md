@@ -5,6 +5,14 @@ Status: implemented
 Settles group-g decision requests 02 and 03. Both ask what a screen may show when the engine does not
 produce it, and they get opposite answers for the same reason.
 
+**Superseded in part.** The rule stands. Its premise about which events exist is dated: the engine now
+records fouls, offsides, set pieces, key passes, assists and the goalkeeper on a save. Corners are
+counted, and the attack share replaces the possession proxy, per
+[the possession bar shows attack share](../../proposed/feature/2026-10-03-the-possession-bar-shows-attack-share.md).
+The per-player columns and the rating's new inputs are in
+[the match player line folds only recorded events](../../proposed/feature/2026-10-03-the-match-player-line-folds-only-recorded-events.md)
+and [the Match Rating reads recorded involvement](../../proposed/feature/2026-10-03-the-match-rating-reads-recorded-involvement.md).
+
 ## Problem
 
 The match engine's attacking phase ends every attack in exactly one of Goal, BigChance, ShotOnTarget or

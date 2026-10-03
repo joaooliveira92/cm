@@ -21,9 +21,9 @@ const view = (throughMinute: number | null) => ({
     { key: "attempts", home: 11, away: 7 },
     { key: "redCards", home: 0, away: 1 },
   ],
-  unavailable: ["possession", "corners"],
-  homePossession: null,
-  awayPossession: null,
+  unavailable: ["possession"],
+  homeAttackShare: null,
+  awayAttackShare: null,
   chancesByType: null,
 });
 
@@ -100,7 +100,7 @@ describe("Match Statistics screen (Screens 95/100)", () => {
     const goals = within(table).getByRole("rowheader", { name: /^Goals/ }).closest("tr")!;
     expect(within(goals).getAllByRole("cell").map((cell) => cell.textContent)).toEqual(["2", "1"]);
     expect(screen.getByText("Full match")).toBeTruthy();
-    expect(screen.getByText(/Not tracked by the match model: Possession, Corners/)).toBeTruthy();
+    expect(screen.getByText(/Not tracked by the match model: Possession\./)).toBeTruthy();
   });
 
   it("during a live match, asks for the match in play cut after the revealed events", async () => {

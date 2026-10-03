@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchEvent } from "@cm-clone/game-engine";
-import { aggregateMatchStatistics as aggregateWith } from "../../../src/main/match/statistics.js";
+import { aggregateMatchStatistics as aggregateWith, attackShare } from "../../../src/main/match/statistics.js";
 import { countedSubstitutions } from "../../../src/main/match/substitutions.js";
 
 /** The fold with the substitution count every read uses; this timeline has no goalkeeper stand-in. */
@@ -40,6 +40,21 @@ const table = (rows: ReturnType<typeof aggregateMatchStatistics>) =>
   Object.fromEntries(rows.map((row) => [row.key, [row.home, row.away]]));
 
 describe("aggregateMatchStatistics — team totals folded from the Match Events", () => {
+  it("counts corners, free kicks and penalties for the side awarded them", () => {
+    const setPieces: ReadonlyArray<MatchEvent> = [
+      TIMELINE[0]!,
+      at(10, "Corner", home, { deliveryType: "default", side: "left" }),
+      at(11, "Corner", home, { deliveryType: "default", side: "right" }),
+      at(30, "FreeKick", away, { side: "left" }),
+      at(60, "Penalty", away),
+    ];
+    expect(table(aggregateMatchStatistics(setPieces, home, null))).toMatchObject({
+      corners: [2, 0],
+      freeKicks: [0, 1],
+      penalties: [0, 1],
+    });
+  });
+
   it("counts every total for the side each event names", () => {
     expect(table(aggregateMatchStatistics(TIMELINE, home, null))).toEqual({
       goals: [1, 1],
@@ -49,6 +64,9 @@ describe("aggregateMatchStatistics — team totals folded from the Match Events"
       bigChances: [0, 0],
       fouls: [0, 0],
       offsides: [0, 0],
+      corners: [0, 0],
+      freeKicks: [0, 0],
+      penalties: [0, 0],
       yellowCards: [0, 1],
       redCards: [1, 0],
       injuries: [1, 0],
@@ -92,5 +110,28 @@ describe("aggregateMatchStatistics — team totals folded from the Match Events"
 
   it("is all zeros before kick-off", () => {
     expect(aggregateMatchStatistics(TIMELINE.slice(0, 1), home, null).every((row) => row.home === 0 && row.away === 0)).toBe(true);
+  });
+});
+
+describe("attackShare — each side's share of the chance-type events, never called possession", () => {
+  const chance = (minute: number, tag: string, teamClubId: ClubId) => at(minute, tag, teamClubId);
+  const attacks: ReadonlyArray<MatchEvent> = [
+    TIMELINE[0]!,
+    chance(3, "ThroughBall", home),
+    chance(9, "Cross", home),
+    chance(15, "Counter", away),
+    chance(22, "LongShot", home),
+  ];
+
+  it("splits the chance-type events between the sides, as whole percentages", () => {
+    expect(attackShare(attacks, home, null)).toEqual({ home: 75, away: 25 });
+  });
+
+  it("cuts a live match at the revealed position", () => {
+    expect(attackShare(attacks, home, 3)).toEqual({ home: 100, away: 0 });
+  });
+
+  it("is null on both sides before the first attack, never 50-50", () => {
+    expect(attackShare(attacks, home, 1)).toEqual({ home: null, away: null });
   });
 });

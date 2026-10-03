@@ -254,7 +254,8 @@ export class PostMatchSummaryView extends Schema.Class<PostMatchSummaryView>("Po
 /** The team totals the match model can back. Every attack ends in exactly one of Goal, BigChance,
  *  ShotOnTarget or ShotMissed, so `attempts` is their sum, `shotsOnTarget` counts Goal + ShotOnTarget,
  *  `shotsOffTarget` counts ShotMissed and `bigChances` counts BigChance (a clear chance not converted
- *  into a recorded shot). */
+ *  into a recorded shot). `corners`, `freeKicks` and `penalties` count the set pieces each side was
+ *  awarded. */
 export const MatchStatisticKey = Schema.Literals([
   "goals",
   "attempts",
@@ -263,6 +264,9 @@ export const MatchStatisticKey = Schema.Literals([
   "bigChances",
   "fouls",
   "offsides",
+  "corners",
+  "freeKicks",
+  "penalties",
   "yellowCards",
   "redCards",
   "injuries",
@@ -271,8 +275,9 @@ export const MatchStatisticKey = Schema.Literals([
 export type MatchStatisticKey = Schema.Schema.Type<typeof MatchStatisticKey>;
 
 /** Statistics a football reader expects that the match model does not simulate. Listed so the
- *  screen says they are unavailable rather than showing a zero (Screen 95 §17). */
-export const UnavailableMatchStatistic = Schema.Literals(["possession", "corners"]);
+ *  screen says they are unavailable rather than showing a zero (Screen 95 §17). There is no
+ *  ball-possession model; the attack share below is not a stand-in for one. */
+export const UnavailableMatchStatistic = Schema.Literals(["possession"]);
 export type UnavailableMatchStatistic = Schema.Schema.Type<typeof UnavailableMatchStatistic>;
 
 export class MatchStatisticRow extends Schema.Class<MatchStatisticRow>("MatchStatisticRow")({
@@ -290,9 +295,10 @@ export class MatchStatisticsView extends Schema.Class<MatchStatisticsView>("Matc
   throughMinute: Schema.NullOr(Schema.Finite),
   rows: Schema.Array(MatchStatisticRow),
   unavailable: Schema.Array(UnavailableMatchStatistic),
-  /** Possession percentage for each team (0-100), null when unavailable. */
-  homePossession: Schema.NullOr(Schema.Finite),
-  awayPossession: Schema.NullOr(Schema.Finite),
+  /** Each side's share of the chance-type events (0-100), null on both sides before the first
+   *  attack. Labelled "Attacks", never "Possession" (Agent Note: the possession bar shows attack share). */
+  homeAttackShare: Schema.NullOr(Schema.Finite),
+  awayAttackShare: Schema.NullOr(Schema.Finite),
   /** Shots broken down by chance type (throughBall, cross, longShot, runWithBall, holdUpLayOff, counter). */
   chancesByType: Schema.NullOr(
     Schema.Struct({

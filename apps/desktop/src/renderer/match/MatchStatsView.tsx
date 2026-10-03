@@ -9,6 +9,9 @@ const STATISTIC: Readonly<Record<MatchStatisticKey, { readonly label: string; re
   bigChances: { label: "Big chances", definition: "Clear chances not converted into a recorded shot" },
   fouls: { label: "Fouls", definition: "Fouls committed" },
   offsides: { label: "Offsides", definition: "Offsides caught" },
+  corners: { label: "Corners", definition: "Corners won" },
+  freeKicks: { label: "Free kicks", definition: "Free kicks won in the attacking third" },
+  penalties: { label: "Penalties", definition: "Penalties awarded" },
   yellowCards: { label: "Yellow cards", definition: "Yellow cards shown" },
   redCards: { label: "Red cards", definition: "Red cards shown" },
   injuries: { label: "Injuries", definition: "Players injured" },
@@ -17,7 +20,6 @@ const STATISTIC: Readonly<Record<MatchStatisticKey, { readonly label: string; re
 
 const UNAVAILABLE_LABEL: Readonly<Record<UnavailableMatchStatistic, string>> = {
   possession: "Possession",
-  corners: "Corners",
 };
 
 /**

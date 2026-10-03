@@ -12,9 +12,9 @@ const wire = {
     { key: "goals", home: 2, away: 1 },
     { key: "attempts", home: 9, away: 6 },
   ],
-  unavailable: ["possession", "corners"],
-  homePossession: null,
-  awayPossession: null,
+  unavailable: ["possession"],
+  homeAttackShare: null,
+  awayAttackShare: null,
   chancesByType: null,
 };
 

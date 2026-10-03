@@ -14,7 +14,7 @@ import {
   type SaveId,
   type UnavailableMatchStatistic,
 } from "@cm-clone/contracts";
-import type { MatchEvent, SubstitutionEvent } from "@cm-clone/game-engine";
+import type { ChanceType, MatchEvent, SubstitutionEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
@@ -31,16 +31,16 @@ export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
   "bigChances",
   "fouls",
   "offsides",
+  "corners",
+  "freeKicks",
+  "penalties",
   "yellowCards",
   "redCards",
   "injuries",
   "substitutions",
 ];
 
-export const UNAVAILABLE_MATCH_STATISTICS: ReadonlyArray<UnavailableMatchStatistic> = [
-  "possession",
-  "corners",
-];
+export const UNAVAILABLE_MATCH_STATISTICS: ReadonlyArray<UnavailableMatchStatistic> = ["possession"];
 
 /** Which totals one event adds to, and the side it credits — typed from the event itself, so a new
  *  counted event cannot fall to a default side. */
@@ -58,6 +58,12 @@ const countedFor = (
       return { clubId: event.teamClubId, keys: ["fouls"] };
     case "Offside":
       return { clubId: event.teamClubId, keys: ["offsides"] };
+    case "Corner":
+      return { clubId: event.teamClubId, keys: ["corners"] };
+    case "FreeKick":
+      return { clubId: event.teamClubId, keys: ["freeKicks"] };
+    case "Penalty":
+      return { clubId: event.teamClubId, keys: ["penalties"] };
     case "YellowCard":
       return { clubId: event.teamClubId, keys: ["yellowCards"] };
     case "RedCard":
@@ -112,74 +118,51 @@ export const aggregateMatchStatistics = (
   return MATCH_STATISTIC_KEYS.map((key) => new MatchStatisticRow({ key, ...totals.get(key)! }));
 };
 
-/** Derive possession percentage from the event stream by counting attack events per team. */
-const computePossession = (
+const CHANCE_TAGS = {
+  ThroughBall: "throughBall",
+  Cross: "cross",
+  LongShot: "longShot",
+  RunWithBall: "runWithBall",
+  HoldUpLayOff: "holdUpLayOff",
+  Counter: "counter",
+} as const satisfies Partial<Record<MatchEvent["_tag"], ChanceType>>;
+
+type ChanceEvent = Extract<MatchEvent, { readonly _tag: keyof typeof CHANCE_TAGS }>;
+
+const isChanceEvent = (event: MatchEvent): event is ChanceEvent => Object.hasOwn(CHANCE_TAGS, event._tag);
+
+/**
+ * Each side's share of the chance-type events, as whole percentages. This is what the model knows
+ * about who is on top; it is not possession, which the engine does not simulate, and is never
+ * labelled as such (Agent Note: the possession bar shows attack share). Null on both sides before
+ * the first attack: no attacks is not 50-50.
+ */
+export const attackShare = (
   events: ReadonlyArray<MatchEvent>,
   homeClubId: ClubId,
   revealedEvents: number | null,
 ): { readonly home: number | null; readonly away: number | null } => {
-  const included = includedEvents(events, revealedEvents);
-  // Count attacking events (chance types) per team as a rough proxy for possession
-  type ChanceEvent = MatchEvent & { readonly teamClubId: ClubId };
-  const isChanceEvent = (e: MatchEvent): e is ChanceEvent =>
-    e._tag === "ThroughBall" || e._tag === "Cross" || e._tag === "LongShot" ||
-    e._tag === "RunWithBall" || e._tag === "HoldUpLayOff" || e._tag === "Counter";
-  const homeAttacks = included.filter((e) => isChanceEvent(e) && e.teamClubId === homeClubId).length;
-  const awayAttacks = included.filter((e) => isChanceEvent(e) && e.teamClubId !== homeClubId).length;
-  const total = homeAttacks + awayAttacks;
-  if (total === 0) return { home: null, away: null };
-  return { home: Math.round((homeAttacks / total) * 100), away: Math.round((awayAttacks / total) * 100) };
+  const attacks = includedEvents(events, revealedEvents).filter(isChanceEvent);
+  if (attacks.length === 0) return { home: null, away: null };
+  const home = Math.round((attacks.filter((e) => e.teamClubId === homeClubId).length / attacks.length) * 100);
+  return { home, away: 100 - home };
 };
 
-/** Derive shots by chance type from the event stream. */
+type ChancesByType = Record<ChanceType, { home: number; away: number }>;
+
+/** Chances by how they were created, per side; null when the timeline has none. */
 const computeChancesByType = (
   events: ReadonlyArray<MatchEvent>,
   homeClubId: ClubId,
   revealedEvents: number | null,
-): {
-  readonly throughBall: { readonly home: number; readonly away: number };
-  readonly cross: { readonly home: number; readonly away: number };
-  readonly longShot: { readonly home: number; readonly away: number };
-  readonly runWithBall: { readonly home: number; readonly away: number };
-  readonly holdUpLayOff: { readonly home: number; readonly away: number };
-  readonly counter: { readonly home: number; readonly away: number };
-} | null => {
-  const included = includedEvents(events, revealedEvents);
-  type ChanceEvent = MatchEvent & { readonly teamClubId: ClubId };
-  const isChanceTag = (e: MatchEvent, tag: string): e is ChanceEvent =>
-    e._tag === tag;
-
-  // Check if any chance type events exist at all
-  const total = ["ThroughBall", "Cross", "LongShot", "RunWithBall", "HoldUpLayOff", "Counter"]
-    .reduce((s, tag) => s + included.filter((e) => e._tag === tag).length, 0);
-  if (total === 0) return null;
-
-  return {
-    throughBall: {
-      home: included.filter((e) => isChanceTag(e, "ThroughBall") && e.teamClubId === homeClubId).length,
-      away: included.filter((e) => isChanceTag(e, "ThroughBall") && e.teamClubId !== homeClubId).length,
-    },
-    cross: {
-      home: included.filter((e) => isChanceTag(e, "Cross") && e.teamClubId === homeClubId).length,
-      away: included.filter((e) => isChanceTag(e, "Cross") && e.teamClubId !== homeClubId).length,
-    },
-    longShot: {
-      home: included.filter((e) => isChanceTag(e, "LongShot") && e.teamClubId === homeClubId).length,
-      away: included.filter((e) => isChanceTag(e, "LongShot") && e.teamClubId !== homeClubId).length,
-    },
-    runWithBall: {
-      home: included.filter((e) => isChanceTag(e, "RunWithBall") && e.teamClubId === homeClubId).length,
-      away: included.filter((e) => isChanceTag(e, "RunWithBall") && e.teamClubId !== homeClubId).length,
-    },
-    holdUpLayOff: {
-      home: included.filter((e) => isChanceTag(e, "HoldUpLayOff") && e.teamClubId === homeClubId).length,
-      away: included.filter((e) => isChanceTag(e, "HoldUpLayOff") && e.teamClubId !== homeClubId).length,
-    },
-    counter: {
-      home: included.filter((e) => isChanceTag(e, "Counter") && e.teamClubId === homeClubId).length,
-      away: included.filter((e) => isChanceTag(e, "Counter") && e.teamClubId !== homeClubId).length,
-    },
-  };
+): ChancesByType | null => {
+  const attacks = includedEvents(events, revealedEvents).filter(isChanceEvent);
+  if (attacks.length === 0) return null;
+  const totals = Object.fromEntries(
+    Object.values(CHANCE_TAGS).map((type) => [type, { home: 0, away: 0 }]),
+  ) as ChancesByType;
+  for (const attack of attacks) totals[CHANCE_TAGS[attack._tag]][attack.teamClubId === homeClubId ? "home" : "away"] += 1;
+  return totals;
 };
 
 /** The view over a match stream's derived timeline, shared by the Match Statistics read and the Match Report. */
@@ -193,7 +176,7 @@ export const matchStatisticsView = (
   const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
   const included = includedEvents(events, revealedEvents);
   const last = included[included.length - 1];
-  const possession = computePossession(events, started.homeClubId, revealedEvents);
+  const attacks = attackShare(events, started.homeClubId, revealedEvents);
   const chancesByType = computeChancesByType(events, started.homeClubId, revealedEvents);
   return new MatchStatisticsView({
     matchId,
@@ -208,8 +191,8 @@ export const matchStatisticsView = (
       countedSubstitutions(events, substitutionLedger(stream, events).standIns, revealedEvents),
     ),
     unavailable: UNAVAILABLE_MATCH_STATISTICS,
-    homePossession: possession.home,
-    awayPossession: possession.away,
+    homeAttackShare: attacks.home,
+    awayAttackShare: attacks.away,
     chancesByType,
   });
 };

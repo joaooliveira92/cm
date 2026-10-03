@@ -40,9 +40,9 @@ const wire = {
     awayClubName: "Northgate Athletic",
     throughMinute: null,
     rows: [{ key: "goals", home: 2, away: 1 }],
-    unavailable: ["possession", "corners"],
-    homePossession: null,
-    awayPossession: null,
+    unavailable: ["possession"],
+    homeAttackShare: null,
+    awayAttackShare: null,
     chancesByType: null,
   },
 };

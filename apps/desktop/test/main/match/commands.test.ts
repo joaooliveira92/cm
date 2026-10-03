@@ -415,7 +415,7 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
       row("yellowCards").home + row("yellowCards").away,
       lines.filter((line) => line.tag === "YellowCard").length,
     );
-    deepStrictEqual([...full.unavailable], ["possession", "corners"]);
+    deepStrictEqual([...full.unavailable], ["possession"]);
     strictEqual(row("redCards").home + row("redCards").away, lines.filter((line) => line.tag === "RedCard").length);
     deepStrictEqual(
       [row("substitutions").home, row("substitutions").away],
