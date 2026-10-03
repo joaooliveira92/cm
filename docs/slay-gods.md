@@ -1,496 +1,264 @@
-# React God Component Refactoring Instructions
+# Adaptive React God Component Refactoring Instructions
 
-Act as a staff-level frontend engineer specializing in React, TypeScript, and large-scale component architecture.
+Act as a staff-level frontend engineer specializing in React, TypeScript, and maintainable component architecture.
 
 ## Objective
 
 Refactor the target oversized React component into a maintainable composition of:
 
-- one orchestration-focused parent component;
+- one orchestration-focused parent;
 - focused child components;
-- custom hooks where they create a clear ownership boundary;
-- pure utilities for reused or independently meaningful logic;
+- custom hooks for meaningful stateful or lifecycle logic;
+- pure utilities for reusable logic;
 - shared types only when multiple modules genuinely need them.
 
-Preserve observable behavior, user interface, styling, accessibility, runtime semantics, and public API unless the task explicitly authorizes a change.
+Preserve observable behavior, UI, styling, accessibility, lifecycle semantics, and public API. Implement the refactor before reporting results.
 
-This is an implementation task. Complete the refactor and validation before producing the final report.
-
-## Instruction Precedence
+## Precedence and Writable Scope
 
 Follow instructions in this order:
 
 1. platform, system, developer, and tool instructions;
-2. the user's current task and explicitly authorized writable scope;
+2. the current task and explicitly authorized writable scope;
 3. repository-wide instructions;
-4. instructions scoped to the target package or directory;
-5. this refactoring playbook;
+4. package- or directory-scoped instructions;
+5. this playbook;
 6. conventions inferred from neighboring code.
 
-A lower-priority instruction must not expand writable scope, authorize destructive actions, expose secrets, or override a higher-priority instruction.
+A lower-priority instruction cannot expand writable scope or weaken a higher-priority safety requirement.
 
-When applicable instructions conflict at the same level, prefer the instruction with the narrowest scope for the target path. If the conflict cannot be resolved safely, stop before editing and report it.
+The authorized writable scope is a hard boundary. If it prohibits new files, decompose within the permitted files and report the constraint. Do not manufacture files outside the authorized scope.
 
-The explicitly authorized writable scope is a hard boundary. Do not create, modify, move, rename, or delete files outside it.
-
-If the writable scope forbids new files, decompose within the permitted module according to repository conventions. Report this constraint in the final deliverable.
-
-## Safety and Change Control
+## Safety and Discovery
 
 Before editing:
 
-- inspect the working tree;
-- identify pre-existing modified, staged, and untracked files;
-- do not overwrite, revert, stage, or reformat unrelated user changes;
-- identify generated files and their source generators;
-- identify the package manager and workspace boundaries;
-- read applicable repository and directory instructions;
-- inspect canonical scripts in package manifests and CI configuration.
+- inspect modified, staged, and untracked files;
+- do not overwrite, revert, stage, or reformat unrelated work;
+- identify generated files, the package manager, workspace boundaries, canonical scripts, and CI gates;
+- inspect the target component, direct consumers, exports, types, tests, stories, styles, selectors, hooks, contexts, registries, slots, providers, and adjacent conventions;
+- identify path-based lint, ownership, dependency, naming, and file-size rules.
 
-Do not:
+Do not add dependencies, alter lockfiles, edit generated files manually, weaken checks, or perform unrelated cleanup unless explicitly authorized.
 
-- add or upgrade dependencies unless explicitly authorized or strictly necessary;
-- alter package manager lockfiles incidentally;
-- run destructive Git commands;
-- modify generated files manually;
-- perform unrelated cleanup;
-- change formatting across unaffected code;
-- hide failures with disabled rules, weaker compiler settings, broad suppressions, or skipped tests.
-
-## Discovery
-
-Before changing the target component, inspect:
-
-- the component implementation;
-- its direct consumers;
-- public exports and re-exports;
-- associated types;
-- tests and specifications;
-- stories, examples, fixtures, and visual tests;
-- styles and selectors coupled to its DOM structure;
-- hooks, contexts, registries, slots, and providers it uses;
-- adjacent components to learn repository conventions;
-- package and directory boundary rules.
-
-Identify the component's actual public and runtime contracts, including:
-
-- exported names and import paths;
-- default versus named exports;
-- props, callback signatures, and ref behavior;
-- DOM structure relied on by selectors, CSS, tests, or consumers;
-- component identity, keys, and state retention;
-- controlled and uncontrolled input behavior;
-- focus and event propagation;
-- context, portal, error-boundary, and Suspense boundaries;
-- hook and effect ordering, timing, and cleanup;
-- registration, subscription, and slot ordering;
-- server-rendering and hydration behavior;
-- import-time side effects;
-- lazy-loading and bundle boundaries;
-- path-specific lint, ownership, or dependency rules;
-- intentional suppressions or documented compatibility constraints.
-
-Record non-obvious contracts before editing.
+Record non-obvious contracts, including exports, import paths, refs, keys, state retention, controlled inputs, DOM shape, focus, event propagation, effects, cleanup, registration order, context boundaries, portals, Suspense, error boundaries, SSR, hydration, import side effects, and lazy-loading boundaries.
 
 ## Behavioral Baseline
 
-Run the narrowest relevant existing validation before editing.
+Run the narrowest relevant existing validation before editing and record:
 
-Prefer repository-defined commands. Do not invent a new command when the repository already provides an appropriate script.
+- the exact command and working directory;
+- exit status and meaningful output;
+- failures, skips, warnings, and environmental blockers.
 
-Record:
+Run the same validation after refactoring. The change must not introduce new failures.
 
-- the exact command;
-- working directory;
-- exit status;
-- relevant pass, failure, skip, or warning summary;
-- environmental blockers.
+If the baseline already fails, compare the before and after results and do not fix unrelated failures. Never claim a test, lint, typecheck, build, or smoke test passed unless that exact command completed successfully during the task.
 
-After the refactor, run the same validation again.
+If no relevant tests exist, add characterization tests only when permitted and necessary to protect existing observable behavior. Do not create tests that merely encode the new file structure.
 
-The refactor must not introduce new failures.
+## Adaptive File-Size Policy
 
-If a command fails before the change:
+File size is a maintainability and LLM-context signal, not an absolute correctness rule. Favor cohesive modules, but actively prevent large files from surviving a refactor without justification.
 
-- preserve enough output for comparison;
-- do not fix unrelated failures;
-- compare the post-change result with the baseline;
-- report whether the failure is unchanged, improved, or regressed.
+Apply these targets to changed, hand-written source files:
 
-Never claim that a test, typecheck, lint, build, story build, or smoke test passed unless that exact command completed successfully during this task.
+- aim for approximately 150 to 300 lines for most components and hooks;
+- treat 400 lines as a mandatory review threshold;
+- avoid files above 500 lines unless a safe and meaningful split is unavailable;
+- when the input file exceeds 400 to 500 lines, actively seek multiple coherent extraction boundaries;
+- for an input above 500 lines, the normal expected result is multiple source files when writable scope permits;
+- do not compress formatting, create dense expressions, or hide complexity merely to reduce line count;
+- do not split a cohesive responsibility solely to satisfy a numeric target.
 
-If no relevant tests exist and the writable scope permits test changes, characterization tests may be added only when necessary to protect existing observable behavior during a high-risk refactor. Such tests must describe pre-existing behavior, not the new file structure.
+A changed source file remaining above 400 lines requires an explicit final-report justification covering:
 
-If tests cannot be added or run, explain why and use the strongest available alternative validation.
+1. why the file remains cohesive;
+2. which additional boundaries were considered;
+3. why further splitting would harm clarity, lifecycle ownership, behavior, API stability, repository conventions, or scope compliance;
+4. which future boundary should be used if the file grows.
 
-## Refactoring Strategy
+A single-file result from an input above 500 lines is acceptable only when the writable scope forbids new files or no safe, meaningful extraction boundary exists. State the reason explicitly.
 
-Refactor incrementally.
+Use this decision order:
 
-Prefer this sequence when practical:
+1. preserve behavior, lifecycle, identity, and public API;
+2. obey writable scope and repository boundaries;
+3. preserve cohesive responsibilities;
+4. keep files small enough for focused human and LLM review;
+5. minimize navigation and import overhead.
 
-1. characterize existing responsibilities and contracts;
-2. extract pure logic without changing behavior;
-3. extract coherent rendering regions;
-4. move local state and effects only when ownership remains correct;
-5. update imports and exports;
-6. remove code made obsolete by the extraction;
-7. run focused checks after meaningful steps;
-8. review the final diff for scope and behavioral risk.
-
-Avoid combining structural refactoring with semantic cleanup.
+Avoid both extremes: monolithic files and swarms of trivial micro-files.
 
 ## Parent Component
 
-The parent should primarily compose and coordinate the feature.
-
-It may:
+The parent should primarily:
 
 - connect repository-approved data and state abstractions;
+- own state genuinely shared by multiple children;
+- connect feature-level hooks;
 - coordinate child components;
-- own state shared by multiple children;
-- call feature-level hooks;
 - pass focused data and callbacks;
-- define the feature's structural layout;
-- retain logic whose movement would alter lifecycle or ownership.
+- define structural layout.
 
-Keep data fetching where the repository architecture places it. Do not move fetching into the parent merely to satisfy this playbook.
-
-The parent should not retain substantial presentation logic, repeated markup, or deeply nested rendering branches when those have a coherent extraction boundary.
-
-Do not optimize for an arbitrary line count. Optimize for understandable responsibilities and safe ownership.
+Keep data fetching where the repository architecture places it. Do not retain substantial presentation logic, repeated markup, or deeply nested branches when coherent boundaries exist. Do not optimize only for line count.
 
 ## Child Components
 
-Extract a child component when the candidate section has a coherent responsibility and extraction materially improves one or more of:
-
-- readability;
-- state or effect ownership;
-- reuse;
-- isolation;
-- testability;
-- accessibility reasoning;
-- reduction of meaningful parent complexity.
+Extract a child when a section has a coherent responsibility and extraction materially improves readability, ownership, reuse, isolation, testability, accessibility reasoning, or parent complexity.
 
 Strong extraction signals include:
 
-- a substantial rendering branch;
+- substantial rendering branches;
 - local state or effects;
 - repeated JSX with the same semantics;
-- a domain concept with a meaningful name;
-- a non-trivial form, dialog, table, toolbar, list, filter, panel, or status region;
-- a section that can receive a small and stable interface.
+- meaningful domain concepts;
+- non-trivial forms, dialogs, tables, toolbars, lists, filters, panels, status regions, or action areas.
 
-Do not extract solely because markup belongs to a named UI category.
+Do not extract solely because markup belongs to a named UI category. Avoid components that merely rename a wrapper element. Do not define extracted components inside another component's render function unless intentional remounting is part of existing behavior.
 
-Avoid components that merely rename a single wrapper without isolating behavior, semantics, styling, or a meaningful concept.
-
-Do not define extracted components inside another component's render function unless remounting on each parent render is an existing and intentional behavior.
+Each extracted module should have a clear responsibility, a domain-oriented name, and an interface understandable without loading the original God Component into context.
 
 ## Component Boundaries
 
-For each proposed extraction, verify:
+For each extraction, verify that:
 
 - the responsibility has a meaningful name;
-- required inputs and outputs are clear;
+- inputs and outputs are clear;
 - state remains at the lowest correct shared owner;
-- effects retain their timing and cleanup behavior;
-- the extraction does not introduce unnecessary context or global state;
+- effects retain timing and cleanup behavior;
 - component identity and keys preserve state correctly;
 - DOM shape remains compatible where consumers depend on it;
-- the boundary does not violate package or dependency rules.
+- the boundary does not violate package or dependency rules;
+- the extraction does not introduce unnecessary context or global state.
 
-Prefer a smaller number of meaningful components over a large number of trivial files.
+Prefer a small number of meaningful modules over many trivial files.
 
-## Hooks
+## Hooks and Closure Semantics
 
-Move non-rendering stateful logic into a custom hook when doing so creates a clear reusable or conceptual boundary.
+Create a custom hook only when it establishes a meaningful stateful, lifecycle, reusable, or conceptual boundary. Hooks should return data, refs, derived values, and callbacks rather than own the rendered DOM subtree.
 
-Suitable responsibilities may include:
+Do not create hooks merely to move lines. Preserve the Rules of Hooks, call order, effect timing, cleanup ordering, and callback freshness.
 
-- filtering and sorting;
-- selection;
-- pagination;
-- keyboard interaction;
-- subscriptions;
-- request lifecycle;
-- complex derived state;
-- coordinated event handlers.
+When an existing dependency list is incomplete:
 
-A hook must not own or return the feature's rendered DOM subtree.
-
-A hook should normally return data, state, derived values, refs, and callbacks. Returning a React value is acceptable only when required by an established registry, slot, provider, or library contract, and the reason must be documented in the final report.
-
-Do not create a custom hook merely to move lines out of the parent. Keep tightly coupled one-use logic local when extraction would obscure ownership.
-
-Preserve Rules of Hooks compliance and hook call order.
-
-## Effects, Callbacks, and Closure Semantics
-
-Do not change effect timing, callback freshness, cleanup order, or dependency semantics incidentally.
-
-When an existing hook has an incomplete dependency list:
-
-1. inspect tests, comments, consumers, history available in the working tree, and observable behavior;
-2. preserve demonstrated runtime behavior during this refactor;
+1. inspect tests, comments, consumers, and observable behavior;
+2. preserve demonstrated behavior during this refactor;
 3. keep any necessary lint suppression narrow;
-4. do not create new dependency omissions merely to reproduce source-code shape.
+4. do not create new dependency omissions merely to imitate the original source shape.
 
-If the intent is unclear, preserve observable behavior and report the ambiguity as technical debt. Do not silently repair it during a structural refactor.
+If intent remains unclear, preserve observable behavior and report the ambiguity. Do not silently repair closure semantics during a structural refactor.
 
 ## Utilities
 
-Extract logic into a utility when it is:
+Extract logic into a utility when it is pure, reused, independently meaningful, or easier to verify separately.
 
-- pure;
-- reused;
-- independently meaningful;
-- easier to test or reason about separately.
+Standalone utility modules must not use React, hooks, elements, context, mutable module state, browser globals, or lifecycle behavior.
 
-Standalone utility modules must not import React or depend on hooks, elements, context, mutable module state, browser globals, or component lifecycle.
+Do not create a utility file for a trivial one-use expression unless its name materially improves comprehension.
 
-If writable scope requires a utility to remain in a React module, it must still be a pure function with explicit inputs and outputs.
+## Props and State
 
-Do not create a utility file for a trivial one-use expression unless the name materially improves comprehension.
+Pass only what supports the child's responsibility. Prefer explicit fields for a small unrelated subset, but pass a cohesive domain value when the child treats it as a unit and that produces a clearer stable interface.
 
-## Props and Data Flow
+Avoid broad bags of props, unnecessary callback forwarding, duplicated derived state, hidden mutation, or global state introduced merely to avoid ordinary prop passing.
 
-Pass what a child needs to fulfill its responsibility.
-
-Prefer explicit fields when a child needs only a small, unrelated subset of a larger value.
-
-Pass a cohesive domain object when the child treats it as a unit and doing so creates a clearer or more stable interface.
-
-Avoid:
-
-- broad bag-of-props interfaces;
-- unnecessary callback forwarding;
-- duplicated derived state;
-- hidden mutation;
-- introducing context or global state solely to avoid ordinary one-level prop passing.
-
-Preserve existing callback signatures, object identity guarantees, ref contracts, and public prop types unless explicitly authorized to change them.
-
-## State Ownership
-
-Keep state at the lowest level that can correctly serve all consumers.
-
-Lift state only when multiple components require coordinated ownership.
-
-Do not duplicate source-of-truth state across the parent and child.
-
-Do not move state across a component identity boundary if doing so changes reset, persistence, initialization, or effect behavior.
+Keep state at the lowest correct shared owner. Do not duplicate a source of truth or move state across identity boundaries when that changes reset, persistence, initialization, effects, or cleanup.
 
 ## React Runtime Preservation
 
 Preserve:
 
 - mount and unmount behavior;
-- element and component identity;
-- key semantics and state retention;
+- element identity, component identity, keys, and state retention;
 - refs and imperative handles;
-- controlled and uncontrolled input semantics;
-- focus retention and focus order;
-- event propagation and handler ordering;
-- provider and context boundaries;
-- portal targets;
-- error-boundary behavior;
-- Suspense and lazy-loading behavior;
-- effect execution and cleanup;
+- controlled and uncontrolled input behavior;
+- focus, event propagation, and handler ordering;
+- provider, portal, error-boundary, and Suspense boundaries;
+- effect timing and cleanup;
 - registration and subscription order;
-- `useId` stability and hydration behavior;
-- import-time side effects;
-- DOM structure when styling, tests, accessibility, or consumers depend on it.
+- `useId`, SSR, and hydration behavior;
+- import-time side effects and lazy-loading boundaries;
+- DOM structure when required by CSS, tests, accessibility, or consumers.
 
-Extraction must not introduce hydration mismatches or move browser-only behavior into a server execution path.
+Do not move browser-only logic into a server path or introduce hydration mismatches.
 
 ## Performance
 
-Preserve existing performance-sensitive contracts unless evidence supports a safe change.
+Preserve existing performance-sensitive contracts.
 
-Use `React.memo`, `useMemo`, and `useCallback` only when they protect a demonstrated or structurally credible boundary, such as:
+Use `React.memo`, `useMemo`, and `useCallback` only for credible boundaries such as expensive calculations, memoized children, dependency-sensitive effects, subscriptions, or established repository conventions.
 
-- an expensive calculation;
-- a memoized child receiving callbacks or objects;
-- a dependency-sensitive effect;
-- a stable external subscription API;
-- a repository convention backed by profiling or architecture.
-
-Do not memoize every extracted value or component.
-
-Do not remove existing memoization solely because it appears unnecessary. Assess its consumers and behavioral implications first.
-
-Avoid introducing allocations, subscriptions, or expensive calculations on paths where they did not previously occur.
+Do not memoize everything. Do not remove existing memoization without examining consumers and runtime implications. Avoid new allocations, subscriptions, or expensive calculations on previously unaffected paths.
 
 ## TypeScript
 
-Preserve strict typing and existing public types.
+Preserve strictness and public types. In new or materially changed code:
 
-For new or materially changed code:
-
-- do not introduce implicit or explicit `any` unless an unavoidable third-party boundary requires it;
-- use `unknown` for untrusted or not-yet-validated values;
-- narrow with runtime validation, type guards, or discriminated unions;
+- do not introduce `any` unless an unavoidable external boundary requires it;
+- use `unknown` for untrusted values and narrow it safely;
+- prefer runtime validation, type guards, and discriminated unions;
 - avoid assertions when TypeScript can prove the type;
-- keep necessary assertions narrow and adjacent to the validated invariant;
-- do not use double assertions such as `value as unknown as Target`;
-- preserve generic inference where it is part of the component API;
-- avoid widening literal types accidentally;
-- preserve optionality and nullability semantics.
+- keep necessary assertions narrow and adjacent to validated invariants;
+- do not use double assertions;
+- preserve generic inference, literal types, optionality, and nullability.
 
-Do not perform unrelated type cleanup.
-
-Create a separate types module only when types are shared across modules or when repository convention requires it. Keep component-private types near their owner.
+Keep private types near their owner. Create a types file only for genuinely shared types or when repository convention requires it.
 
 ## File Organization
 
-Use the repository's established colocation and naming conventions.
+Follow repository colocation and naming conventions. Prefer separate files for meaningful components, hooks, utilities, and shared types when permitted.
 
-Separate files are preferred for meaningful independently owned components, hooks, and utilities when writable scope permits them. Do not create a file for every small function or trivial component.
+Before creating or moving files, check path-based rules, package boundaries, ownership, naming, circular dependencies, barrel conventions, generation, test and story discovery, file-size gates, and case sensitivity.
 
-Before moving or creating files, check for:
-
-- path-based lint rules;
-- import and package boundaries;
-- ownership rules;
-- file-name conventions;
-- barrel export conventions;
-- circular dependency risk;
-- source-file size gates;
-- code generation;
-- test and story discovery patterns;
-- case sensitivity across supported file systems.
-
-Preserve import paths and exports that are part of the effective public API.
-
-Do not introduce a barrel file unless the repository uses that convention and it does not create a dependency cycle.
+Preserve effective public import paths. Do not introduce a barrel file unless it follows repository convention and does not create a dependency cycle.
 
 ## Preserve Observable Behavior
 
 Unless explicitly authorized, do not change:
 
-- functionality;
-- visual output;
-- text and labels;
-- CSS classes;
-- CSS selector compatibility;
-- DOM semantics;
-- accessibility names, roles, states, relationships, and focus behavior;
+- functionality or visible output;
+- text, CSS classes, selectors, or DOM semantics;
+- accessibility names, roles, states, relationships, or focus behavior;
 - animations and transitions;
-- routing;
-- analytics and telemetry events;
-- data fetching behavior;
-- error and loading behavior;
+- routing, telemetry, or analytics;
+- data fetching, loading, and error behavior;
 - callback timing;
-- public imports and exports;
-- props, refs, and imperative APIs;
-- test expectations;
-- story behavior.
+- public imports, exports, props, refs, or imperative APIs;
+- test expectations or story behavior.
 
-This is a structural refactor, not a redesign or feature change.
-
-## Quality Expectations
-
-The changed area should demonstrate:
-
-- cohesive responsibilities;
-- low unnecessary coupling;
-- readable domain-oriented names;
-- limited nesting;
-- clear control flow;
-- no new duplicated business logic;
-- no duplicated source of truth;
-- no obsolete code from the previous structure;
-- no unused imports, props, exports, or suppressions introduced by the refactor;
-- no unnecessary abstraction;
-- no unrelated formatting churn.
-
-Absolute zero duplication across the repository is not required. Report any intentional or remaining duplication in the changed area.
+This is structural refactoring, not redesign or feature work.
 
 ## Validation
 
-Use the repository's canonical commands where available.
+Use canonical repository commands. Run focused checks first and broader checks when feasible, including applicable tests, typecheck, lint, formatting verification, build, stories, accessibility, visual regression, integration, end-to-end, or smoke tests.
 
-Run the narrowest relevant checks first, followed by broader checks when feasible and within scope. Depending on repository support, this may include:
-
-- focused unit or component tests;
-- typecheck;
-- lint;
-- formatting verification;
-- package build;
-- story build;
-- integration tests;
-- accessibility tests;
-- visual regression tests;
-- end-to-end or smoke tests.
-
-Do not alter snapshots automatically without inspecting and explaining the change.
-
-If validation requires unavailable credentials, services, browsers, containers, or environment variables, do not bypass the requirement silently. Report the blocker and any partial validation completed.
+Do not update snapshots blindly. Report unavailable credentials, services, browsers, containers, or environment variables rather than bypassing them.
 
 Before completion:
 
 - inspect the final diff;
-- confirm every changed file is within scope;
-- confirm no unrelated user changes were overwritten;
+- confirm every change is within scope;
+- confirm unrelated work remains untouched;
 - confirm no accidental dependency or lockfile changes occurred;
-- confirm obsolete implementation code was removed;
+- remove obsolete implementation code;
 - confirm imports and exports resolve;
-- compare post-change validation with the baseline.
+- record the final line count of every changed hand-written source file;
+- compare final validation with the baseline.
 
-## Final Deliverable
+## Final Report
 
-After implementation, provide a concise, evidence-based report containing:
+After implementation, report:
 
-### 1. Summary
+1. **Summary:** what changed and whether behavior and public API were preserved.
+2. **Decomposition:** parent responsibilities and every extracted component, hook, utility, and its justification.
+3. **Structure:** relevant changed and new files only.
+4. **File sizes:** final line count for every changed hand-written source file, with justification for each file above 400 lines.
+5. **Baseline:** exact pre-change commands and outcomes.
+6. **Validation:** every post-change command, working directory, outcome, and baseline comparison.
+7. **Compatibility:** exports, imports, state, identity, lifecycle, refs, focus, DOM, effects, SSR, and hydration reviewed.
+8. **Scope:** changed files and pre-existing work left untouched.
+9. **Remaining concerns:** intentional duplication, missing coverage, existing failures, and excluded follow-up work.
+10. **Commit suggestion:** a Conventional Commit message.
 
-- What was refactored.
-- Whether observable behavior and public API were preserved.
-
-### 2. Decomposition
-
-- The parent's remaining responsibilities.
-- Each extracted component, hook, and utility.
-- Why each boundary is appropriate.
-
-### 3. Resulting Structure
-
-- A tree containing only relevant changed and newly created files.
-
-### 4. Behavioral Baseline
-
-- Exact pre-change commands and outcomes.
-- Missing tests or environmental limitations.
-
-### 5. Validation
-
-- Every post-change command executed.
-- Working directory when relevant.
-- Outcome of each command.
-- Comparison with the baseline.
-- Any command not run and the reason.
-
-### 6. Compatibility Review
-
-- Public exports and import paths.
-- State, lifecycle, ref, focus, DOM, effect, and hydration contracts assessed.
-- Any known ambiguity or residual risk.
-
-### 7. Scope Review
-
-- Files changed.
-- Confirmation that all changes are within writable scope.
-- Any pre-existing working-tree changes left untouched.
-
-### 8. Remaining Concerns
-
-- Intentional duplication.
-- Missing coverage.
-- Existing failures.
-- Follow-up work deliberately excluded from this refactor.
-
-### 9. Commit Suggestion
-
-- A Conventional Commit message describing the completed refactor.
-
-Do not claim checks, compatibility guarantees, or absence of duplication without evidence.
+Do not claim validation, compatibility, or absence of duplication without evidence.
