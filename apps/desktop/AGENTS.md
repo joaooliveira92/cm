@@ -31,7 +31,7 @@ it. Everything else is a subsystem folder with an `index.ts` barrel:
 | `club/` | squad, tactics, training, scouting, development, and the same decisions taken for AI clubs |
 | `season/` | the calendar state machine, fixtures, matchday, cups, standings, rollover |
 | `transfers/` | the transfer economy: economics, budgets, bids, AI behaviour, commands |
-| `match/` | starting a match, its event stream, its view projections, its commands |
+| `match/` | starting a match, its persisted event stream, its commands, and the DB reads that load a stream; the pure re-derivation and pitch/substitution projections live in `packages/game-engine` |
 
 Two rules keep this shape honest:
 

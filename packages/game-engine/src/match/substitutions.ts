@@ -10,13 +10,9 @@
  *   halftime instruction, which neither opens a window nor moves that point.
  */
 import { SubstitutionStatusView, type ClubId, type PlayerId } from "@cm-clone/contracts";
-import {
-  MAX_SUBSTITUTIONS_PER_TEAM,
-  MAX_SUBSTITUTION_WINDOWS_PER_TEAM,
-  type MatchEvent,
-  type SubstitutionEvent,
-} from "@cm-clone/game-engine";
-import type { StreamEvent } from "../season/decider.js";
+import type { StreamEvent } from "../eventStream.js";
+import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM } from "./commands.js";
+import type { MatchEvent, SubstitutionEvent } from "./events.js";
 import { HALFTIME_MINUTE, lineupFacts, type LineupCommand } from "./pitch.js";
 import { journaledLineupCommands, matchStartedOf } from "./stream.js";
 

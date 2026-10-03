@@ -33,6 +33,7 @@ import {
   seasonStartYear,
   seasonWindows,
 } from "@cm-clone/shared";
+import { MATCH_STREAM_TYPE } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers } from "../club/squad.js";
@@ -41,7 +42,6 @@ import { advanceRetraining } from "../club/retraining.js";
 import { accrueScoutingProgress } from "../club/scouting.js";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { deriveStreamEvents } from "../match/aiPreferences.js";
-import { MATCH_STREAM_TYPE } from "../match/stream.js";
 import { timelineRecorded } from "../match/timeline.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import { withAdvanceLock } from "./advanceLock.js";

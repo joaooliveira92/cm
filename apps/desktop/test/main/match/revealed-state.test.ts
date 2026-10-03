@@ -8,9 +8,8 @@ import type { CommentaryLineView, MatchId, MatchSummary, ResumeSimulationView, S
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
+import { MATCH_STREAM_TYPE, deriveMatchEvents, matchStartedOf, pitchAsOf } from "@cm-clone/game-engine";
 import { resumeSimulation, submitMatchCommand } from "../../../src/main/match/index.js";
-import { pitchAsOf } from "../../../src/main/match/pitch.js";
-import { MATCH_STREAM_TYPE, deriveMatchEvents, matchStartedOf } from "../../../src/main/match/stream.js";
 import { loadStreamEvents, withExistingSave } from "../../../src/main/season/decider.js";
 import { atFirstFixture, humanClubOf, startSeededMatch } from "./seededMatch.js";
 

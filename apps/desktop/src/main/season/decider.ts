@@ -1,6 +1,7 @@
 import { readdir } from "node:fs/promises";
 import path from "node:path";
 import { SaveNotFoundError, type SaveId } from "@cm-clone/contracts";
+import type { StreamEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadCurrentSeasonRow } from "./currentSeason.js";
@@ -23,12 +24,10 @@ export const withExistingSave = <A, E>(
     return yield* onFound(filename);
   });
 
-/** One row of a domain-bounded event stream (ADR-0007) before/after JSON (de)serialization. */
-export interface StreamEvent {
-  readonly seq: number;
-  readonly tag: string;
-  readonly payload: unknown;
-}
+/** One row of a domain-bounded event stream (ADR-0007). The pure record lives in the engine beside
+ * the deciders that project over it; re-exported here so this main-side stream module stays the one
+ * import path its SQL callers already use. */
+export type { StreamEvent } from "@cm-clone/game-engine";
 
 /** The next `seq` to append for a stream — 1 for a brand-new stream. Assumes a `SqlClient` in context. */
 export const nextStreamSeq = (streamType: string, streamId: string) =>

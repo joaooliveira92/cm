@@ -5,11 +5,10 @@ import os from "node:os";
 import path from "node:path";
 import { it as effectIt } from "@effect/vitest";
 import { ClubId, MatchFixturePanel, MatchId, PlayerId } from "@cm-clone/contracts";
-import type { MatchEvent } from "@cm-clone/game-engine";
+import type { MatchEvent, PersistedMatchStarted } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { getMatchOverview, matchOverviewView } from "../../../src/main/match/matchOverview.js";
 import { resumeSimulation } from "../../../src/main/match/index.js";
-import type { PersistedMatchStarted } from "../../../src/main/match/stream.js";
 import type { StreamEvent } from "../../../src/main/season/decider.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 

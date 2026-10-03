@@ -5,13 +5,11 @@ import path from "node:path";
 import { it as effectIt } from "@effect/vitest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, PitchSlotView, PlayerId, type PitchSlotView as PitchSlot } from "@cm-clone/contracts";
-import type { MatchEvent, MatchTeamSetup } from "@cm-clone/game-engine";
+import { pitchBeforeEachEvent, type MatchEvent, type MatchTeamSetup, type PersistedForcedOff } from "@cm-clone/game-engine";
 import { MATCH_RATING_BASE } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { getMatchRatings, resumeSimulation } from "../../../src/main/match/index.js";
-import { pitchBeforeEachEvent } from "../../../src/main/match/pitch.js";
 import { rateSide } from "../../../src/main/match/ratings.js";
-import type { PersistedForcedOff } from "../../../src/main/match/stream.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 /**

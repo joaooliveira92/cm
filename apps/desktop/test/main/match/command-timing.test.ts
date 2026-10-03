@@ -9,7 +9,7 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { submitMatchCommand } from "../../../src/main/match/index.js";
-import { MATCH_STREAM_TYPE, deriveMatchEvents, type PersistedForcedOff } from "../../../src/main/match/stream.js";
+import { MATCH_STREAM_TYPE, deriveMatchEvents, type PersistedForcedOff } from "@cm-clone/game-engine";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { atFirstFixture, humanClubOf, startSeededMatch } from "./seededMatch.js";
 

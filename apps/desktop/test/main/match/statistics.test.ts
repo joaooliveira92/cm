@@ -1,8 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
-import type { MatchEvent } from "@cm-clone/game-engine";
+import { countedSubstitutions, type MatchEvent } from "@cm-clone/game-engine";
 import { aggregateMatchStatistics as aggregateWith, attackShare } from "../../../src/main/match/statistics.js";
-import { countedSubstitutions } from "../../../src/main/match/substitutions.js";
 
 /** The fold with the substitution count every read uses; this timeline has no goalkeeper stand-in. */
 const aggregateMatchStatistics = (events: ReadonlyArray<MatchEvent>, homeClubId: ClubId, revealedEvents: number | null) =>

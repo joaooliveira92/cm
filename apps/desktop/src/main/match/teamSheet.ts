@@ -12,7 +12,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "./stream.js";
+import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "@cm-clone/game-engine";
 
 interface NameRow {
   readonly id: string;

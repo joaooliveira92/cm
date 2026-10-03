@@ -5,8 +5,9 @@
  */
 import { MatchPitchView, PitchSlotView, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import { legacyPositionOf } from "@cm-clone/shared";
-import type { MatchEvent, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
+import type { MatchEvent, SubstitutionEvent } from "./events.js";
 import type { PersistedForcedOff, PersistedSubstitutionMade } from "./stream.js";
+import type { MatchTeamSetup } from "./types.js";
 
 /** `simulateMatch`'s half length: halftime commands are applied at this minute, and first-half
  *  minutes end here. */

@@ -10,7 +10,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import type { StreamEvent } from "../season/decider.js";
-import { deriveMatchEvents, matchStartedOf } from "./stream.js";
+import { deriveMatchEvents, matchStartedOf } from "@cm-clone/game-engine";
 
 /** The preferences of the match's non-user clubs, keyed by club; the manager's club has none. */
 export const matchAiPreferences = (stream: ReadonlyArray<StreamEvent>) =>

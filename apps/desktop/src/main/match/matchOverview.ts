@@ -23,14 +23,13 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import type { MatchEvent } from "@cm-clone/game-engine";
+import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut, type MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
 import { lastPlayedMatchId } from "./statistics.js";
-import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut } from "./stream.js";
 import { matchEventsOf } from "./timeline.js";
 
 /** Whether the Goal at `index` is a penalty: the event directly before it is the same player's

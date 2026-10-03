@@ -4,9 +4,10 @@
  * `deriveFixtureMatchSeed` — the pure seed policy a Fixture's match is played under.
  *
  * The modules behind it, in the order a match runs through them: `start` (the kickoff snapshot a
- * `StartMatch` freezes into the stream), `stream` (the persisted shapes and the pure re-derivation
- * over them), `view` (a derived timeline turned into the next chunk after a cursor), `queries`
+ * `StartMatch` freezes into the stream), `view` (a derived timeline turned into the next chunk after a cursor), `queries`
  * (the awaiting match Match day resumes, and `ResumeSimulation`), and `commands` (the manager's mid-match commands).
+ * The persisted stream shapes and the pure re-derivation and pitch/substitution projections over them
+ * live in `packages/game-engine`.
  * `seedOverride` sits beside them: the test-only boot-time override the entry module reads.
  */
 

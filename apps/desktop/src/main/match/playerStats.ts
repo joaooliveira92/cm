@@ -23,7 +23,7 @@ import {
   foldMatchPlayerLineCounts,
   type MatchPlayerLineCounts,
 } from "@cm-clone/shared";
-import type { MatchEvent, MatchTeamSetup } from "@cm-clone/game-engine";
+import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut, type MatchEvent, type MatchTeamSetup } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
@@ -31,7 +31,6 @@ import { playerNames } from "./playerNames.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
 import { matchRatingsView } from "./ratings.js";
 import { lastPlayedMatchId } from "./statistics.js";
-import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut } from "./stream.js";
 import { matchEventsOf } from "./timeline.js";
 
 /** A matchday-squad member in draw order: the kickoff slots in slot order, then the named bench. */

@@ -25,7 +25,7 @@ import {
   type SaveId,
 } from "@cm-clone/contracts";
 import { deriveSeed, type PlayerAttributes } from "@cm-clone/shared";
-import { toMatchTactic, type MatchPlayerInput, type MatchTeamSetup } from "@cm-clone/game-engine";
+import { MATCH_STREAM_TYPE, toMatchTactic, type MatchPlayerInput, type MatchTeamSetup, type PersistedMatchStarted } from "@cm-clone/game-engine";
 import { Context, Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadManagerProfile } from "../career/managerProfile.js";
@@ -38,7 +38,6 @@ import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/d
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import { clubColourResolver, displayNames } from "../world/displayNames.js";
 import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
-import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "./stream.js";
 
 /**
  * Load positional ratings for a club's players for use in match player input.

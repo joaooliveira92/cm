@@ -5,14 +5,12 @@ import path from "node:path";
 import { it } from "@effect/vitest";
 import { deepStrictEqual, notDeepStrictEqual, ok, strictEqual } from "node:assert";
 import type { MatchId, SaveId } from "@cm-clone/contracts";
-import type * as GameEngine from "@cm-clone/game-engine";
-import type { MatchEvent } from "@cm-clone/game-engine";
+import * as GameEngine from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import { afterEach, beforeEach, vi } from "vitest";
 import { getMatchRatings, getMatchReport, getMatchStatistics, getPostMatchSummary, resumeSimulation } from "../../../src/main/match/index.js";
 import { deriveStreamEvents } from "../../../src/main/match/aiPreferences.js";
-import { MATCH_STREAM_TYPE } from "../../../src/main/match/stream.js";
 import { MATCH_TIMELINE_TAG } from "../../../src/main/match/timeline.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
 import { loadStreamEvents, type StreamEvent } from "../../../src/main/season/decider.js";
@@ -32,10 +30,10 @@ vi.mock("@cm-clone/game-engine", async (importOriginal) => {
   const engine = await importOriginal<typeof GameEngine>();
   return {
     ...engine,
-    simulateMatchWithCounts: (...args: Parameters<typeof engine.simulateMatchWithCounts>) => {
-      const result = engine.simulateMatchWithCounts(...args);
+    deriveMatchEvents: (...args: Parameters<typeof engine.deriveMatchEvents>) => {
+      const result = engine.deriveMatchEvents(...args);
       if (!rule.changed) return result;
-      const events = result.events.map((event): MatchEvent =>
+      const events = result.events.map((event): GameEngine.MatchEvent =>
         event._tag === "MatchStarted" ? event : { ...event, minute: event.minute + 1 },
       );
       return { ...result, events };
@@ -66,7 +64,7 @@ const drain = (saveId: SaveId, matchId: MatchId) =>
   });
 
 const matchStream = (saveId: SaveId, matchId: MatchId) =>
-  loadStreamEvents(MATCH_STREAM_TYPE, matchId).pipe(
+  loadStreamEvents(GameEngine.MATCH_STREAM_TYPE, matchId).pipe(
     Effect.provide(SqliteClient.layer({ filename: path.join(savesDir, `${saveId}.sqlite`), readonly: true })),
     Effect.scoped,
   );

@@ -13,8 +13,7 @@ import { loadSeasonRow } from "../season/currentSeason.js";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { loadFixtureSides, matchSummaryOf } from "./start.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
-import { MATCH_STREAM_TYPE } from "./stream.js";
-import { substitutionLedger } from "./substitutions.js";
+import { MATCH_STREAM_TYPE, substitutionLedger } from "@cm-clone/game-engine";
 import { buildResumeSimulationView } from "./view.js";
 
 /**

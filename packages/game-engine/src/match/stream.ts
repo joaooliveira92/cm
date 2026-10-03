@@ -12,17 +12,12 @@ import {
   type PillarDistribution,
   type TeamInstructions,
 } from "@cm-clone/shared";
-import {
-  simulateMatchWithCounts,
-  toMatchTactic,
-  type AiController,
-  type MatchCommand,
-  type MatchEvent,
-  type MatchPlayerCountEntry,
-  type MatchTeamSetup,
-  type TacticalDecision,
-} from "@cm-clone/game-engine";
-import { type StreamEvent } from "../season/decider.js";
+import type { StreamEvent } from "../eventStream.js";
+import type { AiController, TacticalDecision } from "./aiController.js";
+import type { MatchCommand } from "./commands.js";
+import type { MatchEvent } from "./events.js";
+import { simulateMatchWithCounts, type MatchPlayerCountEntry } from "./simulate/loop.js";
+import { toMatchTactic, type MatchTeamSetup } from "./types.js";
 
 /**
  * The Match Decider's stream type (ADR-0007).

@@ -4,15 +4,16 @@
  * one the engine can emit (`packages/game-engine/src/match/simulate/teamState.ts`, `loop.ts`).
  */
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import type { MatchEvent, MatchHalf, MatchTeamSetup, SubstitutionEvent } from "@cm-clone/game-engine";
+import type { MatchEvent, MatchHalf, SubstitutionEvent } from "../../src/match/events.js";
+import type { MatchTeamSetup } from "../../src/match/types.js";
 import { builtInTemplate, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, type PlayerAttributes } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
-import { lineupFacts, pitchAsOf, type LineupCommand } from "../../../src/main/match/pitch.js";
+import { lineupFacts, pitchAsOf, type LineupCommand } from "../../src/match/pitch.js";
 import {
   classifySubstitutions,
   countedSubstitutions,
   substitutionStatus,
-} from "../../../src/main/match/substitutions.js";
+} from "../../src/match/substitutions.js";
 
 const club = "me" as ClubId;
 const player = (id: string) => id as PlayerId;

@@ -33,7 +33,7 @@ The ticket's "What to build" states that no code reads the legacy (Position, Fam
 - `apps/desktop/src/main/transfers/playerComparison.ts` — reads old model
 - `apps/desktop/src/main/club/clubSquad.ts` — reads old model
 - `apps/desktop/src/main/club/teamScoutReport.ts` — reads old model
-- `apps/desktop/src/main/match/pitch.ts` — imports `legacyPositionOf`
+- `packages/game-engine/src/match/pitch.ts` — imports `legacyPositionOf`
 - `apps/desktop/src/main/club/tacticsOverview.ts` — uses familiarity tier counts
 - Multiple renderer files use `FAMILIARITY_TIERS` and `POSITIONS` for rendering
 - Multiple test files use the old model
