@@ -15,7 +15,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { NATION_CODES, POSITION_FILTERS, canonicalNationId, nationName, positionFilterName } from "@cm-clone/shared";
 import type { PositionFilter } from "@cm-clone/shared";
-import type { PlayerSearchQuery, SaveId } from "@cm-clone/contracts";
+import type { PlayerId, PlayerSearchQuery, PlayerSearchResultsView, SaveId } from "@cm-clone/contracts";
 import { useScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import type { ScreenBottomBarActions } from "../chrome/bottom-bar/index.js";
 import { Button } from "../components/ui/button.js";
@@ -77,6 +77,296 @@ const parseAge = (text: string): number | undefined => {
 const messageOf = (error: RpcClientError<"getPlayerSearch"> | null): string =>
   error === null ? "The search could not be run." : describeRpcError(error);
 
+/** The committed query a set of draft filters asks for: empty filters are omitted so an untouched
+ *  form searches the whole save. Split from the form state so the mapping reads as one rule. */
+const buildPlayerSearchQuery = (
+  nameText: string,
+  minAge: number | undefined,
+  maxAge: number | undefined,
+  position: string,
+  nationality: string,
+  clubText: string,
+): PlayerSearchQuery => ({
+  ...(nameText.trim() !== "" ? { name: nameText.trim() } : {}),
+  ...(minAge !== undefined ? { minAge } : {}),
+  ...(maxAge !== undefined ? { maxAge } : {}),
+  ...(position !== "" ? { position: position as PlayerSearchQuery["position"] } : {}),
+  ...(nationality !== "" ? { nationality } : {}),
+  ...(clubText.trim() !== "" ? { clubName: clubText.trim() } : {}),
+});
+
+/**
+ * The search form's draft state and the committed query it submits. Filtering, validation and
+ * query-building live here so the screen itself only composes; the committed `submitted` query is
+ * the one boundary where a draft becomes a search.
+ */
+const usePlayerSearchFilters = () => {
+  const [nameText, setNameText] = useState("");
+  const [clubText, setClubText] = useState("");
+  const [minAgeText, setMinAgeText] = useState("");
+  const [maxAgeText, setMaxAgeText] = useState("");
+  const [position, setPosition] = useState<string>("");
+  const [nationality, setNationality] = useState<string>("");
+  const [submitted, setSubmitted] = useState<PlayerSearchQuery | null>(null);
+
+  const minAge = parseAge(minAgeText);
+  const maxAge = parseAge(maxAgeText);
+  const invalidRange = minAge !== undefined && maxAge !== undefined && minAge > maxAge;
+
+  const buildQuery = (): PlayerSearchQuery =>
+    buildPlayerSearchQuery(nameText, minAge, maxAge, position, nationality, clubText);
+
+  const submit = (): void => {
+    if (invalidRange) return;
+    setSubmitted(buildQuery());
+  };
+
+  /** Choosing a position from the actions-row filter sets the draft and, once a search is already
+   *  on screen, re-runs it so the results follow the filter. */
+  const choosePosition = (value: string): void => {
+    setPosition(value);
+    if (submitted !== null && !invalidRange) {
+      setSubmitted(buildQuery());
+    }
+  };
+
+  return {
+    nameText,
+    setNameText,
+    clubText,
+    setClubText,
+    minAgeText,
+    setMinAgeText,
+    maxAgeText,
+    setMaxAgeText,
+    position,
+    setPosition,
+    choosePosition,
+    nationality,
+    setNationality,
+    submitted,
+    invalidRange,
+    submit,
+  };
+};
+
+/** The form's Position control — the full Position taxonomy, each named by its filter label. */
+const PositionFilterSelect = ({
+  value,
+  onSelect,
+}: {
+  readonly value: string;
+  readonly onSelect: (value: string) => void;
+}) => (
+  <Select
+    value={value}
+    onValueChange={(next) => {
+      if (next !== null) onSelect(next);
+    }}
+  >
+    <SelectTrigger aria-label="Position" className={CONTROL_CLASS}>
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="">All positions</SelectItem>
+      {POSITION_FILTERS.map((option) => (
+        <SelectItem key={option} value={option}>
+          {positionFilterName(option)}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+);
+
+/** The form's Nationality control — every nation, keyed by its canonical id and shown by name. */
+const NationalityFilterSelect = ({
+  value,
+  onSelect,
+}: {
+  readonly value: string;
+  readonly onSelect: (value: string) => void;
+}) => (
+  <Select
+    value={value}
+    onValueChange={(next) => {
+      if (next !== null) onSelect(next);
+    }}
+  >
+    <SelectTrigger aria-label="Nationality" className={CONTROL_CLASS}>
+      <SelectValue />
+    </SelectTrigger>
+    <SelectContent>
+      <SelectItem value="">Any nation</SelectItem>
+      {NATION_CODES.map((code) => {
+        const nationId = canonicalNationId(code);
+        return (
+          <SelectItem key={nationId} value={nationId}>
+            {nationName(nationId)}
+          </SelectItem>
+        );
+      })}
+    </SelectContent>
+  </Select>
+);
+
+/** The filter form: one row of the draft filters and the submit that commits them. It owns no
+ *  state — the screen's `usePlayerSearchFilters` does — and submits through the screen so the
+ *  committed query stays the single source of truth. */
+const PlayerSearchForm = ({
+  nameText,
+  onNameChange,
+  minAgeText,
+  onMinAgeChange,
+  maxAgeText,
+  onMaxAgeChange,
+  position,
+  onPositionChange,
+  nationality,
+  onNationalityChange,
+  clubText,
+  onClubChange,
+  invalidRange,
+  onSubmit,
+}: {
+  readonly nameText: string;
+  readonly onNameChange: (value: string) => void;
+  readonly minAgeText: string;
+  readonly onMinAgeChange: (value: string) => void;
+  readonly maxAgeText: string;
+  readonly onMaxAgeChange: (value: string) => void;
+  readonly position: string;
+  readonly onPositionChange: (value: string) => void;
+  readonly nationality: string;
+  readonly onNationalityChange: (value: string) => void;
+  readonly clubText: string;
+  readonly onClubChange: (value: string) => void;
+  readonly invalidRange: boolean;
+  readonly onSubmit: () => void;
+}) => (
+  <form
+    onSubmit={(event) => {
+      event.preventDefault();
+      onSubmit();
+    }}
+    className="mt-4 flex flex-wrap items-end gap-4 rounded-panel bg-panel-bg px-4 py-3"
+  >
+    <label className="flex items-center gap-2 text-text-soft">
+      Name
+      <Input
+        type="text"
+        aria-label="Player name"
+        value={nameText}
+        onChange={(event) => onNameChange(event.target.value)}
+        className="w-40"
+        placeholder="Any name"
+      />
+    </label>
+    <div className="flex items-center gap-2 text-text-soft">
+      Age
+      <Input
+        type="number"
+        inputMode="numeric"
+        aria-label="Minimum age"
+        value={minAgeText}
+        onChange={(event) => onMinAgeChange(event.target.value)}
+        className="w-16"
+        placeholder="Any"
+      />
+      <span aria-hidden="true">to</span>
+      <Input
+        type="number"
+        inputMode="numeric"
+        aria-label="Maximum age"
+        value={maxAgeText}
+        onChange={(event) => onMaxAgeChange(event.target.value)}
+        className="w-16"
+        placeholder="Any"
+      />
+    </div>
+    <div className="flex items-center gap-2 text-text-soft">
+      Position
+      <PositionFilterSelect value={position} onSelect={onPositionChange} />
+    </div>
+    <div className="flex items-center gap-2 text-text-soft">
+      Nationality
+      <NationalityFilterSelect value={nationality} onSelect={onNationalityChange} />
+    </div>
+    <label className="flex items-center gap-2 text-text-soft">
+      Club
+      <Input
+        type="text"
+        aria-label="Club name"
+        value={clubText}
+        onChange={(event) => onClubChange(event.target.value)}
+        className="w-36"
+        placeholder="Any club"
+      />
+    </label>
+    <Button type="submit" variant="default" disabled={invalidRange}>
+      Search
+    </Button>
+  </form>
+);
+
+/**
+ * The screen's verbs in the shell's bottom bar, beside Continue, and only once there are results
+ * for them to act on: View Profile opens the row under the table's cursor, and Compare opens the
+ * ticked rows. Registering them is a stateful concern of the results, so it lives in this hook.
+ */
+const usePlayerSearchBottomBar = ({
+  saveId,
+  loaded,
+  playerIds,
+  cursorId,
+  compareIds,
+}: {
+  readonly saveId: SaveId;
+  readonly loaded: PlayerSearchResultsView | null;
+  readonly playerIds: readonly PlayerId[];
+  readonly cursorId: string | null;
+  readonly compareIds: ReadonlySet<string>;
+}): void => {
+  const bottomBarActions = useMemo((): ScreenBottomBarActions | null => {
+    if (loaded === null) return null;
+    const cursorPlayerId = playerIds.find((id) => id === cursorId);
+    /** Compare (Screen 129, ticket 12) takes the rows the manager has ticked, re-filtered against
+     *  the committed result so a re-query that no longer contains an id cannot carry it into the
+     *  comparison (the roster keeps stale memberships rather than dropping them — the set is
+     *  selection, and a row's removal from the results is not an un-tick). */
+    const comparePlayerIds = playerIds.filter((id) => compareIds.has(String(id)));
+    const compareCount = comparePlayerIds.length;
+    return {
+      buttons: [
+        {
+          id: "view-profile",
+          label: "View Profile",
+          disabled: cursorPlayerId === undefined,
+          onTrigger: (event) => {
+            if (cursorPlayerId === undefined) return;
+            navigateCareer(
+              { type: "playerDetail", saveId, playerId: cursorPlayerId },
+              intentOfClick(event),
+            );
+          },
+        },
+        {
+          id: "compare-players",
+          label: compareCount >= 2 ? `Compare ${compareCount} players` : "Compare",
+          disabled: compareCount < 2,
+          onTrigger: (event) => {
+            navigateCareer(
+              { type: "playerComparison", saveId, playerIds: comparePlayerIds },
+              intentOfClick(event),
+            );
+          },
+        },
+      ],
+      reason: compareCount < 2 ? "Tick at least two players to compare them." : null,
+    };
+  }, [loaded, playerIds, cursorId, compareIds, saveId]);
+  useScreenBottomBarActions(bottomBarActions);
+};
+
 /** The results half of the screen, mounted only once a query has been submitted — so an untouched
  *  screen never issues the whole-save read the empty query would. */
 const SearchResults = ({
@@ -116,47 +406,13 @@ const SearchResults = ({
       : null;
   const cursorId = effectiveActiveId(liveActiveId, roster.orderedIds);
 
-  // The screen's verbs live in the shell's bottom bar, beside Continue, and only once there are
-  // results for them to act on.
-  const bottomBarActions = useMemo((): ScreenBottomBarActions | null => {
-    if (loaded === null) return null;
-    const cursorPlayerId = playerIds.find((id) => id === cursorId);
-    /** Compare (Screen 129, ticket 12) takes the rows the manager has ticked, re-filtered against
-     *  the committed result so a re-query that no longer contains an id cannot carry it into the
-     *  comparison (the roster keeps stale memberships rather than dropping them — the set is
-     *  selection, and a row's removal from the results is not an un-tick). */
-    const comparePlayerIds = playerIds.filter((id) => roster.compareIds.has(String(id)));
-    const compareCount = comparePlayerIds.length;
-    return {
-      buttons: [
-        {
-          id: "view-profile",
-          label: "View Profile",
-          disabled: cursorPlayerId === undefined,
-          onTrigger: (event) => {
-            if (cursorPlayerId === undefined) return;
-            navigateCareer(
-              { type: "playerDetail", saveId, playerId: cursorPlayerId },
-              intentOfClick(event),
-            );
-          },
-        },
-        {
-          id: "compare-players",
-          label: compareCount >= 2 ? `Compare ${compareCount} players` : "Compare",
-          disabled: compareCount < 2,
-          onTrigger: (event) => {
-            navigateCareer(
-              { type: "playerComparison", saveId, playerIds: comparePlayerIds },
-              intentOfClick(event),
-            );
-          },
-        },
-      ],
-      reason: compareCount < 2 ? "Tick at least two players to compare them." : null,
-    };
-  }, [loaded, playerIds, cursorId, roster.compareIds, saveId]);
-  useScreenBottomBarActions(bottomBarActions);
+  usePlayerSearchBottomBar({
+    saveId,
+    loaded,
+    playerIds,
+    cursorId,
+    compareIds: roster.compareIds,
+  });
 
   if (searchResult._tag === "Failure") {
     return <p className="mt-4 text-text-danger">{messageOf(typedError(searchResult))}</p>;
@@ -216,37 +472,24 @@ const SearchResults = ({
 };
 
 export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [nameText, setNameText] = useState("");
-  const [clubText, setClubText] = useState("");
-  const [minAgeText, setMinAgeText] = useState("");
-  const [maxAgeText, setMaxAgeText] = useState("");
-  const [position, setPosition] = useState<string>("");
-  const [nationality, setNationality] = useState<string>("");
-  const [submitted, setSubmitted] = useState<PlayerSearchQuery | null>(null);
-
-  const minAge = parseAge(minAgeText);
-  const maxAge = parseAge(maxAgeText);
-  const invalidRange = minAge !== undefined && maxAge !== undefined && minAge > maxAge;
-
-  const buildQuery = (): PlayerSearchQuery => ({
-    ...(nameText.trim() !== "" ? { name: nameText.trim() } : {}),
-    ...(minAge !== undefined ? { minAge } : {}),
-    ...(maxAge !== undefined ? { maxAge } : {}),
-    ...(position !== "" ? { position: position as PlayerSearchQuery["position"] } : {}),
-    ...(nationality !== "" ? { nationality } : {}),
-    ...(clubText.trim() !== "" ? { clubName: clubText.trim() } : {}),
-  });
-
-  const onSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (invalidRange) return;
-    setSubmitted(buildQuery());
-  };
-
-  const triggerSearch = (): void => {
-    if (invalidRange) return;
-    setSubmitted(buildQuery());
-  };
+  const {
+    nameText,
+    setNameText,
+    clubText,
+    setClubText,
+    minAgeText,
+    setMinAgeText,
+    maxAgeText,
+    setMaxAgeText,
+    position,
+    setPosition,
+    choosePosition,
+    nationality,
+    setNationality,
+    submitted,
+    invalidRange,
+    submit,
+  } = usePlayerSearchFilters();
 
   const toolbarControls = useMemo(
     () => (
@@ -256,7 +499,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           className={ACTIONS_ROW_BUTTON_CLASS}
           aria-label="Search players"
           disabled={invalidRange}
-          onClick={triggerSearch}
+          onClick={submit}
         >
           <span>Search</span>
         </button>
@@ -281,12 +524,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         groupLabel="Position"
         value={position}
         choices={SEARCH_FILTER_CHOICES}
-        onChoose={(value) => {
-          setPosition(value);
-          if (submitted !== null && !invalidRange) {
-            setSubmitted(buildQuery());
-          }
-        }}
+        onChoose={choosePosition}
       />
     ),
     [position],
@@ -312,103 +550,22 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         </p>
       </header>
 
-      <form
-        onSubmit={onSubmit}
-        className="mt-4 flex flex-wrap items-end gap-4 rounded-panel bg-panel-bg px-4 py-3"
-      >
-        <label className="flex items-center gap-2 text-text-soft">
-          Name
-          <Input
-            type="text"
-            aria-label="Player name"
-            value={nameText}
-            onChange={(event) => setNameText(event.target.value)}
-            className="w-40"
-            placeholder="Any name"
-          />
-        </label>
-        <div className="flex items-center gap-2 text-text-soft">
-          Age
-          <Input
-            type="number"
-            inputMode="numeric"
-            aria-label="Minimum age"
-            value={minAgeText}
-            onChange={(event) => setMinAgeText(event.target.value)}
-            className="w-16"
-            placeholder="Any"
-          />
-          <span aria-hidden="true">to</span>
-          <Input
-            type="number"
-            inputMode="numeric"
-            aria-label="Maximum age"
-            value={maxAgeText}
-            onChange={(event) => setMaxAgeText(event.target.value)}
-            className="w-16"
-            placeholder="Any"
-          />
-        </div>
-        <div className="flex items-center gap-2 text-text-soft">
-          Position
-          <Select
-            value={position}
-            onValueChange={(value) => {
-              if (value !== null) setPosition(value);
-            }}
-          >
-            <SelectTrigger aria-label="Position" className={CONTROL_CLASS}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">All positions</SelectItem>
-              {POSITION_FILTERS.map((option) => (
-                <SelectItem key={option} value={option}>
-                  {positionFilterName(option)}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="flex items-center gap-2 text-text-soft">
-          Nationality
-          <Select
-            value={nationality}
-            onValueChange={(value) => {
-              if (value !== null) setNationality(value);
-            }}
-          >
-            <SelectTrigger aria-label="Nationality" className={CONTROL_CLASS}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="">Any nation</SelectItem>
-              {NATION_CODES.map((code) => {
-                const nationId = canonicalNationId(code);
-                return (
-                  <SelectItem key={nationId} value={nationId}>
-                    {nationName(nationId)}
-                  </SelectItem>
-                );
-              })}
-            </SelectContent>
-          </Select>
-        </div>
-        <label className="flex items-center gap-2 text-text-soft">
-          Club
-          <Input
-            type="text"
-            aria-label="Club name"
-            value={clubText}
-            onChange={(event) => setClubText(event.target.value)}
-            className="w-36"
-            placeholder="Any club"
-          />
-        </label>
-        <Button type="submit" variant="default" disabled={invalidRange}>
-          Search
-        </Button>
-      </form>
+      <PlayerSearchForm
+        nameText={nameText}
+        onNameChange={setNameText}
+        minAgeText={minAgeText}
+        onMinAgeChange={setMinAgeText}
+        maxAgeText={maxAgeText}
+        onMaxAgeChange={setMaxAgeText}
+        position={position}
+        onPositionChange={setPosition}
+        nationality={nationality}
+        onNationalityChange={setNationality}
+        clubText={clubText}
+        onClubChange={setClubText}
+        invalidRange={invalidRange}
+        onSubmit={submit}
+      />
 
       {invalidRange && (
         <p role="alert" className="mt-2 text-body text-text-danger">
