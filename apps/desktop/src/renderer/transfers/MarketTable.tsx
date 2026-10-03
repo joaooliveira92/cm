@@ -56,6 +56,7 @@ export const MarketTable = () => {
           onRowPrimary={onRowPrimaryFor(MARKET)}
           announcement={market.announcement?.message ?? ""}
           copy={STATE_COPY["transfer-market"]}
+          denseGrid
         />
       </TableLoadingProvider>
     </section>

@@ -100,12 +100,5 @@ describe("calibrate match engine", () => {
       allCounts.push(countEvents(events));
     }
 
-    const total = allCounts.reduce((a, c) => ({ goals: a.goals + c.goals, yellowCards: a.yellowCards + c.yellowCards, fouls: a.fouls + c.fouls }), { goals: 0, yellowCards: 0, fouls: 0 });
-    const n = allCounts.length;
-    const goalsPerMatch = total.goals / n;
-    const yellowsPerMatch = total.yellowCards / n;
-    const foulsPerMatch = total.fouls / n;
-
-    
-  }, 60000);
+    }, 60000);
 });

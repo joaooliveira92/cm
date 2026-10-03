@@ -17,12 +17,11 @@ import {
   applyForcedOff,
   decayConditions,
   initTeamState,
-  pickPlayerId,
   tacticalView,
   type TeamRuntimeState,
 } from "./teamState.js";
 import type { PlayerId } from "@cm-clone/contracts";
-import { reconcileTacticalDecision, viewTacticalState, type TacticalState } from "./tacticalAdapter.js";
+import { reconcileTacticalDecision, viewTacticalState } from "./tacticalAdapter.js";
 
 export interface SimulateMatchInput {
   readonly seed: number;

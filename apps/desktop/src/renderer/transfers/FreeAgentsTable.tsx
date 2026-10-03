@@ -56,6 +56,7 @@ export const FreeAgentsTable = () => {
           onRowPrimary={onRowPrimaryFor(FREE)}
           announcement={free.announcement?.message ?? ""}
           copy={STATE_COPY["free-agents"]}
+          denseGrid
         />
       </TableLoadingProvider>
     </section>

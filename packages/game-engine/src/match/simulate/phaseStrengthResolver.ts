@@ -83,7 +83,6 @@ export class PhaseStrengthResolver {
     const attacker = homeHasPossession ? home : away;
     const defender = homeHasPossession ? away : home;
     const attackerTactical = homeHasPossession ? homeTactical : awayTactical;
-    const defenderTactical = homeHasPossession ? awayTactical : homeTactical;
     const attackerEff = effectiveStrengths(
       homeHasPossession ? homePossessionStrengths : awayPossessionStrengths,
       minute,

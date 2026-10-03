@@ -56,7 +56,7 @@ export const SelectionIndicator = ({ slot }: { readonly slot: LineupSlot | null 
   return (
     <span
       title={labelled}
-      className={`inline-flex h-5 min-w-10 shrink-0 items-center justify-center rounded-control border px-1 font-mono text-caption leading-none ${tone}`}
+      className={`inline-flex h-7 min-w-10 shrink-0 items-center justify-center rounded-control border px-1 text-caption leading-none ${tone}`}
     >
       <span aria-hidden="true">{slot === null ? "" : slot.label}</span>
       <span className="sr-only">{labelled}</span>

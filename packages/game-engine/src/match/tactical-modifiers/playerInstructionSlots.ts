@@ -1,4 +1,4 @@
-import type { PlayerInstructions, TeamInstructions } from "@cm-clone/shared";
+import type { PlayerInstructions } from "@cm-clone/shared";
 import type { MatchTactic } from "../types.js";
 
 const getDefaultPlayerInstructions = (): PlayerInstructions => ({

@@ -31,6 +31,10 @@ export interface TableContextValue {
     rowId: string,
   ) => void;
   readonly density: TableDensity;
+  /** Whether to draw this table in reui's dense data-grid look (`denseGrid.ts`): a ruled 32px
+   *  header, a divider and a hover tint on every row, and one cell padding across all columns.
+   *  Off by default; the transfers tables opt in. */
+  readonly denseGrid: boolean;
   /** True while the table is scrolled away from its left edge — the only time
    *  anything slides under the sticky pinned columns, and so the only time they
    *  need an opaque background. At rest they stay transparent, so a table over

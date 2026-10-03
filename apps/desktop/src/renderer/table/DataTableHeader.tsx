@@ -7,6 +7,7 @@ import {
 } from "../components/ui/table.js";
 import { FOCUS_RING } from "../focus.js";
 import { useTableCtx } from "./DataTableContext.js";
+import { denseGridHeadClass } from "./denseGrid.js";
 import type { SortState, TableRowShape } from "./types.js";
 import { cycleSort } from "./features/sorting.js";
 
@@ -18,7 +19,7 @@ export const DataTableHeader = <Row extends TableRowShape>(
   props: DataTableHeaderProps<Row>,
 ) => {
   const { table } = props;
-  const { onSortChange, scrolledFromLeft } = useTableCtx();
+  const { onSortChange, scrolledFromLeft, denseGrid } = useTableCtx();
 
   const cycleSortHeader = (columnId: string): void => {
     const current = table.atoms.sorting.get()[0];
@@ -53,7 +54,7 @@ export const DataTableHeader = <Row extends TableRowShape>(
                       ? "descending"
                       : undefined
                 }
-                className={`whitespace-nowrap ${header.column.getIsPinned() !== false && scrolledFromLeft ? "bg-bg-base" : ""}`}
+                className={`whitespace-nowrap ${denseGrid ? denseGridHeadClass : ""} ${header.column.getIsPinned() !== false && scrolledFromLeft ? "bg-bg-base" : ""}`}
                 style={pinnedStyle(header.column)}
               >
                 {sortable ? (

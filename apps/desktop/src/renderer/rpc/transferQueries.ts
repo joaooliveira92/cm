@@ -5,7 +5,6 @@ import { call } from "./call.js";
 import {
   economyKey,
   saveKey,
-  squadKey,
   transferHistoryKey,
   transfersKey,
   budgetReviewKey,

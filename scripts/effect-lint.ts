@@ -667,12 +667,6 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
   // mode-switching state machine across files.
   "apps/desktop/src/renderer/tactics/TacticsScreen.tsx":
     "main tactics screen; three-mode state machine + in-match controls; structural value in one view",
-  // Match engine resolvers: computePhaseStrengths, aggregatePhaseSlots, resolveTeamTactics,
-  // resolveTeamInstructions, resolveSlotBehaviours, resolveTeamModifiers — a pure function set
-  // that maps a Tactic onto numeric engine inputs. Split would scatter a single resolution boundary
-  // (tactics vocabulary → engine numbers) across files whose boundaries are harder to audit.
-  "packages/game-engine/src/match/simulate/resolvers.ts":
-    "tactics-to-engine resolution boundary; single mapping step; audit value as one function set",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

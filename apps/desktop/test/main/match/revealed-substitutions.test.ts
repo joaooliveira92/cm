@@ -27,11 +27,10 @@ const COMMAND_MINUTE = 3;
  * forced by an Injury after minute 3, and where the manager's minute-3 substitution (first starter
  * off, first squad player outside the XI on) re-simulates that forced substitution away. The
  * whole-match count therefore reads 1 both before and after an accepted command. Found by
- * enumerating seeds over `deriveMatchEvents`; 277 and 334 share the property. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. The
- * test re-checks both halves of the property and names this constant when one no longer holds.
- * Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
+ * enumerating seeds over `deriveMatchEvents`; 334 is the current pinned value. Re-pinned 2026-10-03
+ * after a game-engine change invalidated the previous seed (160).
  */
-const FORCED_SUB_AFTER_COMMAND_SEED = 160;
+const FORCED_SUB_AFTER_COMMAND_SEED = 334;
 
 const drainWholeMatch = (saveId: SaveId, matchId: MatchId) =>
   Effect.gen(function* () {

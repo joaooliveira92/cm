@@ -37,6 +37,9 @@ export interface DataTableRootProps<Row extends TableRowShape> {
   readonly announcement: string;
   /** Row height; `compact` when omitted. See `TableDensity`. */
   readonly density?: TableDensity;
+  /** reui's dense data-grid look, the same one the Tactics Overview's Selection card is drawn in.
+   *  Off when omitted. See `denseGrid.ts`. */
+  readonly denseGrid?: boolean;
   readonly ariaBusy?: boolean;
   readonly initialScrollLeft?: number;
   readonly onScrollCommit?: (scrollLeft: number) => void;
@@ -48,7 +51,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
     tableId, screen, region, table, orderedIds, identityColumnId,
     activeId, onActiveChange, onBookmarkChange, selectedId, onToggleSelection,
     onSortChange, onIdentityOpen, onRowPrimary, onRowDragStart, ariaLabel, announcement,
-    density = "compact", ariaBusy, initialScrollLeft, onScrollCommit, children,
+    density = "compact", denseGrid = false, ariaBusy, initialScrollLeft, onScrollCommit, children,
   } = props;
 
   const scrollRef = useRef<HTMLDivElement | null>(null);
@@ -78,7 +81,7 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
     <TableCtx.Provider value={{
       screen, region, identityColumnId, activeId, onActiveChange, onSortChange,
       selectedId, onToggleSelection, onIdentityOpen, onRowPrimary, onRowDragStart,
-      density, scrolledFromLeft: edges.left, effectiveActive, onBodyKeyDown,
+      density, denseGrid, scrolledFromLeft: edges.left, effectiveActive, onBodyKeyDown,
     }}>
       <div className="relative">
         <div data-table-scroll ref={scrollRef} className="mt-2 overflow-x-auto" aria-busy={ariaBusy || undefined} role="group" aria-label={ariaLabel} onScroll={syncEdges}>

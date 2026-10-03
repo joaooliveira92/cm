@@ -259,7 +259,7 @@ describe("SetInstructionsPanel — player sub-mode", () => {
 });
 
 describe("SetInstructionsPanel — Set To Preset", () => {
-  it("offers all 7 templates in the Set To Preset list", () => {
+  it("offers all 7 templates in the Set To Preset list", async () => {
     render(
       <SetInstructionsPanel
         tactic={defaultTactic()}
@@ -270,13 +270,15 @@ describe("SetInstructionsPanel — Set To Preset", () => {
       />,
     );
 
-    const preset = screen.getByLabelText("Set to preset") as HTMLSelectElement;
-    const labels = Array.from(preset.options).map((o) => o.textContent);
-    expect(labels).toEqual(["Set To Preset", "Goalkeeper", "Central Defender", "Full Back",
+    // The Set To Preset is a Popover/Command combobox — open it
+    fireEvent.click(screen.getByLabelText("Set to preset"));
+    const items = await screen.findAllByRole("option");
+    const labels = items.map((o) => o.textContent);
+    expect(labels).toEqual(["Goalkeeper", "Central Defender", "Full Back",
       "Defensive Midfielder", "Attacking Midfielder", "Winger", "Striker"]);
   });
 
-  it("choosing a template changes the slot's instructions", () => {
+  it("choosing a template changes the slot's instructions", async () => {
     let saved: Tactic | null = null;
     render(
       <SetInstructionsPanel
@@ -288,8 +290,9 @@ describe("SetInstructionsPanel — Set To Preset", () => {
       />,
     );
 
-    // Slot 1 is a full back in 4-4-2; the Central Defender preset makes him defensive
-    fireEvent.change(screen.getByLabelText("Set to preset"), { target: { value: "centralDefender" } });
+    // Slot 1 is a full back in 4-4-2; open the popover and pick Central Defender
+    fireEvent.click(screen.getByLabelText("Set to preset"));
+    fireEvent.click(await screen.findByRole("option", { name: /Central Defender/ }));
     expect(saved).not.toBeNull();
     expect((saved as unknown as Tactic).slots[1]!.instructions.mentality).toBe("defensive");
   });

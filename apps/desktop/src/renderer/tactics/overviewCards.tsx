@@ -13,12 +13,12 @@ import {
   TableRow,
 } from "../components/ui/table.js";
 import {
-  formationCellClass,
-  formationHeadClass,
-  formationHeadRowClass,
-  formationRowClass,
-  formationTableClass,
-} from "./formationTable.js";
+  denseGridCellClass,
+  denseGridHeadClass,
+  denseGridHeadRowClass,
+  denseGridRowClass,
+  denseGridTableClass,
+} from "../table/denseGrid.js";
 import { FOCUS_RING } from "../focus.js";
 import type {
   CareerDestination,
@@ -81,40 +81,35 @@ export const SelectionCard = ({ view }: View) => {
   );
   return (
     <Card>
-      <CardContent className="pt-2">
-        <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <CardHeading>Selection</CardHeading>
-          <p className="text-body font-semibold tabular-nums">
-            {view.selection.starters.length} starters · {view.selection.substitutes.length} substitutes
-          </p>
-        </div>
+      <CardContent>
+
         {view.assignments.length === 0 ? (
-          <p className="mt-2 text-text-soft">No starters selected.</p>
+          <p className="text-text-soft">No starters selected.</p>
         ) : (
-          <Table className={formationTableClass}>
+          <Table className={denseGridTableClass}>
             <TableHeader>
-              <TableRow className={formationHeadRowClass}>
-                <TableHead className={`${formationHeadClass} w-12`}>Cell</TableHead>
-                <TableHead className={formationHeadClass}>Player</TableHead>
-                <TableHead className={formationHeadClass}>Fit</TableHead>
-                <TableHead className={`${formationHeadClass} text-right`}>Position rating</TableHead>
+              <TableRow className={denseGridHeadRowClass}>
+                <TableHead className={`${denseGridHeadClass} w-12`}>Cell</TableHead>
+                <TableHead className={denseGridHeadClass}>Player</TableHead>
+                <TableHead className={denseGridHeadClass}>Fit</TableHead>
+                <TableHead className={`${denseGridHeadClass} text-right`}>Position rating</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {view.assignments.map((assignment, index) => (
-                <TableRow key={`${assignment.playerId}-${index}`} className={formationRowClass}>
-                  <TableCell className={`${formationCellClass} font-semibold`}>{slotLabel(assignment.cell)}</TableCell>
-                  <TableCell className={formationCellClass}>
+                <TableRow key={`${assignment.playerId}-${index}`} className={denseGridRowClass}>
+                  <TableCell className={`${denseGridCellClass} font-semibold`}>{slotLabel(assignment.cell)}</TableCell>
+                  <TableCell className={denseGridCellClass}>
                     {assignment.firstName === null ? (
                       <span className="text-text-warning">Player no longer at the club</span>
                     ) : (
                       `${assignment.firstName} ${assignment.lastName}`
                     )}
                   </TableCell>
-                  <TableCell className={formationCellClass}>
+                  <TableCell className={denseGridCellClass}>
                     <FitIndicator tier={assignment.familiarity} />
                   </TableCell>
-                  <TableCell className={formationCellClass}>
+                  <TableCell className={denseGridCellClass}>
                     <Rating value={assignment.positionRating} />
                   </TableCell>
                 </TableRow>

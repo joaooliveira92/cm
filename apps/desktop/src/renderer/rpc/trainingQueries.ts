@@ -2,7 +2,7 @@
 import type { SaveId } from "@cm-clone/contracts";
 import { Atom } from "effect/unstable/reactivity";
 import { call } from "./call.js";
-import { saveKey, squadKey, trainingKey } from "./keys.js";
+import { saveKey, trainingKey } from "./keys.js";
 import { managementReadPolicy } from "./policy.js";
 
 /**

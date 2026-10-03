@@ -34,6 +34,8 @@ export interface TablePanelProps<Row extends TableRowShape> {
   readonly copy: TableStateCopy;
   readonly initialScrollLeft?: number;
   readonly onScrollCommit?: (left: number) => void;
+  /** Forwarded to `DataTable`. See `denseGrid.ts`. */
+  readonly denseGrid?: boolean;
 }
 
 export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row>) => {
@@ -42,7 +44,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
     sort, onSortChange, filters, onSetFilters, filterArea, activeId,
     onActiveChange, onBookmarkChange, selectedId, onToggleSelection,
     onRowPrimary, announcement, alertMessage, copy,
-    initialScrollLeft, onScrollCommit,
+    initialScrollLeft, onScrollCommit, denseGrid,
   } = props;
   const { busy, loadError } = useTableLoading();
   const viewState = deriveViewState({
@@ -72,7 +74,7 @@ export const TablePanel = <Row extends TableRowShape>(props: TablePanelProps<Row
           onToggleSelection={onToggleSelection} onSortChange={onSortChange}
           ariaBusy={busy} onRowPrimary={onRowPrimary} ariaLabel={label}
           announcement={announcement} initialScrollLeft={initialScrollLeft}
-          onScrollCommit={onScrollCommit}
+          onScrollCommit={onScrollCommit} denseGrid={denseGrid}
         >
           {tableRows.length > 0 && (
             <Table className="min-w-full text-left" aria-label={label}>

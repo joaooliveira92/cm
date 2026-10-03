@@ -3,6 +3,7 @@ import type { AppRow } from "./tableFeatures.js";
 import { TableBody, TableCell, TableRow } from "../components/ui/table.js";
 import { FOCUS_RING, focusIdOf, rovingTabIndex } from "../focus.js";
 import { useTableCtx, type TableDensity } from "./DataTableContext.js";
+import { denseGridCellClass, denseGridRowClass } from "./denseGrid.js";
 import type { TableRowShape } from "./types.js";
 
 export interface DataTableBodyProps<TRow extends TableRowShape> {
@@ -19,9 +20,9 @@ export const DataTableBody = <TRow extends TableRowShape>(props: DataTableBodyPr
         const id = row.original.id;
         const isIdentity = (columnId: string): boolean => columnId === ctx.identityColumnId;
         return (
-          <TableRow key={id} className={ROW_CLASS[ctx.density]} aria-selected={ctx.selectedId === id || undefined}>
+          <TableRow key={id} className={`${ROW_CLASS[ctx.density]} ${ctx.denseGrid ? denseGridRowClass : ""}`} aria-selected={ctx.selectedId === id || undefined}>
             {row.getVisibleCells().map((cell) => {
-              const cellClass = `whitespace-nowrap ${cell.column.getIsPinned() !== false && ctx.scrolledFromLeft ? PINNED_CELL_CLASS : ""}`;
+              const cellClass = `whitespace-nowrap ${ctx.denseGrid ? denseGridCellClass : ""} ${cell.column.getIsPinned() !== false && ctx.scrolledFromLeft ? PINNED_CELL_CLASS : ""}`;
               const style = pinnedStyle(cell.column);
               if (isIdentity(cell.column.id)) {
                 return (

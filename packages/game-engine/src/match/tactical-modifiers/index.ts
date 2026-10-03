@@ -9,8 +9,8 @@
  * Resolution re-runs on every live ChangeTactics and on kickoff.
  */
 
-import { DEFAULT_SET_PIECE_ROLES, phaseOfSlot, positionRatingAt, type Phase, type SetPieceRoles, type Slot } from "@cm-clone/shared";
-import type { MatchPlayerInput, MatchTactic, MatchSlot, PhaseStrengths, TacticalModifiers } from "../types.js";
+import { phaseOfSlot, positionRatingAt, type Phase, type SetPieceRoles } from "@cm-clone/shared";
+import type { MatchPlayerInput, MatchTactic, PhaseStrengths, TacticalModifiers } from "../types.js";
 import type { PlayerId } from "@cm-clone/contracts";
 import type { PerSlotBehaviour, TeamBehaviourModifiers } from "../resolveBehaviourVectors.js";
 
