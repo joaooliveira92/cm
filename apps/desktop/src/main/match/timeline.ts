@@ -55,7 +55,6 @@ const StoredMatchEvent = Schema.Union([
   Schema.TaggedStruct("KeyPass", { ...teamPlayer, chanceType: Schema.String }),
   Schema.TaggedStruct("Foul", { ...teamPlayer, isYellowCard: Schema.Boolean }),
   Schema.TaggedStruct("Offside", teamPlayer),
-  Schema.TaggedStruct("Offside", teamPlayer),
   Schema.TaggedStruct("BeatenTrap", teamPlayer),
   Schema.TaggedStruct("Corner", { ...teamPlayer, deliveryType: Schema.String, side: Schema.Literals(["left", "right"]) }),
   Schema.TaggedStruct("FreeKick", { ...teamPlayer, side: Schema.Literals(["left", "right"]), deliveryType: Schema.optional(Schema.String) }),

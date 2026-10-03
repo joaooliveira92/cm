@@ -25,6 +25,7 @@ import {
 import {
   getAwaitingMatch,
   getMatchRatings,
+  getMatchPlayerStats,
   getMatchReport,
   getMatchStatistics,
   getPostMatchSummary,
@@ -422,6 +423,13 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
     Effect.gen(function* () {
       const { saveId, matchId } = yield* Schema.decodeUnknownEffect(AppRpcs.getMatchReport.payload)(payload);
       return yield* getMatchReport(ctx.savesDir, saveId, matchId);
+    }),
+  getMatchPlayerStats: (payload, ctx) =>
+    Effect.gen(function* () {
+      const { saveId, matchId, revealedEvents } = yield* Schema.decodeUnknownEffect(
+        AppRpcs.getMatchPlayerStats.payload,
+      )(payload);
+      return yield* getMatchPlayerStats(ctx.savesDir, saveId, matchId, revealedEvents);
     }),
   submitMatchCommand: (payload, ctx) =>
     Effect.gen(function* () {

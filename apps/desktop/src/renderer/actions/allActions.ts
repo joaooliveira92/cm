@@ -284,7 +284,8 @@ export const SCREEN_METADATA: Readonly<Record<ScreenName, ScreenRegistryMetadata
   competitionResults: { showKeyBadges: false },
   // The match sub-screen placeholders.
   matchStats: { showKeyBadges: false },
-  matchPlayerStats: { showKeyBadges: false },
+  matchHomeStats: { showKeyBadges: false },
+  matchAwayStats: { showKeyBadges: false },
   matchHomeTeam: { showKeyBadges: false },
   matchAwayTeam: { showKeyBadges: false },
   matchRatings: { showKeyBadges: false },

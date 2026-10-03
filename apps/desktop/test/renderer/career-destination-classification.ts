@@ -73,6 +73,8 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   matchSubstitutions: "needs a match in play, reached from the live Match day section",
   matchStats: "a post-match review screen, reached from the Post-Match Summary",
   matchRatings: "a post-match review screen, reached from the Post-Match Summary",
+  matchHomeStats: "a per-player match review screen, save-scoped (map ticket 12)",
+  matchAwayStats: "a per-player match review screen, save-scoped (map ticket 12)",
   matchReport: "names its match, which the cleared match session can no longer supply",
   matchCommentary: "a match-day sub-screen of the main match view",
   matchLatestScores: "a match-day sub-screen of the main match view",

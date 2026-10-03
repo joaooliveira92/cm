@@ -1,4 +1,5 @@
 import type { MatchRatingRow, MatchRatingsView as MatchRatings } from "@cm-clone/contracts";
+import { ratingTone } from "./ratingTone.js";
 
 /** What happened to the player, in words: dismissed and injured states are shown explicitly, never by
  *  color alone (Screen 96 §17). */
@@ -29,7 +30,7 @@ const SideRatings = ({ clubName, rows }: { readonly clubName: string; readonly r
           <th scope="row" className="py-1 pr-3 text-left font-normal">
             {row.playerName}
           </th>
-          <td className="py-1 pr-3 text-right font-semibold tabular-nums">{row.rating.toFixed(1)}</td>
+          <td className={`py-1 pr-3 text-right font-semibold tabular-nums ${ratingTone(row.rating)}`}>{row.rating.toFixed(1)}</td>
           <td className="py-1 text-data text-text-secondary">{statusOf(row)}</td>
         </tr>
       ))}

@@ -106,6 +106,8 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   matchSubstitutions: { type: "matchSubstitutions", saveId },
   matchStats: { type: "matchStats", saveId },
   matchRatings: { type: "matchRatings", saveId },
+  matchHomeStats: { type: "matchHomeStats", saveId },
+  matchAwayStats: { type: "matchAwayStats", saveId },
   matchReport: { type: "matchReport", saveId, matchId },
   matchCommentary: { type: "matchCommentary", saveId },
   matchLatestScores: { type: "matchLatestScores", saveId },

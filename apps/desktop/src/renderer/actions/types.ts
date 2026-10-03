@@ -59,7 +59,8 @@ export type ScreenName =
   | "competitionResults"
   // The match sub-screen placeholders — flat routes under /career/$saveId/.
   | "matchStats"
-  | "matchPlayerStats"
+  | "matchHomeStats"
+  | "matchAwayStats"
   | "matchHomeTeam"
   | "matchAwayTeam"
   | "matchRatings"

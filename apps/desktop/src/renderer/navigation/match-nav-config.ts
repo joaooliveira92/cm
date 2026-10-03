@@ -34,6 +34,8 @@ export const MATCH_TAB_CONFIGS: Record<MatchContext, MatchTabConfig> = {
       { id: "match", label: "Match" },
       { id: "commentary", label: "Commentary" },
       { id: "statistics", label: "Statistics" },
+      { id: "home-stats", label: "Home Stats" },
+      { id: "away-stats", label: "Away Stats" },
       { id: "player-ratings", label: "Player Ratings" },
       { id: "tactics", label: "Tactics" },
       { id: "substitutions", label: "Substitutions" },
@@ -51,6 +53,8 @@ export const MATCH_TAB_CONFIGS: Record<MatchContext, MatchTabConfig> = {
     tabs: [
       { id: "summary", label: "Summary" },
       { id: "statistics", label: "Statistics" },
+      { id: "home-stats", label: "Home Stats" },
+      { id: "away-stats", label: "Away Stats" },
       { id: "player-ratings", label: "Player Ratings" },
       { id: "commentary", label: "Commentary" },
       { id: "other-results", label: "Other Results" },

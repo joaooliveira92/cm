@@ -31,11 +31,13 @@ describe("match nav config — pre-match tabs (§7)", () => {
 describe("match nav config — live-match tabs (§8)", () => {
   const config = MATCH_TAB_CONFIGS["live-match"];
 
-  it("has 8 tabs in spec order", () => {
+  it("has 10 tabs in spec order", () => {
     expect(config.tabs.map((t) => t.label)).toEqual([
       "Match",
       "Commentary",
       "Statistics",
+      "Home Stats",
+      "Away Stats",
       "Player Ratings",
       "Tactics",
       "Substitutions",
@@ -59,10 +61,12 @@ describe("match nav config — live-match tabs (§8)", () => {
 describe("match nav config — post-match tabs (§9)", () => {
   const config = MATCH_TAB_CONFIGS["post-match"];
 
-  it("has 6 tabs in spec order", () => {
+  it("has 8 tabs in spec order", () => {
     expect(config.tabs.map((t) => t.label)).toEqual([
       "Summary",
       "Statistics",
+      "Home Stats",
+      "Away Stats",
       "Player Ratings",
       "Commentary",
       "Other Results",
@@ -85,7 +89,7 @@ describe("match nav config — lookup", () => {
   it("matchTabConfigForContext returns the correct config", () => {
     expect(matchTabConfigForContext("pre-match").matchContext).toBe("pre-match");
     expect(matchTabConfigForContext("live-match").matchContext).toBe("live-match");
-    expect(matchTabConfigForContext("post-match").tabs).toHaveLength(6);
+    expect(matchTabConfigForContext("post-match").tabs).toHaveLength(8);
   });
 });
 

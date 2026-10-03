@@ -20,7 +20,8 @@ export type TableId =
   | "incoming-bids"
   | "outgoing-bids"
   | "league-table"
-  | "player-search";
+  | "player-search"
+  | "match-player-stats";
 
 /** A column's stable id within its table (attribute keys double as column ids). */
 export type ColumnId = string;

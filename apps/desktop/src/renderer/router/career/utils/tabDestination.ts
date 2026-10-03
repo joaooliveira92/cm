@@ -22,6 +22,8 @@ export const tabToDestination = (
     "match": { type: "match", saveId },
     "commentary": { type: "matchCommentary", saveId },
     "statistics": { type: "matchStats", saveId },
+    "home-stats": { type: "matchHomeStats", saveId },
+    "away-stats": { type: "matchAwayStats", saveId },
     "player-ratings": { type: "matchRatings", saveId },
     "tactics": { type: "matchMatchTactics", saveId },
     // Live-match specific

@@ -106,6 +106,7 @@ import {
   PostMatchSummaryView,
   MatchStatisticsView,
   MatchRatingsView,
+  MatchPlayerStatsView,
   MatchReportView,
   TrainingFocusNotOfferedError,
   RetrainingTargetView,
@@ -498,6 +499,17 @@ commitCareer: {
       revealedEvents: Schema.NullOr(Schema.Finite),
     }),
     success: Schema.NullOr(MatchRatingsView),
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Map ticket 12: each matchday-squad member's Match Player Line (counts, cards, substitution
+   *  note, condition, rating) for both sides, bound and cut exactly as `getMatchRatings` is. */
+  getMatchPlayerStats: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: Schema.NullOr(MatchId),
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
+    success: Schema.NullOr(MatchPlayerStatsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
   /** Screen 103: the Match Report of a Fixture whose result has been committed. A read over the

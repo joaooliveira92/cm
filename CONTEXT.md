@@ -214,6 +214,18 @@ the goals conceded while they played, though no event names a save. Only players
 pitch are rated. The base and weights are named constants in `packages/shared/src/rules/matchRating.ts`.
 _Avoid_: rating on its own (see Position Rating, Overall Rating), player rating, performance score
 
+**Match Player Line**:
+One matchday-squad member's part in a match, folded from the Match Event stream: key passes,
+offsides, fouls, assists, shots, shots on target, saves and goals, plus the cards and the
+substitution note. It is the unit the Home/Away Stats table draws, one per squad member in slot then
+bench order. The fold lives in `packages/shared/src/rules/matchPlayerLine.ts`, so the live table, the
+post-match table and the stored line behind the Form tab can never disagree. Only events back a
+count: a column the stream does not record (passes, tackles, headers, interceptions, runs) is not
+drawn at all. An unused substitute has a line with every count zero, drawn blank and dimmed — never
+`0`, which would claim they did nothing rather than did not play. The Match Rating and the full-time
+Condition ride the line on the read, never the stored form.
+_Avoid_: player match stats (the screen's label), player line
+
 **Injury** (match event):
 A Match Event carrying a trigger (`contact` | `non-contact`), a Severity (`light` | `medium` |
 `severe`), a No-Subs Tier (`orange` | `red`), and a body-part Type. Light/Medium are Orange

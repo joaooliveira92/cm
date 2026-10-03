@@ -157,7 +157,7 @@ describe("ContextTabs — match context (§7–§9)", () => {
   it("renders live-match tabs for /live-match/:matchId route", async () => {
     mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": true } });
     const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
-    const expected = ["Match", "Commentary", "Statistics", "Player Ratings", "Tactics", "Opposition", "Live Table"];
+    const expected = ["Match", "Commentary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Tactics", "Opposition", "Live Table"];
     for (const label of expected) {
       expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
     }
@@ -166,7 +166,7 @@ describe("ContextTabs — match context (§7–§9)", () => {
   it("renders post-match tabs for /post-match/:matchId route", async () => {
     mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": true } });
     const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
-    const expected = ["Summary", "Statistics", "Player Ratings", "Commentary", "Other Results", "Table"];
+    const expected = ["Summary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Commentary", "Other Results", "Table"];
     for (const label of expected) {
       expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
     }

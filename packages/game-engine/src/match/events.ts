@@ -46,7 +46,7 @@ export interface GoalEvent extends TeamPlayerEvent {
   readonly chanceType: ChanceType;
   readonly assistPlayerId?: PlayerId;
   /** The goalkeeper beaten; absent when the defending side has none on the pitch, and in timelines
-   *  stored before it was recorded. Read only by commentary. */
+   *  stored before it was recorded. Read by commentary and by the Match Player Line's saves fold. */
   readonly keeperId?: PlayerId;
 }
 

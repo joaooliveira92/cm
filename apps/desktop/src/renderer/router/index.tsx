@@ -73,7 +73,7 @@ import { CompetitionFixturesDetailScreen } from "../competitionFixturesDetail/Co
 import { CompetitionResultsScreen } from "../competitionResults/CompetitionResultsScreen.js";
 // Ticket 07 — Match sub-screen placeholders
 import { MatchStatsScreen } from "../match/screens/StatsScreen.js";
-import { MatchPlayerStatsScreen } from "../match/screens/PlayerStatsScreen.js";
+import { MatchHomeStatsScreen, MatchAwayStatsScreen } from "../match/screens/PlayerStatsScreen.js";
 import { MatchHomeTeamScreen } from "../match/screens/HomeTeamScreen.js";
 import { MatchAwayTeamScreen } from "../match/screens/AwayTeamScreen.js";
 import { MatchPreviewScreen } from "../match/screens/PreviewScreen.js";
@@ -521,7 +521,8 @@ const competitionResultsRoute = createRoute({
 // ---------------------------------------------------------------------------
 
 const matchStatsRoute = defineCareerChild("match-stats", "matchStats", MatchStatsScreen);
-const matchPlayerStatsRoute = defineCareerChild("match-player-stats", "matchPlayerStats", MatchPlayerStatsScreen);
+const matchHomeStatsRoute = defineCareerChild("match-home-stats", "matchHomeStats", MatchHomeStatsScreen);
+const matchAwayStatsRoute = defineCareerChild("match-away-stats", "matchAwayStats", MatchAwayStatsScreen);
 const matchHomeTeamRoute = defineCareerChild("match-home-team", "matchHomeTeam", MatchHomeTeamScreen);
 const matchAwayTeamRoute = defineCareerChild("match-away-team", "matchAwayTeam", MatchAwayTeamScreen);
 const matchRatingsRoute = defineCareerChild("match-ratings", "matchRatings", MatchRatingsScreen);
@@ -656,7 +657,8 @@ managerRoute.addChildren([
         competitionResultsRoute,
       ]),
       matchStatsRoute,
-      matchPlayerStatsRoute,
+      matchHomeStatsRoute,
+      matchAwayStatsRoute,
       matchHomeTeamRoute,
       matchAwayTeamRoute,
       matchRatingsRoute,

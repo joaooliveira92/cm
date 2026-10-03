@@ -32,3 +32,6 @@ export const getMatchStatistics = (input: RpcPayload<"getMatchStatistics">): Rpc
 
 export const getMatchRatings = (input: RpcPayload<"getMatchRatings">): RpcRead<"getMatchRatings"> =>
   call("getMatchRatings", input);
+
+export const getMatchPlayerStats = (input: RpcPayload<"getMatchPlayerStats">): RpcRead<"getMatchPlayerStats"> =>
+  call("getMatchPlayerStats", input);

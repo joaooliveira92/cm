@@ -187,6 +187,8 @@ const matchRouteToTabId = (routeSegment: string): string => {
   const MAP: Record<string, string> = {
     "match": "match",
     "match-stats": "statistics",
+    "match-home-stats": "home-stats",
+    "match-away-stats": "away-stats",
     "match-commentary": "commentary",
     "match-ratings": "player-ratings",
     "match-match-tactics": "tactics",

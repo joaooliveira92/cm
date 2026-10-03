@@ -114,7 +114,8 @@ export const COMPETITION_SCOPED_SCREENS = [
  */
 export const MATCH_SUB_SCREENS = [
   "matchStats",
-  "matchPlayerStats",
+  "matchHomeStats",
+  "matchAwayStats",
   "matchHomeTeam",
   "matchAwayTeam",
   "matchRatings",

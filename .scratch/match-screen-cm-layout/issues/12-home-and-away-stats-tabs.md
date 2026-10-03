@@ -17,11 +17,11 @@ pure and in the shared rules package. Defined per [02](02-per-player-columns-the
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] One pure fold produces the Match Player Line; a test per counting rule in the note passes.
-- [ ] The live and post-match tables for one seeded match agree with the fold of its timeline at the same cut.
-- [ ] Home Stats and Away Stats appear in both tab bars in the order ticket 05 gives, on two routes over one screen; the player-stats placeholder route and screen are gone.
-- [ ] An unused substitute's row is dimmed and empty, never 0; card glyphs carry "Booked"/"Sent off" text; headers expose full names.
-- [ ] The ratings view, the Rat column and the new table use the one rating-tone helper.
-- [ ] Stale records from ticket 11 owned by this change (keeperId doc, duplicate Offside schema entry, CONTEXT.md **Match Player Line**) are updated.
+- [x] One pure fold produces the Match Player Line; a test per counting rule in the note passes.
+- [x] The live and post-match tables for one seeded match agree with the fold of its timeline at the same cut.
+- [x] Home Stats and Away Stats appear in both tab bars in the order ticket 05 gives, on two routes over one screen; the player-stats placeholder route and screen are gone.
+- [x] An unused substitute's row is dimmed and empty, never 0; card glyphs carry "Booked"/"Sent off" text; headers expose full names.
+- [x] The ratings view, the Rat column and the new table use the one rating-tone helper.
+- [x] Stale records from ticket 11 owned by this change (keeperId doc, duplicate Offside schema entry, CONTEXT.md **Match Player Line**) are updated.

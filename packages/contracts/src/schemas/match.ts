@@ -345,6 +345,63 @@ export class MatchRatingsView extends Schema.Class<MatchRatingsView>("MatchRatin
 }) {}
 
 // ---------------------------------------------------------------------------
+// Match Player Stats (map ticket 12): the per-player Match Player Line as a table
+// ---------------------------------------------------------------------------
+
+/** A player's disciplinary mark on the row: a red glyph wins over a yellow. */
+export const MatchPlayerCard = Schema.Literals(["none", "yellow", "red"]);
+export type MatchPlayerCard = Schema.Schema.Type<typeof MatchPlayerCard>;
+
+/**
+ * One matchday-squad member's row, from the Match Player Line fold. A player who did not take part
+ * (an unused substitute) has `played: false`, every count zero and `rating: null`: the screen dims
+ * the row and draws empty cells, never zeros.
+ *
+ * `number` is the kickoff slot number for a starter ("1".."11") or the bench label ("SB1"..), the
+ * same number the Team Selection grid shows; the model has no separate shirt number. `condition` is
+ * the full-time per-player Condition, null while live (no per-cut condition surface exists).
+ */
+export class MatchPlayerStatRow extends Schema.Class<MatchPlayerStatRow>("MatchPlayerStatRow")({
+  playerId: PlayerId,
+  playerName: Schema.String,
+  number: Schema.String,
+  captain: Schema.Boolean,
+  card: MatchPlayerCard,
+  started: Schema.Boolean,
+  played: Schema.Boolean,
+  cameOnMinute: Schema.NullOr(Schema.Finite),
+  wentOffMinute: Schema.NullOr(Schema.Finite),
+  keyPasses: Schema.Finite,
+  offsides: Schema.Finite,
+  fouls: Schema.Finite,
+  assists: Schema.Finite,
+  shots: Schema.Finite,
+  shotsOnTarget: Schema.Finite,
+  saves: Schema.Finite,
+  goals: Schema.Finite,
+  condition: Schema.NullOr(Schema.Finite),
+  rating: Schema.NullOr(Schema.Finite),
+}) {}
+
+export class MatchPlayerTeamStats extends Schema.Class<MatchPlayerTeamStats>("MatchPlayerTeamStats")({
+  clubId: ClubId,
+  clubName: Schema.String,
+  rows: Schema.Array(MatchPlayerStatRow),
+}) {}
+
+/** The per-player stats read for one match: both sides, in matchday-squad order. The screen picks
+ *  a side. `showSaves` is true when any row has a save, so an outfield-only view drops the column. */
+export class MatchPlayerStatsView extends Schema.Class<MatchPlayerStatsView>("MatchPlayerStatsView")({
+  matchId: MatchId,
+  homeClubName: Schema.String,
+  awayClubName: Schema.String,
+  throughMinute: Schema.NullOr(Schema.Finite),
+  showSaves: Schema.Boolean,
+  home: MatchPlayerTeamStats,
+  away: MatchPlayerTeamStats,
+}) {}
+
+// ---------------------------------------------------------------------------
 // Match Report (Screen 103): the committed match's record
 // ---------------------------------------------------------------------------
 

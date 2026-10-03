@@ -32,7 +32,7 @@ will all call it, so the three can never disagree.
 
 | Column | Source | Counting rule |
 |---|---|---|
-| No. | Squad number at kickoff | Not a fold; read from the matchday squad. |
+| No. | Kickoff squad order | Not a fold: the starting slot number (`1`–`11`) or the bench label (`SB<n>`), the same number the Team Selection grid shows. The model has no separate shirt number, so this is the honest stand-in. |
 | C. | `YellowCard`, `RedCard` | A red card glyph wins over a yellow; text alternative "Booked" / "Sent off". |
 | Inf. | `Substitution` | `off 53` when the player went off, `on 53` when he came on, both when both happened; a goalkeeper stand-in move is not a substitution and writes nothing. |
 | Key | `KeyPass` | Counted for the creator, except when the creator is the finisher of the chance event the `KeyPass` follows: a self-created chance is not a key pass. |
@@ -42,7 +42,7 @@ will all call it, so the three can never disagree.
 | She | `Goal`, `ShotOnTarget`, `ShotMissed` | All three, for the shooter. Penalties count: their outcome is one of these three events. |
 | Sat | `Goal`, `ShotOnTarget` | For the shooter. |
 | Sav | `ShotOnTarget.keeperId` | For the goalkeeper named. Shown only when at least one goalkeeper row has a value, so outfield-only views don't carry an empty column. Timelines stored before `keeperId` existed yield no saves, which is the honest reading of an old record. |
-| Con | Match Condition at the cut | Live: the engine's per-player Condition at the revealed position. Post-match: Condition at full time. Not stored in the Form line. |
+| Con | Match Condition | Live: none, because no per-cut Condition surface exists and the full-time value would reveal the future. Post-match: the engine's full-time per-player Condition, re-derived from the seed and journal (conditions are not part of the stored timeline). Not stored in the Form line. |
 | Rat | Match Rating | [The rating reads recorded involvement](2026-10-03-the-match-rating-reads-recorded-involvement.md). |
 | Gls | `Goal` | For the scorer. |
 

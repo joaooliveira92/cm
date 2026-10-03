@@ -41,6 +41,7 @@ const TABLE_LABELS: Readonly<Record<TableId, string>> = {
   "outgoing-bids": "Outgoing Bids",
   "league-table": "League Table",
   "player-search": "Player Search",
+  "match-player-stats": "Player Stats",
 };
 
 export const tableLabel = (tableId: TableId): string => TABLE_LABELS[tableId];

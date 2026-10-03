@@ -15,6 +15,7 @@ export { getPostMatchSummary } from "./postMatchSummary.js";
 export { getMatchReport, reportEvents } from "./report.js";
 export { aggregateMatchStatistics, getMatchStatistics } from "./statistics.js";
 export { getMatchRatings } from "./ratings.js";
+export { getMatchPlayerStats } from "./playerStats.js";
 export { getTeamSheet } from "./teamSheet.js";
 export { getAwaitingMatch, resumeSimulation } from "./queries.js";
 export { MatchSeedSource, deriveFixtureMatchSeed, startMatch } from "./start.js";
