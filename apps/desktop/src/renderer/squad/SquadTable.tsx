@@ -16,21 +16,25 @@ import { useSquad } from "./SquadProvider.js";
 import { useSquadBottomBar } from "./squadBottomBar.js";
 import { SquadRoster } from "./SquadRoster.js";
 import { SQUAD_TOGGLEABLE_COLUMN_IDS } from "../table/features/visibility.js";
-import { SQUAD_VIEWS, squadViewById } from "./squadViews.js";
+import { SQUAD_VIEWS, squadViewById, type SquadViewDefinition, type SquadViewId } from "./squadViews.js";
 import { SquadPositionList } from "./SquadPositionList.js";
 import { SquadSortSelect } from "./SquadSortSelect.js";
 import { MatchDayBar } from "./MatchDayBar.js";
 import { ToolbarChoiceMenu, type ToolbarChoice } from "./ToolbarChoiceMenu.js";
-import { isAttributeClause } from "../table/features/filtering.js";
+import { isAttributeClause, type AttributeThreshold } from "../table/features/filtering.js";
 import { AttributeFilterDialog } from "./AttributeFilterDialog.js";
 import { writeLineupDrag } from "./lineupDrag.js";
 import type { LineupFitReadout } from "./lineupFit.js";
 import { SQUAD_COLUMN_LABELS } from "../table/squad/squadColumns.js";
-import { MODELED_STATUSES, StatusLegendDialog } from "../table/squad/playerStatus.js";
+import {
+  MODELED_STATUSES,
+  StatusLegendDialog,
+  type ReservedStatus,
+} from "../table/squad/playerStatus.js";
 import { activeFilterCount } from "../table/viewState.js";
 import type { TableStateCopy } from "../table/viewState.js";
 import type { SquadColumnPreferences } from "../table/columnPreferences.js";
-import type { FilterClause, RefreshState, TableViewState } from "../table/types.js";
+import type { FilterClause, RefreshState, SortState, TableViewState } from "../table/types.js";
 import {
   clearToolbarControls,
   setToolbarControls,
@@ -54,6 +58,42 @@ const VIEW_CHOICES: readonly ToolbarChoice[] = SQUAD_VIEWS.map((option) => ({
   detail: option.layout === "list" ? "Position list" : "Table",
 }));
 
+/** One Attribute clause of the live filter set — the shape the Attribute dialog edits. */
+type AttributeClause = Extract<FilterClause, { readonly _tag: "attribute" }>;
+
+/**
+ * The blocking load failure: the read's message and the retry that re-runs it.
+ * The screen's own shell rather than the panel's, because with no players there
+ * is no panel to draw — a distinct state, not a message inside the table.
+ */
+const SquadLoadError = ({
+  message,
+  copy,
+}: {
+  readonly message: string;
+  readonly copy: TableStateCopy;
+}) => (
+  <main
+    tabIndex={-1}
+    data-focus-id="squad"
+    aria-label="Squad"
+    className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
+  >
+    <h1 className="text-title">Squad</h1>
+    <Alert variant="destructive" className="mt-6">
+      <p>{message}</p>
+      <Button
+        type="button"
+        variant="secondary"
+        className="mt-2"
+        data-action-id="retry-squad-table"
+        onClick={() => void dispatchAction("retry-squad-table")}
+      >
+        {copy.retryLabel}
+      </Button>
+    </Alert>
+  </main>
+);
 
 /**
  * The players count line, with the non-blocking background refresh marker.
@@ -273,6 +313,78 @@ const FitContextLine = ({
   );
 };
 
+/**
+ * The Squad screen's registered controls: the Position, Status and Attribute
+ * filters, the View selector, and — for the position list only — Sort. Built as
+ * one element and handed to the career chrome's actions row via the screen
+ * toolbar store, so the screen's controls sit with every other screen's rather
+ * than inside the panel. The View choice resolves the chosen id back to the
+ * catalogue here, so the trigger and the layout cannot disagree about the view.
+ */
+const SquadToolbarControls = ({
+  view,
+  sort,
+  activePosition,
+  activeStatus,
+  activeAttributes,
+  onPositionFilter,
+  onStatusFilter,
+  onAttributeFilters,
+  countWithAttributeFilters,
+  onViewChange,
+  onSortCycle,
+}: {
+  readonly view: SquadViewDefinition;
+  readonly sort: SortState | null;
+  readonly activePosition: Extract<FilterClause, { readonly _tag: "position" }> | undefined;
+  readonly activeStatus: ReservedStatus | undefined;
+  readonly activeAttributes: readonly AttributeClause[];
+  readonly onPositionFilter: (position: string) => void;
+  readonly onStatusFilter: (status: string) => void;
+  readonly onAttributeFilters: (thresholds: readonly AttributeThreshold[]) => void;
+  readonly countWithAttributeFilters: (thresholds: readonly AttributeThreshold[]) => number;
+  readonly onViewChange: (viewId: SquadViewId) => void;
+  readonly onSortCycle: (next: SortState | null) => void;
+}) => (
+  <>
+    <ToolbarChoiceMenu
+      ariaLabel="Filter squad by position"
+      triggerText={activePosition === undefined ? "Position" : `Position: ${activePosition.position}`}
+      groupLabel="Position"
+      value={activePosition?.position ?? ""}
+      choices={POSITION_CHOICES}
+      onChoose={onPositionFilter}
+    />
+    {/* Offers only what the engine models (Tired today), by full term; the
+        list grows as reserved slots become modeled. */}
+    <ToolbarChoiceMenu
+      ariaLabel="Filter squad by status"
+      triggerText={activeStatus === undefined ? "Status" : `Status: ${activeStatus.term}`}
+      groupLabel="Status"
+      value={activeStatus?.abbreviation ?? ""}
+      choices={STATUS_CHOICES}
+      onChoose={onStatusFilter}
+    />
+    <AttributeFilterDialog
+      active={activeAttributes}
+      onApply={onAttributeFilters}
+      countMatching={countWithAttributeFilters}
+    />
+    <ToolbarChoiceMenu
+      ariaLabel="Squad view"
+      triggerText="View"
+      groupLabel="View"
+      value={view.id}
+      choices={VIEW_CHOICES}
+      onChoose={(id) => {
+        const next = SQUAD_VIEWS.find((option) => option.id === id);
+        if (next !== undefined) onViewChange(next.id);
+      }}
+    />
+    {view.layout === "list" && <SquadSortSelect sort={sort} onSortCycle={onSortCycle} />}
+  </>
+);
+
 /** The squad list leaf: filter toolbar, the View selector, column visibility
  *  controls, view-state placeholders, status legend, and the body — the
  *  two-column position list or the DataTable, whichever the chosen view draws.
@@ -319,28 +431,7 @@ export const SquadTable = () => {
   } = actions;
 
   if (viewState._tag === "LoadError") {
-    return (
-      <main
-        tabIndex={-1}
-        data-focus-id="squad"
-        aria-label="Squad"
-        className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
-      >
-        <h1 className="text-title">Squad</h1>
-        <Alert variant="destructive" className="mt-6">
-          <p>{viewState.error.message}</p>
-          <Button
-            type="button"
-            variant="secondary"
-            className="mt-2"
-            data-action-id="retry-squad-table"
-            onClick={() => void dispatchAction("retry-squad-table")}
-          >
-            {copy.retryLabel}
-          </Button>
-        </Alert>
-      </main>
-    );
+    return <SquadLoadError message={viewState.error.message} copy={copy} />;
   }
 
   const view = squadViewById(viewId);
@@ -369,43 +460,19 @@ export const SquadTable = () => {
    *  controls for one state is one too many. */
   const toolbarControls = useMemo(
     () => (
-      <>
-        <ToolbarChoiceMenu
-          ariaLabel="Filter squad by position"
-          triggerText={activePosition === undefined ? "Position" : `Position: ${activePosition.position}`}
-          groupLabel="Position"
-          value={activePosition?.position ?? ""}
-          choices={POSITION_CHOICES}
-          onChoose={setPositionFilter}
-        />
-        {/* Offers only what the engine models (Tired today), by full term; the
-            list grows as reserved slots become modeled. */}
-        <ToolbarChoiceMenu
-          ariaLabel="Filter squad by status"
-          triggerText={activeStatus === undefined ? "Status" : `Status: ${activeStatus.term}`}
-          groupLabel="Status"
-          value={activeStatus?.abbreviation ?? ""}
-          choices={STATUS_CHOICES}
-          onChoose={setStatusFilter}
-        />
-        <AttributeFilterDialog
-          active={activeAttributes}
-          onApply={setAttributeFilters}
-          countMatching={countWithAttributeFilters}
-        />
-        <ToolbarChoiceMenu
-          ariaLabel="Squad view"
-          triggerText="View"
-          groupLabel="View"
-          value={view.id}
-          choices={VIEW_CHOICES}
-          onChoose={(id) => {
-            const next = SQUAD_VIEWS.find((option) => option.id === id);
-            if (next !== undefined) setView(next.id);
-          }}
-        />
-        {view.layout === "list" && <SquadSortSelect sort={sort} onSortCycle={onSortCycle} />}
-      </>
+      <SquadToolbarControls
+        view={view}
+        sort={sort}
+        activePosition={activePosition}
+        activeStatus={activeStatus}
+        activeAttributes={activeAttributes}
+        onPositionFilter={setPositionFilter}
+        onStatusFilter={setStatusFilter}
+        onAttributeFilters={setAttributeFilters}
+        countWithAttributeFilters={countWithAttributeFilters}
+        onViewChange={setView}
+        onSortCycle={onSortCycle}
+      />
     ),
     [
       view.layout,
