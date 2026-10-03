@@ -18,6 +18,24 @@ no dependency at all). `shared` depends on `content`. Keep `shared/src/index.ts`
 content surface so external importers (`@cm-clone/shared`) are unchanged; the churn is internal to
 `shared`.
 
+**Constraint found while triaging (2026-10-03):** `content` and `setup` currently import each other,
+so the move is not a straight folder lift:
+
+- `content/leagueSetupCatalogue.ts` imports the row types (`CompetitionNode`, `CupEntrant`,
+  `ExchangeLink`, `LeagueSetupIndex`) from `setup/leagueSetup.ts`.
+- `content/contentPack.ts` imports `compareCodeUnits` from `shared/order.ts`.
+- `setup/leagueSetup.ts` (and other setup/rules files) import `content/nations.ts`.
+
+Break it by giving `content` the row *types* rather than reaching up: move the type/constant half of
+`setup/leagueSetup.ts` (lines ~22–166: `CompetitionNode`, `LeagueScopeOption`, `NationNode`,
+`ExchangeLink`, `CupEntrant`, `RegionNode`, `LeagueSetupIndex`, `SimulationMode`,
+`NationSelectionState`, `CompetitionKind`) and `order.ts` into `content`, leaving the index-builders
+(`allCompetitions`, `competitionIndex`, `nationIndex`, `scopeOptionIndex`) in `shared` importing the
+types from `@cm-clone/content`. Re-export both from `shared/src/index.ts` so nothing outside the two
+packages moves an import. ~44 `content` imports, ~12 `leagueSetup.js` imports and ~10 `order.js`
+imports inside `shared` are the mechanical churn; do not leave a re-export shim *and* the original
+type in place.
+
 ## Acceptance criteria
 
 - [ ] `packages/content` exists, is registered in `pnpm-workspace.yaml`, and has a row in
