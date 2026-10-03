@@ -1,19 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Effect, Result } from "effect";
-import { nextCommandMinute } from "@cm-clone/game-engine";
+import { useCallback, useMemo, useState } from "react";
 import type { CommentaryLineView, MatchPitchView, SaveId, SubstitutionStatusView } from "@cm-clone/contracts";
-import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
-import { resumeSimulation, submitMatchCommandMutation, useAtomSet } from "../../rpc.js";
-import { resolveCommandStatus, type CommandStatus } from "../commandStatus.js";
+import { useCommentaryCommands, type CommentaryCommands } from "./useCommentaryCommands.js";
 import { useControlledClub } from "./useControlledClub.js";
 import { useInjuryLedger } from "./useInjuryLedger.js";
 import { useRevealedFeed } from "./useRevealedFeed.js";
+import { useStateChangeReread } from "./useStateChangeReread.js";
 import {
   getActiveMatch,
-  getHalfTimeRevealed,
-  getRevealedEvents,
   getRevealedFeed,
-  HALFTIME_MINUTE,
   type LastRevealedInjury,
   type MatchPhase,
   type RevealedFeed,
@@ -21,13 +15,7 @@ import {
   type RevealedScore,
 } from "../session.js";
 import { useMatchStream, type MatchStream, type PlayingLine, type ReadProjection } from "../stream.js";
-import { useMatchContext, type MatchCommand } from "../MatchProvider.js";
-
-/** Revealing one of these can change what the controlled club's view says — the score, the head-count,
- *  the pitch, the substitution counts — so the feed re-reads at the new revealed position rather than
- *  waiting for the next poll. A line that changes none of them is already fully described by the read
- *  that carried it. */
-const STATE_CHANGING_TAGS: ReadonlySet<string> = new Set(["Goal", "RedCard", "Injury", "Substitution", "FullTimeWhistle"]);
+import { useMatchContext } from "../MatchProvider.js";
 
 interface RestoredFeed extends RevealedFeed {
   readonly phase: MatchPhase;
@@ -58,8 +46,7 @@ export interface CommentaryState {
   readonly playing: PlayingLine | null;
 }
 
-export interface CommentaryActions {
-  readonly submitCommand: (command: MatchCommand, isHalftime: boolean) => Promise<CommandStatus>;
+export interface CommentaryActions extends CommentaryCommands {
   readonly resume: () => void;
 }
 
@@ -79,9 +66,11 @@ export interface CommentaryContextValue {
  * The live match's commentary: what has been revealed, what the controlled club's view of it says, which
  * injuries await a decision, and the stream that drives the rest.
  *
- * This hook composes those four owners and owns only what is genuinely shared — the restore snapshot
- * every one of them starts from, and the re-read a state-changing reveal triggers. Each owner's contract
- * is its own return value, so a change to the pacing rules never reaches the injury ledger.
+ * This hook is composition and nothing else. It wires six owners together — the revealed play, the
+ * controlled club, the injury ledger, the stream, the re-read a state-changing reveal triggers, and the
+ * command surface — and owns only what is genuinely theirs in common: the restore snapshot every one of
+ * them starts from. Each owner's contract is its own return value, so a change to the pacing rules, the
+ * re-read policy or the command lifecycle never reaches the others.
  */
 export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
   const { state: matchState } = useMatchContext();
@@ -139,69 +128,27 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
 
   // ── Re-read the controlled club's view when a reveal changes it ───────────
 
-  const lastRevealedTag = feed.state.lines.at(-1)?.tag;
-  // A match left paused on a decision needs its counts back before the panel can offer them, so the
-  // first pass reads even though nothing has been revealed yet.
-  const restoreReadRef = useRef(restored?.phase === "paused" && (restored?.revealedInjuries.length ?? 0) > 0);
-  useEffect(() => {
-    if (match === null) return;
-    const restoring = restoreReadRef.current;
-    restoreReadRef.current = false;
-    if (!restoring && (lastRevealedTag === undefined || !STATE_CHANGING_TAGS.has(lastRevealedTag))) return;
-    const revealedEvents = getRevealedEvents(saveId);
-    const stamp = stream.stamp();
-    const resume = resumeSimulation({ saveId, matchId: match.matchId, cursor: stream.cursor(), revealedEvents });
-    // The projection only: the lines this read returns are not buffered, because the poller reads on
-    // from the revealed position anyway and would return them a second time.
-    Effect.runPromise(resume.pipe(Effect.result)).then(
-      (outcome) => {
-        if (Result.isFailure(outcome)) return;
-        club.read.polled(outcome.success, stamp);
-      },
-      () => undefined,
-    );
-  }, [feed.state.lines.length, lastRevealedTag, match, saveId, stream, club.read.polled]);
+  useStateChangeReread({
+    saveId,
+    match,
+    lines: feed.state.lines,
+    // A match left paused on a decision needs its counts back before the panel can offer them, so the
+    // first pass reads even though nothing has been revealed yet.
+    initialRead: restored?.phase === "paused" && (restored?.revealedInjuries.length ?? 0) > 0,
+    stream,
+    read: club.read,
+  });
 
   // ── Commands ─────────────────────────────────────────────────────────────
 
-  const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
-
-  const submitCommand = useCallback(
-    async (command: MatchCommand, isHalftime: boolean): Promise<CommandStatus> => {
-      if (match === null) return { _tag: "rejected" as const, reason: "No match is in play." };
-      const revealedEvents = getRevealedEvents(saveId);
-      const actedOn = ledger.pending();
-      const stamp = stream.stamp();
-      stream.beginCommand(stamp);
-      try {
-        const result = await runCommand({
-          saveId,
-          matchId: match.matchId,
-          // From zero, not the poll cursor: the command rewrites the timeline, so what follows it is
-          // resimulated and re-read rather than resumed.
-          cursor: 0,
-          revealedEvents,
-          minute: isHalftime ? HALFTIME_MINUTE : nextCommandMinute(feed.minute(), getHalfTimeRevealed(saveId)),
-          isHalftime,
-          command,
-        });
-        ledger.resolve(actedOn);
-        read.commanded(result, stamp);
-        return resolveCommandStatus(command, result);
-      } catch (error) {
-        const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
-        if (typed?._tag === "RemoteFailure") return { _tag: "rejected" as const, reason: describeRpcError(typed) };
-        throw error;
-      } finally {
-        // The half-played line is after the revealed position, so the read from it sends that event
-        // again, resimulated. Playing on would reveal it twice.
-        stream.setPlaying(null);
-        stream.endCommand();
-        stream.rewindTo(revealedEvents);
-      }
-    },
-    [saveId, match, runCommand, feed.minute, ledger.pending, ledger.resolve, stream, read],
-  );
+  const { submitCommand } = useCommentaryCommands({
+    saveId,
+    match,
+    minute: feed.minute,
+    ledger,
+    stream,
+    read: club.read,
+  });
 
   const resume = useCallback((): void => ledger.clear(), [ledger.clear]);
 

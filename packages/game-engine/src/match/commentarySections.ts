@@ -170,3 +170,17 @@ export const COMMENTARY_SECTIONS: ReadonlyMap<CommentaryTemplateKey, ReadonlyArr
  *  `GoalScore` sentences, which never change anything on their own. */
 export const changesTheMatch = (key: CommentaryTemplateKey): boolean =>
   (ALWAYS_SHOWN as ReadonlySet<string>).has(key.split(":")[0]!);
+
+/** The Match Event tags whose reveal can change the controlled club's read of a match — the score
+ *  (`Goal`), the men on the pitch (`RedCard`, `Injury`), the substitutions available (`Substitution`)
+ *  and the final state (`FullTimeWhistle`). A reader that already holds the club's view re-reads when
+ *  one of these lines is revealed, rather than waiting for its next poll.
+ *
+ *  Distinct from `changesTheMatch`, which also holds moments the read carries nothing about: kick-off,
+ *  half time, a tactics change, a yellow card. Half time carries the same score as the goal before it,
+ *  so it changes nothing here. */
+const CHANGES_CLUB_VIEW: ReadonlySet<string> = new Set(["Goal", "RedCard", "Injury", "Substitution", "FullTimeWhistle"]);
+
+/** Whether revealing a line tagged `tag` can change the controlled club's read. Takes a plain string
+ *  because a `CommentaryLineView`'s tag crosses the wire as one. */
+export const changesClubView = (tag: string): boolean => CHANGES_CLUB_VIEW.has(tag);

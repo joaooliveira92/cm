@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { MatchEvent } from "../../src/match/events.js";
-import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS } from "../../src/match/commentarySections.js";
+import { ALWAYS_SHOWN, FOLLOW_ON_DELAY_MS, changesClubView } from "../../src/match/commentarySections.js";
 import { parseCommentaryFile } from "../../src/match/commentaryFile.js";
 import { renderCommentary as renderWith } from "../../src/match/commentary.js";
 import { SHIPPED, renderShipped as renderCommentary } from "./shippedCommentary.js";
@@ -224,6 +224,29 @@ describe("commentary playback, after Championship Manager's events file", () => 
   it("never gives a line that changes the match a display chance", () => {
     for (const [key, playback] of Object.entries(SHIPPED.playback)) {
       if (ALWAYS_SHOWN.has(key.split(":")[0] as never)) expect(playback.displayChance, key).toBe(1);
+    }
+  });
+});
+
+describe("changesClubView", () => {
+  it("holds the moments whose reveal can move the controlled club's read", () => {
+    for (const tag of ["Goal", "RedCard", "Injury", "Substitution", "FullTimeWhistle"]) {
+      expect(changesClubView(tag)).toBe(true);
+    }
+  });
+
+  it("leaves out the moments the read carries nothing about", () => {
+    for (const tag of [
+      "MatchStarted",
+      "HalfTimeReached",
+      "Penalty",
+      "YellowCard",
+      "Foul",
+      "Offside",
+      "TacticsChanged",
+      "GoalScore:opener",
+    ]) {
+      expect(changesClubView(tag)).toBe(false);
     }
   });
 });
