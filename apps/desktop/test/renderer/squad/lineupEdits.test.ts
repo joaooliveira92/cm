@@ -231,11 +231,14 @@ describe("assistantLineupOf", () => {
     ...Array.from({ length: 8 }, (_, index) => player(`r${index}`, 40 - index)),
   ];
 
-  it("fills every starter slot and the bench in the Tactic's own Formation, keeping its instructions", () => {
+  it("fills every starter slot and the bench, resetting player and team instructions to defaults", () => {
     const next = assistantLineupOf(baseTactic(), squad)!;
     expect(next.sourceTemplate).toBe("4-4-2");
-    expect(next.team.mentality).toBe("normal");
+    // Team instructions are reset: baseTactic had zonalMarking: true
+    expect(next.team.zonalMarking).toBe(false);
     expect(playerAt(next, 0)).toEqual(pid("gk1"));
+    // Player instructions are reset per cell: slot 0 (GK C) gets goalkeeper defaults
+    expect(next.slots[0]!.instructions.distribution).toBe("longKick");
   });
 
   it("fills a custom shape by the slots' own cells, not the Formation's template", () => {

@@ -8,9 +8,15 @@ import {
   CM_HINT_CLASS,
   CM_PANEL_CLASS,
   CM_PANEL_TITLE_CLASS,
-  CM_SELECT_CLASS,
 } from "./cmChrome.js";
 import { Checkbox } from "../components/ui/checkbox.js";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../components/ui/select.js";
 
 /** camelCase id to Title Case with spaces, eg "closingDown" → "Closing Down". */
 export const displayName = (key: string): string =>
@@ -73,23 +79,25 @@ export const TickChoiceRow = ({
       <label htmlFor={id} className={LABEL_CLASS}>
         {label}
       </label>
-      <select
+      <Select
         value={currentValue}
-        onChange={(e) => onChange(e.target.value)}
-        className={`${CM_SELECT_CLASS} w-full`}
+        items={Object.fromEntries(options.map((v) => [v, displayValue(v)]))}
+        onValueChange={(value) => {
+          if (value !== null) onChange(value);
+        }}
         disabled={!isTicked || disabled}
-        aria-label={label}
       >
-        {isTicked ? (
-          options.map((v) => (
-            <option key={v} value={v}>
+        <SelectTrigger aria-label={label} className="w-full">
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((v) => (
+            <SelectItem key={v} value={v}>
               {displayValue(v)}
-            </option>
-          ))
-        ) : (
-          <option value={offValue}>{placeholder}</option>
-        )}
-      </select>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 };

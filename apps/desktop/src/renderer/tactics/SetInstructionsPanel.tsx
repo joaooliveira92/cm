@@ -30,17 +30,10 @@ import {
   type TeamSetPieces,
   type TeamSwitch,
 } from "@cm-clone/shared";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "../components/ui/command.js";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "../components/ui/command.js";
 import { Popover, PopoverContent, PopoverTrigger } from "../components/ui/popover.js";
 import { FOCUS_RING } from "../focus.js";
-import { CM_BUTTON_CLASS, CM_SELECT_CLASS } from "./cmChrome.js";
+import { CM_BUTTON_CLASS } from "./cmChrome.js";
 import {
   displayName,
   displayValue,
@@ -498,23 +491,35 @@ export const SetInstructionsPanel = ({
           </>
         }
         footer={
-          <select
-            value=""
-            onChange={(e) => {
-              if (e.target.value !== "") applyTemplate(e.target.value as InstructionTemplate);
-            }}
-            disabled={disabled}
-            className={`${CM_SELECT_CLASS} w-60`}
-            aria-label="Set to preset"
-            title="Replace this player's instructions with a preset"
-          >
-            <option value="">Set To Preset</option>
-            {INSTRUCTION_TEMPLATES.map((template) => (
-              <option key={template} value={template}>
-                {TEMPLATE_LABEL[template]}
-              </option>
-            ))}
-          </select>
+          <Popover>
+            <PopoverTrigger
+              aria-label="Set to preset"
+              title="Replace this player's instructions with a preset"
+              className={`${CM_BUTTON_CLASS} w-56`}
+            >
+              Set To Preset
+            </PopoverTrigger>
+            <PopoverContent align="end" className="w-56 p-0">
+              <Command>
+                <CommandInput placeholder="Search presets…" aria-label="Search presets" />
+                <CommandList>
+                  <CommandEmpty>No presets found</CommandEmpty>
+                  <CommandGroup heading="Templates">
+                    {INSTRUCTION_TEMPLATES.map((template) => (
+                      <CommandItem
+                        key={template}
+                        value={template}
+                        keywords={[TEMPLATE_LABEL[template], template]}
+                        onSelect={() => applyTemplate(template)}
+                      >
+                        <span className="flex-1 truncate">{TEMPLATE_LABEL[template]}</span>
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
         }
         className="flex-[3]"
       >

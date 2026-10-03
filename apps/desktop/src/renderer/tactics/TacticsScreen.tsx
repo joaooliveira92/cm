@@ -617,6 +617,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
               onSwap={handleSwap}
               onMove={handleMove}
               onToggleRun={handleToggleRun}
+              pitchView={{ position: columns.pos, fit: columns.fit, condition: columns.condition }}
             />
             </section>
           )}

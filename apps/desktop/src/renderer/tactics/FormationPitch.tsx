@@ -3,7 +3,7 @@ import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts"
 import { DEFAULT_SUB, slotLabel, type Slot } from "@cm-clone/shared";
 import { useOptionalClubColours } from "../chrome/CareerStateProvider.js";
 import { FOCUS_RING } from "../focus.js";
-import { captionShift, fitTierWord, markerBox, markerName } from "./markerLayout.js";
+import { captionShift, markerBox, markerName, pitchInfoLine } from "./markerLayout.js";
 import { markerKitStyle } from "./markerKit.js";
 import { PitchBackground } from "./PitchBackground.js";
 import {
@@ -113,6 +113,7 @@ export const FormationPitch = ({
   onSwap,
   onMove,
   onToggleRun,
+  pitchView,
 }: {
   readonly formation: string;
   readonly slots: ReadonlyArray<TacticSlot>;
@@ -123,6 +124,7 @@ export const FormationPitch = ({
   readonly onSwap: (from: number, to: number) => void;
   readonly onMove: (slotIndex: number, cell: Slot, subRow?: number, subCol?: number) => void;
   readonly onToggleRun: (slotIndex: number, target: Slot | null) => void;
+  readonly pitchView?: { readonly position: boolean; readonly fit: boolean; readonly condition: boolean };
 }) => {
   const spots = pitchLayout(slots);
   const clubColours = useOptionalClubColours();
@@ -354,9 +356,8 @@ export const FormationPitch = ({
           // While dragged, the marker names the cell it would land in and the fit there, so a drop
           // across a row's boundary shows before the release.
           const cell = landing && intent?.kind === "place" ? intent.zone.cell : slot.cell;
-          // Fit tier as word, never a colour (no raw positional rating)
-          const fitWord = player ? fitTierWord(player, cell) : null;
-          const caption = landing ? [slotLabel(cell), fitWord].filter((part) => part !== null).join(" · ") : fitWord;
+          const pitchInfo = player ? pitchInfoLine(player, cell, pitchView) : null;
+          const caption = landing ? [slotLabel(cell), pitchInfo].filter((part) => part !== null).join(" · ") : pitchInfo;
 
           return (
             <li

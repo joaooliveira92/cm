@@ -10,8 +10,10 @@
  */
 import { PlayerId, Tactic } from "@cm-clone/contracts";
 import {
+  DEFAULT_TEAM_INSTRUCTIONS,
   STARTER_COUNT,
   bestXiForCells,
+  seededInstructions,
   selectBench,
   slotLabel,
   type BenchCandidate,
@@ -146,8 +148,9 @@ export const clearLineupSlot = (tactic: Tactic, order: number): Tactic =>
  * The assistant manager's pick: the whole match-day chosen for the manager in the Tactic's own
  * shape (its template's cells or a modified one), which stays the manager's call. Starters and
  * bench come from the same shared rules AI clubs pick by (`bestXiForCells`, then `selectBench`),
- * so the assistant never picks a team the AI would call worse. Instructions and set-piece
- * settings are kept. `null` when the squad cannot field the shape.
+ * so the assistant never picks a team the AI would call worse. Player instructions are reset to
+ * cell-appropriate defaults (`seededInstructions`) and team instructions to
+ * `DEFAULT_TEAM_INSTRUCTIONS`. `null` when the squad cannot field the shape.
  */
 export const assistantLineupOf = (
   tactic: Tactic,
@@ -163,6 +166,11 @@ export const assistantLineupOf = (
     ...tactic,
     assignments: starters,
     bench: selectBench(squad, starters),
+    slots: tactic.slots.map((slot) => ({
+      ...slot,
+      instructions: seededInstructions(slot.cell),
+    })),
+    team: DEFAULT_TEAM_INSTRUCTIONS,
   });
 };
 

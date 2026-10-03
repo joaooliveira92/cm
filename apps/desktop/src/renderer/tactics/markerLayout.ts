@@ -44,3 +44,22 @@ export const fitTierWord = (player: SquadPlayerView, cell: Slot): string => {
   const t = familiarityOf(player.suitability[slotLabel(cell)] ?? 1);
   return t === "natural" ? "Natural" : t === "competent" ? "Competent" : "Unfamiliar";
 };
+
+const pct = (n: number): string => `${n}%`;
+
+export interface PitchView {
+  readonly position: boolean;
+  readonly fit: boolean;
+  readonly condition: boolean;
+}
+
+const DEFAULT_PITCH_VIEW: PitchView = { position: false, fit: true, condition: false };
+
+/** The info line shown below the player name on the pitch, based on view selection. */
+export const pitchInfoLine = (player: SquadPlayerView, cell: Slot, view?: PitchView): string | null => {
+  const v = view ?? DEFAULT_PITCH_VIEW;
+  if (v.fit) return fitTierWord(player, cell);
+  if (v.position) return player.positionLabel;
+  if (v.condition) return pct(player.condition);
+  return null;
+};
