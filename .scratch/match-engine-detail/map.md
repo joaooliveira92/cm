@@ -2,8 +2,8 @@
 
 Label: `wayfinder:map`
 
-> Status: 2026-10-03, resolved autonomously at the user's approval. Open: 05 (research running) and 09
-> (waits on 05).
+> Status: complete 2026-10-03, every ticket resolved autonomously at the user's approval. Nothing is
+> left to decide; ready for `/cm-to-spec`.
 
 ## Destination
 
@@ -36,12 +36,16 @@ balance, timeline size, commentary) or ruled out with a reason.
   random stream from the match seed, appended after the slice; results byte-identical.
 - [Recording possession](issues/04-recording-possession.md): share of minute-slices with the ball, as
   a cumulative tally event; it takes the bottom bar.
+- [Typical per-match figures to calibrate against](issues/05-cm-calibration-figures.md): Opta and
+  StatsBomb ranges recorded in the calibration research; CM 03/04 figures are feel, not targets.
 - [Event volume: individual events or tallies?](issues/06-event-volume-and-the-timeline.md):
   individual events; baseline 59.8 events / 6.7 KB per match, budget ≤ 3× events and +25% commit time.
 - [Naming the fouled player](issues/07-naming-the-fouled-player.md): a side-in-possession player
   picked on the attribution stream, as a field on `Foul`; takers unchanged.
 - [Commentary and the reveal for new events](issues/08-commentary-for-new-events.md): silent lines
   keep the one-line-per-event invariant the live cut depends on.
+- [Rating weights for the new involvement](issues/09-rating-weights-for-new-involvement.md): tackle
+  won and interception +0.10, header won +0.05, fouled +0.03; defence goals-against share -0.4 → -0.3.
 - [Saves, stored timelines and matches in progress](issues/10-saves-and-in-progress-matches.md):
   nothing restarts; the stored-timeline union must gain the new kinds; old matches read "-".
 - [Screen follow-through](issues/11-screen-follow-through.md): new columns and rows extend the

@@ -41,9 +41,9 @@ rule; that rule stays the engine's way of deciding when to emit the duel.
 events about 14 together.
 
 **Expected additions per match:** tackles and interceptions at the credit rate tuned to the
-calibration targets (on the order of 30–40), defensive headers (a few, from corners and cleared
+calibration targets (10–13 tackles won and 8–12 interceptions per team per [05](05-cm-calibration-figures.md), so 36–50), defensive headers (a few, from corners and cleared
 crosses), and `PossessionTally` at the end of each eventful slice (at most one per slice, about 40–50).
-The fouled player is a field, not an event. Roughly 140–150 events and 15 KB per match.
+The fouled player is a field, not an event. Roughly 150–160 events and 16 KB per match, inside the budget below.
 
 **Budget, asserted in the implementing tickets:**
 

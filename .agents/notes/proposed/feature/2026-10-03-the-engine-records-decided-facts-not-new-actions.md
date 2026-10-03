@@ -68,5 +68,10 @@ breakdowns are still real, just not individually named.
 - Credited tackles and interceptions are a distribution, not a record of who really made them. A
   defender's tally reflects his attributes and minutes more than any single match. Accepted, and the
   reason they get low rating weights.
+- Headers will run far below real football (27–44 aerial duels per team-match in the
+  [calibration research](../../../../docs/research/match-engine-calibration-figures.md)), because only
+  crosses and set pieces decide a header here. Accepted: inflating them would be the invented-figure
+  case. Calibration asserts tackles and interceptions against the real ranges, and headers only against
+  this engine's own cross and corner volume.
 - The CM table stays without its most familiar columns (Pas, Cmp). Accepted until a possession-chain
   model exists.
