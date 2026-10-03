@@ -9,7 +9,7 @@ the "four statistics" the engine does **not** produce?
 ## Sources
 
 - `packages/game-engine/src/match/events.ts` — Match Event types (v1 vocabulary)
-- `packages/game-engine/src/match/simulate/resolvers.ts` — event resolution (Goal/BigChance/ShotOnTarget/ShotMissed shares)
+- `packages/game-engine/src/match/simulate/chanceTypeResolvers.ts` — event resolution (Goal/BigChance/ShotOnTarget/ShotMissed shares)
 - `packages/game-engine/src/match/simulate/loop.ts` — simulation loop, `SimulateMatchInput`
 - `packages/game-engine/src/match/simulate/teamState.ts` — per-team runtime state
 - `packages/game-engine/src/match/simulate/constants.ts` — tuning constants (GOAL_SHARE, BIG_CHANCE_SHARE, etc.)

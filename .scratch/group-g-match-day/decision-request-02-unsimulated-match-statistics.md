@@ -9,7 +9,7 @@ extended to simulate them, or do the Match Statistics screens show only what the
 ## Why this is blocking
 
 The engine's attacking phase ends every attack in exactly one of Goal, BigChance, ShotOnTarget or
-ShotMissed, and cards are rolled per defender (`packages/game-engine/src/match/simulate/resolvers.ts`).
+ShotMissed, and cards are rolled per defender (`packages/game-engine/src/match/simulate/minuteResolvers.ts`).
 There is no ball-possession model, no set-piece event and no foul or offside event. Deriving these
 numbers from the existing events would invent a statistical model, and Screen 95 §17 says "Values
 unavailable to the match model remain unavailable". Adding them to the engine changes what a seed

@@ -11,7 +11,7 @@ should the team play on with no goalkeeper until the manager makes a change?
 Found in review of [ticket 19](issues/19-substitution-picker-lists-the-tactic-not-the-pitch.md) and
 carried into [ticket 26](issues/26-forced-substitution-picks-any-squad-player.md).
 
-- `resolveCards` (`packages/game-engine/src/match/simulate/resolvers.ts`) removes a red-carded
+- `resolveCards` (`packages/game-engine/src/match/simulate/minuteResolvers.ts`) removes a red-carded
   player's slot without `emptySlot`'s goalkeeper stand-in.
 - `applyForcedOff`'s doc comment claims it "reuses the red path's `emptySlot`", which is false.
 
