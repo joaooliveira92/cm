@@ -7,7 +7,6 @@ import type {
   MatchPitchView,
   MatchSummary,
   PlayerId,
-  RpcSuccess,
   SaveId,
   SquadPlayerView,
   SubstitutionStatusView,
@@ -68,59 +67,6 @@ export interface Advisory {
   readonly id: string;
   readonly title: string;
   readonly detail: string;
-}
-
-// ── Commentary Feed ──────────────────────────────────────────────────────────
-
-export interface CommentaryFeedState {
-  readonly revealed: ReadonlyArray<CommentaryLineView>;
-  readonly homeScore: number;
-  readonly awayScore: number;
-  readonly clubSubs: SubstitutionStatusView;
-  readonly clubSubsKnown: boolean;
-  readonly clubOnPitchCount: number;
-  readonly clubPitch: MatchPitchView | null;
-  readonly revealedInjuries: ReadonlyArray<RevealedInjury>;
-  readonly currentMinute: number;
-}
-
-export interface CommentaryFeedActions {
-  readonly submitCommand: (command: MatchCommand, isHalftime: boolean) => Promise<CommandStatus>;
-  readonly resume: () => void;
-}
-
-export interface CommentaryFeedMeta {
-  readonly cursorRef: { current: number };
-  readonly pendingRef: { current: Array<CommentaryLineView> };
-  readonly fetchingRef: { current: boolean };
-  readonly streamCompleteRef: { current: boolean };
-  readonly pausedRef: { current: boolean };
-  readonly commandInFlightRef: { current: boolean };
-  readonly commandRequestRef: { current: number };
-  readonly pitchSentRef: { current: number };
-  readonly pitchAppliedRef: { current: number };
-  readonly clubSubsRef: { current: SubstitutionStatusView };
-  readonly revealedInjuriesRef: { current: ReadonlyArray<RevealedInjury> };
-  readonly injuryByLineRef: { current: WeakMap<CommentaryLineView, InjuryView> };
-  readonly lastRevealedInjuryRef: { current: LastRevealedInjury | null };
-  readonly capReachedRef: { current: boolean };
-  readonly mountedRef: { current: boolean };
-  readonly restoreReadRef: { current: boolean };
-  readonly nextPitchRequest: () => number;
-  readonly applyPollView: (view: RpcSuccess<"resumeSimulation">, request: number) => void;
-  readonly revealLine: (line: CommentaryLineView) => void;
-  readonly setPaused: (paused: boolean) => void;
-  readonly reportError: (message: string) => void;
-}
-
-export interface RevealedInjury {
-  readonly injury: InjuryView;
-  readonly capReachedWhenRevealed: boolean;
-}
-
-export interface LastRevealedInjury {
-  readonly revealed: RevealedInjury;
-  readonly minute: number;
 }
 
 // ── Match Control Panel ──────────────────────────────────────────────────────

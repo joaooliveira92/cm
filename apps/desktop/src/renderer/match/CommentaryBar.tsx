@@ -10,7 +10,7 @@ import {
   useCommentarySpeed,
 } from "./commentaryPreferences.js";
 import { showsInBar, textSoFar } from "./engine/playback.js";
-import type { PlayingLine } from "./hooks/useCommentaryFeed.js";
+import type { PlayingLine } from "./stream.js";
 
 /** Blinks a flash line gets, and how long each lasts. */
 const FLASH_BLINKS = 6;

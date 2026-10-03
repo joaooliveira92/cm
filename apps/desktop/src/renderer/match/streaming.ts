@@ -1,40 +1,32 @@
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Effect, Result } from "effect";
-import {
-  POLL_INTERVAL_MS,
-  REVEAL_INTERVAL_MS,
-  resumeSimulation,
-} from "../rpc.js";
+import { POLL_INTERVAL_MS, REVEAL_INTERVAL_MS, resumeSimulation } from "../rpc.js";
 import { useMatchContext } from "./MatchProvider.js";
 import { controlledClubId } from "./controlledClub.js";
 import { useCommentaryContext } from "./CommentaryProvider.js";
 import { getRevealedEvents } from "./session.js";
 import { getCommentaryHighlights, getCommentarySpeed, speedFactor } from "./commentaryPreferences.js";
 import { playbackParts, showsInBar } from "./engine/playback.js";
-import type { PlayingLine } from "./hooks/useCommentaryFeed.js";
-import { nextPaceDecision, shouldPauseMatch, shouldPollMatch } from "./engine/pace.js";
+import { shouldPauseMatch, nextPaceDecision } from "./engine/pace.js";
+import type { PlayingLine } from "./stream.js";
 
+/**
+ * Drives the live stream: a poller that reads ahead of the reveal, and a pacer that shows what has been
+ * read, one line at a time.
+ *
+ * Both halves talk to the feed only through `MatchStream` — a port whose every member reads the value
+ * current at the moment it is called — so this loop never holds a copy of the feed's state and never
+ * re-subscribes when the match changes underneath it.
+ */
 export const useMatchStreaming = (): void => {
   const { state: matchState, actions: matchActions } = useMatchContext();
-  const { state: commState, meta: commMeta } = useCommentaryContext();
-  const setPhaseComplete = matchActions.setPhaseComplete;
+  const { state: commState, meta } = useCommentaryContext();
+  const { stream } = meta;
+  // Destructured, not taken off `matchActions`: the context value is a fresh object every render, but
+  // these three are stable callbacks, so depending on them does not re-subscribe.
+  const { reportError, setPhaseComplete, setPhasePaused } = matchActions;
 
-  const { match, hydrated, phase, quick } = matchState;
-
-  // Stable refs for commMeta callbacks so effects never re-run when the
-  // callbacks change (they depend on matchState.match which is set once).
-  const nextPitchRequestRef = useRef(commMeta.nextPitchRequest);
-  nextPitchRequestRef.current = commMeta.nextPitchRequest;
-  const applyPollViewRef = useRef(commMeta.applyPollView);
-  applyPollViewRef.current = commMeta.applyPollView;
-  const revealLineRef = useRef(commMeta.revealLine);
-  revealLineRef.current = commMeta.revealLine;
-  const reportErrorRef = useRef(commMeta.reportError);
-  reportErrorRef.current = commMeta.reportError;
-  const setPausedRef = useRef(commMeta.setPaused);
-  setPausedRef.current = commMeta.setPaused;
-  const setPlayingRef = useRef(commMeta.setPlaying);
-  setPlayingRef.current = commMeta.setPlaying;
+  const { match, hydrated, phase, quick, saveId } = matchState;
 
   useEffect(() => {
     if (!hydrated) return;
@@ -46,9 +38,9 @@ export const useMatchStreaming = (): void => {
       commState.revealedInjuries.some(({ injury, capReachedWhenRevealed }) =>
         shouldPauseMatch([injury], clubId, capReachedWhenRevealed),
       );
-    commMeta.pausedRef.current = needsDecision;
-    setPausedRef.current(needsDecision);
-  }, [match, phase, quick, commState.revealedInjuries, hydrated]);
+    stream.halt(needsDecision);
+    setPhasePaused(needsDecision);
+  }, [match, phase, quick, commState.revealedInjuries, hydrated, stream, setPhasePaused]);
 
   useEffect(() => {
     if (!hydrated) return;
@@ -56,55 +48,46 @@ export const useMatchStreaming = (): void => {
 
     let active = true;
     const poll = async (): Promise<void> => {
-      if (
-        !active ||
-        !shouldPollMatch({
-          fetching: commMeta.fetchingRef.current,
-          streamComplete: commMeta.streamCompleteRef.current,
-          paused: commMeta.pausedRef.current || commMeta.commandInFlightRef.current,
-          bufferLength: commMeta.pendingRef.current.length,
-        })
-      ) {
-        return;
-      }
-      commMeta.fetchingRef.current = true;
-      const revealedEvents = getRevealedEvents(matchState.saveId);
-      const request = nextPitchRequestRef.current();
+      if (!active || !stream.mayPoll()) return;
+      stream.beginFetch();
+      const revealedEvents = getRevealedEvents(saveId);
+      const stamp = stream.stamp();
       try {
         const outcome = await Effect.runPromise(
           resumeSimulation({
-            saveId: matchState.saveId,
+            saveId,
             matchId: match.matchId,
-            cursor: commMeta.cursorRef.current,
+            cursor: stream.cursor(),
             revealedEvents,
           }).pipe(Effect.result),
         );
         if (Result.isFailure(outcome)) {
-          reportErrorRef.current("Failed to resume match simulation");
-          commMeta.streamCompleteRef.current = true;
+          reportError("Failed to resume match simulation");
+          stream.endStream();
           return;
         }
-        applyPollViewRef.current(outcome.success, request);
+        stream.receive(outcome.success, stamp);
         if (quick) revealBuffered();
       } catch {
-        reportErrorRef.current("Failed to resume match simulation");
-        commMeta.streamCompleteRef.current = true;
+        reportError("Failed to resume match simulation");
+        stream.endStream();
       } finally {
-        commMeta.fetchingRef.current = false;
+        stream.endFetch();
       }
-      if (quick && active && !commMeta.streamCompleteRef.current) await poll();
+      // A quick result has no pacing worth honouring: read to the end of the match, revealing as it goes.
+      if (quick && active && !stream.streamEnded()) await poll();
     };
 
     const revealBuffered = (): void => {
-      const playing = commMeta.playingRef.current;
+      const playing = stream.playing();
       if (playing !== null) {
-        setPlayingRef.current(null);
-        revealLineRef.current(playing.line);
+        stream.setPlaying(null);
+        stream.reveal(playing.line);
       }
-      for (let next = commMeta.pendingRef.current.shift(); next !== undefined; next = commMeta.pendingRef.current.shift()) {
-        revealLineRef.current(next);
+      for (let next = stream.take(); next !== undefined; next = stream.take()) {
+        stream.reveal(next);
       }
-      if (commMeta.streamCompleteRef.current) setPhaseComplete();
+      if (stream.streamEnded()) setPhaseComplete();
     };
 
     poll();
@@ -113,7 +96,7 @@ export const useMatchStreaming = (): void => {
       active = false;
       clearInterval(interval);
     };
-  }, [match, quick, matchState.saveId, setPhaseComplete, hydrated]);
+  }, [match, quick, saveId, setPhaseComplete, reportError, stream, hydrated]);
 
   useEffect(() => {
     if (match === null) return;
@@ -128,17 +111,17 @@ export const useMatchStreaming = (): void => {
     const show = (playing: PlayingLine): void => {
       const part = playing.parts[playing.shown - 1]!;
       if (playing.shown < playing.parts.length) {
-        setPlayingRef.current(playing);
+        stream.setPlaying(playing);
       } else {
-        setPlayingRef.current(null);
-        revealLineRef.current(playing.line);
+        stream.setPlaying(null);
+        stream.reveal(playing.line);
       }
       schedule(part.delayMs);
     };
 
     const tick = (): void => {
-      const halted = commMeta.pausedRef.current || commMeta.commandInFlightRef.current;
-      const playing = commMeta.playingRef.current;
+      const halted = stream.halted();
+      const playing = stream.playing();
       if (playing !== null) {
         if (halted) schedule(REVEAL_INTERVAL_MS);
         else show({ ...playing, shown: playing.shown + 1 });
@@ -146,14 +129,14 @@ export const useMatchStreaming = (): void => {
       }
       const decision = nextPaceDecision({
         paused: halted,
-        bufferLength: commMeta.pendingRef.current.length,
-        streamComplete: commMeta.streamCompleteRef.current,
+        bufferLength: stream.buffered(),
+        streamComplete: stream.streamEnded(),
       });
-      const next = decision === "reveal" ? commMeta.pendingRef.current.shift() : undefined;
+      const next = decision === "reveal" ? stream.take() : undefined;
       if (next !== undefined && !showsInBar(next, getCommentaryHighlights())) {
         // Lost its display-chance draw, or below the chosen highlights: revealed at once, never shown
         // in the bar, and it takes no time.
-        revealLineRef.current(next);
+        stream.reveal(next);
         tick();
         return;
       }
@@ -161,11 +144,11 @@ export const useMatchStreaming = (): void => {
         show({ line: next, parts: playbackParts(next, speedFactor(getCommentarySpeed())), shown: 1 });
         return;
       }
-      if (decision === "complete") matchActions.setPhaseComplete();
+      if (decision === "complete") setPhaseComplete();
       schedule(REVEAL_INTERVAL_MS);
     };
 
     schedule(REVEAL_INTERVAL_MS);
     return () => clearTimeout(timer);
-  }, [match, setPhaseComplete]);
+  }, [match, setPhaseComplete, stream]);
 };
