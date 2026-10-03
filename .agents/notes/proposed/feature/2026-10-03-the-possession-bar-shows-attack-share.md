@@ -4,7 +4,10 @@ Status: proposed
 
 Partially supersedes [the match model shows only what it produces](../../implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md)
 for corners only: that note listed corners as unavailable because no set-piece event existed, and one
-now does. Possession stays unavailable exactly as it ruled. Sibling of
+now does. Possession stays unavailable exactly as it ruled.
+
+**Superseded in part** by [possession is the share of minutes with the ball](2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md):
+once possession is recorded, the bar shows it and Attacks stays as a Statistics row. Sibling of
 [the match player line folds only recorded events](2026-10-03-the-match-player-line-folds-only-recorded-events.md).
 
 ## Problem

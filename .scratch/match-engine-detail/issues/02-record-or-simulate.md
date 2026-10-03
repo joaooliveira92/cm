@@ -1,7 +1,7 @@
 # Record what is rolled, or simulate new actions?
 
 Type: grilling
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -13,3 +13,8 @@ change what happens next (a tackle that ends an attack, an interception that fli
 [the match model shows only what it produces](../../../.agents/notes/implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md)
 says numbers with no consequence are decorative. Which category does each statistic go in, and is
 "decorative but recorded" acceptable when the decision behind it was really made?
+
+## Answer
+
+**Record decided facts and attribute decided team-level facts; simulate nothing new. Passes, completion
+and key headers are ruled out because nothing in the engine decides them.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-10-03-the-engine-records-decided-facts-not-new-actions.md).

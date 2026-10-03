@@ -1,7 +1,7 @@
 # Recording possession
 
 Type: grilling
-Status: ready-for-agent
+Status: resolved
 Blocked by: 01
 
 ## Question
@@ -13,3 +13,8 @@ right mid-match? Is 92 coin flips a fine enough grain to show as a percentage, o
 a stated precision? Once recorded, the "Attacks" bar from
 [the possession bar shows attack share](../../../.agents/notes/proposed/feature/2026-10-03-the-possession-bar-shows-attack-share.md)
 either becomes a possession bar or stays beside one; which?
+
+## Answer
+
+**Possession is the share of minute-slices with the ball, carried as a cumulative `PossessionTally`
+event; it replaces Attacks on the bar, and Attacks stays as a Statistics row.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md).

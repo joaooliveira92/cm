@@ -2,7 +2,8 @@
 
 Label: `wayfinder:map`
 
-> Status: charted 2026-10-03. Nothing resolved yet. Frontier: 01, 04, 05.
+> Status: 2026-10-03, resolved autonomously at the user's approval. Open: 05 (research running) and 09
+> (waits on 05).
 
 ## Destination
 
@@ -26,17 +27,39 @@ balance, timeline size, commentary) or ruled out with a reason.
 
 ## Decisions so far
 
+- [What the engine rolls but does not record](issues/01-what-the-engine-rolls-but-does-not-record.md):
+  possession per slice, failed-attack slices, contact duels and cross finishers are decided and
+  discarded; no defender, fouled player or pass is ever decided.
+- [Record what is rolled, or simulate new actions?](issues/02-record-or-simulate.md): record and
+  attribute decided facts only; passes, completion and key headers ruled out.
+- [Attribution without moving the seed](issues/03-attribution-without-moving-the-seed.md): a second
+  random stream from the match seed, appended after the slice; results byte-identical.
+- [Recording possession](issues/04-recording-possession.md): share of minute-slices with the ball, as
+  a cumulative tally event; it takes the bottom bar.
+- [Event volume: individual events or tallies?](issues/06-event-volume-and-the-timeline.md):
+  individual events; baseline 59.8 events / 6.7 KB per match, budget ≤ 3× events and +25% commit time.
+- [Naming the fouled player](issues/07-naming-the-fouled-player.md): a side-in-possession player
+  picked on the attribution stream, as a field on `Foul`; takers unchanged.
+- [Commentary and the reveal for new events](issues/08-commentary-for-new-events.md): silent lines
+  keep the one-line-per-event invariant the live cut depends on.
+- [Saves, stored timelines and matches in progress](issues/10-saves-and-in-progress-matches.md):
+  nothing restarts; the stored-timeline union must gain the new kinds; old matches read "-".
+- [Screen follow-through](issues/11-screen-follow-through.md): new columns and rows extend the
+  match-screen fold after its tickets 12 and 18.
+
 ## Not yet specified
 
-- **Balance re-tune.** If ticket 02 puts any statistic in "simulate a new action", scorelines move and
-  a calibration pass is owed; its shape depends on which actions change outcomes.
-- **AI-fixture cost.** Whether AI fixtures simulate the full detail or a cheaper path, once ticket 06
-  sets the volume.
-- **Screen follow-through.** Which columns, statistics and Form figures the match screen gains, and in
-  which order, once the events exist; probably a short amendment to that map's spec rather than new
-  decisions.
+None. Balance cleared to Out of scope (02 changes no outcome), AI-fixture cost settled in 06, screen
+follow-through graduated to 11.
 
 ## Out of scope
+
+- **Re-calibrating goals and fouls.** No decision here changes an outcome. The engine test fixtures
+  measure 4.2 goals and 3.6 fouls per match against `calibrate.test.ts` targets of 2.5–2.8 and 20–26
+  ([06](issues/06-event-volume-and-the-timeline.md)); that gap predates this map and is its own
+  balance effort. Until it is closed, fouls suffered will be small.
+- **Passes, completion and key headers** — nothing decides a pass; returns only with a possession-chain
+  model ([02](issues/02-record-or-simulate.md)).
 
 - A spatial model (Action Zones, 2D Pitch, positions on the pitch): a different engine, not more detail
   on this one.

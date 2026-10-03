@@ -1,7 +1,7 @@
 # Attribution without moving the seed
 
 Type: grilling
-Status: ready-for-agent
+Status: resolved
 Blocked by: 02
 
 ## Question
@@ -13,3 +13,8 @@ match. Should attribution draw from a second random stream derived from the matc
 or from the main stream, accepting new results for every seed? Weigh it against
 [the three-phase engine and deterministic seed](../../../.agents/notes/implemented/architecture/2026-08-27-match-engine-three-phase-and-deterministic-seed.md), [the deterministic match seed seam](../../../.agents/notes/proposed/testing/2026-09-06-deterministic-match-seed-seam.md),
 the command-journal replay of live matches, and `calibrate.test.ts`.
+
+## Answer
+
+**Attribution draws from its own random stream derived from the match seed and appends its events
+after the slice's set pieces, so every existing seed produces the same result.** See [Agent Note](../../../.agents/notes/proposed/architecture/2026-10-03-attribution-draws-from-its-own-stream.md).
