@@ -80,6 +80,19 @@ describe("the career header while a match is on", () => {
     await settle();
     expect(within(scoreboard()).getByText("FT")).toBeTruthy();
   });
+
+  it("mounts the Attacks bar with the scoreboard, and takes it down when the result is accepted", async () => {
+    await mountCareer("in_season", "fixtures");
+    expect(screen.queryByText("Attacks")).toBeNull();
+
+    startMatch();
+    await settle();
+    expect(screen.getByText("Attacks")).toBeTruthy();
+
+    clearActiveMatch(saveId);
+    await settle();
+    expect(screen.queryByText("Attacks")).toBeNull();
+  });
 });
 
 describe("the scoreboard clock", () => {

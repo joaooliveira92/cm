@@ -14,8 +14,10 @@
  */
 import type {
   ClubId,
+  PlayerId,
   SaveId,
   StaffProfileView,
+  StaffRankedPlayerView,
   StaffRankingsView,
 } from "@cm-clone/contracts";
 import {
@@ -53,26 +55,6 @@ export const STAFF_ROLE_TITLES: Readonly<Record<ClubPersonRole, string>> = {
   scout: "Scout",
   physio: "Physio",
 };
-
-const COACHING_LABELS: Readonly<Record<StaffCoachingRating, string>> = {
-  coachingGoalkeepers: "Coaching Goalkeepers",
-  coachingOutfieldPlayers: "Coaching Outfield Players",
-  manManagement: "Man Management",
-  physiotherapy: "Physiotherapy",
-  tacticalKnowledge: "Tactical Knowledge",
-  workingWithYoungsters: "Working With Youngsters",
-};
-
-const MENTAL_LABELS: Readonly<Record<StaffMentalRating, string>> = {
-  adaptability: "Adaptability",
-  determination: "Determination",
-  judgingPlayerAbility: "Judging Player Ability",
-  judgingPlayerPotential: "Judging Player Potential",
-  levelOfDiscipline: "Level of Discipline",
-  motivating: "Motivating",
-};
-
-const capitalise = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
 
 export const StaffProfileScreen = ({
   saveId,
@@ -126,84 +108,150 @@ const StaffProfileBody = ({
   readonly profile: StaffProfileView;
 }) => (
   <>
-    <header className="rounded-panel bg-panel-bg px-3 py-2 text-center">
-      <h1 id="staff-profile-heading" className="text-title">
-        {profile.firstName} {profile.lastName} ({profile.club.name})
-        {!profile.isUserClub && (
-          <span className="ml-2 text-body font-semibold text-text-secondary">[Not your club]</span>
-        )}
-      </h1>
-      <p className="text-body font-semibold text-text-secondary">
-        {STAFF_ROLE_TITLES[profile.role]}, {profile.nationality}, Age {profile.age}
-      </p>
-    </header>
-
-    {(profile.coaching !== null || profile.mental !== null || profile.tactics !== null) && (
-      <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
-        {profile.coaching !== null && (
-          <PlayerPanel title="Coaching">
-            {STAFF_COACHING_RATINGS.map((key) => (
-              <PlayerRow key={key} label={COACHING_LABELS[key]} value={profile.coaching?.[key]} />
-            ))}
-          </PlayerPanel>
-        )}
-        {profile.mental !== null && (
-          <PlayerPanel title="Mental">
-            {STAFF_MENTAL_RATINGS.map((key) => (
-              <PlayerRow key={key} label={MENTAL_LABELS[key]} value={profile.mental?.[key]} />
-            ))}
-          </PlayerPanel>
-        )}
-        {profile.tactics !== null && (
-          <PlayerPanel title="Tactics">
-            <PlayerRow label="Preferred Formation" value={profile.tactics.formation} />
-            <PlayerRow label="Mentality" value={spaced(profile.tactics.mentality)} />
-            <PlayerRow label="Coaching Emphasis" value={capitalise(profile.tactics.coachingEmphasis)} />
-          </PlayerPanel>
-        )}
-      </div>
-    )}
-
+    <StaffProfileHeader profile={profile} />
+    <StaffRatingPanels
+      coaching={profile.coaching}
+      mental={profile.mental}
+      tactics={profile.tactics}
+    />
     {profile.rankings !== null && <RankingsPanel saveId={saveId} rankings={profile.rankings} />}
-
     <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-      <PlayerPanel title="Overview">
-        <PlayerRow label="Date of Birth" value={formatCalendarDate(profile.dateOfBirth)} />
-        <PlayerRow label="Nationality" value={profile.nationality} />
-        <PlayerRow label="Languages" value={profile.languages.join(", ")} />
-        <PlayerRow label="Joined Club" value={formatCalendarDate(profile.joined)} />
-        {profile.plansTraining && <PlayerRow label="Duties" value="Plans the Training Schedule" />}
-      </PlayerPanel>
-      <PlayerNotePanel title="History">
-        {profile.history.length === 0 ? (
-          <p className="text-body text-text-secondary">
-            No earlier clubs — {profile.club.name} is their first post.
-          </p>
-        ) : (
-          <Table aria-label="Earlier clubs">
-            <TableHeader>
-              <TableRow>
-                <TableHead>Seasons</TableHead>
-                <TableHead>Club</TableHead>
-                <TableHead>Role</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {profile.history.map((spell) => (
-                <TableRow key={`${spell.fromYear}-${spell.club.id}`}>
-                  <TableCell className="tabular-nums">
-                    {spell.fromYear}–{spell.toYear}
-                  </TableCell>
-                  <TableCell>{spell.club.name}</TableCell>
-                  <TableCell>{STAFF_ROLE_TITLES[spell.role]}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        )}
-      </PlayerNotePanel>
+      <StaffOverviewPanel profile={profile} />
+      <StaffHistoryPanel history={profile.history} clubName={profile.club.name} />
     </div>
   </>
+);
+
+const StaffProfileHeader = ({ profile }: { readonly profile: StaffProfileView }) => (
+  <header className="rounded-panel bg-panel-bg px-3 py-2 text-center">
+    <h1 id="staff-profile-heading" className="text-title">
+      {profile.firstName} {profile.lastName} ({profile.club.name})
+      {!profile.isUserClub && (
+        <span className="ml-2 text-body font-semibold text-text-secondary">[Not your club]</span>
+      )}
+    </h1>
+    <p className="text-body font-semibold text-text-secondary">
+      {STAFF_ROLE_TITLES[profile.role]}, {profile.nationality}, Age {profile.age}
+    </p>
+  </header>
+);
+
+const COACHING_LABELS: Readonly<Record<StaffCoachingRating, string>> = {
+  coachingGoalkeepers: "Coaching Goalkeepers",
+  coachingOutfieldPlayers: "Coaching Outfield Players",
+  manManagement: "Man Management",
+  physiotherapy: "Physiotherapy",
+  tacticalKnowledge: "Tactical Knowledge",
+  workingWithYoungsters: "Working With Youngsters",
+};
+
+const MENTAL_LABELS: Readonly<Record<StaffMentalRating, string>> = {
+  adaptability: "Adaptability",
+  determination: "Determination",
+  judgingPlayerAbility: "Judging Player Ability",
+  judgingPlayerPotential: "Judging Player Potential",
+  levelOfDiscipline: "Level of Discipline",
+  motivating: "Motivating",
+};
+
+const capitalise = (word: string): string => word.charAt(0).toUpperCase() + word.slice(1);
+
+const RatingRows = <K extends string>({
+  keys,
+  labels,
+  values,
+}: {
+  readonly keys: readonly K[];
+  readonly labels: Readonly<Record<K, string>>;
+  readonly values: Readonly<Record<K, number>>;
+}) => (
+  <>
+    {keys.map((key) => (
+      <PlayerRow key={key} label={labels[key]} value={values[key]} />
+    ))}
+  </>
+);
+
+const StaffRatingPanels = ({
+  coaching,
+  mental,
+  tactics,
+}: {
+  readonly coaching: StaffProfileView["coaching"];
+  readonly mental: StaffProfileView["mental"];
+  readonly tactics: StaffProfileView["tactics"];
+}) => {
+  if (coaching === null && mental === null && tactics === null) {
+    return null;
+  }
+  return (
+    <div className="grid grid-cols-1 gap-3 md:grid-cols-3">
+      {coaching !== null && (
+        <PlayerPanel title="Coaching">
+          <RatingRows keys={STAFF_COACHING_RATINGS} labels={COACHING_LABELS} values={coaching} />
+        </PlayerPanel>
+      )}
+      {mental !== null && (
+        <PlayerPanel title="Mental">
+          <RatingRows keys={STAFF_MENTAL_RATINGS} labels={MENTAL_LABELS} values={mental} />
+        </PlayerPanel>
+      )}
+      {tactics !== null && (
+        <PlayerPanel title="Tactics">
+          <PlayerRow label="Preferred Formation" value={tactics.formation} />
+          <PlayerRow label="Mentality" value={spaced(tactics.mentality)} />
+          <PlayerRow label="Coaching Emphasis" value={capitalise(tactics.coachingEmphasis)} />
+        </PlayerPanel>
+      )}
+    </div>
+  );
+};
+
+const StaffOverviewPanel = ({ profile }: { readonly profile: StaffProfileView }) => (
+  <PlayerPanel title="Overview">
+    <PlayerRow label="Date of Birth" value={formatCalendarDate(profile.dateOfBirth)} />
+    <PlayerRow label="Nationality" value={profile.nationality} />
+    <PlayerRow label="Languages" value={profile.languages.join(", ")} />
+    <PlayerRow label="Joined Club" value={formatCalendarDate(profile.joined)} />
+    {profile.plansTraining && <PlayerRow label="Duties" value="Plans the Training Schedule" />}
+  </PlayerPanel>
+);
+
+const StaffHistoryPanel = ({
+  history,
+  clubName,
+}: {
+  readonly history: StaffProfileView["history"];
+  readonly clubName: string;
+}) => (
+  <PlayerNotePanel title="History">
+    {history.length === 0 ? (
+      <p className="text-body text-text-secondary">
+        No earlier clubs — {clubName} is their first post.
+      </p>
+    ) : (
+      <Table aria-label="Earlier clubs">
+        <TableHeader>
+          <TableRow>
+            <TableHead>Seasons</TableHead>
+            <TableHead>Club</TableHead>
+            <TableHead>Role</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {history.map((spell) => (
+            <TableRow key={`${spell.fromYear}-${spell.club.id}`}>
+              <TableCell className="tabular-nums">
+                {spell.fromYear}–{spell.toYear}
+              </TableCell>
+              <TableCell>{spell.club.name}</TableCell>
+              <TableCell>{STAFF_ROLE_TITLES[spell.role]}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    )}
+  </PlayerNotePanel>
 );
 
 const POSITION_BUTTON_CLASS = `rounded-control px-2 py-1 text-label transition-colors ${FOCUS_RING.join(" ")}`;
@@ -221,66 +269,93 @@ const RankingsPanel = ({
   readonly rankings: StaffRankingsView;
 }) => {
   const [position, setPosition] = useState<Position>("ST");
-  const players = new Map(rankings.players.map((player) => [player.id, player]));
   const order = rankings.byPosition.find((entry) => entry.position === position)?.playerIds ?? [];
   const title = `Coach Player Rankings (${POSITION_NAMES[position]})`;
 
   return (
     <PlayerNotePanel title={title}>
-      <div role="group" aria-label="Ranking position" className="mb-2 flex flex-wrap gap-1">
-        {POSITIONS.map((candidate) => (
-          <button
-            key={candidate}
-            type="button"
-            aria-pressed={candidate === position}
-            aria-label={POSITION_NAMES[candidate]}
-            className={`${POSITION_BUTTON_CLASS} ${
-              candidate === position
-                ? "bg-surface-raised text-text-highlight"
-                : "text-text-secondary hover:bg-surface hover:text-text-primary"
-            }`}
-            onClick={() => setPosition(candidate)}
-          >
-            {candidate}
-          </button>
-        ))}
-      </div>
-      <Table aria-label={title}>
-        <TableHeader>
-          <TableRow>
-            <TableHead className="w-12">Rnk</TableHead>
-            <TableHead>Name</TableHead>
-            <TableHead>Position(s)</TableHead>
-            <TableHead className="text-right">Age</TableHead>
-            <TableHead className="text-right">Cond.</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {order.map((playerId, index) => {
-            const player = players.get(playerId);
-            if (player === undefined) return null;
-            return (
-              <TableRow key={playerId}>
-                <TableCell className="tabular-nums">{index + 1}</TableCell>
-                <TableCell>
-                  <button
-                    type="button"
-                    className={`font-semibold hover:underline ${FOCUS_RING.join(" ")}`}
-                    onClick={(event) =>
-                      navigateCareer({ type: "playerDetail", saveId, playerId }, intentOfClick(event))
-                    }
-                  >
-                    {player.lastName}, {player.firstName.charAt(0)}
-                  </button>
-                </TableCell>
-                <TableCell>{player.positionLabel}</TableCell>
-                <TableCell className="text-right tabular-nums">{player.age}</TableCell>
-                <TableCell className="text-right tabular-nums">{player.condition}%</TableCell>
-              </TableRow>
-            );
-          })}
-        </TableBody>
-      </Table>
+      <RankingsPositionPicker selected={position} onSelect={setPosition} />
+      <RankingsTable label={title} order={order} players={rankings.players} saveId={saveId} />
     </PlayerNotePanel>
+  );
+};
+
+const RankingsPositionPicker = ({
+  selected,
+  onSelect,
+}: {
+  readonly selected: Position;
+  readonly onSelect: (position: Position) => void;
+}) => (
+  <div role="group" aria-label="Ranking position" className="mb-2 flex flex-wrap gap-1">
+    {POSITIONS.map((candidate) => (
+      <button
+        key={candidate}
+        type="button"
+        aria-pressed={candidate === selected}
+        aria-label={POSITION_NAMES[candidate]}
+        className={`${POSITION_BUTTON_CLASS} ${
+          candidate === selected
+            ? "bg-surface-raised text-text-highlight"
+            : "text-text-secondary hover:bg-surface hover:text-text-primary"
+        }`}
+        onClick={() => onSelect(candidate)}
+      >
+        {candidate}
+      </button>
+    ))}
+  </div>
+);
+
+const RankingsTable = ({
+  label,
+  order,
+  players,
+  saveId,
+}: {
+  readonly label: string;
+  readonly order: readonly PlayerId[];
+  readonly players: readonly StaffRankedPlayerView[];
+  readonly saveId: SaveId;
+}) => {
+  const playersById = new Map(players.map((player) => [player.id, player]));
+
+  return (
+    <Table aria-label={label}>
+      <TableHeader>
+        <TableRow>
+          <TableHead className="w-12">Rnk</TableHead>
+          <TableHead>Name</TableHead>
+          <TableHead>Position(s)</TableHead>
+          <TableHead className="text-right">Age</TableHead>
+          <TableHead className="text-right">Cond.</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {order.map((playerId, index) => {
+          const player = playersById.get(playerId);
+          if (player === undefined) return null;
+          return (
+            <TableRow key={playerId}>
+              <TableCell className="tabular-nums">{index + 1}</TableCell>
+              <TableCell>
+                <button
+                  type="button"
+                  className={`font-semibold hover:underline ${FOCUS_RING.join(" ")}`}
+                  onClick={(event) =>
+                    navigateCareer({ type: "playerDetail", saveId, playerId }, intentOfClick(event))
+                  }
+                >
+                  {player.lastName}, {player.firstName.charAt(0)}
+                </button>
+              </TableCell>
+              <TableCell>{player.positionLabel}</TableCell>
+              <TableCell className="text-right tabular-nums">{player.age}</TableCell>
+              <TableCell className="text-right tabular-nums">{player.condition}%</TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
 };

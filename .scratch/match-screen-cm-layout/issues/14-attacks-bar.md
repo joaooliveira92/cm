@@ -11,7 +11,7 @@ mounted once in the match route shell, reading the attack share the statistics r
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** claimed
 
 - [ ] The bar renders on every live and post-match tab and on no pre-match tab.
 - [ ] Both percentages are visible text; "No attacks yet" before the first attack.

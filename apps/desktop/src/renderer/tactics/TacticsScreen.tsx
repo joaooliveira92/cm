@@ -24,6 +24,11 @@ import { TeamSelectionGrid } from "./TeamSelectionGrid.js";
 import { NO_PLAYER, useTacticDraft } from "./useTacticDraft.js";
 import { describeRpcError } from "../rpc.js";
 
+// ── Pure tactic transforms ──────────────────────────────────────
+//
+// Editing a Tactic is a pipeline of immutable value transforms, so a caller can describe a change
+// ("move this slot", "clear the selection") without touching React or the draft lifecycle.
+
 /** Whether the Tactic has moved off the built-in template it is named for. */
 const isModifiedFromTemplate = (tactic: Tactic): boolean => {
   const source = builtInTemplate(tactic.sourceTemplate);
@@ -122,6 +127,44 @@ const CONFLICT_MESSAGE =
 
 type Mode = "positions" | "instructions" | "priorities";
 
+/** Which of the Team Selection table's optional columns are shown. */
+interface ColumnVisibility {
+  readonly pos: boolean;
+  readonly fit: boolean;
+  readonly condition: boolean;
+}
+
+/** Configuration for in-match mode. When provided, the Tactics screen renders as a standalone
+ *  editor inside a `LiveCommandFrame`, receiving all data from the match context instead of loading
+ *  it from the server. The outer `<main>` tag is left to `LiveCommandFrame`. */
+export interface InMatchTactics {
+  /** The current tactic to display and edit. */
+  readonly tactic: Tactic;
+  /** The squad from the match context, used for player names and selection. */
+  readonly squad: ReadonlyArray<SquadPlayerView>;
+  /** The controlled club's display name. */
+  readonly clubName: string;
+  /** Called when the user edits the tactic (seeding an undo stack entry). */
+  readonly setTactic: (tactic: Tactic) => void;
+  /** Called when Confirm is triggered. */
+  readonly onConfirm: () => void;
+  /** Called when Undo Last is triggered. */
+  readonly onUndoLast: () => void;
+  /** Called when Cancel is triggered. */
+  readonly onCancel: () => void;
+  /** Number of pending (undoable) changes. */
+  readonly pendingCount: number;
+  /** Validation error to display, or null. */
+  readonly validationError: string | null;
+  /** True while a command is being submitted. */
+  readonly isPending: boolean;
+}
+
+// ── Co-located presentational components ────────────────────────
+//
+// The writable scope is this one file, so the screen's sections live here rather than one per file.
+// Each owns a single slice of markup and receives only what it renders; the parent below is left to
+// own state, connect hooks and compose them.
 
 /** A CM-style dropdown menu: a button that opens a list of actions in a floating panel. */
 const MenuButton = ({
@@ -189,82 +232,395 @@ const MenuButton = ({
   );
 };
 
-/** Configuration for in-match mode. When provided, the Tactics screen renders as a standalone
- *  editor inside a `LiveCommandFrame`, receiving all data from the match context instead of loading
- *  it from the server. The outer `<main>` tag is left to `LiveCommandFrame`. */
-export interface InMatchTactics {
-  /** The current tactic to display and edit. */
-  readonly tactic: Tactic;
-  /** The squad from the match context, used for player names and selection. */
-  readonly squad: ReadonlyArray<SquadPlayerView>;
-  /** The controlled club's display name. */
-  readonly clubName: string;
-  /** Called when the user edits the tactic (seeding an undo stack entry). */
-  readonly setTactic: (tactic: Tactic) => void;
-  /** Called when Confirm is triggered. */
-  readonly onConfirm: () => void;
-  /** Called when Undo Last is triggered. */
-  readonly onUndoLast: () => void;
-  /** Called when Cancel is triggered. */
-  readonly onCancel: () => void;
-  /** Number of pending (undoable) changes. */
-  readonly pendingCount: number;
-  /** Validation error to display, or null. */
-  readonly validationError: string | null;
-  /** True while a command is being submitted. */
-  readonly isPending: boolean;
-}
-
-export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; readonly inMatch?: InMatchTactics }) => {
-  const isInMatch = inMatch !== undefined;
-
-  // ── Data sources ──────────────────────────────────────────────
-
-  const draftHooks = !isInMatch
-    ? useTacticDraft(saveId, {
-        saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
-      })
-    : null;
-
-  const viewResult = isInMatch
-    ? ({
-        _tag: "Success" as const,
-        value: { squad: inMatch!.squad, club: { name: inMatch!.clubName }, tactic: inMatch!.tactic, revision: 0 },
-      } as const)
-    : draftHooks!.viewResult;
-  const viewError = isInMatch ? null : draftHooks!.viewError;
-  const tactic = isInMatch ? inMatch!.tactic : draftHooks!.tactic;
-  const revision = isInMatch ? 0 : draftHooks!.revision;
-  const conflict = isInMatch ? null : draftHooks!.conflict;
-  const status = isInMatch ? null : draftHooks!.status;
-  const setTactic = isInMatch ? inMatch!.setTactic : draftHooks!.setTactic;
-  const save = isInMatch ? (() => Promise.resolve(false)) : draftHooks!.save;
-  const refresh = isInMatch ? (() => {}) : draftHooks!.refresh;
-
-  const squad: ReadonlyArray<SquadPlayerView> = isInMatch
-    ? inMatch!.squad
-    : viewResult._tag === "Success"
-      ? viewResult.value.squad
-      : [];
-  const clubName: string = isInMatch
-    ? inMatch!.clubName
-    : viewResult._tag === "Success"
-      ? viewResult.value.club.name
-      : "";
-
-  const [mode, setMode] = useState<Mode>("positions");
-  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
-  const [columns, setColumns] = useState({ pos: true, fit: true, condition: true });
-  const squadByIdRef = useRef<ReadonlyMap<string, SquadPlayerView>>(new Map());
-
-  // Update squadByIdRef when the view changes
-  useEffect(() => {
-    if (viewResult._tag === "Success") {
-      squadByIdRef.current = new Map(viewResult.value.squad.map((p) => [p.id, p]));
+/** The screen's `<main>` shell. Message states share the plain frame; the workspace adds the
+ *  full-height flex layout. */
+const TacticsScreenFrame = ({
+  children,
+  variant,
+}: {
+  readonly children: ReactNode;
+  readonly variant: "message" | "workspace";
+}) => (
+  <main
+    tabIndex={-1}
+    data-focus-id="tactics"
+    aria-label="Tactics"
+    className={
+      variant === "workspace"
+        ? `flex min-h-0 flex-1 flex-col gap-0 p-3 text-foreground ${FOCUS_RING.join(" ")}`
+        : `p-8 text-foreground ${FOCUS_RING.join(" ")}`
     }
-  }, [viewResult]);
+  >
+    {children}
+  </main>
+);
 
-  // Register action handlers
+/** The formation menu bar: quick-load templates, column toggles, the template label and the
+ *  positions/instructions/priorities mode switch. */
+const TacticsMenuBar = ({
+  isInMatch,
+  sourceTemplate,
+  modified,
+  columns,
+  onToggleColumn,
+  mode,
+  onSelectMode,
+}: {
+  readonly isInMatch: boolean;
+  readonly sourceTemplate: string;
+  readonly modified: boolean;
+  readonly columns: ColumnVisibility;
+  readonly onToggleColumn: (column: keyof ColumnVisibility) => void;
+  readonly mode: Mode;
+  readonly onSelectMode: (mode: Mode) => void;
+}) => {
+  const templateItems = useMemo(
+    () =>
+      BUILT_IN_TEMPLATE_NAMES.map((name) => ({
+        label: `${name === sourceTemplate ? "✓ " : ""}Quick Load: ${name}`,
+        onSelect: () => void dispatchAction("set-formation", { formation: name }),
+        current: name === sourceTemplate,
+      })),
+    [sourceTemplate],
+  );
+
+  return (
+    <nav aria-label="Tactics menu" className="flex shrink-0 items-center gap-2 pb-2">
+      <MenuButton
+        label="File"
+        items={
+          isInMatch
+            ? templateItems
+            : [...templateItems, { label: "Save", onSelect: () => void dispatchAction("save-tactic") }]
+        }
+      />
+      <MenuButton
+        label="View"
+        items={[
+          {
+            label: `${columns.pos ? "Hide" : "Show"} Position`,
+            onSelect: () => onToggleColumn("pos"),
+            current: columns.pos,
+          },
+          {
+            label: `${columns.fit ? "Hide" : "Show"} Fit`,
+            onSelect: () => onToggleColumn("fit"),
+            current: columns.fit,
+          },
+          {
+            label: `${columns.condition ? "Hide" : "Show"} Condition`,
+            onSelect: () => onToggleColumn("condition"),
+            current: columns.condition,
+          },
+        ]}
+      />
+      <span
+        data-testid="tactic-template-label"
+        className="ml-2 text-label font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
+      >
+        {sourceTemplate}
+        {modified ? " (modified)" : ""}
+      </span>
+      <div className="ml-auto flex items-center gap-2">
+        <button
+          type="button"
+          aria-pressed={mode === "positions"}
+          onClick={() => onSelectMode("positions")}
+          className={CM_BUTTON_CLASS}
+        >
+          Set Positions
+        </button>
+        <button
+          type="button"
+          aria-pressed={mode === "instructions"}
+          onClick={() => onSelectMode("instructions")}
+          className={CM_BUTTON_CLASS}
+        >
+          Set Instructions
+        </button>
+        <button
+          type="button"
+          aria-pressed={mode === "priorities"}
+          onClick={() => onSelectMode("priorities")}
+          className={CM_BUTTON_CLASS}
+        >
+          Set Priorities
+        </button>
+      </div>
+    </nav>
+  );
+};
+
+/** The left column: the Team Selection grid and its interaction hint. */
+const TeamSelectionPanel = ({
+  tactic,
+  squad,
+  mode,
+  selectedSlot,
+  columns,
+  onSelectSlot,
+  onSwap,
+  onAssign,
+}: {
+  readonly tactic: Tactic;
+  readonly squad: ReadonlyArray<SquadPlayerView>;
+  readonly mode: Mode;
+  readonly selectedSlot: number | null;
+  readonly columns: ColumnVisibility;
+  readonly onSelectSlot: (slotIndex: number | null) => void;
+  readonly onSwap: (from: number, to: number) => void;
+  readonly onAssign: (slotIndex: number, playerId: PlayerId) => void;
+}) => (
+  <section
+    aria-label="Team Selection"
+    className={`${CM_PANEL_CLASS} @container min-w-0 ${mode === "positions" ? "flex-1" : "shrink basis-[34rem]"}`}
+  >
+    <h2 className={CM_PANEL_TITLE_CLASS}>Team Selection</h2>
+    <div className="min-h-0 flex-1 overflow-y-auto px-1">
+      <TeamSelectionGrid
+        tactic={tactic}
+        squad={squad}
+        selectedSlot={selectedSlot}
+        onSelectSlot={onSelectSlot}
+        onSwap={onSwap}
+        onAssign={onAssign}
+        columns={columns}
+      />
+    </div>
+    <p className="shrink-0 border-t border-white/10 px-3 py-1.5 text-caption text-text-secondary">
+      Click a starter to select; then click a substitute or reserve to bring him in, or an empty cell on the pitch to move.
+    </p>
+  </section>
+);
+
+/** The right area: the pitch in positions mode, or the instructions/priorities panel. */
+const TacticsModeArea = ({
+  mode,
+  tactic,
+  squad,
+  squadById,
+  selectedSlot,
+  columns,
+  onSelectSlot,
+  onSwap,
+  onMove,
+  onToggleRun,
+  onTacticChange,
+}: {
+  readonly mode: Mode;
+  readonly tactic: Tactic;
+  readonly squad: ReadonlyArray<SquadPlayerView>;
+  readonly squadById: ReadonlyMap<string, SquadPlayerView>;
+  readonly selectedSlot: number | null;
+  readonly columns: ColumnVisibility;
+  readonly onSelectSlot: (slotIndex: number | null) => void;
+  readonly onSwap: (from: number, to: number) => void;
+  readonly onMove: (index: number, cell: Slot, subRow?: number, subCol?: number) => void;
+  readonly onToggleRun: (slotIndex: number, target: Slot | null) => void;
+  readonly onTacticChange: (tactic: Tactic) => void;
+}) => (
+  <div
+    className={`flex min-h-0 flex-col ${
+      mode === "positions" ? "w-[min(calc(68cqh+1.75rem),60cqw)] shrink-0" : "min-w-[28rem] flex-1"
+    }`}
+  >
+    {mode === "positions" && (
+      <section
+        aria-label="Positions"
+        className={`${CM_PANEL_CLASS} flex-1 items-center justify-center px-3 [container-type:size]`}
+      >
+        <FormationPitch
+          formation={tactic.sourceTemplate}
+          slots={tactic.slots}
+          assignments={tactic.assignments}
+          squadById={squadById}
+          selectedSlot={selectedSlot}
+          onSelectSlot={onSelectSlot}
+          onSwap={onSwap}
+          onMove={onMove}
+          onToggleRun={onToggleRun}
+          pitchView={{ position: columns.pos, fit: columns.fit, condition: columns.condition }}
+        />
+      </section>
+    )}
+
+    {mode === "instructions" && (
+      <SetInstructionsPanel
+        tactic={tactic}
+        squadById={squadById}
+        selectedSlot={selectedSlot}
+        onSelectSlot={onSelectSlot}
+        onTacticChange={onTacticChange}
+      />
+    )}
+
+    {mode === "priorities" && (
+      <SetPrioritiesPanel
+        tactic={tactic}
+        squad={squad}
+        squadById={squadById}
+        onTacticChange={onTacticChange}
+      />
+    )}
+  </div>
+);
+
+/** The in-match action bar: validation error, pending-change count and Confirm/Undo/Cancel. */
+const InMatchTacticFooter = ({
+  validationError,
+  pendingCount,
+  isPending,
+}: {
+  readonly validationError: string | null;
+  readonly pendingCount: number;
+  readonly isPending: boolean;
+}) => (
+  <>
+    {validationError && (
+      <p role="alert" className="mt-1 text-data text-text-warning">
+        {validationError}
+      </p>
+    )}
+
+    {pendingCount > 0 && (
+      <p className="mt-1 text-data text-text-secondary">
+        <Badge variant="warning">{pendingCount} pending change{pendingCount === 1 ? "" : "s"}</Badge>
+      </p>
+    )}
+
+    <div className="mt-2 flex items-center justify-center gap-3 border-t border-border-subtle pt-2">
+      <Button
+        type="button"
+        variant="default"
+        disabled={isPending}
+        data-action-id="confirm-live-tactic"
+        onClick={() => void dispatchAction("confirm-live-tactic")}
+      >
+        {isPending ? "Confirming..." : "Confirm"}
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={pendingCount === 0 || isPending}
+        data-action-id="undo-live-tactic"
+        onClick={() => void dispatchAction("undo-live-tactic")}
+      >
+        Undo Last
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={pendingCount === 0 || isPending}
+        data-action-id="cancel-live-tactic"
+        onClick={() => void dispatchAction("cancel-live-tactic")}
+      >
+        Cancel
+      </Button>
+    </div>
+  </>
+);
+
+/** The save-conflict bar: a lost write race offers Refresh, and the transient status line. */
+const TacticConflictBar = ({
+  conflict,
+  status,
+  onRefresh,
+}: {
+  readonly conflict: number | null;
+  readonly status: string | null;
+  readonly onRefresh: () => void;
+}) => {
+  if (conflict === null && !status) return null;
+  return (
+    <section className="chrome-gradient mt-2 flex items-center gap-3 rounded-panel border border-panel-border px-3 py-2 shadow-chrome">
+      {conflict !== null && (
+        <>
+          <span role="alert" className="text-body text-text-danger" data-testid="tactic-conflict">
+            {CONFLICT_MESSAGE}
+          </span>
+          <Button
+            type="button"
+            variant="secondary"
+            data-action-id="refresh-tactics"
+            onClick={onRefresh}
+          >
+            Refresh
+          </Button>
+        </>
+      )}
+      {status && <span className="text-body text-text-bright">{status}</span>}
+    </section>
+  );
+};
+
+/** Publishes the screen's verbs to the shell's bottom bar while it is mounted. Renders nothing. */
+const TacticsBottomBar = ({
+  tactic,
+  squad,
+  enabled,
+}: {
+  readonly tactic: Tactic;
+  readonly squad: ReadonlyArray<SquadPlayerView>;
+  readonly enabled: boolean;
+}) => {
+  const selectionPresent = hasSelection(tactic);
+  const canField = squad.length >= tactic.slots.length;
+  const bottomBarActions = useMemo(
+    () => ({
+      buttons: [
+        {
+          id: "assistant-pick-tactic-team",
+          actionId: "assistant-pick-tactic-team",
+          label: "Assistant Picks Team",
+          disabled: !canField,
+          onTrigger: () => void dispatchAction("assistant-pick-tactic-team"),
+        },
+        {
+          id: "clear-tactic-selection",
+          actionId: "clear-tactic-selection",
+          label: "Clear Selection",
+          disabled: !selectionPresent,
+          onTrigger: () => void dispatchAction("clear-tactic-selection"),
+        },
+        {
+          id: "save-tactic",
+          actionId: "save-tactic",
+          label: "Save Tactic",
+          disabled: false,
+          onTrigger: () => void dispatchAction("save-tactic"),
+        },
+      ],
+    }),
+    [selectionPresent, canField],
+  );
+  useScreenBottomBarActions(enabled ? bottomBarActions : null);
+  return null;
+};
+
+// ── Co-located hooks ────────────────────────────────────────────
+
+/** Registers the screen's action handlers for the lifetime of the mount. The dependency array is
+ *  deliberately the one the screen had: `isInMatch` and `inMatch` are fixed per mount, so they are
+ *  not listed and the handlers close over the current values as before. */
+const useTacticsActionHandlers = ({
+  isInMatch,
+  inMatch,
+  saveId,
+  tactic,
+  squad,
+  revision,
+  setTactic,
+  save,
+}: {
+  readonly isInMatch: boolean;
+  readonly inMatch: InMatchTactics | undefined;
+  readonly saveId: SaveId;
+  readonly tactic: Tactic;
+  readonly squad: ReadonlyArray<SquadPlayerView>;
+  readonly revision: number;
+  readonly setTactic: (tactic: Tactic) => void;
+  readonly save: () => Promise<boolean>;
+}): void => {
   useEffect(() => {
     const unregisters: Array<() => void> = [];
 
@@ -322,45 +678,18 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
       for (const unregister of unregisters) unregister();
     };
   }, [saveId, tactic, squad, revision, setTactic, save]);
+};
 
-  // Screen bottom bar (normal mode only)
-  if (!isInMatch) {
-    const selectionPresent = hasSelection(tactic);
-    const canField = squad.length >= tactic.slots.length;
-    const bottomBarActions = useMemo(
-      () => ({
-        buttons: [
-          {
-            id: "assistant-pick-tactic-team",
-            actionId: "assistant-pick-tactic-team",
-            label: "Assistant Picks Team",
-            disabled: !canField,
-            onTrigger: () => void dispatchAction("assistant-pick-tactic-team"),
-          },
-          {
-            id: "clear-tactic-selection",
-            actionId: "clear-tactic-selection",
-            label: "Clear Selection",
-            disabled: !selectionPresent,
-            onTrigger: () => void dispatchAction("clear-tactic-selection"),
-          },
-          {
-            id: "save-tactic",
-            actionId: "save-tactic",
-            label: "Save Tactic",
-            disabled: false,
-            onTrigger: () => void dispatchAction("save-tactic"),
-          },
-        ],
-      }),
-      [selectionPresent, canField],
-    );
-    useScreenBottomBarActions(viewResult._tag === "Success" ? bottomBarActions : null);
-  }
-
-  const modified = isModifiedFromTemplate(tactic);
-
-  // Keyboard handling: global shortcuts
+/** The screen's global keyboard shortcuts: Ctrl/Cmd+S saves (and is swallowed in-match), Escape
+ *  clears the selected slot. The empty dependency array matches the effect it replaces: the handler
+ *  closes over `isInMatch` and the stable setters. */
+const useTacticsShortcuts = ({
+  isInMatch,
+  setSelectedSlot,
+}: {
+  readonly isInMatch: boolean;
+  readonly setSelectedSlot: (slotIndex: number | null) => void;
+}): void => {
   useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       if (isInMatch && (event.ctrlKey || event.metaKey) && event.key === "s") {
@@ -380,16 +709,20 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
     document.addEventListener("keydown", handler);
     return () => document.removeEventListener("keydown", handler);
   }, []);
+};
 
-  // Group fixtures — always computed, safe before early returns
-  const modifiedTemplates = useMemo(() => {
-    return BUILT_IN_TEMPLATE_NAMES.map((name) => ({
-      name,
-      current: name === tactic.sourceTemplate,
-    }));
-  }, [tactic.sourceTemplate]);
-
-  // Callbacks for pitch interactions — defined before early returns so hook order is stable
+/** The draft-editing commands: the pitch drags, lineup swaps and player assignments, all expressed
+ *  as `Tactic` transforms against the current draft. Owns the one rule that spans them — an empty
+ *  slot that is filled hands the selection on to the next empty one. */
+const useTacticEditing = ({
+  tactic,
+  setTactic,
+  setSelectedSlot,
+}: {
+  readonly tactic: Tactic;
+  readonly setTactic: (tactic: Tactic) => void;
+  readonly setSelectedSlot: (slotIndex: number | null) => void;
+}) => {
   const handleMove = useCallback(
     (index: number, cell: Slot, subRow?: number, subCol?: number) => {
       setTactic(moveSlot(tactic, index, cell, subRow, subCol));
@@ -411,7 +744,7 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
       setTactic(next);
       if (tactic.assignments[slotIndex] === NO_PLAYER) setSelectedSlot(nextEmptySlot(next, slotIndex));
     },
-    [tactic, setTactic],
+    [tactic, setTactic, setSelectedSlot],
   );
 
   const handleBringIn = useCallback(
@@ -435,47 +768,92 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
     (slotIndex: number | null) => {
       setSelectedSlot(slotIndex);
     },
-    [],
+    [setSelectedSlot],
   );
+
+  return { handleMove, handleSwap, handleBringIn, handleAssign, handleToggleRun, handleSelectSlot };
+};
+
+// ── The screen ──────────────────────────────────────────────────
+
+export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; readonly inMatch?: InMatchTactics }) => {
+  const isInMatch = inMatch !== undefined;
+
+  // ── Data sources ──────────────────────────────────────────────
+
+  const draftHooks = !isInMatch
+    ? useTacticDraft(saveId, {
+        saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
+      })
+    : null;
+
+  const viewResult = isInMatch
+    ? ({
+        _tag: "Success" as const,
+        value: { squad: inMatch!.squad, club: { name: inMatch!.clubName }, tactic: inMatch!.tactic, revision: 0 },
+      } as const)
+    : draftHooks!.viewResult;
+  const viewError = isInMatch ? null : draftHooks!.viewError;
+  const tactic = isInMatch ? inMatch!.tactic : draftHooks!.tactic;
+  const revision = isInMatch ? 0 : draftHooks!.revision;
+  const conflict = isInMatch ? null : draftHooks!.conflict;
+  const status = isInMatch ? null : draftHooks!.status;
+  const setTactic = isInMatch ? inMatch!.setTactic : draftHooks!.setTactic;
+  const save = isInMatch ? (() => Promise.resolve(false)) : draftHooks!.save;
+  const refresh = isInMatch ? (() => {}) : draftHooks!.refresh;
+
+  const squad: ReadonlyArray<SquadPlayerView> = isInMatch
+    ? inMatch!.squad
+    : viewResult._tag === "Success"
+      ? viewResult.value.squad
+      : [];
+  const clubName: string = isInMatch
+    ? inMatch!.clubName
+    : viewResult._tag === "Success"
+      ? viewResult.value.club.name
+      : "";
+
+  // ── Local editor state ────────────────────────────────────────
+
+  const [mode, setMode] = useState<Mode>("positions");
+  const [selectedSlot, setSelectedSlot] = useState<number | null>(null);
+  const [columns, setColumns] = useState<ColumnVisibility>({ pos: true, fit: true, condition: true });
+
+  const toggleColumn = useCallback((column: keyof ColumnVisibility) => {
+    setColumns((current) => ({ ...current, [column]: !current[column] }));
+  }, []);
+
+  // ── Wiring ────────────────────────────────────────────────────
+
+  useTacticsActionHandlers({ isInMatch, inMatch, saveId, tactic, squad, revision, setTactic, save });
+  const editing = useTacticEditing({ tactic, setTactic, setSelectedSlot });
+  useTacticsShortcuts({ isInMatch, setSelectedSlot });
+
+  const modified = isModifiedFromTemplate(tactic);
 
   // Early returns — all hooks above are stable across renders
   if (!isInMatch) {
     if (viewError)
       return (
-        <main
-          tabIndex={-1}
-          data-focus-id="tactics"
-          aria-label="Tactics"
-          className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
-        >
+        <TacticsScreenFrame variant="message">
           <Alert variant="destructive">
             <p>{describeRpcError(viewError)}</p>
           </Alert>
-        </main>
+        </TacticsScreenFrame>
       );
     if (viewResult._tag === "Initial")
       return (
-        <main
-          tabIndex={-1}
-          data-focus-id="tactics"
-          aria-label="Tactics"
-          className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
-        >
+        <TacticsScreenFrame variant="message">
           <p className="p-8 text-text-secondary">Loading tactics...</p>
-        </main>
+        </TacticsScreenFrame>
       );
     if (viewResult._tag === "Failure")
       return (
-        <main
-          tabIndex={-1}
-          data-focus-id="tactics"
-          aria-label="Tactics"
-          className={`p-8 text-foreground ${FOCUS_RING.join(" ")}`}
-        >
+        <TacticsScreenFrame variant="message">
           <Alert variant="destructive">
             <p>Failed to load tactics</p>
           </Alert>
-        </main>
+        </TacticsScreenFrame>
       );
   }
 
@@ -483,250 +861,72 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
 
   const squadById = new Map(squad.map((player) => [player.id, player]));
 
-  // Build the content that's shared between modes
   const content: ReactNode = (
     <>
       <h1 className="sr-only">{clubName} Tactics</h1>
 
-      {/* Menu bar */}
-      <nav aria-label="Tactics menu" className="flex shrink-0 items-center gap-2 pb-2">
-        {isInMatch ? (
-          <MenuButton
-            label="File"
-            items={modifiedTemplates.map((t) => ({
-              label: `${t.current ? "✓ " : ""}Quick Load: ${t.name}`,
-              onSelect: () => void dispatchAction("set-formation", { formation: t.name }),
-              current: t.current,
-            }))}
-          />
-        ) : (
-          <MenuButton
-            label="File"
-            items={[
-              ...modifiedTemplates.map((t) => ({
-                label: `${t.current ? "✓ " : ""}Quick Load: ${t.name}`,
-                onSelect: () => void dispatchAction("set-formation", { formation: t.name }),
-                current: t.current,
-              })),
-              { label: "Save", onSelect: () => void dispatchAction("save-tactic") },
-            ]}
-          />
-        )}
-        <MenuButton
-          label="View"
-          items={[
-            {
-              label: `${columns.pos ? "Hide" : "Show"} Position`,
-              onSelect: () => setColumns((c) => ({ ...c, pos: !c.pos })),
-              current: columns.pos,
-            },
-            {
-              label: `${columns.fit ? "Hide" : "Show"} Fit`,
-              onSelect: () => setColumns((c) => ({ ...c, fit: !c.fit })),
-              current: columns.fit,
-            },
-            {
-              label: `${columns.condition ? "Hide" : "Show"} Condition`,
-              onSelect: () => setColumns((c) => ({ ...c, condition: !c.condition })),
-              current: columns.condition,
-            },
-          ]}
-        />
-        <span
-          data-testid="tactic-template-label"
-          className="ml-2 text-label font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]"
-        >
-          {tactic.sourceTemplate}
-          {modified ? " (modified)" : ""}
-        </span>
-        <div className="ml-auto flex items-center gap-2">
-          <button
-            type="button"
-            aria-pressed={mode === "positions"}
-            onClick={() => setMode("positions")}
-            className={CM_BUTTON_CLASS}
-          >
-            Set Positions
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "instructions"}
-            onClick={() => setMode("instructions")}
-            className={CM_BUTTON_CLASS}
-          >
-            Set Instructions
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === "priorities"}
-            onClick={() => setMode("priorities")}
-            className={CM_BUTTON_CLASS}
-          >
-            Set Priorities
-          </button>
-        </div>
-      </nav>
+      <TacticsMenuBar
+        isInMatch={isInMatch}
+        sourceTemplate={tactic.sourceTemplate}
+        modified={modified}
+        columns={columns}
+        onToggleColumn={toggleColumn}
+        mode={mode}
+        onSelectMode={setMode}
+      />
 
       {/* Main content: left column (Team Selection) + right area (pitch) */}
       {/* A size container, so the pitch panel can take the width a 68:100 pitch of this height needs.
           In a match the match state sits above it, so it keeps a floor rather than shrink to nothing
           on a short window. */}
       <div className={`flex min-h-0 flex-1 gap-3 [container-type:size] ${isInMatch ? "min-h-[24rem]" : ""}`}>
-        {/* Left column: Team Selection */}
-        <section
-          aria-label="Team Selection"
-          className={`${CM_PANEL_CLASS} @container min-w-0 ${mode === "positions" ? "flex-1" : "shrink basis-[34rem]"}`}
-        >
-          <h2 className={CM_PANEL_TITLE_CLASS}>Team Selection</h2>
-          <div className="min-h-0 flex-1 overflow-y-auto px-1">
-            <TeamSelectionGrid
-              tactic={tactic}
-              squad={squad}
-              selectedSlot={selectedSlot}
-              onSelectSlot={handleSelectSlot}
-              onSwap={handleBringIn}
-              onAssign={handleAssign}
-              columns={columns}
-            />
-          </div>
-          <p className="shrink-0 border-t border-white/10 px-3 py-1.5 text-caption text-text-secondary">
-            Click a starter to select; then click a substitute or reserve to bring him in, or an empty cell on the pitch to move.
-          </p>
-        </section>
+        <TeamSelectionPanel
+          tactic={tactic}
+          squad={squad}
+          mode={mode}
+          selectedSlot={selectedSlot}
+          columns={columns}
+          onSelectSlot={editing.handleSelectSlot}
+          onSwap={editing.handleBringIn}
+          onAssign={editing.handleAssign}
+        />
 
         {/* Right area: mode-dependent content */}
         {/* Set Positions: the pitch's width at full height (68% of it, plus the panel's padding and
             border), capped so Team Selection keeps 40% of the row. The other modes take the rest. */}
-        <div
-          className={`flex min-h-0 flex-col ${
-            mode === "positions" ? "w-[min(calc(68cqh+1.75rem),60cqw)] shrink-0" : "min-w-[28rem] flex-1"
-          }`}
-        >
-          {mode === "positions" && (
-            <section
-              aria-label="Positions"
-              className={`${CM_PANEL_CLASS} flex-1 items-center justify-center px-3 [container-type:size]`}
-            >
-            <FormationPitch
-              formation={tactic.sourceTemplate}
-              slots={tactic.slots}
-              assignments={tactic.assignments}
-              squadById={squadById}
-              selectedSlot={selectedSlot}
-              onSelectSlot={handleSelectSlot}
-              onSwap={handleSwap}
-              onMove={handleMove}
-              onToggleRun={handleToggleRun}
-              pitchView={{ position: columns.pos, fit: columns.fit, condition: columns.condition }}
-            />
-            </section>
-          )}
-
-          {mode === "instructions" && (
-            <SetInstructionsPanel
-              tactic={tactic}
-              squadById={squadById}
-              selectedSlot={selectedSlot}
-              onSelectSlot={handleSelectSlot}
-              onTacticChange={setTactic}
-            />
-          )}
-
-          {mode === "priorities" && (
-            <SetPrioritiesPanel
-              tactic={tactic}
-              squad={squad}
-              squadById={squadById}
-              onTacticChange={setTactic}
-            />
-          )}
-        </div>
+        <TacticsModeArea
+          mode={mode}
+          tactic={tactic}
+          squad={squad}
+          squadById={squadById}
+          selectedSlot={selectedSlot}
+          columns={columns}
+          onSelectSlot={editing.handleSelectSlot}
+          onSwap={editing.handleSwap}
+          onMove={editing.handleMove}
+          onToggleRun={editing.handleToggleRun}
+          onTacticChange={setTactic}
+        />
       </div>
 
-      {/* In-match mode bar */}
+      {!isInMatch && (
+        <TacticsBottomBar tactic={tactic} squad={squad} enabled={viewResult._tag === "Success"} />
+      )}
+
       {isInMatch && (
-        <>
-          {/* Validation error */}
-          {inMatch!.validationError && (
-            <p role="alert" className="mt-1 text-data text-text-warning">
-              {inMatch!.validationError}
-            </p>
-          )}
-
-          {/* Pending changes indicator */}
-          {inMatch!.pendingCount > 0 && (
-            <p className="mt-1 text-data text-text-secondary">
-              <Badge variant="warning">{inMatch!.pendingCount} pending change{inMatch!.pendingCount === 1 ? "" : "s"}</Badge>
-            </p>
-          )}
-
-          <div className="mt-2 flex items-center justify-center gap-3 border-t border-border-subtle pt-2">
-            <Button
-              type="button"
-              variant="default"
-              disabled={inMatch!.isPending}
-              data-action-id="confirm-live-tactic"
-              onClick={() => void dispatchAction("confirm-live-tactic")}
-            >
-              {inMatch!.isPending ? "Confirming..." : "Confirm"}
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={inMatch!.pendingCount === 0 || inMatch!.isPending}
-              data-action-id="undo-live-tactic"
-              onClick={() => void dispatchAction("undo-live-tactic")}
-            >
-              Undo Last
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={inMatch!.pendingCount === 0 || inMatch!.isPending}
-              data-action-id="cancel-live-tactic"
-              onClick={() => void dispatchAction("cancel-live-tactic")}
-            >
-              Cancel
-            </Button>
-          </div>
-        </>
+        <InMatchTacticFooter
+          validationError={inMatch!.validationError}
+          pendingCount={inMatch!.pendingCount}
+          isPending={inMatch!.isPending}
+        />
       )}
 
-      {/* Conflict bar (normal mode only) */}
-      {!isInMatch && (conflict !== null || status) && (
-        <section className="chrome-gradient mt-2 flex items-center gap-3 rounded-panel border border-panel-border px-3 py-2 shadow-chrome">
-          {conflict !== null && (
-            <>
-              <span role="alert" className="text-body text-text-danger" data-testid="tactic-conflict">
-                {CONFLICT_MESSAGE}
-              </span>
-              <Button
-                type="button"
-                variant="secondary"
-                data-action-id="refresh-tactics"
-                onClick={refresh}
-              >
-                Refresh
-              </Button>
-            </>
-          )}
-          {status && <span className="text-body text-text-bright">{status}</span>}
-        </section>
-      )}
+      <TacticConflictBar conflict={conflict} status={status} onRefresh={refresh} />
     </>
   );
 
   // In in-match mode, LiveCommandFrame provides the <main> tag
   if (isInMatch) return content;
 
-  return (
-    <main
-      tabIndex={-1}
-      data-focus-id="tactics"
-      aria-label="Tactics"
-      className={`flex min-h-0 flex-1 flex-col gap-0 p-3 text-foreground ${FOCUS_RING.join(" ")}`}
-    >
-      {content}
-    </main>
-  );
+  return <TacticsScreenFrame variant="workspace">{content}</TacticsScreenFrame>;
 };
