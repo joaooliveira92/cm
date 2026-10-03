@@ -1,4 +1,4 @@
-import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressItemKey, pressPrefix, test } from "./launchApp.js";
 import { savesDir, seedScouted } from "./seedSaves.js";
 
 /**
@@ -35,9 +35,29 @@ test("Recruitment opens the Scouting Centre with the Scout roster and coverage, 
   await main.getByRole("button", { name: "Scouting Assignment", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Scouting Assignment", level: 1 })).toBeVisible();
 
-  await goto(page, "scouting");
+  await pressPrefix(page, "b");
   await expect(page.getByRole("heading", { name: "Scouting Centre", level: 1 })).toBeVisible();
+
   await main.getByRole("button", { name: "Scouting Knowledge", exact: true }).click();
   await expect(page.getByRole("heading", { name: "Scouting Knowledge", level: 1 })).toBeVisible();
   await expect(page.getByRole("table", { name: "Scouted Clubs" })).toBeVisible();
+});
+
+/**
+ * `g 4 r` reaches Scouting Centre by the two-level prefix through the Recruitment section.
+ * Scouting Centre is the Recruitment section's fourth item (r), so the keyboard gesture navigates to
+ * the screen and the router lands focus on the Scouting Centre region.
+ */
+test("g 4 r reaches Scouting Centre by keyboard with semantic focus", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedScouted(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: scouted");
+
+  await pressItemKey(page, "recruitment", "recruitment-scouting");
+
+  await expect(page.getByRole("heading", { name: "Scouting Centre", level: 1 })).toBeVisible();
+  await expect(page.locator('[data-focus-id="scouting"]')).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

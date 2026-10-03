@@ -1,4 +1,4 @@
-import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchApp.js";
 import { savesDir, seedConcluded } from "./seedSaves.js";
 
 /**
@@ -42,4 +42,9 @@ test("the Performance Report shows an own player's Training Focus and recorded d
   await expect(seasons.getByRole("heading", { level: 3 })).toHaveCount(1);
   await expect(seasons.getByText(/Season baseline|First recorded Season at your club/)).toBeVisible();
   await expect(page.getByText(/Placeholder/)).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+
+  // g b returns to the Training Plan.
+  await pressPrefix(page, "b");
+  await expect(page.getByRole("heading", { name: `${playerName} — Training Plan`, level: 1 })).toBeVisible();
 });

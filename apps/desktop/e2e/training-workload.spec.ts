@@ -1,4 +1,4 @@
-import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressPrefix, pressSectionKey, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -38,4 +38,24 @@ test("the Training screen opens Workload and Recovery, one Condition gauge per p
 
   await pressPrefix(page, "b");
   await expect(page.getByRole("heading", { name: "Training Overview", level: 1 })).toBeVisible();
+});
+
+/**
+ * `g 3` reaches the Training Overview hub by keyboard, and "View workload and recovery details"
+ * opens the Workload screen from it — the same path a keyboard-first player takes.
+ */
+test("g 3 then View workload opens Workload and Recovery by keyboard", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedFresh(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: fresh");
+
+  await pressSectionKey(page, "training");
+  await expect(page.getByRole("heading", { name: "Training Overview", level: 1 })).toBeVisible();
+  await expect(page.locator('[data-focus-id="training"]')).toBeFocused();
+
+  await page.getByRole("button", { name: "View workload and recovery details" }).click();
+  await expect(page.getByRole("heading", { name: "Workload and Recovery", level: 1 })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

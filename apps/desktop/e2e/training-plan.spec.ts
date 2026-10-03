@@ -1,4 +1,4 @@
-import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressPrefix, pressSectionKey, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
 /**
@@ -41,4 +41,23 @@ test("a Workload and Recovery row opens the player's Training Plan, which sets a
 
   await pressPrefix(page, "b");
   await expect(page.getByRole("heading", { name: "Workload and Recovery", level: 1 })).toBeVisible();
+});
+
+/**
+ * `g 3` reaches the Training Overview hub by keyboard through the Training section.
+ * The section key opens the panel, and Training Overview is the section's default destination,
+ * so the keyboard gesture navigates to the screen and the router lands focus.
+ */
+test("g 3 reaches Training Overview by keyboard with semantic focus", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedFresh(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: fresh");
+
+  await pressSectionKey(page, "training");
+
+  await expect(page.getByRole("heading", { name: "Training Overview", level: 1 })).toBeVisible();
+  await expect(page.locator('[data-focus-id="training"]')).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

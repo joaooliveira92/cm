@@ -1,4 +1,4 @@
-import { continueSeededCareer, expect, goto, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressItemKey, pressPrefix, test } from "./launchApp.js";
 import { openClubSurface } from "./leagueRow.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
@@ -28,6 +28,7 @@ test("the Club section's Information entry opens the manager's own club", async 
   // The manager's own club is never marked.
   await expect(page.getByText("[Not your club]")).toHaveCount(0);
   await expect(page.getByText("WIP — Placeholder screen")).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });
 
 test("a league row opens that club's information, marked as not the manager's", async ({
@@ -54,4 +55,27 @@ test("a league row opens that club's information, marked as not the manager's", 
   // also on the staff page — so it is what proves this is Information and not a near neighbour.
   await expect(page.getByText("Ground")).toBeVisible();
   await expect(page.getByText("Capacity")).toBeVisible();
+
+  // g b returns to the League Table.
+  await pressPrefix(page, "b");
+  await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
+});
+
+/**
+ * `g 7 w` reaches Club Information by the two-level prefix through the Club section.
+ * Club Information is the Club section's second item (w), so the keyboard gesture navigates to
+ * the screen and the router lands focus on the Club Information region.
+ */
+test("g 7 w reaches Club Information by keyboard with semantic focus", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedFresh(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: fresh");
+
+  await pressItemKey(page, "club", "club-information");
+
+  await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+  await expect(page.locator('[data-focus-id="clubInformation"]')).toBeFocused();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

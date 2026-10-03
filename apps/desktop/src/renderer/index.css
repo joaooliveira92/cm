@@ -217,9 +217,9 @@
      The formation pitch on the Tactics editor: two mown-stripe greens, white
      markings, and the starter marker. The GK marker is the one position the
      diagram singles out, so it gets its own fill. */
-  --color-pitch-grass: #3f7a2a;
-  --color-pitch-stripe: #478733;
-  --color-pitch-line: rgb(255 255 255 / 0.75);
+  --color-pitch-grass: #3b7529;
+  --color-pitch-stripe: #43813a;
+  --color-pitch-line: rgb(255 255 255 / 0.82);
   --color-pitch-marker: #152a8a;
   --color-pitch-marker-gk: #0f7a36;
 
@@ -407,14 +407,22 @@
 }
 
 /*
- * The Tactics editor's pitch: horizontal mown stripes, twelve bands goal to goal.
+ * The Tactics editor's pitch: horizontal mown stripes, twelve bands goal to goal, under a fine
+ * turf grain and a floodlit falloff that leaves the middle brightest and darkens toward the
+ * corners. All background layers, so the browser rasterizes them once and a drag above never
+ * repaints them.
  */
 @utility pitch-grass {
-  background-image: repeating-linear-gradient(
-    180deg,
-    var(--color-pitch-grass) 0 calc(100% / 12),
-    var(--color-pitch-stripe) calc(100% / 12) calc(100% / 6)
-  );
+  background-color: var(--color-pitch-grass);
+  background-image:
+    radial-gradient(ellipse 75% 60% at 50% 50%, rgb(255 255 255 / 0.07), transparent 70%),
+    radial-gradient(ellipse 90% 80% at 50% 50%, transparent 55%, rgb(0 0 0 / 0.3) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0.1 0 0 0 0 0 0 0 0 0.22 0'/%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E"),
+    repeating-linear-gradient(
+      180deg,
+      var(--color-pitch-grass) 0 calc(100% / 12),
+      var(--color-pitch-stripe) calc(100% / 12) calc(100% / 6)
+    );
 }
 
 /* The Tactics editor's glossy pill: a lit top half over the darker body, as CM drew its buttons. */

@@ -1,6 +1,11 @@
-import { continueSeededCareer, expect, goto, pressPrefix, test } from "./launchApp.js";
+import { continueSeededCareer, expect, goto, pressPrefix, pressSectionKey, test } from "./launchApp.js";
 import { savesDir, seedFresh } from "./seedSaves.js";
 
+/**
+ * Training Schedule's reachable path (Screen 107, ticket 06): the Training Overview hub opens the
+ * Schedule through its "Plan training" button. The g b back assertion returns through real history
+ * to the Training Overview hub.
+ */
 test("the Training Schedule screen opens from the hub, shows session rows with type and intensity selectors, and g b returns", async ({
   window: page,
   userDataDir,
@@ -38,8 +43,9 @@ test("the Training Schedule screen opens from the hub, shows session rows with t
     await expect(rows.nth(i).getByRole("combobox", { name: `Session ${i + 1} intensity` })).toBeVisible();
   }
 
-  // Bottom bar renders Save and Reset buttons (delegation is in the bar too).
+  // Bottom bar renders Save and Reset buttons.
   await expect(main.getByRole("button", { name: "Save Schedule" })).toBeVisible();
+  await expect(main.getByRole("button", { name: "Reset", exact: true })).toBeVisible();
 
   // No alert on screen.
   await expect(page.getByRole("alert")).toHaveCount(0);
@@ -47,4 +53,24 @@ test("the Training Schedule screen opens from the hub, shows session rows with t
   // g b returns to the Training Overview hub.
   await pressPrefix(page, "b");
   await expect(page.getByRole("heading", { name: "Training Overview", level: 1 })).toBeVisible();
+});
+
+/**
+ * `g 3` reaches the Training Overview hub by keyboard, and "Plan training" opens the Schedule
+ * from it — the same path a keyboard-first player takes.
+ */
+test("g 3 then Plan training opens the Training Schedule by keyboard", async ({
+  window: page,
+  userDataDir,
+}) => {
+  await seedFresh(savesDir(userDataDir));
+  await continueSeededCareer(page, "Seed: fresh");
+
+  await pressSectionKey(page, "training");
+  await expect(page.getByRole("heading", { name: "Training Overview", level: 1 })).toBeVisible();
+  await expect(page.locator('[data-focus-id="training"]')).toBeFocused();
+
+  await page.getByRole("button", { name: "Plan training" }).click();
+  await expect(page.getByRole("heading", { name: "Training Schedule", level: 1 })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveCount(0);
 });

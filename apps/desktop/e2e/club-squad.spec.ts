@@ -89,12 +89,14 @@ test("a league row opens that club's squad, marked and read-only, ranged by scou
   await expect(exactRow.getByText(/\d+–\d+/)).toHaveCount(0);
   await expect(exactRow.getByText(/^\d+$/).first()).toBeVisible();
 
+  await expect(page.getByRole("alert")).toHaveCount(0);
+
   // g b returns through real history to the page the entry point came from.
   await pressPrefix(page, "b");
   await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
 });
 
-test("the manager's own club row opens its squad exact and unmarked", async ({
+test("the manager's own club row opens its squad exact and unmarked, and g b returns", async ({
   window: page,
   userDataDir,
 }) => {
@@ -116,4 +118,9 @@ test("the manager's own club row opens its squad exact and unmarked", async ({
   // The manager's own squad reads exact: every OVR and Attribute cell is a plain number, and the
   // en-dash band never appears anywhere on the page.
   await expect(page.getByText(/\d+–\d+/)).toHaveCount(0);
+  await expect(page.getByRole("alert")).toHaveCount(0);
+
+  // g b returns through real history to the page the entry point came from.
+  await pressPrefix(page, "b");
+  await expect(page.getByRole("heading", { name: "League Table" })).toBeVisible();
 });
