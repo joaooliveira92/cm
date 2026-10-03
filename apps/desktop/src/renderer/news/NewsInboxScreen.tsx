@@ -1,7 +1,7 @@
-import type { NewsCategory, NewsView } from "@cm-clone/shared";
+import type { NewsCategory, NewsFilter, NewsView } from "@cm-clone/shared";
 import { EMPTY_NEWS_FILTER, NEWS_CATEGORIES, filterNews, formatCalendarDate } from "@cm-clone/shared";
 import type { NewsMessageView, SaveId } from "@cm-clone/contracts";
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useMemo, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
@@ -25,6 +25,8 @@ import {
   resolveSelection,
   stepSelection,
   toggleCategory,
+  withSearch,
+  withView,
 } from "./inboxState.js";
 
 /**
@@ -67,6 +69,14 @@ const whenLabel = (message: NewsMessageView): string => {
   if (message.seasonNumber !== null) return `Season ${message.seasonNumber}`;
   return "—";
 };
+
+/** A message-state patch as the screen issues it: the target ids plus the fields to set. Ids are
+ *  plain strings at this edge — `bulkTargets` produces unbranded ids — which is why the single
+ *  `runPatch` call site still needs its cast. */
+type PatchFn = (
+  messageIds: ReadonlyArray<string>,
+  fields: { readonly read?: boolean; readonly archived?: boolean; readonly flagged?: boolean },
+) => void;
 
 /**
  * One row. State is carried by text as well as by weight and the leading dot, never by colour
@@ -170,72 +180,233 @@ const MessagePane = ({
   </Card>
 );
 
-export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const inboxResult = useAtomValue(newsInboxAtom(saveId));
-  const [patchState, runPatch] = useAtom(setNewsMessageStateMutation);
+/** The frame every inbox state renders inside: one `main`, one focus target. */
+const InboxShell = ({ children }: { readonly children: ReactNode }) => (
+  <main
+    tabIndex={-1}
+    data-focus-id="news"
+    aria-label="News Inbox"
+    className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
+  >
+    {children}
+  </main>
+);
 
+/** The screen header. Counts are announced politely and describe the whole inbox, not the filtered
+ *  result — narrowing the list must not appear to change how much news there is. */
+const InboxHeader = ({
+  unread,
+  total,
+  actionRequired,
+  highPriorityUnread,
+  refreshing,
+}: {
+  readonly unread: number;
+  readonly total: number;
+  readonly actionRequired: number;
+  readonly highPriorityUnread: number;
+  readonly refreshing: boolean;
+}) => (
+  <header className="flex flex-wrap items-baseline justify-between gap-3">
+    <h1 className="text-title">News</h1>
+    <p aria-live="polite" className="text-body text-text-secondary">
+      {unread} unread of {total}
+      {actionRequired > 0 && ` · ${actionRequired} awaiting your answer`}
+      {actionRequired === 0 &&
+        highPriorityUnread > 0 &&
+        ` · ${highPriorityUnread} needing attention`}
+      {refreshing && " · Refreshing…"}
+    </p>
+  </header>
+);
+
+/** Screen 26 — the filter bar. The bar emits intents; the filter state and its transitions live in
+ *  the hook, so the bar carries no transition logic of its own. */
+const FilterBar = ({
+  filter,
+  narrowed,
+  onView,
+  onToggleCategory,
+  onSearch,
+  onClear,
+}: {
+  readonly filter: NewsFilter;
+  readonly narrowed: boolean;
+  readonly onView: (view: NewsView) => void;
+  readonly onToggleCategory: (category: NewsCategory) => void;
+  readonly onSearch: (search: string) => void;
+  readonly onClear: () => void;
+}) => (
+  <section aria-label="Filters" className="mt-4 flex flex-wrap items-center gap-2">
+    <div role="tablist" aria-label="Inbox view" className="flex gap-1">
+      {VIEW_TABS.map((tab) => (
+        <Button
+          key={tab.view}
+          role="tab"
+          type="button"
+          aria-selected={filter.view === tab.view}
+          variant={filter.view === tab.view ? "default" : "secondary"}
+          onClick={() => onView(tab.view)}
+        >
+          {tab.label}
+        </Button>
+      ))}
+    </div>
+    <div role="group" aria-label="Categories" className="flex flex-wrap gap-1">
+      {NEWS_CATEGORIES.map((category) => (
+        <Button
+          key={category}
+          type="button"
+          aria-pressed={filter.categories.includes(category)}
+          variant={filter.categories.includes(category) ? "default" : "secondary"}
+          onClick={() => onToggleCategory(category)}
+        >
+          {CATEGORY_LABELS[category]}
+        </Button>
+      ))}
+    </div>
+    <Input
+      type="search"
+      aria-label="Search news"
+      placeholder="Search news"
+      value={filter.search}
+      onChange={(event) => onSearch(event.target.value)}
+      className="w-56"
+    />
+    {narrowed && (
+      <Button type="button" variant="secondary" onClick={onClear}>
+        Clear filters
+      </Button>
+    )}
+  </section>
+);
+
+/** The bulk action bar. Eligibility and the target count come from `bulkTargets` over the visible
+ *  list — the bar acts on what the manager can see, and only on what would actually change. */
+const BulkActions = ({
+  visible,
+  pending,
+  onPatch,
+}: {
+  readonly visible: ReadonlyArray<NewsMessageView>;
+  readonly pending: boolean;
+  readonly onPatch: PatchFn;
+}) => {
+  const readTargets = bulkTargets(visible, "read");
+  const archiveTargets = bulkTargets(visible, "archive");
+  return (
+    <section aria-label="Bulk actions" className="mt-3 flex flex-wrap gap-2">
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={pending || readTargets.length === 0}
+        onClick={() => onPatch(readTargets, { read: true })}
+      >
+        Mark all read ({readTargets.length})
+      </Button>
+      <Button
+        type="button"
+        variant="secondary"
+        disabled={pending || archiveTargets.length === 0}
+        onClick={() => onPatch(archiveTargets, { archived: true })}
+      >
+        Archive all ({archiveTargets.length})
+      </Button>
+    </section>
+  );
+};
+
+/** The no-results branch. An empty result under active filters and an empty inbox are different
+ *  situations, so they get different copy and different corrective actions. */
+const EmptyState = ({
+  narrowed,
+  onClear,
+}: {
+  readonly narrowed: boolean;
+  readonly onClear: () => void;
+}) => (
+  <div className="mt-6 text-text-secondary">
+    <p>
+      {narrowed
+        ? "No messages match these filters."
+        : "No news yet. Press Continue to advance the season."}
+    </p>
+    {narrowed && (
+      <Button type="button" variant="secondary" className="mt-2" onClick={onClear}>
+        Clear all filters
+      </Button>
+    )}
+  </div>
+);
+
+/** The message list. A listbox whose rows carry `news-row-<id>` ids, so `aria-activedescendant`
+ *  can name the selection while the rows themselves never own focus. */
+const MessageList = ({
+  messages,
+  selectedId,
+  onSelect,
+  onKeyDown,
+}: {
+  readonly messages: ReadonlyArray<NewsMessageView>;
+  readonly selectedId: string | null;
+  readonly onSelect: (message: NewsMessageView) => void;
+  readonly onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;
+}) => (
+  <div
+    role="listbox"
+    tabIndex={0}
+    aria-label="Messages"
+    aria-activedescendant={selectedId === null ? undefined : `news-row-${selectedId}`}
+    onKeyDown={onKeyDown}
+    className={`max-h-[32rem] overflow-y-auto rounded-md border border-border ${PANEL} ${FOCUS_RING.join(" ")}`}
+  >
+    {messages.map((message) => (
+      <MessageRow
+        key={message.messageId}
+        message={message}
+        selected={message.messageId === selectedId}
+        onSelect={() => onSelect(message)}
+      />
+    ))}
+  </div>
+);
+
+/**
+ * Filter state and the derived visible list. The transitions route through the pure helpers in
+ * `inboxState`, so the rules stay unit-testable without mounting the screen, and `narrowed` is
+ * derived once here — both clear affordances and the empty-state copy read the same answer.
+ */
+const useNewsFiltering = (messages: ReadonlyArray<NewsMessageView>) => {
   const [filter, setFilter] = useState(EMPTY_NEWS_FILTER);
-  const [requestedId, setRequestedId] = useState<string | null>(null);
-  const listRef = useRef<HTMLDivElement | null>(null);
-
-  const messages = inboxResult._tag === "Success" ? inboxResult.value.messages : [];
   const visible = useMemo(() => filterNews(messages, filter), [messages, filter]);
+  return {
+    filter,
+    visible,
+    narrowed: isNarrowed(filter),
+    setView: (view: NewsView) => setFilter(withView(filter, view)),
+    toggleCategory: (category: NewsCategory) =>
+      setFilter({ ...filter, categories: toggleCategory(filter.categories, category) }),
+    setSearch: (search: string) => setFilter(withSearch(filter, search)),
+    clear: () => setFilter(EMPTY_NEWS_FILTER),
+  };
+};
 
-  // The selection is derived rather than stored, so a refresh that appends messages above the
-  // selected one cannot move it, and a filter that hides it cannot leave the pane pointing at a
-  // message the manager can no longer see.
+/**
+ * Selection and the listbox keyboard model. The selection is derived rather than stored, so a
+ * refresh that appends messages above the selected one cannot move it, and a filter that hides it
+ * cannot leave the pane pointing at a message the manager can no longer see. The arrows and
+ * Home/End move within the visible set; Enter and Space open the selection, marking an unread
+ * message read — the same contract a pointer click has.
+ */
+const useNewsSelection = (visible: ReadonlyArray<NewsMessageView>, patch: PatchFn) => {
+  const [requestedId, setRequestedId] = useState<string | null>(null);
+
   const selectedId = resolveSelection(visible, requestedId);
   const selected = visible.find((message) => message.messageId === selectedId) ?? null;
 
-  const loadError = typedError(inboxResult);
-  if (loadError)
-    return (
-      <main
-        tabIndex={-1}
-        data-focus-id="news"
-        aria-label="News Inbox"
-        className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
-      >
-        <Alert variant="destructive">
-          <p>{describeRpcError(loadError)}</p>
-        </Alert>
-      </main>
-    );
-  if (inboxResult._tag === "Initial")
-    return (
-      <main
-        tabIndex={-1}
-        data-focus-id="news"
-        aria-label="News Inbox"
-        className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
-      >
-        <p className="p-8 text-text-secondary">Loading news...</p>
-      </main>
-    );
-  if (inboxResult._tag === "Failure")
-    return (
-      <main
-        tabIndex={-1}
-        data-focus-id="news"
-        aria-label="News Inbox"
-        className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
-      >
-        <Alert variant="destructive">
-          <p>Failed to load news.</p>
-        </Alert>
-      </main>
-    );
-
-  const counts = inboxResult.value.counts;
-  const patchError = typedError(patchState);
-  const pending = patchState.waiting;
-
-  const patch = (
-    messageIds: ReadonlyArray<string>,
-    fields: { readonly read?: boolean; readonly archived?: boolean; readonly flagged?: boolean },
-  ) => {
-    if (messageIds.length === 0 || pending) return;
-    runPatch({ saveId, messageIds: messageIds as never, patch: fields });
+  const openMessage = (message: NewsMessageView) => {
+    setRequestedId(message.messageId);
+    if (message.state === "unread") patch([message.messageId], { read: true });
   };
 
   const onListKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
@@ -264,136 +435,86 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
     }
   };
 
+  return { selectedId, selected, openMessage, onListKeyDown };
+};
+
+export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+  const inboxResult = useAtomValue(newsInboxAtom(saveId));
+  const [patchState, runPatch] = useAtom(setNewsMessageStateMutation);
+
+  const messages = inboxResult._tag === "Success" ? inboxResult.value.messages : [];
+  const filtering = useNewsFiltering(messages);
+
+  const pending = patchState.waiting;
+  const patchError = typedError(patchState);
+  const patch: PatchFn = (messageIds, fields) => {
+    if (messageIds.length === 0 || pending) return;
+    runPatch({ saveId, messageIds: messageIds as never, patch: fields });
+  };
+
+  const selection = useNewsSelection(filtering.visible, patch);
+
+  const loadError = typedError(inboxResult);
+  if (loadError)
+    return (
+      <InboxShell>
+        <Alert variant="destructive">
+          <p>{describeRpcError(loadError)}</p>
+        </Alert>
+      </InboxShell>
+    );
+  if (inboxResult._tag === "Initial")
+    return (
+      <InboxShell>
+        <p className="p-8 text-text-secondary">Loading news...</p>
+      </InboxShell>
+    );
+  if (inboxResult._tag === "Failure")
+    return (
+      <InboxShell>
+        <Alert variant="destructive">
+          <p>Failed to load news.</p>
+        </Alert>
+      </InboxShell>
+    );
+
+  const counts = inboxResult.value.counts;
+  const { visible, narrowed } = filtering;
+  const { selectedId, selected } = selection;
+
   return (
-    <main
-      tabIndex={-1}
-      data-focus-id="news"
-      aria-label="News Inbox"
-      className={`p-6 text-foreground ${FOCUS_RING.join(" ")}`}
-    >
-      <header className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-title">News</h1>
-        {/* Counts are announced politely and describe the whole inbox, not the filtered result —
-            narrowing the list must not appear to change how much news there is. */}
-        <p aria-live="polite" className="text-body text-text-secondary">
-          {counts.unread} unread of {counts.total}
-          {counts.actionRequired > 0 && ` · ${counts.actionRequired} awaiting your answer`}
-          {counts.actionRequired === 0 &&
-            counts.highPriorityUnread > 0 &&
-            ` · ${counts.highPriorityUnread} needing attention`}
-          {inboxResult.waiting && " · Refreshing…"}
-        </p>
-      </header>
-
-      {/* Screen 26 — filters. */}
-      <section aria-label="Filters" className="mt-4 flex flex-wrap items-center gap-2">
-        <div role="tablist" aria-label="Inbox view" className="flex gap-1">
-          {VIEW_TABS.map((tab) => (
-            <Button
-              key={tab.view}
-              role="tab"
-              type="button"
-              aria-selected={filter.view === tab.view}
-              variant={filter.view === tab.view ? "default" : "secondary"}
-              onClick={() => setFilter({ ...filter, view: tab.view })}
-            >
-              {tab.label}
-            </Button>
-          ))}
-        </div>
-        <div role="group" aria-label="Categories" className="flex flex-wrap gap-1">
-          {NEWS_CATEGORIES.map((category) => (
-            <Button
-              key={category}
-              type="button"
-              aria-pressed={filter.categories.includes(category)}
-              variant={filter.categories.includes(category) ? "default" : "secondary"}
-              onClick={() =>
-                setFilter({ ...filter, categories: toggleCategory(filter.categories, category) })
-              }
-            >
-              {CATEGORY_LABELS[category]}
-            </Button>
-          ))}
-        </div>
-        <Input
-          type="search"
-          aria-label="Search news"
-          placeholder="Search news"
-          value={filter.search}
-          onChange={(event) => setFilter({ ...filter, search: event.target.value })}
-          className="w-56"
-        />
-        {isNarrowed(filter) && (
-          <Button type="button" variant="secondary" onClick={() => setFilter(EMPTY_NEWS_FILTER)}>
-            Clear filters
-          </Button>
-        )}
-      </section>
-
-      <section aria-label="Bulk actions" className="mt-3 flex flex-wrap gap-2">
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={pending || bulkTargets(visible, "read").length === 0}
-          onClick={() => patch(bulkTargets(visible, "read"), { read: true })}
-        >
-          Mark all read ({bulkTargets(visible, "read").length})
-        </Button>
-        <Button
-          type="button"
-          variant="secondary"
-          disabled={pending || bulkTargets(visible, "archive").length === 0}
-          onClick={() => patch(bulkTargets(visible, "archive"), { archived: true })}
-        >
-          Archive all ({bulkTargets(visible, "archive").length})
-        </Button>
-      </section>
-
+    <InboxShell>
+      <InboxHeader
+        unread={counts.unread}
+        total={counts.total}
+        actionRequired={counts.actionRequired}
+        highPriorityUnread={counts.highPriorityUnread}
+        refreshing={inboxResult.waiting}
+      />
+      <FilterBar
+        filter={filtering.filter}
+        narrowed={narrowed}
+        onView={filtering.setView}
+        onToggleCategory={filtering.toggleCategory}
+        onSearch={filtering.setSearch}
+        onClear={filtering.clear}
+      />
+      <BulkActions visible={visible} pending={pending} onPatch={patch} />
       {patchError !== null && (
         <p role="alert" className="mt-3 text-body text-destructive">
           {describeRpcError(patchError)}
         </p>
       )}
-
       {visible.length === 0 ? (
-        <div className="mt-6 text-text-secondary">
-          <p>{isNarrowed(filter) ? "No messages match these filters." : "No news yet. Press Continue to advance the season."}</p>
-          {isNarrowed(filter) && (
-            <Button
-              type="button"
-              variant="secondary"
-              className="mt-2"
-              onClick={() => setFilter(EMPTY_NEWS_FILTER)}
-            >
-              Clear all filters
-            </Button>
-          )}
-        </div>
+        <EmptyState narrowed={narrowed} onClear={filtering.clear} />
       ) : (
         <div className="mt-4 grid gap-4 lg:grid-cols-[minmax(18rem,24rem)_1fr]">
-          <div
-            ref={listRef}
-            role="listbox"
-            tabIndex={0}
-            aria-label="Messages"
-            aria-activedescendant={selectedId === null ? undefined : `news-row-${selectedId}`}
-            onKeyDown={onListKeyDown}
-            className={`max-h-[32rem] overflow-y-auto rounded-md border border-border ${PANEL} ${FOCUS_RING.join(" ")}`}
-          >
-            {visible.map((message) => (
-              <MessageRow
-                key={message.messageId}
-                message={message}
-                selected={message.messageId === selectedId}
-                onSelect={() => {
-                  setRequestedId(message.messageId);
-                  if (message.state === "unread") patch([message.messageId], { read: true });
-                }}
-              />
-            ))}
-          </div>
-
+          <MessageList
+            messages={visible}
+            selectedId={selectedId}
+            onSelect={selection.openMessage}
+            onKeyDown={selection.onListKeyDown}
+          />
           {selected !== null && (
             <MessagePane
               message={selected}
@@ -410,6 +531,6 @@ export const NewsInboxScreen = ({ saveId }: { readonly saveId: SaveId }) => {
           )}
         </div>
       )}
-    </main>
+    </InboxShell>
   );
 };
