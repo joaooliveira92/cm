@@ -8,6 +8,7 @@ import { useCommentaryContext } from "../CommentaryProvider.js";
 import { KickoffPanel } from "../KickoffPanel.js";
 import { MatchCommentaryStream } from "../MatchCommentaryStream.js";
 import { MatchControlPanel } from "../MatchControlPanel.js";
+import { MatchOverviewPanel } from "../MatchOverviewPanel.js";
 import { PostMatchSummary } from "../PostMatchSummary.js";
 
 export const RESTARTED_FROM_KICKOFF = "The app was closed mid-match, so this match has restarted from kickoff.";
@@ -72,6 +73,7 @@ export const MatchDayLayout = () => {
 
       {state.match && (
         <section className="stadium-wash mt-6 rounded-panel border border-panel-border-dark p-4 shadow-panel">
+          <MatchOverviewPanel saveId={state.saveId} />
           {state.phase === "complete" || state.phase === "committing" || state.phase === "committed" ? (
             <MatchComplete match={state.match} />
           ) : (

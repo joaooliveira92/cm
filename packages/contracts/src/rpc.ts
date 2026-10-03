@@ -107,6 +107,7 @@ import {
   MatchStatisticsView,
   MatchRatingsView,
   MatchPlayerStatsView,
+  MatchOverviewView,
   MatchReportView,
   TrainingFocusNotOfferedError,
   RetrainingTargetView,
@@ -510,6 +511,18 @@ commitCareer: {
       revealedEvents: Schema.NullOr(Schema.Finite),
     }),
     success: Schema.NullOr(MatchPlayerStatsView),
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
+  },
+  /** Map ticket 15: the live Match tab's and post-match Summary's Match Incidents (scorers, penalty
+   *  marks, sendings-off), the half-time score once revealed, and the fixture panel. Bound and cut
+   *  as `getMatchStatistics` is. */
+  getMatchOverview: {
+    payload: Schema.Struct({
+      saveId: SaveId,
+      matchId: Schema.NullOr(MatchId),
+      revealedEvents: Schema.NullOr(Schema.Finite),
+    }),
+    success: Schema.NullOr(MatchOverviewView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
   },
   /** Screen 103: the Match Report of a Fixture whose result has been committed. A read over the

@@ -404,6 +404,62 @@ export class MatchPlayerStatsView extends Schema.Class<MatchPlayerStatsView>("Ma
 }) {}
 
 // ---------------------------------------------------------------------------
+// Match Overview (map ticket 15): incidents, half-time score and the fixture panel
+// ---------------------------------------------------------------------------
+
+/** One goal in a scorer's line: its minute and whether it came from a penalty (a Goal directly
+ *  preceded by the same player's Penalty). */
+export class MatchIncidentGoal extends Schema.Class<MatchIncidentGoal>("MatchIncidentGoal")({
+  minute: Schema.Finite,
+  half: Schema.Literals([1, 2]),
+  penalty: Schema.Boolean,
+}) {}
+
+/** One scorer's line: the player and every goal, in order. A scorer with two goals is one line. */
+export class MatchIncidentScorer extends Schema.Class<MatchIncidentScorer>("MatchIncidentScorer")({
+  playerId: PlayerId,
+  playerName: Schema.String,
+  goals: Schema.Array(MatchIncidentGoal),
+}) {}
+
+export class MatchSendOff extends Schema.Class<MatchSendOff>("MatchSendOff")({
+  playerId: PlayerId,
+  playerName: Schema.String,
+  minute: Schema.Finite,
+  half: Schema.Literals([1, 2]),
+}) {}
+
+/** One side's Match Incidents: scorers in order of their first goal, then sendings-off. */
+export class MatchTeamIncidents extends Schema.Class<MatchTeamIncidents>("MatchTeamIncidents")({
+  scorers: Schema.Array(MatchIncidentScorer),
+  sendOffs: Schema.Array(MatchSendOff),
+}) {}
+
+/** The occasion: competition and round, the game date, and the home club's ground. Referee, weather
+ *  and attendance are not modelled and never drawn. */
+export class MatchFixturePanel extends Schema.Class<MatchFixturePanel>("MatchFixturePanel")({
+  competitionName: Schema.String,
+  round: Schema.Finite,
+  gameDate: Schema.String,
+  venue: Schema.String,
+}) {}
+
+/** The shared read behind the live Match tab's and the post-match Summary's Match Incidents and
+ *  Fixture panels. Cut at the revealed position live; the half-time score is null until
+ *  `HalfTimeReached` is revealed, never a fabricated 0-0. */
+export class MatchOverviewView extends Schema.Class<MatchOverviewView>("MatchOverviewView")({
+  matchId: MatchId,
+  homeClubName: Schema.String,
+  awayClubName: Schema.String,
+  throughMinute: Schema.NullOr(Schema.Finite),
+  home: MatchTeamIncidents,
+  away: MatchTeamIncidents,
+  halfTimeHomeScore: Schema.NullOr(Schema.Finite),
+  halfTimeAwayScore: Schema.NullOr(Schema.Finite),
+  fixture: MatchFixturePanel,
+}) {}
+
+// ---------------------------------------------------------------------------
 // Match Report (Screen 103): the committed match's record
 // ---------------------------------------------------------------------------
 

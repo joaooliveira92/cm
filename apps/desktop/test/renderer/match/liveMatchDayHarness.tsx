@@ -211,6 +211,7 @@ export const mountMatchDayWithSpine = async (
   if (sess !== null) setActiveMatch(sess as never);
   mockPreload(async (method, payload) => {
     if (method === "getTactics") return { _tag: "Success", value: tacticView() } as never;
+    if (method === "getMatchOverview") return { _tag: "Success", value: null } as never;
     if (method === "resumeSimulation") {
       const overrides = typeof polled === "function" ? polled(polls) : polled;
       polls += 1;

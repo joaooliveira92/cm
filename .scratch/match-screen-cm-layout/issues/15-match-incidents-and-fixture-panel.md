@@ -9,9 +9,9 @@ fails as the statistics read does. Defined in [06](06-the-overview-incidents-and
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] A scorer with two goals reads as one line with both minutes; stoppage minutes use the existing minute formatting.
-- [ ] A Goal directly after the same player's Penalty event is marked "(pen)".
-- [ ] The half-time line is absent before HalfTimeReached is revealed.
-- [ ] The fixture panel shows no referee, weather or attendance.
+- [x] A scorer with two goals reads as one line with both minutes; stoppage minutes use the existing minute formatting.
+- [x] A Goal directly after the same player's Penalty event is marked "(pen)".
+- [x] The half-time line is absent before HalfTimeReached is revealed.
+- [x] The fixture panel shows no referee, weather or attendance.

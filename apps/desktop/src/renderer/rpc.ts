@@ -130,7 +130,7 @@ export {
   applyLeaguePreset,
 } from "./rpc/precareer.js";
 
-export { getAwaitingMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchRatings, getMatchPlayerStats, getMatchReport } from "./rpc/match.js";
+export { getAwaitingMatch, resumeSimulation, getTeamSheet, getPostMatchSummary, getMatchStatistics, getMatchRatings, getMatchPlayerStats, getMatchOverview, getMatchReport } from "./rpc/match.js";
 
 export {
   REVEAL_INTERVAL_MS,
