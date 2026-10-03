@@ -662,11 +662,6 @@ const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
   // a single coherent panel across files, making the per-slot instruction layout harder to audit.
   "apps/desktop/src/renderer/tactics/SetInstructionsPanel.tsx":
     "set-instructions panel; one coherent UI panel; layout readability in a single component",
-  // The main tactics screen: menu bar, three-mode switching (positions/instructions/priorities),
-  // team selection grid, formation pitch, in-match confirm/undo/cancel. Split would scatter the
-  // mode-switching state machine across files.
-  "apps/desktop/src/renderer/tactics/TacticsScreen.tsx":
-    "main tactics screen; three-mode state machine + in-match controls; structural value in one view",
 }
 
 /** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */

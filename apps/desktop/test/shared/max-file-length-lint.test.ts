@@ -78,7 +78,6 @@ describe("max-file-length", () => {
       join("apps", "desktop", "src", "main", "db", "schema.ts"),
       join("apps", "desktop", "src", "main", "db", "migrations.generated.ts"),
       join("apps", "desktop", "src", "renderer", "tactics", "SetInstructionsPanel.tsx"),
-      join("apps", "desktop", "src", "renderer", "tactics", "TacticsScreen.tsx"),
     ]) {
       expect(statSync(join(repoRoot, path)).isFile()).toBe(true);
     }

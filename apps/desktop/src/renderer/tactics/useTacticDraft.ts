@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { PlayerId, Tactic, WriteRequestId, type SaveId } from "@cm-clone/contracts";
+import { Tactic, WriteRequestId, type SaveId } from "@cm-clone/contracts";
 import { STARTER_COUNT, builtInTemplate, tacticFromTemplate, type TacticTemplate } from "@cm-clone/shared";
 import {
   changeTacticsMutation,
@@ -11,10 +11,7 @@ import {
   useAtomValue,
   type RpcClientError,
 } from "../rpc.js";
-
-/** The placeholder the editor holds in a slot no player is named for yet. The server refuses a
- *  Tactic that carries any, so a draft with one is something to fill, never something to save. */
-export const NO_PLAYER = PlayerId.make("");
+import { NO_PLAYER } from "./tacticEdits.js";
 
 /** A Tactic loaded from a template: its slots, instructions and set-piece settings, none of them
  *  named, an empty bench and no takers. The screen-safe default below and the manager's preferred
