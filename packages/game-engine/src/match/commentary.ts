@@ -364,6 +364,23 @@ const drawTemplate = (
 };
 
 /**
+ * A penalty's context is the foul that produced it, which a card may sit between; every other line
+ * reads the event immediately before it.
+ */
+const contextualPrevious = (
+  event: MatchEvent,
+  events: ReadonlyArray<MatchEvent>,
+  index: number,
+): MatchEvent | undefined => {
+  if (event._tag === "Penalty") {
+    for (let i = index - 1; i >= 0; i--) {
+      if (events[i]!._tag === "Foul") return events[i];
+    }
+  }
+  return events[index - 1];
+};
+
+/**
  * Renders the full ordered event list into Commentary Lines, one per event, purely from the events and
  * a seed derived from the match. No template-choice state is persisted. A line depends only on the
  * events up to and including its own, so re-running this over a resimulated list (ADR-0007) leaves
@@ -399,7 +416,7 @@ export const renderCommentary = (
         level: "full",
       };
     }
-    const { keys, tokens } = drawFor(event, events[index - 1], match, names, table.phrases);
+    const { keys, tokens } = drawFor(event, contextualPrevious(event, events, index), match, names, table.phrases);
     const texts = partsOf(keys.map((key) => fillTemplate(drawTemplate(table, bags, matchSeed, key, tokens), tokens)));
     // A line plays by its first section's settings, so a goal plays by its Goal section, not its GoalScore.
     const playback = table.playback[keys[0]!];

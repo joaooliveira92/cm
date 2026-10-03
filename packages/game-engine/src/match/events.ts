@@ -115,8 +115,8 @@ export interface InterceptionEvent extends TeamPlayerEvent {
 }
 
 /** An aerial duel decided by the engine's header rule. `attacking` is true when the winner is the
- *  header shooter; `teamClubId` is the attacking side's club. Attempted is credited for both players,
- *  won for the winner. */
+ *  header shooter; `teamClubId` is the winner's club. Attempted is credited for both players, won for
+ *  the winner. */
 export interface HeaderDuelEvent extends BaseMatchEvent {
   readonly _tag: "HeaderDuel";
   readonly half: MatchHalf;

@@ -5,8 +5,9 @@
  * kick or penalty is struck by its taker; a corner is headed by someone else, the taker's assist.
  */
 import type { MatchEvent } from "./events.js";
+import type { ShotKind } from "./commentarySections.js";
 
-export type ShotKind = "closeRange" | "header" | "flickOn" | "longRange" | "freeKick" | "penalty";
+export type { ShotKind };
 
 export type ShotEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "ShotOnTarget" | "ShotMissed" }>;
 

@@ -69,17 +69,19 @@ export const CommentaryFeed = ({
       onScroll={onScroll}
       className={`space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-body shadow-panel ${className}`}
     >
-      {lines.map((line, index) => (
-        <li key={index} className={`flex gap-3 ${rowClass(line.tag)}`}>
-          <span className="w-10 shrink-0 text-data tabular-nums text-text-muted">
-            {MILESTONES[line.tag] ?? `${line.minute}'`}
-          </span>
-          {CARD_COLOUR[line.tag] !== undefined && (
-            <span aria-hidden="true" className={`mt-1 inline-block h-3 w-2 shrink-0 rounded-[1px] ${CARD_COLOUR[line.tag]}`} />
-          )}
-          <span className={TONE[line.tag] ?? ""}>{line.text}</span>
-        </li>
-      ))}
+      {lines
+        .filter((line) => line.text !== "")
+        .map((line, index) => (
+          <li key={index} className={`flex gap-3 ${rowClass(line.tag)}`}>
+            <span className="w-10 shrink-0 text-data tabular-nums text-text-muted">
+              {MILESTONES[line.tag] ?? `${line.minute}'`}
+            </span>
+            {CARD_COLOUR[line.tag] !== undefined && (
+              <span aria-hidden="true" className={`mt-1 inline-block h-3 w-2 shrink-0 rounded-[1px] ${CARD_COLOUR[line.tag]}`} />
+            )}
+            <span className={TONE[line.tag] ?? ""}>{line.text}</span>
+          </li>
+        ))}
       {lines.length === 0 && <li className="text-text-muted italic">{emptyMessage}</li>}
     </ol>
   );

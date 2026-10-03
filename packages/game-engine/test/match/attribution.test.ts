@@ -39,6 +39,20 @@ describe("attribution records decided facts without moving the seed", () => {
     }
   });
 
+  it("recovers the un-attributed timeline with a live command applied", () => {
+    for (let i = 0; i < 200; i++) {
+      const seed = 6000 + i;
+      const home = buildTeam(clubId("home"), seed * 2).setup;
+      const away = buildTeam(clubId("away"), seed * 2 + 1).setup;
+      const commandsByMinute = new Map([
+        [30, [{ _tag: "ForceOff" as const, clubId: home.clubId, playerId: home.squad[0]!.id }]],
+      ]);
+      const attributed = simulateMatch({ seed, home, away, commandsByMinute });
+      const plain = simulateMatch({ seed, home, away, commandsByMinute, recordAttribution: false });
+      expect(withoutAttribution(attributed)).toEqual(plain);
+    }
+  });
+
   it("emits the new kinds and names a possession-side player on a foul", () => {
     for (let i = 0; i < 40; i++) {
       const seed = 7000 + i;
@@ -80,7 +94,8 @@ describe("attribution records decided facts without moving the seed", () => {
       for (let i = 1; i < tallies.length; i++) {
         const previous = tallies[i - 1]!;
         const current = tallies[i]!;
-        expect(current.homeSlices + current.awaySlices).toBeGreaterThan(previous.homeSlices + previous.awaySlices);
+        // A boundary tally repeats the last eventful slice's counts, so the total never falls.
+        expect(current.homeSlices + current.awaySlices).toBeGreaterThanOrEqual(previous.homeSlices + previous.awaySlices);
         expect(current.homeSlices).toBeGreaterThanOrEqual(previous.homeSlices);
         expect(current.awaySlices).toBeGreaterThanOrEqual(previous.awaySlices);
       }
