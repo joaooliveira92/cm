@@ -72,6 +72,8 @@ question. Plan only: no code in this effort.
 - 2026-10-04: tickets 16 and 17 resolved — Latest Scores ships (unresolved before acceptance with no
   score, then the day's other results grouped by competition with cup penalties) and Report joins
   the post-match tab bar, opening the save-scoped report for the match just played. Frontier: empty.
+  The spec's E2E pass through Latest Scores is deferred with the rest of this effort's e2e sweep:
+  the component and main-process seams are covered, no Playwright spec drives the new tab yet.
 
 ## Not yet specified
 

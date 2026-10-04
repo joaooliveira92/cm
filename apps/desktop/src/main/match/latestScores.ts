@@ -22,6 +22,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadPendingFixture, loadSeasonRow } from "../season/currentSeason.js";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
+import { controlledClubLastPlayedFixture } from "./statistics.js";
 
 /** One raw `fixtures` row of the Matchday, before grouping and name resolution. */
 export interface LatestScoreRow {
@@ -85,21 +86,11 @@ export const latestScoresFromRows = (
   });
 };
 
-/** The controlled club's most recently played Fixture, or `null` before its first. */
-const lastPlayedFixture = Effect.gen(function* () {
-  const sql = yield* SqlClient;
-  const rows = yield* sql<{
-    id: FixtureId;
-    date: string;
-  }>`SELECT f.id, f.scheduled_date as "date"
-     FROM fixtures f
-     JOIN clubs c ON c.is_user_club = 1 AND (f.home_club_id = c.id OR f.away_club_id = c.id)
-     WHERE f.played = 1
-     ORDER BY f.scheduled_date DESC, f.id DESC
-     LIMIT 1`;
-  return rows[0] ?? null;
-});
-
+/**
+ * The Latest Scores view for the save: the other fixtures on the user's own Matchday date, grouped
+ * and named. The date comes from the pending boundary fixture while one is pending, otherwise from
+ * the controlled club's last played fixture (the same resolver `getLatestMatchReport` uses).
+ */
 export const latestScoresView = Effect.gen(function* () {
   const row = yield* loadSeasonRow;
   const pending = yield* loadPendingFixture(row);
@@ -113,7 +104,7 @@ export const latestScoresView = Effect.gen(function* () {
     userFixtureId = pending.fixtureId;
     resolved = false;
   } else {
-    const played = yield* lastPlayedFixture;
+    const played = yield* controlledClubLastPlayedFixture;
     if (played === null) {
       return new LatestScoresView({ date: row.currentDate, resolved: false, groups: [] });
     }

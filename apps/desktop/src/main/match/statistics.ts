@@ -10,6 +10,7 @@ import {
   MatchStatisticsView,
   MatchId,
   type ClubId,
+  type FixtureId,
   type MatchStatisticKey,
   type SaveId,
   type UnavailableMatchStatistic,
@@ -258,18 +259,27 @@ export const matchStatisticsView = (
   });
 };
 
-/** The controlled club's most recent played Fixture that has a match stream, if any. */
-export const lastPlayedMatchId = Effect.gen(function* () {
+/** The controlled club's most recent played Fixture that has a match stream, with its date, if any.
+ *  The single answer to "the match just played", shared by every save-scoped read that names no
+ *  match — statistics, ratings, the latest report and Latest Scores — so none of them can disagree
+ *  about which Matchday that was. */
+export const controlledClubLastPlayedFixture = Effect.gen(function* () {
   const sql = yield* SqlClient;
-  const rows = yield* sql<{ id: number }>`
-    SELECT f.id FROM fixtures f
+  const rows = yield* sql<{ id: FixtureId; date: string }>`
+    SELECT f.id, f.scheduled_date as "date" FROM fixtures f
     JOIN clubs c ON c.is_user_club = 1 AND (f.home_club_id = c.id OR f.away_club_id = c.id)
     WHERE f.played = 1
       AND EXISTS (SELECT 1 FROM events e WHERE e.stream_type = ${MATCH_STREAM_TYPE} AND e.stream_id = CAST(f.id AS TEXT))
     ORDER BY f.scheduled_date DESC, f.id DESC
     LIMIT 1`;
-  return rows.length === 0 ? null : MatchId.make(String(rows[0]!.id));
+  return rows[0] ?? null;
 });
+
+/** The controlled club's most recent played Fixture that has a match stream, if any. */
+export const lastPlayedMatchId = Effect.map(
+  controlledClubLastPlayedFixture,
+  (fixture) => (fixture === null ? null : MatchId.make(String(fixture.id))),
+);
 
 export const getMatchStatistics = (
   savesDir: string,

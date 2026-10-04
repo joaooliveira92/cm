@@ -235,10 +235,9 @@ export const CAREER_SCREEN_TYPES = [
 ] as const;
 
 /**
- * The career destinations a save alone is enough to reach. Everything except the two
- * club-scoped drill-downs (`teamScoutReport`, `clubStaff`, `clubInformation`), which need a target
- * club and so can
- * only be built where one is in hand.
+ * The career destinations a save alone is enough to reach. Everything except the destinations that
+ * need a second identifier in hand — a club, a competition, a player, a training plan or a match —
+ * none of which the navbar, the keyboard spine or the Tactics issue links ever carry.
  *
  * The navbar, the keyboard spine, and the Tactics overview's issue links all build a
  * destination from a bare type plus the current save, and this is the type that keeps them
