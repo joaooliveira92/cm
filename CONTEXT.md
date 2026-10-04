@@ -219,6 +219,13 @@ the goals conceded while they played, though no event names a save. Only players
 pitch are rated. The base and weights are named constants in `packages/shared/src/rules/matchRating.ts`.
 _Avoid_: rating on its own (see Position Rating, Overall Rating), player rating, performance score
 
+**Player of the Match**:
+The one player with the highest Match Rating across both sides at full time. Ties break by goals, then
+assists, then the winning side's player, then player id by code units, so the same match always names
+the same man. Computed on read from the Match Player Lines, never stored, and marked on the player's
+Form tab (the MoM count) and the post-match Player Ratings tab.
+_Avoid_: man of the match (the game's own name is Player of the Match), MoM on its own
+
 **Match Player Line**:
 One matchday-squad member's part in a match, folded from the Match Event stream: key passes,
 offsides, fouls, fouls suffered, tackles won, headers attempted and won, interceptions, runs,

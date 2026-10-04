@@ -10,9 +10,9 @@ Defined in [09](09-the-form-tab.md).
 
 **Blocked by:** 19
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The tie-break order is proven by a test with tied ratings at each step.
-- [ ] The post-match Ratings tab marks exactly one Player of the Match.
-- [ ] Sh Tar and Av R show "-" with no shots or no appearances.
-- [ ] CONTEXT.md defines Player of the Match.
+- [x] The tie-break order is proven by a test with tied ratings at each step.
+- [x] The post-match Ratings tab marks exactly one Player of the Match.
+- [x] Sh Tar and Av R show "-" with no shots or no appearances.
+- [x] CONTEXT.md defines Player of the Match.

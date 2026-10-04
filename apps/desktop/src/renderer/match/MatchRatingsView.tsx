@@ -12,7 +12,15 @@ const statusOf = (row: MatchRatingRow): string => {
   return parts.join(" · ");
 };
 
-const SideRatings = ({ clubName, rows }: { readonly clubName: string; readonly rows: ReadonlyArray<MatchRatingRow> }) => (
+const SideRatings = ({
+  clubName,
+  rows,
+  playerOfTheMatch,
+}: {
+  readonly clubName: string;
+  readonly rows: ReadonlyArray<MatchRatingRow>;
+  readonly playerOfTheMatch: MatchRatingRow["playerId"] | null;
+}) => (
   <table className="w-full border-collapse">
     <caption className="mb-2 text-left text-heading text-text-highlight">{clubName}</caption>
     <thead>
@@ -29,6 +37,11 @@ const SideRatings = ({ clubName, rows }: { readonly clubName: string; readonly r
           <td className="py-1 pr-3 text-text-secondary">{row.position}</td>
           <th scope="row" className="py-1 pr-3 text-left font-normal">
             {row.playerName}
+            {playerOfTheMatch !== null && row.playerId === playerOfTheMatch && (
+              <span className="ml-2 rounded-control bg-surface-raised px-1.5 py-0.5 text-data text-text-highlight">
+                Player of the Match
+              </span>
+            )}
           </th>
           <td className={`py-1 pr-3 text-right font-semibold tabular-nums ${ratingTone(row.rating)}`}>{row.rating.toFixed(1)}</td>
           <td className="py-1 text-data text-text-secondary">{statusOf(row)}</td>
@@ -49,8 +62,8 @@ export const MatchRatingsView = ({ view }: { readonly view: MatchRatings }) => (
       {view.throughMinute === null ? "Full match" : `Up to ${view.throughMinute}'`}
     </p>
     <div className="grid max-w-4xl gap-6 md:grid-cols-2">
-      <SideRatings clubName={view.homeClubName} rows={view.home} />
-      <SideRatings clubName={view.awayClubName} rows={view.away} />
+      <SideRatings clubName={view.homeClubName} rows={view.home} playerOfTheMatch={view.playerOfTheMatch} />
+      <SideRatings clubName={view.awayClubName} rows={view.away} playerOfTheMatch={view.playerOfTheMatch} />
     </div>
     <p className="text-data text-text-muted">
       Ratings run from 1 to 10. A player who stayed on the bench is not rated.

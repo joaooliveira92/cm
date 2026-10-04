@@ -21,6 +21,7 @@ import {
   EMPTY_MATCH_PLAYER_LINE_COUNTS,
   foldMatchPlayerLineCounts,
   matchRating,
+  playerOfTheMatch,
   type MatchInvolvement,
   type MatchRatingResult,
 } from "@cm-clone/shared";
@@ -213,13 +214,40 @@ export const matchRatingsView = (
       commands.filter((command): command is PersistedForcedOff => command._tag === "ForceOffMade" && command.clubId === setup.clubId),
     );
   const last = events[cut - 1];
+  const home = rate(started.homeSetup, true);
+  const away = rate(started.awaySetup, false);
+  // Player of the Match: the highest rating across both sides, tie-broken by goals, assists, the
+  // winning side and player id (map ticket 20). The goals and assists come from the same Match
+  // Player Line fold the rows were rated from, so the tie-break cannot disagree with the row.
+  const included = events.slice(0, cut);
+  const starters = new Set<string>([
+    ...started.homeSetup.tactic.slots.map((slot) => String(slot.playerId)),
+    ...started.awaySetup.tactic.slots.map((slot) => String(slot.playerId)),
+  ]);
+  const lines = foldMatchPlayerLineCounts(starters, included, null);
+  const score = scoreOf(included);
+  const candidate = (row: MatchRatingRow, won: boolean) => {
+    const line = lines.get(String(row.playerId)) ?? EMPTY_MATCH_PLAYER_LINE_COUNTS;
+    return {
+      playerId: String(row.playerId),
+      rating: row.rating,
+      goals: line.goals,
+      assists: line.assists,
+      won,
+    };
+  };
+  const mom = playerOfTheMatch([
+    ...home.map((row) => candidate(row, score.home > score.away)),
+    ...away.map((row) => candidate(row, score.away > score.home)),
+  ]);
   return new MatchRatingsView({
     matchId,
     homeClubName: clubName(started.homeClubId),
     awayClubName: clubName(started.awayClubId),
     throughMinute: revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
-    home: rate(started.homeSetup, true),
-    away: rate(started.awaySetup, false),
+    home,
+    away,
+    playerOfTheMatch: mom === null ? null : (mom as PlayerId),
   });
 };
 

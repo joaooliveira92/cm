@@ -25,11 +25,12 @@ const row = (overrides: Record<string, unknown>) => ({
   ...overrides,
 });
 
-const view = (throughMinute: number | null) => ({
+const view = (throughMinute: number | null, playerOfTheMatch: string | null = null) => ({
   matchId: "m1",
   homeClubName: "Home FC",
   awayClubName: "Away FC",
   throughMinute,
+  playerOfTheMatch,
   home: [
     row({ playerId: "h1", playerName: "Ada Keeper", position: "GK", rating: 7.4 }),
     row({ playerId: "h2", playerName: "Bo Striker", position: "ST", rating: 8, wentOffMinute: 70 }),
@@ -102,5 +103,13 @@ describe("MatchRatingsScreen", () => {
 
     mount({ _tag: "Failure", error: { _tag: "SaveNotFoundError", id: s1 } });
     await waitFor(() => expect(screen.getByRole("button", { name: "Retry" })).toBeTruthy());
+  });
+
+  it("marks exactly one Player of the Match", async () => {
+    mount({ _tag: "Success", value: view(null, "h2") });
+
+    const home = await screen.findByRole("table", { name: "Home FC" });
+    expect(screen.getAllByText("Player of the Match")).toHaveLength(1);
+    expect(within(home).getByRole("row", { name: /Bo Striker/ }).textContent).toContain("Player of the Match");
   });
 });

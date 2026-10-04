@@ -13,6 +13,7 @@
 import {
   PlayerFormClubOption,
   PlayerFormGameRow,
+  PlayerFormSeasonRow,
   PlayerFormView,
   PlayerNotFoundError,
   type ClubId,
@@ -24,6 +25,7 @@ import {
 import {
   matchRatingFromStoredLine,
   matchRatingPhaseOfLabel,
+  playerOfTheMatch,
   type MatchRatingResult,
 } from "@cm-clone/shared";
 import { MATCH_STREAM_TYPE, matchStartedOf } from "@cm-clone/game-engine";
@@ -40,9 +42,12 @@ import { matchEventsOf } from "./timeline.js";
 /** One stored line, as read from `player_match_lines` (the columns the Form row and rating need). */
 interface FormLineRow {
   readonly fixtureId: number;
+  readonly playerId: string;
   readonly clubId: string;
   readonly seasonNumber: number;
   readonly competitionId: string;
+  /** The competition's kind: `league`, `cup`, `continental` or `reserve`. */
+  readonly kind: string;
   readonly date: string;
   readonly opponentClubId: string;
   readonly isHome: number;
@@ -82,21 +87,40 @@ interface FormFixtureRow {
   readonly awayPenalties: number | null;
 }
 
-const lineSelect = `fixture_id as "fixtureId", club_id as "clubId", season_number as "seasonNumber",
-  competition_id as "competitionId", date, opponent_club_id as "opponentClubId", is_home as "isHome",
-  position, started, on_minute as "onMinute", off_minute as "offMinute", on_at_end as "onAtEnd",
-  result, goals, assists, key_passes as "keyPasses", shots, shots_on_target as "shotsOnTarget",
-  saves, offsides, fouls, yellow_cards as "yellowCards", red_cards as "redCards", runs,
-  tackles_won as "tacklesWon", interceptions, headers, headers_won as "headersWon",
-  fouls_suffered as "foulsSuffered"`;
+const lineSelect = `l.fixture_id as "fixtureId", l.player_id as "playerId", l.club_id as "clubId", l.season_number as "seasonNumber",
+  l.competition_id as "competitionId", c.kind as "kind", l.date,
+  l.opponent_club_id as "opponentClubId", l.is_home as "isHome",
+  l.position, l.started, l.on_minute as "onMinute", l.off_minute as "offMinute", l.on_at_end as "onAtEnd",
+  l.result, l.goals, l.assists, l.key_passes as "keyPasses", l.shots, l.shots_on_target as "shotsOnTarget",
+  l.saves, l.offsides, l.fouls, l.yellow_cards as "yellowCards", l.red_cards as "redCards", l.runs,
+  l.tackles_won as "tacklesWon", l.interceptions, l.headers, l.headers_won as "headersWon",
+  l.fouls_suffered as "foulsSuffered"`;
+
+const LINE_FROM = `FROM player_match_lines l JOIN competitions c ON c.id = l.competition_id`;
 
 const loadPlayerLines = (playerId: PlayerId) =>
   Effect.gen(function* () {
     const sql = yield* SqlClient;
     return yield* sql.unsafe<FormLineRow>(
-      `SELECT ${lineSelect} FROM player_match_lines
-       WHERE player_id = ? AND season_number = ${CURRENT_SEASON_NUMBER_SQL}
-       ORDER BY date ASC, fixture_id ASC`,
+      `SELECT ${lineSelect} ${LINE_FROM}
+       WHERE l.player_id = ? AND l.season_number = ${CURRENT_SEASON_NUMBER_SQL}
+       ORDER BY l.date ASC, l.fixture_id ASC`,
+      [playerId],
+    );
+  });
+
+/** Every line of every fixture this player has a line in this season, both clubs, for the Player of
+ *  the Match tie-break. */
+const loadFixtureLines = (playerId: PlayerId) =>
+  Effect.gen(function* () {
+    const sql = yield* SqlClient;
+    return yield* sql.unsafe<FormLineRow>(
+      `SELECT ${lineSelect} ${LINE_FROM}
+       WHERE l.fixture_id IN (
+         SELECT fixture_id FROM player_match_lines
+         WHERE player_id = ? AND season_number = ${CURRENT_SEASON_NUMBER_SQL}
+       )
+       ORDER BY l.fixture_id ASC, l.player_id ASC`,
       [playerId],
     );
   });
@@ -245,6 +269,139 @@ const loadFixtureRatings = (
     return ratings;
   });
 
+/** The Player of the Match of each fixture the player appeared in, keyed by fixture id. A fixture
+ *  that keeps a timeline rates every player exactly; an AI fixture rates from the stored counts. */
+const momFixturesOf = (
+  lines: ReadonlyArray<FormLineRow>,
+  userRatings: ReadonlyMap<number, ReadonlyMap<PlayerId, number>>,
+  playerId: PlayerId,
+): ReadonlySet<number> => {
+  const byFixture = new Map<number, Array<FormLineRow>>();
+  for (const line of lines) {
+    const group = byFixture.get(line.fixtureId);
+    if (group === undefined) byFixture.set(line.fixtureId, [line]);
+    else group.push(line);
+  }
+  const mom = new Set<number>();
+  for (const [fixtureId, group] of byFixture) {
+    const exact = userRatings.get(fixtureId);
+    const winner = playerOfTheMatch(
+      group.map((line) => ({
+        playerId: String(line.playerId),
+        rating: exact?.get(line.playerId as PlayerId) ?? ratingOfLine(line),
+        goals: line.goals,
+        assists: line.assists,
+        won: line.result === "win",
+      })),
+    );
+    if (winner !== null && winner === String(playerId)) mom.add(fixtureId);
+  }
+  return mom;
+};
+
+/** One competition's running totals while the season block is built. */
+interface SeasonBucket {
+  starts: number;
+  subs: number;
+  goals: number;
+  assists: number;
+  mom: number;
+  yellowCards: number;
+  redCards: number;
+  shots: number;
+  shotsOnTarget: number;
+  fouls: number;
+  ratingSum: number;
+  appearances: number;
+}
+
+const blankBucket = (): SeasonBucket => ({
+  starts: 0,
+  subs: 0,
+  goals: 0,
+  assists: 0,
+  mom: 0,
+  yellowCards: 0,
+  redCards: 0,
+  shots: 0,
+  shotsOnTarget: 0,
+  fouls: 0,
+  ratingSum: 0,
+  appearances: 0,
+});
+
+const addToBucket = (bucket: SeasonBucket, line: FormLineRow, rating: number, mom: boolean): void => {
+  bucket.appearances += 1;
+  bucket.starts += line.started === 1 ? 1 : 0;
+  bucket.subs += line.started === 1 ? 0 : 1;
+  bucket.goals += line.goals;
+  bucket.assists += line.assists;
+  bucket.mom += mom ? 1 : 0;
+  bucket.yellowCards += line.yellowCards;
+  bucket.redCards += line.redCards;
+  bucket.shots += line.shots;
+  bucket.shotsOnTarget += line.shotsOnTarget;
+  bucket.fouls += line.fouls;
+  bucket.ratingSum += rating;
+};
+
+const seasonRow = (kind: "league" | "cup" | "continental" | "overall", label: string, bucket: SeasonBucket): PlayerFormSeasonRow =>
+  new PlayerFormSeasonRow({
+    kind,
+    label,
+    starts: bucket.starts,
+    subs: bucket.subs,
+    goals: bucket.goals,
+    assists: bucket.assists,
+    mom: bucket.mom,
+    yellowCards: bucket.yellowCards,
+    redCards: bucket.redCards,
+    shots: bucket.shots,
+    shotsOnTarget: bucket.shotsOnTarget,
+    fouls: bucket.fouls,
+    averageRating:
+      bucket.appearances === 0
+        ? null
+        : Math.round((bucket.ratingSum / bucket.appearances) * 100) / 100,
+  });
+
+/** The season block: League and Cup always, Continental only when the player appeared in one,
+ *  reserve fixtures excluded, then Overall. */
+const seasonRowsOf = (
+  lines: ReadonlyArray<FormLineRow>,
+  momFixtures: ReadonlySet<number>,
+  userRatings: ReadonlyMap<number, ReadonlyMap<PlayerId, number>>,
+  playerId: PlayerId,
+): ReadonlyArray<PlayerFormSeasonRow> => {
+  const buckets = new Map<string, SeasonBucket>();
+  const bucketFor = (kind: string): SeasonBucket => {
+    const existing = buckets.get(kind);
+    if (existing !== undefined) return existing;
+    const created = blankBucket();
+    buckets.set(kind, created);
+    return created;
+  };
+  const overall = blankBucket();
+  for (const line of lines) {
+    if (line.kind === "reserve") continue;
+    if (line.started !== 1 && line.onMinute === null) continue;
+    const rating = userRatings.get(line.fixtureId)?.get(playerId) ?? ratingOfLine(line);
+    const mom = momFixtures.has(line.fixtureId);
+    addToBucket(bucketFor(line.kind), line, rating, mom);
+    addToBucket(overall, line, rating, mom);
+  }
+  const rows: Array<PlayerFormSeasonRow> = [
+    seasonRow("league", "League", buckets.get("league") ?? blankBucket()),
+    seasonRow("cup", "Cup", buckets.get("cup") ?? blankBucket()),
+  ];
+  const continental = buckets.get("continental");
+  if (continental !== undefined && continental.appearances > 0) {
+    rows.push(seasonRow("continental", "Continental", continental));
+  }
+  rows.push(seasonRow("overall", "Overall", overall));
+  return rows;
+};
+
 export const playerFormView = (
   playerId: PlayerId,
   lines: ReadonlyArray<FormLineRow>,
@@ -254,6 +411,7 @@ export const playerFormView = (
   currentClubId: ClubId | null,
   clubs: ReadonlyArray<PlayerFormClubOption>,
   userRatings: ReadonlyMap<number, ReadonlyMap<PlayerId, number>>,
+  momFixtures: ReadonlySet<number>,
   nameOf: (clubId: string) => string,
 ): PlayerFormView => {
   const linesByFixture = new Map(lines.map((line) => [line.fixtureId, line]));
@@ -346,7 +504,7 @@ export const playerFormView = (
     games,
     formRatings,
     goalkeeper,
-    season: [],
+    season: seasonRowsOf(lines, momFixtures, userRatings, playerId),
   });
 };
 
@@ -377,22 +535,24 @@ export const getPlayerForm = (
         clubIds[0] ??
         null;
 
+      const userFixtureIds = [...new Set(lines.map((line) => line.fixtureId))];
+      const userRatings = yield* loadFixtureRatings(userFixtureIds, named);
+      const momFixtures = momFixturesOf(yield* loadFixtureLines(playerId), userRatings, playerId);
+
       if (selectedClubId === null) {
         return playerFormView(
           playerId, lines, [], new Set(), null, currentClubId, clubs,
-          new Map(), named,
+          userRatings, momFixtures, named,
         );
       }
 
       const joinedOn = yield* loadJoinedOn(playerId, selectedClubId);
       const fixtures = yield* loadClubFixtures(selectedClubId, joinedOn);
       const fixturesWithLines = yield* loadFixturesWithLines(selectedClubId);
-      const userFixtureIds = [...new Set(lines.map((line) => line.fixtureId))];
-      const userRatings = yield* loadFixtureRatings(userFixtureIds, named);
 
       return playerFormView(
         playerId, lines, fixtures, fixturesWithLines, selectedClubId,
-        currentClubId, clubs, userRatings, named,
+        currentClubId, clubs, userRatings, momFixtures, named,
       );
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

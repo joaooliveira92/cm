@@ -1,4 +1,4 @@
-import { cleanup, render, screen } from "@testing-library/react";
+import { cleanup, render, screen, within } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { PlayerId } from "@cm-clone/contracts";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
@@ -83,7 +83,9 @@ const formView = () => ({
   ],
   formRatings: [7.8, 5.4],
   goalkeeper: false,
-  season: [],
+  season: [
+    { kind: "overall", label: "Overall", starts: 1, subs: 1, goals: 1, assists: 0, mom: 1, yellowCards: 0, redCards: 0, shots: 0, shotsOnTarget: 0, fouls: 2, averageRating: null },
+  ],
 });
 
 const install = () => {
@@ -143,5 +145,10 @@ describe("PlayerFormScreen", () => {
     expect(screen.getByText("Form: 8 5")).toBeDefined();
     expect(screen.getByText("7.8")).toBeDefined();
     expect(screen.getByText("Rivals")).toBeDefined();
+
+    // The season block draws "starts (sub)", the MoM count, and "-" for Sh Tar and Av R with no shots.
+    const season = await screen.findByRole("region", { name: "Season totals" });
+    expect(within(season).getByRole("row", { name: /Overall/ }).textContent).toContain("1 (1)");
+    expect(within(season).getAllByText("-")).toHaveLength(2);
   });
 });

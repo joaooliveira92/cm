@@ -66,6 +66,9 @@ question. Plan only: no code in this effort.
 - 2026-10-04: ticket 19 resolved — the player Form tab ships: its clubs, the selected club's played
   fixtures this season with the player's line in each, the four row states and the five-rating
   strip. Frontier: 16, 17, 20.
+- 2026-10-04: ticket 20 resolved — the Form season block (League/Cup/Continental/Overall) and Player
+  of the Match ship; Player of the Match is marked on the post-match Ratings tab and joins
+  `CONTEXT.md`. Frontier: 16, 17. This unblocks match-engine-detail ticket 18.
 
 ## Not yet specified
 

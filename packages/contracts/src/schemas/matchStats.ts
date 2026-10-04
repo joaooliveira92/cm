@@ -111,6 +111,9 @@ export class MatchRatingsView extends Schema.Class<MatchRatingsView>("MatchRatin
   throughMinute: Schema.NullOr(Schema.Finite),
   home: Schema.Array(MatchRatingRow),
   away: Schema.Array(MatchRatingRow),
+  /** The Player of the Match (map ticket 20): the highest Match Rating across both sides, or null
+   *  before anyone has a rating (a live cut with no events). */
+  playerOfTheMatch: Schema.NullOr(PlayerId),
 }) {}
 
 // ---------------------------------------------------------------------------

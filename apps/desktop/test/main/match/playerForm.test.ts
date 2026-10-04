@@ -100,6 +100,22 @@ it.effect("a played row carries the same Match Rating as the Ratings tab, and th
     ok(ratingRow !== undefined, "the player is rated");
     strictEqual(game.rating, ratingRow.rating, "the Form row's rating equals the Ratings tab's");
     ok(form.formRatings.includes(ratingRow.rating), "the form strip counts the appearance");
+
+    // The season block totals the appearance: one start, the goals, and a mean rating.
+    const overall = form.season.find((row) => row.kind === "overall");
+    ok(overall !== undefined, "the season block has an Overall row");
+    strictEqual(overall.starts, 1, "one start");
+    strictEqual(overall.subs, 0, "no substitute appearance");
+    strictEqual(overall.goals, game.goals, "the season totals equal the row's");
+    ok(overall.averageRating !== null, "an appearance gives a mean rating");
+    strictEqual(overall.averageRating, game.rating, "one appearance means the mean equals the rating");
+
+    // The Player of the Match is marked, and his season row counts it.
+    const momId = ratings.playerOfTheMatch;
+    ok(momId !== null, "a finished match names a Player of the Match");
+    const momForm = yield* getPlayerForm(savesDir, save.id, momId!, null);
+    const momOverall = momForm.season.find((row) => row.kind === "overall");
+    ok(momOverall !== undefined && momOverall.mom >= 1, "the Player of the Match counts one MoM");
   }),
 );
 

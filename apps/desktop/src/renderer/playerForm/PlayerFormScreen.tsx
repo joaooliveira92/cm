@@ -7,7 +7,7 @@
  * the user's own fixture opens its Match Report. The read is `getPlayerForm`; the season block
  * arrives with ticket 20.
  */
-import type { ClubId, PlayerFormGameRow, PlayerFormView, PlayerId, SaveId } from "@cm-clone/contracts";
+import type { ClubId, PlayerFormGameRow, PlayerFormSeasonRow, PlayerFormView, PlayerId, SaveId } from "@cm-clone/contracts";
 import { useState } from "react";
 import { FOCUS_RING } from "../focus.js";
 import { intentOfClick, navigateCareer } from "../navigation/adapter.js";
@@ -148,6 +148,67 @@ const FormTable = ({
   );
 };
 
+const shotTargetPct = (row: PlayerFormSeasonRow): string =>
+  row.shots === 0 ? "-" : `${Math.round((row.shotsOnTarget / row.shots) * 100)}%`;
+
+const SeasonBlock = ({ rows }: { readonly rows: ReadonlyArray<PlayerFormSeasonRow> }) => (
+  <section className="space-y-2" aria-label="Season totals">
+    <h2 className="text-heading text-text-highlight">Season</h2>
+    <table className="min-w-full text-left text-data">
+      <thead>
+        <tr>
+          <th scope="col">Competition</th>
+          <th scope="col">
+            <AbbrHeader short="Apps" full="Appearances (starts (sub))" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Gls" full="Goals" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Asts" full="Assists" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="MoM" full="Player of the Match" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Yel" full="Yellow cards" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Red" full="Red cards" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Sh Tar" full="Shots on target %" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Fouls" full="Fouls committed" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Av R" full="Average Match Rating" />
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((row) => (
+          <tr key={row.kind}>
+            <th scope="row" className="text-left font-normal">
+              {row.label}
+            </th>
+            <td className="tabular-nums">{`${row.starts} (${row.subs})`}</td>
+            <td className="tabular-nums">{row.goals}</td>
+            <td className="tabular-nums">{row.assists}</td>
+            <td className="tabular-nums">{row.mom}</td>
+            <td className="tabular-nums">{row.yellowCards}</td>
+            <td className="tabular-nums">{row.redCards}</td>
+            <td className="tabular-nums">{shotTargetPct(row)}</td>
+            <td className="tabular-nums">{row.fouls}</td>
+            <td className="tabular-nums">{row.averageRating === null ? "-" : row.averageRating.toFixed(2)}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+);
+
 const FormBody = ({
   view,
   saveId,
@@ -190,6 +251,7 @@ const FormBody = ({
         navigateCareer({ type: "matchReport", saveId, matchId }, intentOfClick(event))
       }
     />
+    <SeasonBlock rows={view.season} />
   </div>
 );
 
