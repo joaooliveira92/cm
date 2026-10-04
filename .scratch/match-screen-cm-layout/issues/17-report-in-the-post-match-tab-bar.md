@@ -10,8 +10,8 @@ route-reachable, so the tab cannot be opened from the bar yet; the context wirin
 
 **Blocked by:** 21
 
-**Status:** open
+**Status:** resolved
 
-- [ ] Report appears in the post-match tab bar and opens the report for the current match — pending the
+- [x] Report appears in the post-match tab bar and opens the report for the current match — pending the
       post-match context in [21](21-post-match-tab-context.md).
 - [x] The tab is absent live and pre-match.

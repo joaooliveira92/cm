@@ -34,7 +34,6 @@ export const tabToDestination = (
     "summary": { type: "match", saveId },
     "report": { type: "matchLatestReport", saveId },
     "other-results": { type: "matchLatestScores", saveId },
-    "table": { type: "matchLiveTable", saveId },
     // Pre-match specific
     "overview": { type: "match", saveId },
     "team-selection": { type: "match", saveId },

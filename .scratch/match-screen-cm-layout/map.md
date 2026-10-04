@@ -83,6 +83,11 @@ question. Plan only: no code in this effort.
   `implemented/`, the bar component renamed `PossessionBar`, the E2E asserts it, ticket 14's criteria
   corrected, and the unreachable post-match tab context filed as
   [21](issues/21-post-match-tab-context.md). Frontier: 21, then 17 (reopened; blocked by 21).
+- 2026-10-04: tickets 21 and 17 resolved — a committed-match store flips the bar to Post-match at
+  Accept result, keeps it across tab clicks, keeps the Possession bar on every post-match tab and
+  opens Report for the match just played. See [the post-match context
+  note](../../.agents/notes/proposed/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md).
+  Frontier: empty.
 
 ## Not yet specified
 

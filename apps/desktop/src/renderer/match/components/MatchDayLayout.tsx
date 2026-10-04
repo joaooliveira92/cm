@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { type MatchSummary } from "@cm-clone/contracts";
 import { Alert } from "../../components/ui/alert.js";
 import { Button } from "../../components/ui/button.js";
@@ -5,6 +6,7 @@ import { dispatchAction } from "../../actions/dispatch.js";
 import { FOCUS_RING } from "../../focus.js";
 import { useMatchContext } from "../MatchProvider.js";
 import { useCommentaryContext } from "../CommentaryProvider.js";
+import { getCommittedMatch, subscribeActiveMatch } from "../session.js";
 import { KickoffPanel } from "../KickoffPanel.js";
 import { MatchCommentaryStream } from "../MatchCommentaryStream.js";
 import { MatchControlPanel } from "../MatchControlPanel.js";
@@ -53,6 +55,12 @@ const MatchComplete = ({ match }: { readonly match: MatchSummary }) => {
 
 export const MatchDayLayout = () => {
   const { state } = useMatchContext();
+  // Once the result is accepted the live session is gone, so a remount of Match day has no match of
+  // its own. The committed match is the one the Post-match Summary tab still names; without it a tab
+  // click back to Summary would show the kickoff panel instead of the result just accepted.
+  const committed = useSyncExternalStore(subscribeActiveMatch, () => getCommittedMatch(state.saveId));
+  const committedMatch = state.match === null ? committed?.match ?? null : null;
+
   return (
     <main
       tabIndex={-1}
@@ -63,7 +71,7 @@ export const MatchDayLayout = () => {
       <h1 className="text-title">Match day</h1>
       {state.error && <Alert variant="destructive" className="mt-2"><p>{state.error}</p></Alert>}
 
-      {!state.match && <KickoffPanel />}
+      {!state.match && committedMatch === null && <KickoffPanel />}
 
       {state.match && state.restoredAfterRestart && state.phase !== "committed" && (
         <Alert role="status" className="mt-2">
@@ -79,6 +87,13 @@ export const MatchDayLayout = () => {
           ) : (
             <MatchOngoing />
           )}
+        </section>
+      )}
+
+      {committedMatch !== null && (
+        <section className="stadium-wash mt-6 rounded-panel border border-panel-border-dark p-4 shadow-panel">
+          <MatchOverviewPanel saveId={state.saveId} />
+          <PostMatchSummary saveId={state.saveId} matchId={committedMatch.matchId} />
         </section>
       )}
     </main>

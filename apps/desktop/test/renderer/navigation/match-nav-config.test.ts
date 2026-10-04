@@ -81,7 +81,8 @@ describe("match nav config — post-match tabs (§9)", () => {
   });
 
   it("Table is conditional", () => {
-    const table = config.tabs.find((t) => t.id === "table") as MatchConditionalTab;
+    const table = config.tabs.find((t) => t.id === "live-table") as MatchConditionalTab;
+    expect(table.label).toBe("Table");
     expect(table.visible(true)).toBe(true);
     expect(table.visible(false)).toBe(false);
   });

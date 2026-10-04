@@ -61,7 +61,10 @@ export const MATCH_TAB_CONFIGS: Record<MatchContext, MatchTabConfig> = {
       { id: "commentary", label: "Commentary" },
       { id: "other-results", label: "Latest Scores" },
       {
-        id: "table",
+        // The same id as the live Table: both reach the one `/match-live-table` route, and the
+        // route parser cannot tell the contexts apart, so a shared id is what keeps the tab
+        // highlighted after a click.
+        id: "live-table",
         label: "Table",
         visible: liveTableVisible,
       },

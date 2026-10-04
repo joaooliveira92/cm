@@ -4,7 +4,7 @@ import { MatchId, SaveId } from "@cm-clone/contracts";
 import { PostMatchSummary } from "../../../src/renderer/match/PostMatchSummary.js";
 import { bindRouter } from "../../../src/renderer/navigation/adapter.js";
 import { MatchDayScreen } from "../../../src/renderer/match/MatchDayScreen.js";
-import { clearActiveMatch, getActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
+import { clearActiveMatch, clearCommittedMatch, getActiveMatch, setActiveMatch, setCommittedMatch } from "../../../src/renderer/match/session.js";
 import { getScopeState, resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 
@@ -131,6 +131,7 @@ describe("Post-Match Summary (Screen 99)", () => {
 describe("Match day holds the Post-Match Summary back until the result is accepted", () => {
   afterEach(() => {
     clearActiveMatch(SaveId.make("s1"));
+    clearCommittedMatch(SaveId.make("s1"));
     resetScopeState();
   });
 
@@ -200,5 +201,34 @@ describe("Match day holds the Post-Match Summary back until the result is accept
     mountMatchDay("committed");
     expect(await screen.findByRole("navigation", { name: "Post-match review" })).toBeTruthy();
     expect(screen.getByRole("heading", { name: "Home FC 2 - 1 Away FC" })).toBeTruthy();
+  });
+
+  it("keeps the accepted match committed so a remount shows its summary, not the kickoff panel", async () => {
+    setCommittedMatch(SaveId.make("s1"), {
+      saveId: SaveId.make("s1"),
+      match: {
+        matchId: MatchId.make("m1"),
+        fixtureId: 1,
+        homeClubId: "home",
+        homeClubName: "Home FC",
+        awayClubId: "away",
+        awayClubName: "Away FC",
+        isHome: true,
+      },
+    } as never);
+    (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+      call: async (method: string) => {
+        if (method === "getPostMatchSummary") return { _tag: "Success", value: summary(EVENTS) };
+        return { _tag: "Failure", error: { _tag: "SaveNotFoundError", id: "s1" } };
+      },
+    };
+    render(
+      <RegistryProvider>
+        <MatchDayScreen saveId={SaveId.make("s1")} />
+      </RegistryProvider>,
+    );
+
+    expect(await screen.findByRole("heading", { name: "Home FC 2 - 1 Away FC" })).toBeTruthy();
+    expect(screen.queryByText("No Fixture is waiting. Continue the career to reach your next one.")).toBeNull();
   });
 });

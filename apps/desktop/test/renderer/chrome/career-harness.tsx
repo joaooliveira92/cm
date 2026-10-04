@@ -174,7 +174,11 @@ export const mountCareer = async (phase: Phase, child: CareerChild) => {
  *  that needs its own wire responses (a payload that changes between calls).
  *  `Probe`, when given, renders beside the league screen inside the career's own
  *  atom registry, so a test can run a mutation the chrome's queries observe. */
-export const mountRoutedCareer = async (child: CareerChild, Probe?: ComponentType) => {
+export const mountRoutedCareer = async (
+  child: CareerChild,
+  Probe?: ComponentType,
+  awaitButton: RegExp = /Continue/,
+) => {
   const rootRoute = createRootRoute({ component: () => <Outlet /> });
   const careerRoute = createRoute({ getParentRoute: () => rootRoute, path: "career" });
   const saveRoute = createRoute({
@@ -212,7 +216,7 @@ export const mountRoutedCareer = async (child: CareerChild, Probe?: ComponentTyp
   });
   bindRouter({ navigate: () => undefined, history: { back: () => undefined, forward: () => undefined, canGoBack: () => false } } as never);
   render(<RouterProvider router={router} />);
-  await screen.findByRole("button", { name: /Continue/ });
+  await screen.findByRole("button", { name: awaitButton });
 };
 
 /** The reset every suite in this directory runs; called from each file's own

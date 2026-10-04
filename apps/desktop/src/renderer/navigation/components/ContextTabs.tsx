@@ -32,6 +32,15 @@ import { NO_DRAG } from "../../chrome/header/drag-region.js";
 export interface ContextTabsProps {
   readonly onChangeTab?: (navId: EntityType | MatchContext, tabId: string) => void;
   readonly matchTabVisibility?: Partial<Record<string, boolean>>;
+  /**
+   * The match phase the route cannot express on its own. Every flat `match-*` route parses as
+   * `live-match` because the path alone cannot say whether the match is live or accepted, so the
+   * caller — which can see the committed match — supplies `post-match` after a result is accepted.
+   * Ignored unless the route already reads as a live match, so pre-match and entity contexts keep
+   * the phase their path names. See
+   * `.agents/notes/proposed/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md`.
+   */
+  readonly matchPhaseOverride?: "post-match" | null;
 }
 
 const matchContextLabel = (context: MatchContext): string => {
@@ -71,7 +80,7 @@ const TabButton = ({
   </button>
 );
 
-export const ContextTabs = ({ onChangeTab, matchTabVisibility }: ContextTabsProps) => {
+export const ContextTabs = ({ onChangeTab, matchTabVisibility, matchPhaseOverride }: ContextTabsProps) => {
   const location = useLocation();
   const searchParams = useMemo(
     () => new URLSearchParams(location.search),
@@ -82,8 +91,12 @@ export const ContextTabs = ({ onChangeTab, matchTabVisibility }: ContextTabsProp
     [location.pathname, searchParams],
   );
 
-  const { entityType, matchContext } = parsed;
+  const { entityType } = parsed;
   const rawTabId = parsed.activeTabId;
+  const matchContext =
+    parsed.matchContext === "live-match" && matchPhaseOverride != null
+      ? matchPhaseOverride
+      : parsed.matchContext;
 
   const entityConfig = useMemo(
     () => (entityType !== null ? entityTabConfigForType(entityType) : null),

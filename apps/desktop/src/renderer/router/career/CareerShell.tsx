@@ -1,8 +1,9 @@
 import { Outlet, useLocation } from "@tanstack/react-router";
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useSyncExternalStore } from "react";
 import { CareerChrome } from "../../chrome/CareerChrome.js";
 import { RegistryProvider } from "../../rpc.js";
 import { ContextTabs } from "../../navigation/components/ContextTabs.js";
+import { getActiveMatch, getCommittedMatch, subscribeActiveMatch } from "../../match/session.js";
 import { useCareerSaveScope } from "./hooks/useCareerSaveScope.js";
 import { useCareerTabNavigation } from "./hooks/useCareerTabNavigation.js";
 import { RouteParamErrorScreen } from "./RouteParamErrorScreen.js";
@@ -19,6 +20,12 @@ export const CareerShell = () => {
   const saveId = save.success;
   const handleTabChange = useCareerTabNavigation(saveId);
 
+  // The flat match routes parse as `live-match`, so the bar can only tell live from accepted by the
+  // session: a committed match with no live one makes every match tab the Post-match bar.
+  const liveMatch = useSyncExternalStore(subscribeActiveMatch, () => getActiveMatch(saveId));
+  const committedMatch = useSyncExternalStore(subscribeActiveMatch, () => getCommittedMatch(saveId));
+  const matchPhaseOverride = liveMatch === null && committedMatch !== null ? "post-match" : null;
+
   // The career shell owns its scroll region: the shell is viewport-fixed and
   // only the outlet scrolls, so the header band and the sidebar are stationary
   // and scrolling can never hide them. A route change starts the new screen at
@@ -32,7 +39,7 @@ export const CareerShell = () => {
 
   return (
     <RegistryProvider key={saveId}>
-      <CareerChrome saveId={saveId} contextNav={<ContextTabs onChangeTab={handleTabChange} />}>
+      <CareerChrome saveId={saveId} contextNav={<ContextTabs onChangeTab={handleTabChange} matchPhaseOverride={matchPhaseOverride} />}>
         <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto">
           <Outlet />
         </div>

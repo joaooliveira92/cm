@@ -19,6 +19,7 @@ import { useLocation } from "@tanstack/react-router";
 import { ACTION_REGISTRY } from "../actions/allActions.js";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { clearScopeState, getScopeState, setScopeState, subscribeScopeState } from "../actions/scopeState.js";
+import { clearCommittedMatch, getCommittedMatch, supersededByAwaiting } from "../match/session.js";
 import type { MatchReadout, ScreenName } from "../actions/types.js";
 import { type NavigationIntent } from "../focus.js";
 import {
@@ -154,6 +155,17 @@ export const CareerStateProvider = ({
     setScopeState({ phase: season.phase, advancing });
     return () => clearScopeState("phase", "advancing");
   }, [advancing, season]);
+
+  // The post-match context ends when a different Fixture awaits a kickoff. It lives here, in the
+  // always-mounted chrome, rather than on Match day, so advancing the calendar from any screen drops
+  // the committed match and its Possession bar instead of leaving them until Match day is next opened.
+  const awaitingFixture = season?.awaitingFixture ?? null;
+  useEffect(() => {
+    const committed = getCommittedMatch(saveId);
+    if (committed !== null && supersededByAwaiting(committed, awaitingFixture)) {
+      clearCommittedMatch(saveId);
+    }
+  }, [awaitingFixture, saveId]);
 
   // At the pre-match boundary the advance deliberately writes nothing, so pressing "Go to Match" has
   // to take the player to Match day rather than ask the Calendar to move again.

@@ -4,27 +4,31 @@ import { MatchId, SaveId } from "@cm-clone/contracts";
 import { PossessionBar } from "../../../src/renderer/match/PossessionBar.js";
 import {
   clearActiveMatch,
+  clearCommittedMatch,
   recordRevealedLines,
   setActiveMatch,
+  setCommittedMatch,
 } from "../../../src/renderer/match/session.js";
 import { RegistryProvider } from "../../../src/renderer/rpc.js";
 import { MATCH_COLOURS } from "./matchColours.js";
 
 const s1 = SaveId.make("s1");
 
+const matchSummary = (matchId = "m1") => ({
+  matchId: MatchId.make(matchId),
+  fixtureId: 1,
+  homeClubId: "home",
+  homeClubName: "Home FC",
+  awayClubId: "away",
+  awayClubName: "Away FC",
+  ...MATCH_COLOURS,
+  isHome: true,
+});
+
 const liveSession = (phase = "live", matchId = "m1") =>
   setActiveMatch({
     saveId: s1,
-    match: {
-      matchId: MatchId.make(matchId),
-      fixtureId: 1,
-      homeClubId: "home",
-      homeClubName: "Home FC",
-      awayClubId: "away",
-      awayClubName: "Away FC",
-      ...MATCH_COLOURS,
-      isHome: true,
-    },
+    match: matchSummary(matchId),
     phase,
   } as never);
 
@@ -85,6 +89,7 @@ const mount = (impl: (method: string, payload: Record<string, unknown>) => unkno
 afterEach(() => {
   cleanup();
   clearActiveMatch(s1);
+  clearCommittedMatch(s1);
 });
 
 describe("Possession bar", () => {
@@ -180,5 +185,21 @@ describe("Possession bar", () => {
     );
 
     expect(screen.queryByText("Possession")).toBeNull();
+  });
+
+  it("reads the accepted match's full-time possession once the live session is gone", async () => {
+    setCommittedMatch(s1, matchSummary("m7") as never);
+    const calls = mount((method) =>
+      method === "getLeagueTable"
+        ? { _tag: "Success", value: leagueTable(null) }
+        : { _tag: "Success", value: statistics(55, 45) },
+    );
+
+    expect(await screen.findByText("55%")).toBeTruthy();
+    expect(screen.getByText("45%")).toBeTruthy();
+    expect(calls.find((call) => call.method === "getMatchStatistics")?.payload).toMatchObject({
+      matchId: "m7",
+      revealedEvents: null,
+    });
   });
 });

@@ -6,7 +6,7 @@ import { REVEAL_INTERVAL_MS, RegistryProvider, leagueTableAtom, useAtomValue } f
 import { MatchProvider, useMatchContext } from "../../../src/renderer/match/MatchProvider.js";
 import { CommentaryProvider, useCommentaryContext } from "../../../src/renderer/match/CommentaryProvider.js";
 import { useMatchStreaming } from "../../../src/renderer/match/streaming.js";
-import { clearActiveMatch, getActiveMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
+import { clearActiveMatch, clearCommittedMatch, getActiveMatch, getCommittedMatch, setActiveMatch } from "../../../src/renderer/match/session.js";
 import { resetScopeState } from "../../../src/renderer/actions/scopeState.js";
 import { MATCH_COLOURS } from "./matchColours.js";
 
@@ -243,6 +243,8 @@ beforeEach(() => {
   cleanup();
   clearActiveMatch(s1);
   clearActiveMatch(s2);
+  clearCommittedMatch(s1);
+  clearCommittedMatch(s2);
   resetScopeState();
   vi.useFakeTimers();
 });
@@ -251,6 +253,8 @@ afterEach(() => {
   cleanup();
   clearActiveMatch(s1);
   clearActiveMatch(s2);
+  clearCommittedMatch(s1);
+  clearCommittedMatch(s2);
   resetScopeState();
   vi.useRealTimers();
 });
@@ -275,6 +279,8 @@ describe("starting a match and accepting its result refresh the season read (gro
     expect(called(mocked, "getLeagueTable")).toHaveLength(3);
     expect(pending()).toBe("none");
     expect(probe()).toBe("m1|Kick-off. / Home FC score! 1-0. / Full time.|committed");
+    // The accepted match stays named for the post-match screens even as the live session ends.
+    expect(getCommittedMatch(s1)?.match.matchId).toBe("m1");
     // No Continue in between, and nothing read the accepted match back.
     expect(called(mocked, "advanceCalendar")).toEqual([]);
     expect(called(mocked, "getAwaitingMatch")).toEqual([]);

@@ -23,6 +23,15 @@ export interface ActiveMatchSession {
   readonly quick?: boolean;
 }
 
+/**
+ * The match a save has just had accepted, kept after the live session is cleared at commit so the
+ * post-match tab bar, the Possession bar and the Summary can still name it.
+ */
+export interface CommittedMatch {
+  readonly saveId: SaveId;
+  readonly match: MatchSummary;
+}
+
 export interface RevealedScore {
   readonly homeScore: number;
   readonly awayScore: number;

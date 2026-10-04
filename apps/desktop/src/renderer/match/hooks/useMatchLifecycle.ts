@@ -12,7 +12,7 @@ import {
 } from "../../rpc.js";
 import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 import { registerActionHandler } from "../../actions/dispatch.js";
-import { clearActiveMatch, getActiveMatch, setActiveMatch } from "../session.js";
+import { clearActiveMatch, clearCommittedMatch, getActiveMatch, setActiveMatch, setCommittedMatch } from "../session.js";
 
 export interface MatchLifecycleState {
   readonly pending: PendingFixtureView | null;
@@ -56,6 +56,9 @@ export function useMatchLifecycle(saveId: SaveId): {
   const startMatch = useCallback(
     async (mode: MatchMode): Promise<void> => {
       if (pending === null) return;
+      // A new kickoff ends the previous match's post-match context: the tab bar goes back to
+      // Live Match and the Possession bar follows the match now being played.
+      clearCommittedMatch(saveId);
       setError(null);
       setPhase("starting");
       startingRef.current = true;
@@ -140,8 +143,12 @@ export function useMatchLifecycle(saveId: SaveId): {
   }, [saveId, match, phase, restoredAfterRestart, quick]);
 
   useEffect(() => {
-    if (phase === "committed") clearActiveMatch(saveId);
-  }, [phase, saveId]);
+    if (phase !== "committed" || match === null) return;
+    // The result is accepted: the live session ends, but the match stays named so the post-match
+    // tab bar, the Possession bar and the Summary can still read it.
+    setCommittedMatch(saveId, match);
+    clearActiveMatch(saveId);
+  }, [phase, saveId, match]);
 
   useEffect(() => {
     const unreg = registerActionHandler("start-match", () => void startMatch("play"));

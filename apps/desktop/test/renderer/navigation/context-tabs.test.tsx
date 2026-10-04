@@ -164,7 +164,7 @@ describe("ContextTabs — match context (§7–§9)", () => {
   });
 
   it("renders post-match tabs for /post-match/:matchId route", async () => {
-    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": true } });
+    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "live-table": true } });
     const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
     const expected = ["Summary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Report", "Commentary", "Latest Scores", "Table"];
     for (const label of expected) {
@@ -222,6 +222,31 @@ describe("ContextTabs — match context (§7–§9)", () => {
     ).toBe("page");
   });
 
+  it("shows the Post-match bar for a flat match route when the phase override says accepted", async () => {
+    mountAtPath(["match"], undefined, { matchPhaseOverride: "post-match" });
+    const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
+    expect(within(nav).getByRole("tab", { name: "Report" })).toBeTruthy();
+    expect(within(nav).getByRole("tab", { name: "Summary" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("resolves a flat stats route to its Post-match tab under the override", async () => {
+    mountAtPath(["match-home-stats"], undefined, { matchPhaseOverride: "post-match" });
+    const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
+    expect(within(nav).getByRole("tab", { name: "Home Stats" }).getAttribute("aria-current")).toBe("page");
+  });
+
+  it("leaves a flat match route Live when there is no phase override", async () => {
+    mountAtPath(["match"]);
+    const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(within(nav).queryByRole("tab", { name: "Report" })).toBeNull();
+  });
+
+  it("does not let the override turn a pre-match route into the Post-match bar", async () => {
+    mountAtPath(["pre-match", "201"], undefined, { matchPhaseOverride: "post-match" });
+    const nav = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    expect(within(nav).queryByRole("tab", { name: "Report" })).toBeNull();
+  });
+
   it("hides Live Table when matchTabVisibility indicates not applicable", async () => {
     mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": false } });
     const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
@@ -229,7 +254,7 @@ describe("ContextTabs — match context (§7–§9)", () => {
   });
 
   it("hides Table for post-match when matchTabVisibility indicates not applicable", async () => {
-    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": false } });
+    mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "live-table": false } });
     const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
     expect(within(nav).queryByRole("tab", { name: "Table" })).toBeNull();
   });

@@ -26,14 +26,22 @@ match's statistics (it hides today because `getActiveMatch` is empty post-commit
 
 **Blocked by:** None (can start immediately)
 
-**Status:** open
+**Status:** resolved
 
-- [ ] After a result is accepted the tab bar is Post-match, and Report opens the report for the match
+- [x] After a result is accepted the tab bar is Post-match, and Report opens the report for the match
       just played.
-- [ ] Post-match context survives tab clicks; Latest Scores still resolves the day's results.
-- [ ] The Possession bar renders on every post-match tab.
-- [ ] Live and pre-match bars are unchanged; Report stays absent live and pre-match.
+- [x] Post-match context survives tab clicks; Latest Scores still resolves the day's results.
+- [x] The Possession bar renders on every post-match tab.
+- [x] Live and pre-match bars are unchanged; Report stays absent live and pre-match.
 
 Supersedes the unreachable half of [17](17-report-in-the-post-match-tab-bar.md); see
 [05](05-one-tab-bar-for-two-tab-rows.md) and
 [possession is the share of minutes with the ball](../../../.agents/notes/implemented/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md).
+
+## Answer
+
+A module-level committed-match store, written at commit and cleared when a different Fixture awaits a
+kickoff, carries the accepted match past `clearActiveMatch`. `CareerShell` reads it and passes a
+`matchPhaseOverride` to `ContextTabs`; `PossessionBar` and `MatchDayLayout` read it directly. The
+decision, alternatives and risks are in [the post-match context
+note](../../../.agents/notes/proposed/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md).

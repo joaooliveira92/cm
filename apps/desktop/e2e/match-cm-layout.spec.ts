@@ -119,11 +119,22 @@ test("a live match reaches Home Stats, Away Stats and Latest Scores, live and af
   await accept.click();
   await expect(matchDay.getByText("Result accepted. Continue to move on.")).toBeVisible({ timeout: 15_000 });
 
+  // The bar flips to Post-match once the result is accepted, and the Possession bar stays on it.
+  const postTabs = page.getByRole("tablist", { name: "Post-match" });
+  await expect(postTabs).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByRole("region", { name: "Possession" })).toBeVisible();
+
   // Latest Scores after acceptance: the caption is gone and the day's results carry scores.
-  await tabs.getByRole("tab", { name: "Latest Scores" }).click();
+  await postTabs.getByRole("tab", { name: "Latest Scores" }).click();
   await expect(latest.getByRole("heading", { name: "Latest Scores" })).toBeVisible();
   await expect(latest.getByText("Results come in at full time.")).toHaveCount(0);
   await expect(latest.getByText(/^\d+ - \d+$/).first()).toBeVisible();
+
+  // Report joins the post-match bar and opens the report for the match just played.
+  await postTabs.getByRole("tab", { name: "Report" }).click();
+  const report = page.getByRole("main", { name: "Match Report" });
+  await expect(report.getByRole("heading", { name: "Match Report" })).toBeVisible();
+  await expect(report.getByText(/Half time:/)).toBeVisible();
 });
 
 test("a starter's Form tab opens after a played Matchday, showing the recorded line (map tickets 19, 20)", async ({
