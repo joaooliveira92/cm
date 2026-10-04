@@ -285,8 +285,11 @@ const momFixturesOf = (
   const mom = new Set<number>();
   for (const [fixtureId, group] of byFixture) {
     const exact = userRatings.get(fixtureId);
+    // Only players who took part are eligible: the ratings tab has no row for an unused substitute,
+    // and a stored-line rating for one would invent a performance.
+    const played = group.filter((line) => line.started === 1 || line.onMinute !== null);
     const winner = playerOfTheMatch(
-      group.map((line) => ({
+      played.map((line) => ({
         playerId: String(line.playerId),
         rating: exact?.get(line.playerId as PlayerId) ?? ratingOfLine(line),
         goals: line.goals,
