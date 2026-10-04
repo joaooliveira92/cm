@@ -4,7 +4,8 @@
     "typescript",
     "unicorn",
     "oxc",
-    "import"
+    "import",
+    "react"
   ],
   "jsPlugins": [
     "@shadcn/lint"
@@ -13,6 +14,13 @@
     "correctness": "error",
     "perf": "warn"
   },
+  // React Compiler support (Rules of React), adopted from the oxc announcement:
+  // https://oxc.rs/blog/2026-08-18-react-compiler-support
+  // Rules are "error" where the codebase is clean today and "warn" where adoption debt
+  // exists. The warn buckets are tracked in .scratch/react-compiler-adoption/ and should
+  // graduate to "error" as their findings are resolved. The classic (non-compiler) react/*
+  // and react-hooks/* rules that oxlint's correctness category would otherwise auto-enable
+  // are turned off below; the classic plugin is a separate, unevaluated adoption.
   "rules": {
     "no-eval": "error",
     "no-var": "error",
@@ -36,7 +44,34 @@
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-array-for-each": "warn",
     "unicorn/prefer-array-flat": "warn",
-    "import/no-duplicates": "error"
+    "import/no-duplicates": "error",
+    "react/error-boundaries": "error",
+    "react/invariant": "error",
+    "react/preserve-manual-memoization": "error",
+    "react/purity": "error",
+    "react/set-state-in-render": "error",
+    "react/syntax": "error",
+    "react/unsupported-syntax": "error",
+    "react/use-memo": "error",
+    "react/void-use-memo": "error",
+    "react/capitalized-calls": "error",
+    "react/refs": "warn",
+    "react/set-state-in-effect": "warn",
+    "react/exhaustive-effect-dependencies": "warn",
+    "react/todo": "warn",
+    "react/memo-dependencies": "warn",
+    "react/hooks": "warn",
+    "react/immutability": "warn",
+    "react/static-components": "warn",
+    "react/rule-suppression": "warn",
+    "react/no-deriving-state-in-effects": "warn",
+    "react/incompatible-library": "warn",
+    "react/globals": "warn",
+    "react/no-array-index-key": "off",
+    "react/jsx-no-constructed-context-values": "off",
+    "react/no-object-type-as-default-prop": "off",
+    "react/no-children-prop": "off",
+    "react-hooks/exhaustive-deps": "off"
   },
   "env": {
     "builtin": true
