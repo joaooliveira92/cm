@@ -3,12 +3,13 @@ import { REVEAL_INTERVAL_MS } from "../../rpc.js";
 import { shownAtLevel, type HighlightLevel } from "@cm-clone/shared";
 
 /**
- * Whether a line reaches the commentary bar. It must have won its display-chance draw, and its level be within
- * the chosen highlights. A line that doesn't is revealed at once, taking no time, and stays in the
- * log. A line without a level, which the engine sent no playback for, counts as `full`.
+ * Whether a line reaches the commentary bar. It must have won its display-chance draw, its level be
+ * within the chosen highlights, and it must not be a silent recorded-but-unspoken line. A line that
+ * doesn't is revealed at once, taking no time, and stays in the log. A line without a level, which
+ * the engine sent no playback for, counts as `full`.
  */
 export const showsInBar = (line: CommentaryLineView, highlights: HighlightLevel): boolean =>
-  line.quiet !== true && shownAtLevel(line.level ?? "full", highlights);
+  line.silent !== true && line.quiet !== true && shownAtLevel(line.level ?? "full", highlights);
 
 export interface PlaybackPart {
   readonly text: string;

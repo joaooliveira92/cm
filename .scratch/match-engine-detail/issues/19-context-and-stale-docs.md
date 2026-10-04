@@ -14,12 +14,7 @@ change makes them stale.
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-> Partial: `CONTEXT.md` names the new events, drops the fold's stale premise, and defines Possession.
-> Remaining: the one-line pointer to this map in the match-screen spec's Further Notes, and updating
-> the match-screen spec's "out of scope until new engine events exist" paragraph and the fold note's
-> absent list.
-
-- [ ] `CONTEXT.md` names the new events, drops the fold's stale premise, and defines Possession.
-- [ ] The match-screen spec points at this map and its stale paragraph is updated.
+- [x] `CONTEXT.md` names the new events, drops the fold's stale premise, and defines Possession.
+- [x] The match-screen spec points at this map and its stale paragraph is updated.

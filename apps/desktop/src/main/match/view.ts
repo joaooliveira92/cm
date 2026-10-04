@@ -176,6 +176,7 @@ export const buildResumeSimulationView = (
             parts: line.parts.map((part) => new CommentaryPartView(part)),
             flash: line.flash,
             quiet: line.quiet,
+            silent: line.silent,
             clubId: line.clubId === null ? null : ClubId.make(line.clubId),
             level: line.level,
           }),

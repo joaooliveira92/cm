@@ -32,6 +32,14 @@ describe("CommentaryFeed", () => {
     expect(screen.getByText("Nothing yet.")).toBeTruthy();
   });
 
+  it("never draws a silent line, even if it carried text the engine meant only to record", () => {
+    const silent = new CommentaryLineView({ minute: 30, tag: "PossessionTally", text: "Recorded only.", silent: true });
+    render(<CommentaryFeed lines={[...LINES, silent]} emptyMessage="" />);
+    expect(screen.queryByText("Recorded only.")).toBeNull();
+    const rows = within(screen.getByRole("log", { name: "Commentary" })).getAllByRole("listitem");
+    expect(rows).toHaveLength(LINES.length);
+  });
+
   it("follows the newest line, but not once the reader has scrolled up", () => {
     const { rerender } = render(<CommentaryFeed lines={LINES.slice(0, 2)} emptyMessage="" />);
     const log = screen.getByRole("log");

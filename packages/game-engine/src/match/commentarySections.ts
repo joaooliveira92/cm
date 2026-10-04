@@ -57,6 +57,7 @@ export type Placeholder =
   | "side"
   | "formation"
   | "assist"
+  | "fouled"
   | PronounPlaceholder;
 
 /** Pronouns for a line's `{player}`, so no file hard-codes one. Capitalised forms start a sentence. */
@@ -149,7 +150,8 @@ export const COMMENTARY_SECTIONS: ReadonlyMap<CommentaryTemplateKey, ReadonlyArr
   ),
   ...SHOT_KINDS.map((kind) => [`ShotMissed:${kind}`, [...PLAYER_MOMENT, "assist"]] as const),
   ...SITUATIONS.map((situation) => [`GoalScore:${situation}`, SIDES] as const),
-  ...(["Foul", "Offside", "BeatenTrap", "Penalty", "YellowCard", "RedCard"] as const).map((tag) => [tag, PLAYER_MOMENT] as const),
+  ...(["Foul", "Penalty"] as const).map((tag) => [tag, [...PLAYER_MOMENT, "fouled"]] as const),
+  ...(["Offside", "BeatenTrap", "YellowCard", "RedCard"] as const).map((tag) => [tag, PLAYER_MOMENT] as const),
   ...(["Corner", "FreeKick"] as const).map((tag) => [tag, [...PLAYER_MOMENT, "side"]] as const),
   ...CORNER_KINDS.map((kind) => [`Corner:${kind}`, [...PLAYER_MOMENT, "side"]] as const),
   ...FREE_KICK_KINDS.map((kind) => [`FreeKick:${kind}`, [...PLAYER_MOMENT, "side"]] as const),

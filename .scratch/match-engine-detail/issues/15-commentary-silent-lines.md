@@ -14,13 +14,9 @@ count.
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-> Partial: the engine emits one `silent` Commentary Line per new event (empty text, no parts) and a
-> test proves line count equals event count. Remaining: carry `silent` on `CommentaryLineView`, have
-> the pacer reveal it without a beat, and have the feed and highlight filtering skip it.
-
-- [ ] For a seeded match with every new kind, line count equals event count.
-- [ ] Silent lines carry no text or delay and are skipped by the feed and highlight filtering.
-- [ ] A `{fouled}` line names the brought-down player when the field is present, and a token-free line
+- [x] For a seeded match with every new kind, line count equals event count.
+- [x] Silent lines carry no text or delay and are skipped by the feed and highlight filtering.
+- [x] A `{fouled}` line names the brought-down player when the field is present, and a token-free line
       is used when it is absent.

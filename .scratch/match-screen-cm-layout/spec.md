@@ -102,7 +102,7 @@ The match screens take the shape of CM 03/04's match view, showing only what the
 ## Out of Scope
 
 - Action Zones and 2D Pitch: the engine has no spatial model.
-- Passes, tackles, headers, interceptions, runs with the ball, fouls suffered and real possession: these need new engine events, which is an effort of its own.
+- Passes and key headers: needed a possession-chain model the engine lacks. Tackles, headers, interceptions, runs with the ball, fouls suffered and real possession now come from recorded engine events; see [the match-engine-detail map](../match-engine-detail/map.md).
 - Referee, weather and attendance: nothing models them, and capacity is not a crowd.
 - Live scores from other fixtures: Matchday resolution would have to move out of the commit transaction.
 - Non Competitive and International form rows, and Player History (screen 55).
@@ -110,5 +110,6 @@ The match screens take the shape of CM 03/04's match view, showing only what the
 
 ## Further Notes
 
+- The new per-player and team figures are recorded by the engine in [the match-engine-detail map](../match-engine-detail/map.md), which extends this screen's fold and reads rather than deciding anything new.
 - Every map decision was settled without a human in the loop at the user's request, and the user then approved the full set of recommendations on 2026-10-03.
 - Rating weights are first guesses; plan a tuning pass after playing several matches with the new table.

@@ -4,9 +4,9 @@ Label: `wayfinder:map`
 
 > Status: complete 2026-10-03, every ticket resolved autonomously at the user's approval. Nothing is
 > left to decide. [Spec published](spec.md); implementation tickets 12–19 sliced under
-> [issues/](issues/). Ticket 12 (the engine core) resolved; 13, 15 and 19 shipped their engine-side
-> slice and carry a "Partial" note; 14, 16, 17 and 18 remain, sequenced after the match-screen
-> effort's fold and line-table tickets.
+> [issues/](issues/). Tickets 12–16 and 19 are resolved (the fold, rating, stored-timeline decode,
+> silent commentary, statistics read and docs all shipped). 17 and 18 remain, still blocked on the
+> match-screen line-table and Form tickets they extend.
 
 ## Destination
 

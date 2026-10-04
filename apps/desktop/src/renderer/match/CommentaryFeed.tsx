@@ -70,7 +70,7 @@ export const CommentaryFeed = ({
       className={`space-y-1 overflow-y-auto rounded-panel border border-panel-border bg-panel-bg p-4 text-body shadow-panel ${className}`}
     >
       {lines
-        .filter((line) => line.text !== "")
+        .filter((line) => line.text !== "" && line.silent !== true)
         .map((line, index) => (
           <li key={index} className={`flex gap-3 ${rowClass(line.tag)}`}>
             <span className="w-10 shrink-0 text-data tabular-nums text-text-muted">

@@ -170,6 +170,7 @@ describe("commentary reads the events around a line", () => {
       half: 1,
       teamClubId: home,
       playerId: playerId("p1"),
+      fouledPlayerId: playerId("p2"),
       isYellowCard: false,
     }));
     for (const seed of [1, 7, 99]) {
@@ -182,6 +183,34 @@ describe("commentary reads the events around a line", () => {
     const before = textOf([started, goal(10, home, 1, 0), goal(20, home, 2, 0)]);
     const after = textOf([started, goal(10, home, 1, 0), goal(20, away, 1, 1), goal(30, away, 1, 2)]);
     expect(after.slice(0, 2)).toEqual(before.slice(0, 2));
+  });
+
+  it("names the player brought down on a Foul line only when the victim is recorded", () => {
+    const named: ReadonlyArray<MatchEvent> = COMMENTARY_TEMPLATES.Foul.map((_, minute) => ({
+      _tag: "Foul",
+      minute,
+      half: 1,
+      teamClubId: home,
+      playerId: playerId("p1"),
+      fouledPlayerId: playerId("p2"),
+      isYellowCard: false,
+    }));
+    const lines = textOf([started, ...named], 7).slice(1);
+    expect(lines.some((line) => line.includes("P Two"))).toBe(true);
+
+    const unnamed: ReadonlyArray<MatchEvent> = COMMENTARY_TEMPLATES.Foul.map((_, minute) => ({
+      _tag: "Foul",
+      minute,
+      half: 1,
+      teamClubId: home,
+      playerId: playerId("p1"),
+      isYellowCard: false,
+    }));
+    for (const seed of [1, 7, 99]) {
+      const silent = textOf([started, ...unnamed], seed).slice(1);
+      // No line can use a placeholder the event does not fill, so none names a victim.
+      expect(silent.every((line) => !line.includes("P Two"))).toBe(true);
+    }
   });
 
 
