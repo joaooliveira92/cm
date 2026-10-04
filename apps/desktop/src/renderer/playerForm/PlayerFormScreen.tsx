@@ -25,30 +25,42 @@ const STATE_TEXT: Readonly<Record<PlayerFormGameRow["state"], string>> = {
   noRecord: "No player record",
 };
 
-/** The stats columns, in CM order: abbreviation, full name, and how to read the value. Ticket 18
- *  inserts the recorded-defending columns between Key and Off. */
+/** The stats columns, in CM order, matching the Home/Away Stats table. Ticket 18's
+ *  recorded-defending columns read "-" on a row from a timeline stored before the events existed. */
 const COLUMNS: ReadonlyArray<{
+  readonly id: string;
   readonly short: string;
   readonly full: string;
-  readonly value: (row: PlayerFormGameRow) => string;
+  readonly value: (row: PlayerFormGameRow) => string | null;
   readonly rating?: boolean;
   readonly goalkeeper?: boolean;
 }> = [
-  { short: "Key", full: "Key passes", value: (row) => String(row.keyPasses) },
-  { short: "Off", full: "Offsides", value: (row) => String(row.offsides) },
-  { short: "Fou", full: "Fouls committed", value: (row) => String(row.fouls) },
-  { short: "Ast", full: "Assists", value: (row) => String(row.assists) },
-  { short: "She", full: "Shots", value: (row) => String(row.shots) },
-  { short: "Sat", full: "Shots on target", value: (row) => String(row.shotsOnTarget) },
-  { short: "Sav", full: "Saves", value: (row) => String(row.saves), goalkeeper: true },
+  { id: "keyPasses", short: "Key", full: "Key passes", value: (row) => String(row.keyPasses) },
+  { id: "tacklesAttempted", short: "Tck", full: "Tackles attempted", value: (row) => nullable(row.tacklesAttempted) },
+  { id: "tacklesWon", short: "Won", full: "Tackles won", value: (row) => nullable(row.tacklesWon) },
+  { id: "headers", short: "Hea", full: "Headers attempted", value: (row) => nullable(row.headers) },
+  { id: "headersWon", short: "Won", full: "Headers won", value: (row) => nullable(row.headersWon) },
+  { id: "interceptions", short: "Int", full: "Interceptions", value: (row) => nullable(row.interceptions) },
+  { id: "runs", short: "Run", full: "Runs", value: (row) => nullable(row.runs) },
+  { id: "offsides", short: "Off", full: "Offsides", value: (row) => String(row.offsides) },
+  { id: "fouls", short: "Fou", full: "Fouls committed", value: (row) => String(row.fouls) },
+  { id: "foulsSuffered", short: "Fld", full: "Fouls suffered", value: (row) => nullable(row.foulsSuffered) },
+  { id: "assists", short: "Ast", full: "Assists", value: (row) => String(row.assists) },
+  { id: "shots", short: "She", full: "Shots", value: (row) => String(row.shots) },
+  { id: "shotsOnTarget", short: "Sat", full: "Shots on target", value: (row) => String(row.shotsOnTarget) },
+  { id: "saves", short: "Sav", full: "Saves", value: (row) => String(row.saves), goalkeeper: true },
   {
+    id: "rating",
     short: "Rat",
     full: "Match Rating",
-    value: (row) => (row.rating === null ? "" : row.rating.toFixed(1)),
+    value: (row) => (row.rating === null ? null : row.rating.toFixed(1)),
     rating: true,
   },
-  { short: "Gls", full: "Goals", value: (row) => String(row.goals) },
+  { id: "goals", short: "Gls", full: "Goals", value: (row) => String(row.goals) },
 ];
+
+/** A count that may be absent (a pre-change timeline): "-" when played, empty when not. */
+const nullable = (value: number | null): string | null => (value === null ? "-" : String(value));
 
 const CardMark = ({ row }: { readonly row: PlayerFormGameRow }) => {
   if (row.card === "none") return null;
@@ -79,7 +91,7 @@ const FormTable = ({
 }) => {
   const columns = COLUMNS.filter((column) => column.goalkeeper !== true || view.goalkeeper);
   return (
-    <table className="min-w-full text-left text-data">
+    <table aria-label="Recent games" className="min-w-full text-left text-data">
       <caption className="text-text-muted">Only what the match records is shown.</caption>
       <thead>
         <tr>
@@ -92,7 +104,7 @@ const FormTable = ({
             <AbbrHeader short="Inf." full="Substitution" />
           </th>
           {columns.map((column) => (
-            <th key={column.short} scope="col">
+            <th key={column.id} scope="col">
               <AbbrHeader short={column.short} full={column.full} />
             </th>
           ))}
@@ -125,17 +137,18 @@ const FormTable = ({
                     <CardMark row={row} />
                   </td>
                   <td>{substitutionNote(row)}</td>
-                  {columns.map((column) => (
-                    <td key={column.short} className="tabular-nums">
-                      {column.rating === true && row.rating !== null ? (
-                        <span className={`font-semibold ${ratingTone(row.rating)}`}>
-                          {column.value(row)}
-                        </span>
-                      ) : (
-                        column.value(row)
-                      )}
-                    </td>
-                  ))}
+                  {columns.map((column) => {
+                    const text = column.value(row);
+                    return (
+                      <td key={column.id} className="tabular-nums">
+                        {column.rating === true && row.rating !== null ? (
+                          <span className={`font-semibold ${ratingTone(row.rating)}`}>{text}</span>
+                        ) : (
+                          text
+                        )}
+                      </td>
+                    );
+                  })}
                 </>
               ) : (
                 <td colSpan={2 + columns.length}>{stateText}</td>
@@ -177,10 +190,16 @@ const SeasonBlock = ({ rows }: { readonly rows: ReadonlyArray<PlayerFormSeasonRo
             <AbbrHeader short="Red" full="Red cards" />
           </th>
           <th scope="col">
+            <AbbrHeader short="Tck" full="Tackles attempted" />
+          </th>
+          <th scope="col">
             <AbbrHeader short="Sh Tar" full="Shots on target %" />
           </th>
           <th scope="col">
             <AbbrHeader short="Fouls" full="Fouls committed" />
+          </th>
+          <th scope="col">
+            <AbbrHeader short="Fls Ag" full="Fouls suffered" />
           </th>
           <th scope="col">
             <AbbrHeader short="Av R" full="Average Match Rating" />
@@ -199,8 +218,10 @@ const SeasonBlock = ({ rows }: { readonly rows: ReadonlyArray<PlayerFormSeasonRo
             <td className="tabular-nums">{row.mom}</td>
             <td className="tabular-nums">{row.yellowCards}</td>
             <td className="tabular-nums">{row.redCards}</td>
+            <td className="tabular-nums">{row.tackles === null ? "-" : row.tackles}</td>
             <td className="tabular-nums">{shotTargetPct(row)}</td>
             <td className="tabular-nums">{row.fouls}</td>
+            <td className="tabular-nums">{row.foulsSuffered === null ? "-" : row.foulsSuffered}</td>
             <td className="tabular-nums">{row.averageRating === null ? "-" : row.averageRating.toFixed(2)}</td>
           </tr>
         ))}

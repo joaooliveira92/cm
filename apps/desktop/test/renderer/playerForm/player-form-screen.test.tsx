@@ -84,7 +84,7 @@ const formView = () => ({
   formRatings: [7.8, 5.4],
   goalkeeper: false,
   season: [
-    { kind: "overall", label: "Overall", starts: 1, subs: 1, goals: 1, assists: 0, mom: 1, yellowCards: 0, redCards: 0, shots: 0, shotsOnTarget: 0, fouls: 2, averageRating: null },
+    { kind: "overall", label: "Overall", starts: 1, subs: 1, goals: 1, assists: 0, mom: 1, yellowCards: 0, redCards: 0, tackles: 3, shots: 0, shotsOnTarget: 0, fouls: 2, foulsSuffered: 1, averageRating: null },
   ],
 });
 
@@ -145,6 +145,10 @@ describe("PlayerFormScreen", () => {
     expect(screen.getByText("Form: 8 5")).toBeDefined();
     expect(screen.getByText("7.8")).toBeDefined();
     expect(screen.getByText("Rivals")).toBeDefined();
+
+    // The recorded-defending columns read "-" when the line's timeline predates them.
+    const games = screen.getByRole("table", { name: "Recent games" });
+    expect(within(games).getByRole("row", { name: /Rivals/ }).textContent).toContain("-");
 
     // The season block draws "starts (sub)", the MoM count, and "-" for Sh Tar and Av R with no shots.
     const season = await screen.findByRole("region", { name: "Season totals" });

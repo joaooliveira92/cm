@@ -311,6 +311,11 @@ interface SeasonBucket {
   shots: number;
   shotsOnTarget: number;
   fouls: number;
+  /** A count that is unknown once any contributing line predates the recorded-defending events. */
+  tackles: number;
+  tacklesUnknown: boolean;
+  foulsSuffered: number;
+  foulsSufferedUnknown: boolean;
   ratingSum: number;
   appearances: number;
 }
@@ -326,6 +331,10 @@ const blankBucket = (): SeasonBucket => ({
   shots: 0,
   shotsOnTarget: 0,
   fouls: 0,
+  tackles: 0,
+  tacklesUnknown: false,
+  foulsSuffered: 0,
+  foulsSufferedUnknown: false,
   ratingSum: 0,
   appearances: 0,
 });
@@ -342,6 +351,10 @@ const addToBucket = (bucket: SeasonBucket, line: FormLineRow, rating: number, mo
   bucket.shots += line.shots;
   bucket.shotsOnTarget += line.shotsOnTarget;
   bucket.fouls += line.fouls;
+  if (line.tacklesWon === null || bucket.tacklesUnknown) bucket.tacklesUnknown = true;
+  else bucket.tackles += line.tacklesWon + line.fouls;
+  if (line.foulsSuffered === null || bucket.foulsSufferedUnknown) bucket.foulsSufferedUnknown = true;
+  else bucket.foulsSuffered += line.foulsSuffered;
   bucket.ratingSum += rating;
 };
 
@@ -359,6 +372,9 @@ const seasonRow = (kind: "league" | "cup" | "continental" | "overall", label: st
     shots: bucket.shots,
     shotsOnTarget: bucket.shotsOnTarget,
     fouls: bucket.fouls,
+    tackles: bucket.appearances === 0 || bucket.tacklesUnknown ? null : bucket.tackles,
+    foulsSuffered:
+      bucket.appearances === 0 || bucket.foulsSufferedUnknown ? null : bucket.foulsSuffered,
     averageRating:
       bucket.appearances === 0
         ? null

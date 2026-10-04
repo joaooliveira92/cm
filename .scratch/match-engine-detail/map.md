@@ -5,11 +5,10 @@ Label: `wayfinder:map`
 > Status: complete 2026-10-03, every ticket resolved autonomously at the user's approval. Nothing is
 > left to decide. [Spec published](spec.md); implementation tickets 12–19 sliced under
 > [issues/](issues/). Tickets 12–17 and 19 are resolved (the fold, rating, stored-timeline decode,
-> silent commentary, statistics read, player match lines and docs all shipped). 18 remains: the
-> match-screen line-table ticket it extends shipped 2026-10-04, so 17's nullable count columns went
-> into that table and its read-side check resolved against it; 18 is still blocked on the Form tickets
-> ([match-screen 19](../match-screen-cm-layout/issues/19-form-tab-recent-games.md) and
-> [20](../match-screen-cm-layout/issues/20-form-season-block-and-player-of-the-match.md)).
+> silent commentary, statistics read, player match lines and docs all shipped). 18 is resolved too:
+> the match-screen Form tickets 19 and 20 shipped first (2026-10-04), then the Form rows gained the
+> recorded-defending columns and the season block its Tck and Fls Ag. Every ticket in this map is
+> done.
 
 ## Destination
 

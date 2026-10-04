@@ -136,6 +136,10 @@ export class PlayerFormSeasonRow extends Schema.Class<PlayerFormSeasonRow>("Play
   shots: Schema.Finite,
   shotsOnTarget: Schema.Finite,
   fouls: Schema.Finite,
+  /** Tackles attempted (won plus fouls) and fouls suffered; null when a contributing line predates
+   *  the recorded-defending events (match-engine ticket 18), so the block reads "-". */
+  tackles: Schema.NullOr(Schema.Finite),
+  foulsSuffered: Schema.NullOr(Schema.Finite),
   /** Mean Match Rating over appearances, two decimals, or null when he made none. */
   averageRating: Schema.NullOr(Schema.Finite),
 }) {}

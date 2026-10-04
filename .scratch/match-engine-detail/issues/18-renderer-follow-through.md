@@ -12,8 +12,8 @@ data reads "-". Sequenced after the match-screen fold, column-list, Form and Lat
 
 **Blocked by:** 14, 16, [match-screen 19](../../match-screen-cm-layout/issues/19-form-tab-recent-games.md), [match-screen 20](../../match-screen-cm-layout/issues/20-form-season-block-and-player-of-the-match.md)
 
-**Status:** blocked
+**Status:** resolved
 
-- [ ] New columns and rows render live and post-match, cut at the revealed position.
-- [ ] Possession is on the bar, with both percentages as text and "not tracked" before any tally.
-- [ ] Old data reads "-"; no pass or completion column exists.
+- [x] New columns and rows render live and post-match, cut at the revealed position.
+- [x] Possession is on the bar, with both percentages as text and "not tracked" before any tally.
+- [x] Old data reads "-"; no pass or completion column exists.
