@@ -10,7 +10,8 @@
  *
  * The frame owns the profile read's three view states, so a screen inside it renders against a
  * loaded `PlayerProfileView` and never repeats the loading/error arms. A screen needing more than
- * the profile (the Information tab's contract, say) reads its own atom inside the children.
+ * the profile (the Information tab's contract, the Form tab's recent games, say) reads its own atom
+ * inside the children.
  */
 import type { PlayerId, PlayerProfileView, SaveId } from "@cm-clone/contracts";
 import { nationName } from "@cm-clone/shared";
@@ -23,12 +24,13 @@ import { describeRpcError, playerContractAtom, playerProfileAtom, typedError, us
 
 const PAGE_CLASS = `flex flex-1 flex-col px-4 pt-3 pb-6 text-foreground ${FOCUS_RING.join(" ")}`;
 
-/** The player-scoped routes, in the order the strip draws them. `Form` and `History` are absent
- *  rather than disabled: neither per-player match form nor career history is modelled (Group D
- *  tickets 04/53/55), so a tab for them would name a screen that cannot exist yet. */
+/** The player-scoped routes, in the order the strip draws them. `History` is absent rather than
+ *  disabled: career history is not modelled (Group D ticket 55), so a tab for it would name a screen
+ *  that cannot exist yet. `Form` joins after Information (map ticket 19). */
 const TABS = [
   { id: "playerProfile", label: "Profile", destination: "playerDetail" },
   { id: "playerContract", label: "Information", destination: "playerContract" },
+  { id: "playerForm", label: "Form", destination: "playerForm" },
   { id: "playerDevelopment", label: "Development", destination: "playerDevelopment" },
 ] as const;
 

@@ -69,6 +69,7 @@ export const CAREER_SUB_SURFACES: Readonly<Record<CareerSubSurfaceType, string>>
   playerDetail: "names a player, so it cannot be built from a save alone",
   playerDevelopment: "names a player, so it cannot be built from a save alone",
   playerContract: "names a player, so it cannot be built from a save alone",
+  playerForm: "names a player, so it cannot be built from a save alone",
   matchMatchTactics: "needs a match in play, reached from the live Match day section",
   matchSubstitutions: "needs a match in play, reached from the live Match day section",
   matchStats: "a post-match review screen, reached from the Post-Match Summary",

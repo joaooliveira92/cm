@@ -11,9 +11,9 @@ ratings, rounded; "Form: no appearances" when none. No knowledge gate. Defined i
 
 **Blocked by:** 13, 18
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] The three non-appearance states render as distinct text.
-- [ ] A player signed mid-season has no rows for his new club before his transfer date.
-- [ ] The form strip matches the ratings of his last five appearances across clubs.
-- [ ] The player strip's comment and Group D ticket 04's screen-53 row point at this effort.
+- [x] The three non-appearance states render as distinct text.
+- [x] A player signed mid-season has no rows for his new club before his transfer date.
+- [x] The form strip matches the ratings of his last five appearances across clubs.
+- [x] The player strip's comment and Group D ticket 04's screen-53 row point at this effort.

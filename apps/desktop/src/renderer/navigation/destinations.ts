@@ -149,6 +149,9 @@ export type CareerDestination =
   /** A player's Contract screen (Screen 56) — reached from the Contract Expiry screen. Needs the
    *  player too, so it is excluded from save-scoped nav like `playerDetail`. */
   | { readonly type: "playerContract"; readonly saveId: SaveId; readonly playerId: PlayerId }
+  /** A player's Form tab (map ticket 19) — recent games, the form strip and the season block. Needs
+   *  the player, so excluded from save-scoped nav like the other player tabs. */
+  | { readonly type: "playerForm"; readonly saveId: SaveId; readonly playerId: PlayerId }
   /**
    * Transfer Target Comparison (Screen 129, ticket 12) — the Players the manager selected in
    * Player Search, side by side, the figures read by the human club's Scouting Progress. It names
@@ -241,7 +244,7 @@ export const CAREER_SCREEN_TYPES = [
  */
 export type SaveScopedCareerDestinationType = Exclude<
   CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "staffProfile" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" | "playerDetail" | "playerDevelopment" | "playerContract" | "playerComparison" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchHomeStats" | "matchAwayStats" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
+  "teamScoutReport" | "clubStaff" | "staffProfile" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" |   "playerDetail" | "playerDevelopment" | "playerContract" | "playerForm" | "playerComparison" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" | "matchStats" | "matchRatings" | "matchHomeStats" | "matchAwayStats" | "matchReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
 >;
 
 /**
@@ -374,6 +377,10 @@ export type ResolvedDestination =
       readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
     }
   | {
+      readonly to: "/career/$saveId/player/$playerId/form";
+      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
+    }
+  | {
       readonly to: "/career/$saveId/player-comparison/$playerIds";
       readonly params: { readonly saveId: SaveId; readonly playerIds: string };
     }
@@ -472,6 +479,7 @@ export const resolveDestination = (destination: NavigationDestination): Resolved
     case "playerDetail":
     case "playerDevelopment":
     case "playerContract":
+    case "playerForm":
     case "playerComparison":
     case "matchMatchTactics":
     case "matchSubstitutions":
@@ -675,6 +683,11 @@ const careerRoute = (
     case "playerContract":
       return {
         to: "/career/$saveId/player/$playerId/contract",
+        params: { saveId: destination.saveId, playerId: destination.playerId },
+      };
+    case "playerForm":
+      return {
+        to: "/career/$saveId/player/$playerId/form",
         params: { saveId: destination.saveId, playerId: destination.playerId },
       };
     case "playerComparison":

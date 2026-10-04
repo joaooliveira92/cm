@@ -4,8 +4,11 @@ import {
   MATCH_RATING_EVENT_WEIGHTS,
   MATCH_RATING_GOAL_AGAINST_SHARE,
   matchRating,
+  matchRatingFromStoredLine,
   matchRatingPhaseOf,
+  matchRatingPhaseOfLabel,
   type MatchInvolvement,
+  type StoredMatchLineRating,
 } from "../../src/rules/matchRating.js";
 
 const quiet = (overrides: Partial<MatchInvolvement> = {}): MatchInvolvement => ({
@@ -121,5 +124,48 @@ describe("matchRating (group-g decision request 03, Option B)", () => {
 
   it("gives the defence phase a smaller goals-against share now recorded defending carries some of it", () => {
     expect(MATCH_RATING_GOAL_AGAINST_SHARE.defense).toBe(-0.3);
+  });
+});
+
+describe("matchRatingFromStoredLine (map ticket 19)", () => {
+  const line = (overrides: Partial<StoredMatchLineRating> = {}): StoredMatchLineRating => ({
+    phase: "midfield",
+    started: true,
+    onAtEnd: true,
+    goals: 0,
+    assists: 0,
+    keyPasses: 0,
+    shots: 0,
+    shotsOnTarget: 0,
+    saves: 0,
+    yellowCards: 0,
+    redCards: 0,
+    fouls: 0,
+    offsides: 0,
+    tacklesWon: 0,
+    interceptions: 0,
+    headersWon: 0,
+    foulsSuffered: 0,
+    result: "draw",
+    ...overrides,
+  });
+
+  it("weights a goal once, even though the line counts it as a shot on target too", () => {
+    const scored = matchRatingFromStoredLine(line({ goals: 1, shots: 1, shotsOnTarget: 1, result: "win" }));
+    const identical = matchRatingFromStoredLine(line({ result: "win" }));
+    expect(scored - identical).toBeCloseTo(MATCH_RATING_EVENT_WEIGHTS.goal, 5);
+  });
+
+  it("maps a slot label to its phase, falling back to midfield", () => {
+    expect(matchRatingPhaseOfLabel("GK")).toBe("defense");
+    expect(matchRatingPhaseOfLabel("D RC")).toBe("defense");
+    expect(matchRatingPhaseOfLabel("DM L")).toBe("midfield");
+    expect(matchRatingPhaseOfLabel("AM C")).toBe("attack");
+    expect(matchRatingPhaseOfLabel("F R")).toBe("attack");
+    expect(matchRatingPhaseOfLabel("")).toBe("midfield");
+  });
+
+  it("rates a stored line with no goal share at the phase's base, since the timeline is gone", () => {
+    expect(matchRatingFromStoredLine(line({ phase: "midfield" }))).toBe(MATCH_RATING_BASE + 0.3);
   });
 });

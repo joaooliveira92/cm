@@ -35,7 +35,7 @@ Eight screens remain after tickets 01-03. Dispositions:
 | 50 Player Profile | **needs-design** | Squad screen shows players as table rows with no drill-down. Profile is the natural surface a player row leads to. Needs RPC + screen + route. |
 | 51 Player Attributes | **satisfied-inline** | All attributes are toggleable squad table columns. A dedicated screen with no new data adds no value. The WIP placeholder route should be removed. |
 | 52 Player Positions | **satisfied-inline** | Positions + familiarity shown in squad position list and table column. Same reasoning as 51. |
-| 53 Player Form | **out-of-scope** | Form (last N matches) would require a new data model (per-player match rating history) and has no shipping feature depending on it. A dedicated effort if needed. |
+| 53 Player Form | **superseded** | Shipped by the [CM 03/04 match-screen effort](../../match-screen-cm-layout/map.md), tickets 19/20: the per-player match line table and a Form tab now model recent games, the form strip and season totals. |
 | 55 Player History | **deferred** | Career history (clubs played for, seasons, transfer dates) requires modeling the sequence of contracts/transfers a player passes through. Related to Season Summary. Not urgent. |
 | 56 Player Contract | **needs-design** | Contract terms (wage, length, expiry) are modeled but have no dedicated surface. A contract detail panel accessible from squad or profile would be useful. Needs getPlayerContract RPC. |
 | 59 Player Injuries | **out-of-scope** | Injuries are per-match events with no durable per-player record (no injury history table). Building one is a data-modeling effort not justified by current needs. |

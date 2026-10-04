@@ -5,7 +5,8 @@ import {
 } from "@cm-clone/shared";
 import { Schema } from "effect";
 import { ClubSummary } from "./clubs.js";
-import { PlayerId, ClubId } from "./ids.js";
+import { ClubId, FixtureId, MatchId, PlayerId } from "./ids.js";
+import { MatchPlayerCard } from "./matchStats.js";
 import { PositionSummaryFields, PlayerPositionView } from "./squad.js";
 import { PlayerFigureSchema } from "./transfers.js";
 
@@ -60,4 +61,96 @@ export class PlayerProfileView extends Schema.Class<PlayerProfileView>("PlayerPr
   club: ClubSummary,
   contractExpiry: Schema.String,
   injuryStatus: Schema.String,
+}) {}
+
+// ---------------------------------------------------------------------------
+// Player Form (map ticket 19): recent games and the five-rating form strip
+// ---------------------------------------------------------------------------
+
+/** What a Form row is for the player: he played, he was an unused substitute in a recorded matchday
+ *  squad, the club's match has lines but he was not named, or the fixture has no player record at
+ *  all (a `results-only` club, no engine timeline). The screen renders each as its own text. */
+export const PlayerFormRowState = Schema.Literals([
+  "played",
+  "unusedSubstitute",
+  "notSelected",
+  "noRecord",
+]);
+export type PlayerFormRowState = Schema.Schema.Type<typeof PlayerFormRowState>;
+
+/** One played fixture of the selected club this season, with the player's line in it. Every count is
+ *  zero and `rating` is null when he did not play; `state` says which kind of absence. */
+export class PlayerFormGameRow extends Schema.Class<PlayerFormGameRow>("PlayerFormGameRow")({
+  fixtureId: FixtureId,
+  /** ISO `YYYY-MM-DD`, the fixture's date. */
+  date: Schema.String,
+  opponentClubName: Schema.String,
+  isHome: Schema.Boolean,
+  state: PlayerFormRowState,
+  /** The player's club's result, or null when he has no line on it. */
+  result: Schema.NullOr(Schema.Literals(["win", "draw", "loss"])),
+  card: MatchPlayerCard,
+  started: Schema.Boolean,
+  cameOnMinute: Schema.NullOr(Schema.Finite),
+  wentOffMinute: Schema.NullOr(Schema.Finite),
+  keyPasses: Schema.Finite,
+  offsides: Schema.Finite,
+  fouls: Schema.Finite,
+  assists: Schema.Finite,
+  shots: Schema.Finite,
+  shotsOnTarget: Schema.Finite,
+  saves: Schema.Finite,
+  goals: Schema.Finite,
+  /** The recorded-defending counts (match-engine ticket 18), null on a pre-change row; the Form
+   *  table draws them between Key and Off. */
+  tacklesWon: Schema.NullOr(Schema.Finite),
+  tacklesAttempted: Schema.NullOr(Schema.Finite),
+  headers: Schema.NullOr(Schema.Finite),
+  headersWon: Schema.NullOr(Schema.Finite),
+  interceptions: Schema.NullOr(Schema.Finite),
+  runs: Schema.NullOr(Schema.Finite),
+  foulsSuffered: Schema.NullOr(Schema.Finite),
+  /** The Match Rating from the same fold the stats table reads, or null when he did not play. */
+  rating: Schema.NullOr(Schema.Finite),
+  /** Set only for the user's own fixture, whose Match Report the row opens; null for any other. */
+  matchId: Schema.NullOr(MatchId),
+}) {}
+
+/** One club the player has a line for this season, an option in the Team selector. */
+export class PlayerFormClubOption extends Schema.Class<PlayerFormClubOption>("PlayerFormClubOption")({
+  clubId: ClubId,
+  clubName: Schema.String,
+}) {}
+
+/** One competition's season totals. Ticket 20 fills these; ticket 19 leaves the array empty. */
+export class PlayerFormSeasonRow extends Schema.Class<PlayerFormSeasonRow>("PlayerFormSeasonRow")({
+  kind: Schema.Literals(["league", "cup", "continental", "overall"]),
+  label: Schema.String,
+  starts: Schema.Finite,
+  subs: Schema.Finite,
+  goals: Schema.Finite,
+  assists: Schema.Finite,
+  mom: Schema.Finite,
+  yellowCards: Schema.Finite,
+  redCards: Schema.Finite,
+  shots: Schema.Finite,
+  shotsOnTarget: Schema.Finite,
+  fouls: Schema.Finite,
+  /** Mean Match Rating over appearances, two decimals, or null when he made none. */
+  averageRating: Schema.NullOr(Schema.Finite),
+}) {}
+
+/** A player's Form read: his clubs, the selected club's played fixtures this season with his line in
+ *  each, and the five-rating form strip. The season block arrives with ticket 20. */
+export class PlayerFormView extends Schema.Class<PlayerFormView>("PlayerFormView")({
+  playerId: PlayerId,
+  clubs: Schema.Array(PlayerFormClubOption),
+  selectedClubId: Schema.NullOr(ClubId),
+  games: Schema.Array(PlayerFormGameRow),
+  /** The Match Ratings of his last five appearances across all his clubs, oldest to newest. */
+  formRatings: Schema.Array(Schema.Finite),
+  /** A goalkeeper: the Sav column is drawn. */
+  goalkeeper: Schema.Boolean,
+  /** Season totals by competition; empty until ticket 20. */
+  season: Schema.Array(PlayerFormSeasonRow),
 }) {}

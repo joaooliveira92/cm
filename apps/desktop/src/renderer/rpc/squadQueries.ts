@@ -77,6 +77,29 @@ const playerContractForSave = Atom.family((saveId: SaveId) =>
 export const playerContractAtom = (saveId: SaveId, playerId: PlayerId) =>
   playerContractForSave(saveId)(playerId);
 
+/**
+ * getPlayerForm — `["save", saveId]`, `["squad", saveId]`.
+ *
+ * Player Form (map ticket 19): recent games, the form strip and the season block. Keyed save →
+ * player → selected club, so switching the Team selector reads that club's rows while the rest of
+ * the tab holds. Reactive on the squad key as well as the save-wide one: a committed Matchday
+ * invalidates it, which is what makes a just-played fixture appear.
+ */
+const playerFormForSave = Atom.family((saveId: SaveId) =>
+  Atom.family((playerId: PlayerId) =>
+    Atom.family((clubId: ClubId | null) =>
+      managementReadPolicy(
+        Atom.make(call("getPlayerForm", { saveId, playerId, clubId })).pipe(
+          Atom.withReactivity([saveKey(saveId), squadKey(saveId)]),
+        ),
+      ),
+    ),
+  ),
+);
+
+export const playerFormAtom = (saveId: SaveId, playerId: PlayerId, clubId: ClubId | null) =>
+  playerFormForSave(saveId)(playerId)(clubId);
+
 /** Contract Expiry (Screen 141, without Bosman): the manager's own-club Players in their last
  *  contracted year, and the squad size beside them. Reactive on the squad key as well as the
  *  save-wide one: `renewContract` invalidates the squad key, and a renewed player leaves this list,

@@ -30,6 +30,7 @@ import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
 import { StaffProfileScreen } from "../staffProfile/StaffProfileScreen.js";
 import { PlayerProfileScreen } from "../playerProfile/PlayerProfileScreen.js";
 import { PlayerContractScreen } from "../playerContract/PlayerContractScreen.js";
+import { PlayerFormScreen } from "../playerForm/PlayerFormScreen.js";
 import { PlayerDevelopmentScreen } from "../playerDevelopment/PlayerDevelopmentScreen.js";
 import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportScreen.js";
 import { TrainingScreen } from "../training/TrainingScreen.js";
@@ -436,6 +437,12 @@ const playerDevelopmentRoute = createRoute({
   ),
 });
 
+const playerFormRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "form",
+  component: () => <CareerPlayerChildView screenId="playerForm" Screen={PlayerFormScreen} />,
+});
+
 const playerCoachReportRoute = createRoute({
   getParentRoute: () => playerRoute,
   path: "coach-report",
@@ -647,6 +654,7 @@ managerRoute.addChildren([
       playerRoute.addChildren([
         playerProfileRoute,
         playerContractRoute,
+        playerFormRoute,
         playerDevelopmentRoute,
         playerCoachReportRoute,
       ]),

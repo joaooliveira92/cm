@@ -70,6 +70,7 @@ import {
   getMatchRatings,
   getMatchReport,
   getMatchStatistics,
+  getPlayerForm,
   getPostMatchSummary,
   getTeamSheet,
   resumeSimulation,
@@ -360,6 +361,9 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   ),
   getMatchOverview: handle("getMatchOverview", ({ saveId, matchId, revealedEvents }, ctx) =>
     getMatchOverview(ctx.savesDir, saveId, matchId, revealedEvents),
+  ),
+  getPlayerForm: handle("getPlayerForm", ({ saveId, playerId, clubId }, ctx) =>
+    getPlayerForm(ctx.savesDir, saveId, playerId, clubId),
   ),
   submitMatchCommand: handle(
     "submitMatchCommand",

@@ -148,3 +148,79 @@ export const matchRating = (involvement: MatchInvolvement): number => {
   const clamped = Math.min(MATCH_RATING_MAX, Math.max(MATCH_RATING_MIN, raw));
   return Math.round(clamped * 10) / 10;
 };
+
+/**
+ * A rating derived from a stored `player_match_lines` row rather than a timeline. AI fixtures keep
+ * no timeline, so their Form rows rate from the counts alone; the goals-for/against-while-on share
+ * and the clean sheet cannot be recovered from the row and are left at zero. The user's own fixture
+ * keeps its timeline and is rated exactly by `matchRating` through the ratings fold instead.
+ */
+export interface StoredMatchLineRating {
+  readonly phase: MatchRatingPhase;
+  readonly started: boolean;
+  readonly onAtEnd: boolean;
+  readonly goals: number;
+  readonly assists: number;
+  readonly keyPasses: number;
+  readonly shots: number;
+  readonly shotsOnTarget: number;
+  readonly saves: number;
+  readonly yellowCards: number;
+  readonly redCards: number;
+  readonly fouls: number;
+  readonly offsides: number;
+  readonly tacklesWon: number;
+  readonly interceptions: number;
+  readonly headersWon: number;
+  readonly foulsSuffered: number;
+  readonly result: MatchRatingResult;
+}
+
+/** A Position standing in for a phase, so `matchRating` recovers the same phase from it. */
+const POSITION_OF_PHASE: Readonly<Record<MatchRatingPhase, Position>> = {
+  defense: "DC",
+  midfield: "MC",
+  attack: "ST",
+};
+
+/** The phase of a stored line's slot label (`GK`, `D RC`, `AM C`), by its row. A label the fold never
+ *  writes falls back to `midfield`, the same fallback `matchRatingPhaseOf` uses. */
+export const matchRatingPhaseOfLabel = (label: string): MatchRatingPhase => {
+  switch (label.split(" ")[0]) {
+    case "GK":
+    case "SW":
+    case "D":
+      return "defense";
+    case "AM":
+    case "F":
+      return "attack";
+    default:
+      return "midfield";
+  }
+};
+
+export const matchRatingFromStoredLine = (line: StoredMatchLineRating): number =>
+  matchRating({
+    position: POSITION_OF_PHASE[line.phase],
+    started: line.started,
+    onAtEnd: line.onAtEnd,
+    goals: line.goals,
+    keyPasses: line.keyPasses,
+    assists: line.assists,
+    shotsOnTarget: line.shotsOnTarget - line.goals,
+    bigChances: 0,
+    shotsMissed: line.shots - line.shotsOnTarget,
+    saves: line.saves,
+    yellowCards: line.yellowCards,
+    redCards: line.redCards,
+    fouls: line.fouls,
+    offsides: line.offsides,
+    tacklesWon: line.tacklesWon,
+    interceptions: line.interceptions,
+    headersWon: line.headersWon,
+    foulsSuffered: line.foulsSuffered,
+    goalsForWhileOn: 0,
+    goalsAgainstWhileOn: 0,
+    result: line.result,
+    finished: true,
+  });

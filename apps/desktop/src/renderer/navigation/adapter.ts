@@ -173,6 +173,7 @@ export const navigate = (destination: NavigationDestination): void => {
     case "/career/$saveId/player/$playerId/profile":
     case "/career/$saveId/player/$playerId/development":
     case "/career/$saveId/player/$playerId/contract":
+    case "/career/$saveId/player/$playerId/form":
     case "/career/$saveId/training/plan/$playerId":
       getRouter().navigate({
         to: resolved.to,

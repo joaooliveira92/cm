@@ -63,6 +63,9 @@ question. Plan only: no code in this effort.
 - 2026-10-04: ticket 13 resolved — the Match Rating reads assists, key passes, saves, fouls and
   offsides, counted by the one Match Player Line fold the player table already reads. Frontier: 16,
   17, then 19 (unblocked), 20.
+- 2026-10-04: ticket 19 resolved — the player Form tab ships: its clubs, the selected club's played
+  fixtures this season with the player's line in each, the four row states and the five-rating
+  strip. Frontier: 16, 17, 20.
 
 ## Not yet specified
 

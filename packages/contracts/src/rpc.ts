@@ -81,6 +81,7 @@ import {
   NullableTrainingFocusSchema,
   PillarDistribution,
   PlayerContractView,
+  PlayerFormView,
   PlayerId,
   PlayerNotFoundError,
   PlayerNotFreeAgentError,
@@ -866,6 +867,14 @@ commitCareer: {
   getPlayerContract: {
     payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId }),
     success: PlayerContractView,
+    error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
+  },
+  /** Player Form (map ticket 19): the clubs a player has lines for this season, the selected club's
+   *  played fixtures with his line in each, and the five-rating form strip. `clubId` selects the
+   *  Team the rows are for; null defaults to his current club. */
+  getPlayerForm: {
+    payload: Schema.Struct({ saveId: SaveId, playerId: PlayerId, clubId: Schema.NullOr(ClubId) }),
+    success: PlayerFormView,
     error: Schema.Union([SaveNotFoundError, PlayerNotFoundError]),
   },
   /** Key binding overrides (ticket 14 / Stage 6): a machine-local `record<ActionId, binding>`

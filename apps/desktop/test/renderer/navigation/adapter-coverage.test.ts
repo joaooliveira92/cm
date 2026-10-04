@@ -101,6 +101,7 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   playerDetail: { type: "playerDetail", saveId, playerId },
   playerDevelopment: { type: "playerDevelopment", saveId, playerId },
   playerContract: { type: "playerContract", saveId, playerId },
+  playerForm: { type: "playerForm", saveId, playerId },
   playerComparison: { type: "playerComparison", saveId, playerIds: [playerId] },
   matchMatchTactics: { type: "matchMatchTactics", saveId },
   matchSubstitutions: { type: "matchSubstitutions", saveId },

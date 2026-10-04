@@ -14,6 +14,7 @@ export {
   clubSquadAtom,
   playerProfileAtom,
   playerContractAtom,
+  playerFormAtom,
   contractExpiryAtom,
   playerDevelopmentHistoryAtom,
   squadDevelopmentAtom,
