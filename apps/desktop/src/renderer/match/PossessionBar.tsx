@@ -7,19 +7,20 @@ import { getActiveMatch, getRevealedEvents, subscribeActiveMatch, type ActiveMat
 import type { BoundMatchState } from "./useBoundMatchRead.js";
 
 /**
- * The persistent Possession bar (map ticket 12/16): under every live and post-match tab, each side's
- * share of the minutes with the ball, both percentages printed and the split drawn in the two clubs'
- * colours. Before any possession tally it is a neutral track reading "Not tracked", never a 50-50.
- * It follows the match session, so it runs from kickoff until the result is accepted and is absent
- * pre-match.
+ * The persistent Possession bar: under every live tab (and every post-match tab, once that context
+ * is reachable — match-screen ticket 21), each side's share of the minutes with the ball, both
+ * percentages printed and the split drawn in the two clubs' colours. Before any possession tally it
+ * is a neutral track reading "Not tracked", never a 50-50. It follows the match session, so it runs
+ * from kickoff until the result is accepted and is absent pre-match.
  *
  * The share is the statistics read's `possession` row, cut at the revealed position live, so the bar
- * never shows a slice the manager has not seen. Attacks stays a row on the Statistics tab.
+ * never shows a slice the manager has not seen. Attacks stays a row on the Statistics tab. See
+ * `.agents/notes/implemented/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md`.
  */
-export const AttacksBar = ({ saveId }: { readonly saveId: SaveId }) => {
+export const PossessionBar = ({ saveId }: { readonly saveId: SaveId }) => {
   const session = useSyncExternalStore(subscribeActiveMatch, () => getActiveMatch(saveId));
   if (session === null) return null;
-  return <AttacksBarContent saveId={saveId} session={session} />;
+  return <PossessionBarContent saveId={saveId} session={session} />;
 };
 
 /**
@@ -61,7 +62,7 @@ const usePossession = (saveId: SaveId, session: ActiveMatchSession): BoundMatchS
   return state;
 };
 
-const AttacksBarContent = ({
+const PossessionBarContent = ({
   saveId,
   session,
 }: {

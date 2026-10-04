@@ -22,7 +22,7 @@ injuries or set pieces changes.
 - Attribution draws from its own seed-derived stream and appends after the slice's set pieces, so every
   existing seed produces the same result. See [Agent Note](../../../.agents/notes/proposed/architecture/2026-10-03-attribution-draws-from-its-own-stream.md).
 - Possession is the share of minute-slices with the ball, carried as a cumulative `PossessionTally`.
-  See [Agent Note](../../../.agents/notes/proposed/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md).
+  See [Agent Note](../../../.agents/notes/implemented/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md).
 - The fouled player is a possession-side player named as `fouledPlayerId` on `Foul`. See [ticket 07](07-naming-the-fouled-player.md).
 - Event volume budget: ≤ 3× today's count (≤180) and ≤ 20 KB per stored timeline, averaged over 200
   seeds. See [ticket 06](06-event-volume-and-the-timeline.md).

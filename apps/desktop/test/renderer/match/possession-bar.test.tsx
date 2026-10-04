@@ -1,7 +1,7 @@
 import { act, cleanup, render, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 import { MatchId, SaveId } from "@cm-clone/contracts";
-import { AttacksBar } from "../../../src/renderer/match/AttacksBar.js";
+import { PossessionBar } from "../../../src/renderer/match/PossessionBar.js";
 import {
   clearActiveMatch,
   recordRevealedLines,
@@ -76,7 +76,7 @@ const mount = (impl: (method: string, payload: Record<string, unknown>) => unkno
   };
   render(
     <RegistryProvider>
-      <AttacksBar saveId={s1} />
+      <PossessionBar saveId={s1} />
     </RegistryProvider>,
   );
   return calls;
@@ -87,7 +87,7 @@ afterEach(() => {
   clearActiveMatch(s1);
 });
 
-describe("Possession bar (map ticket 14/16)", () => {
+describe("Possession bar", () => {
   it("prints both sides' possession under the live tabs, cut after the revealed events", async () => {
     liveSession();
     recordRevealedLines(s1, MatchId.make("m1"), [

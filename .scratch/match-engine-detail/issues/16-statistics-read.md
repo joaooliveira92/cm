@@ -9,7 +9,7 @@ Statistics row. `computePossession` becomes `attackShare` and is labelled Attack
 **Decisions:**
 
 - Possession leaves the unavailable list and drives the bottom bar; Attacks stays a row.
-  See [Agent Note](../../../.agents/notes/proposed/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md)
+  See [Agent Note](../../../.agents/notes/implemented/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md)
   and [ticket 11](11-screen-follow-through.md).
 
 **Blocked by:** 12, 13

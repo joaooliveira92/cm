@@ -1,10 +1,11 @@
 # Agent Note: Possession is the share of minutes with the ball
 
-Status: proposed
+Status: implemented
 
-Partially supersedes [the possession bar shows attack share](2026-10-03-the-possession-bar-shows-attack-share.md):
-the bar it describes shows possession instead once this ships; its renaming of the attack-share proxy
-and its set-piece counts stand. Recorded under [the engine records decided facts, not new actions](2026-10-03-the-engine-records-decided-facts-not-new-actions.md).
+Partially supersedes [attack share is a statistics row](2026-10-03-attack-share-is-a-statistics-row.md):
+that note's renaming of the attack-share proxy and its set-piece counts stand, but the bar it
+described shows possession now. Recorded under
+[the engine records decided facts, not new actions](../../proposed/feature/2026-10-03-the-engine-records-decided-facts-not-new-actions.md).
 
 ## Problem
 
@@ -14,7 +15,7 @@ discards the result. A match has about 92 slices: 45 a half plus one stoppage sl
 therefore already decided; it only needs recording in a form the statistics read can cut at a revealed
 position, which is by event index, not minute.
 
-## Proposal
+## Decision
 
 - **Event.** A `PossessionTally` event carries the cumulative count of slices each side has had the
   ball so far: `{ homeSlices, awaySlices }`. It is emitted at the end of every slice that emitted any
@@ -25,7 +26,7 @@ position, which is by event index, not minute.
   side the remainder. Its definition, shown with it, is "Share of minutes with the ball". At one slice
   per minute the grain is about one percentage point, so no decimal is shown. Null before the first
   tally, never 50–50.
-- **Statistics.** `possession` leaves the unavailable list and becomes a counted row. A timeline stored
+- **Statistics.** `possession` left the unavailable list and became a counted row. A timeline stored
   before tallies existed has none, so its possession stays unavailable for that match.
 - **The bar.** The persistent bottom bar shows Possession. Attacks remains a row on the Statistics tab,
   because it answers a different question (who creates chances).
@@ -44,15 +45,13 @@ schema entry for one statistic.
 **Keep the bar on Attacks and add Possession as a row only.** Rejected: possession is the figure the
 bar's position in CM promises, and it is now real.
 
-## Acceptance criteria
+## Consequences
 
-- The engine's possession roll outcomes for a seed equal the tallies' increments (test counts both).
+- The engine's possession roll outcomes for a seed equal the tallies' increments (a test counts both).
 - The live statistics cut at any position returns the last tally at or before it.
 - A stored timeline without tallies shows possession as unavailable, not 0 or 50.
-- The bar reads "Possession" with both percentages printed.
-
-## Risks
-
+- The bar reads "Possession" with both percentages printed; before the first tally it reads "Not
+  tracked", never 50–50. It is mounted in the career shell, so it follows the match session.
 - A per-minute roll is coarser than real ball time; a dominant side's 70% is plausible, but the figure
   swings more in short spells. The definition line states what it measures.
 - Emitting tallies changes event positions; the live cut is by position, so every live reader must go

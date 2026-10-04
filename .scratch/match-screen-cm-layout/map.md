@@ -34,12 +34,15 @@ question. Plan only: no code in this effort.
   twelve columns folded from recorded events; passes, tackles, headers, interceptions, runs and fouls
   suffered are not drawn.
 - [Team statistics: corners, possession and the footer bar](issues/03-team-statistics-corners-and-possession.md):
-  corners, free kicks and penalties become counted; the possession proxy becomes "Attacks" and drives
-  the bottom bar; possession stays unavailable.
+  corners, free kicks and penalties become counted; the chance-share proxy becomes an "Attacks"
+  Statistics row. The bar half was superseded by the engine-detail work, which recorded real
+  possession: the footer bar shows possession. See [attack share is a statistics
+  row](../../.agents/notes/implemented/feature/2026-10-03-attack-share-is-a-statistics-row.md).
 - [The Match Rating reads the recorded involvement](issues/04-match-rating-reads-recorded-involvement.md):
   assists, key passes, saves, fouls and offsides become rating weights; ratings recompute on read.
 - [One tab bar for CM's two tab rows](issues/05-one-tab-bar-for-two-tab-rows.md): Home Stats, Away
-  Stats, Latest Scores and Report join the existing `SecondaryNav`; no second bar.
+  Stats, Latest Scores and Report join the existing `SecondaryNav`; no second bar. The post-match tab
+  bar is configured but not route-reachable yet — see [21](issues/21-post-match-tab-context.md).
 - [The Overview: incidents, half-time score and fixture panel](issues/06-the-overview-incidents-and-fixture-panel.md):
   scorers with minutes and `(pen)`, half-time score, competition/date/venue; no referee, weather or
   attendance.
@@ -76,6 +79,10 @@ question. Plan only: no code in this effort.
   drives a live match through Home Stats, Away Stats and Latest Scores and on to the accepted
   scores, then plays a Matchday and opens a starter's Form tab. Both passes run the shipped bundle
   through `pnpm test:e2e`.
+- 2026-10-04: reconciliation of the shipped bar — the possession and attack-share notes moved to
+  `implemented/`, the bar component renamed `PossessionBar`, the E2E asserts it, ticket 14's criteria
+  corrected, and the unreachable post-match tab context filed as
+  [21](issues/21-post-match-tab-context.md). Frontier: 21, then 17 (reopened; blocked by 21).
 
 ## Not yet specified
 

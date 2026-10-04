@@ -12,7 +12,7 @@ import { AppTitleBar } from "./header/AppTitleBar.js";
 import { CareerIdentity } from "./header/CareerIdentity.js";
 import { HeaderActionsMenu } from "./header/HeaderActionsMenu.js";
 import { MatchHeader, useMatchScoreboard } from "./header/MatchHeader.js";
-import { AttacksBar } from "../match/AttacksBar.js";
+import { PossessionBar } from "../match/PossessionBar.js";
 import { clubHeaderStyle } from "./header/club-scheme.js";
 import { NO_DRAG } from "./header/drag-region.js";
 import { CareerStateProvider, useCareerState, continueUnavailableReason } from "./CareerStateProvider.js";
@@ -148,7 +148,7 @@ const CareerChromeInner = ({
 
             <div className="flex min-h-0 min-w-0 flex-1 flex-col">
               {contextNav}
-              <AttacksBar saveId={saveId} />
+              <PossessionBar saveId={saveId} />
               {/* Hidden when nothing fills it: no screen controls or menu in the span, no readout after the spacer. */}
               <div
                 className="flex shrink-0 items-center justify-between border-b border-border-subtle bg-bg px-3 py-1 [&:has(>span:empty):not(:has(>:nth-child(3)))]:hidden"

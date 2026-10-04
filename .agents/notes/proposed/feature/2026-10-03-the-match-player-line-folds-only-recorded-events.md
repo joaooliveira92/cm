@@ -5,8 +5,9 @@ Status: proposed
 Partially supersedes [the match model shows only what it produces](../../implemented/architecture/2026-09-19-the-match-model-shows-only-what-it-produces.md):
 that note's rule stands unchanged; its factual premise ("no set-piece event, and no foul or offside
 event", "no event names a save, a tackle or an assist") is no longer true of the engine, and this note
-records what the rule yields against the engine as it is now. Corners and the possession bar are
-covered in [the possession bar shows attack share](2026-10-03-the-possession-bar-shows-attack-share.md).
+records what the rule yields against the engine as it is now. Corners, the attack-share row and the
+possession bar are covered in [attack share is a statistics row](../../implemented/feature/2026-10-03-attack-share-is-a-statistics-row.md)
+and [possession is the share of minutes with the ball](../../implemented/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md).
 Both stay active; neither is archived by the other.
 
 ## Problem

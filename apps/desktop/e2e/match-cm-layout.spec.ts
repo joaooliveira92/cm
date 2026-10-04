@@ -84,6 +84,12 @@ test("a live match reaches Home Stats, Away Stats and Latest Scores, live and af
   const tabs = page.getByRole("tablist", { name: "Live Match" });
   await expect(tabs).toBeVisible();
 
+  // The persistent bottom bar is the Possession bar (the newer note; the match-engine-detail change
+  // made possession a real counted statistic), with both sides' percentages as text once a tally exists.
+  const possession = page.getByRole("region", { name: "Possession" });
+  await expect(possession).toBeVisible();
+  await expect(possession.getByText(/^\d+%$/)).toHaveCount(2, { timeout: 30_000 });
+
   // Home Stats: the club names the heading, the table draws, and the fold rule is stated once.
   await tabs.getByRole("tab", { name: "Home Stats" }).click();
   const home = page.getByRole("main", { name: "Home Stats" });

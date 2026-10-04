@@ -14,4 +14,8 @@ the footer bar show, what happens to the shipped proxy, and do corners become a 
 ## Answer
 
 **Corners become counted; the possession proxy is renamed to what it measures, "Attacks", and that
-share drives the footer bar; possession stays unavailable.** See [Agent Note](../../../.agents/notes/proposed/feature/2026-10-03-the-possession-bar-shows-attack-share.md).
+share drives the footer bar; possession stays unavailable.** See [Agent Note](../../../.agents/notes/implemented/feature/2026-10-03-attack-share-is-a-statistics-row.md).
+
+**Superseded on the bar.** The engine-detail work later recorded real possession, so the footer bar
+shows possession and Attacks stays a Statistics row. See [possession is the share of minutes with the
+ball](../../../.agents/notes/implemented/feature/2026-10-03-possession-is-the-share-of-minutes-with-the-ball.md).
