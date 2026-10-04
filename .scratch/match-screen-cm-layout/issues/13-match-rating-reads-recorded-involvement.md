@@ -10,9 +10,9 @@ Line fold, so the counting rules exist once. Committed matches re-rate on read.
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Each new weight moves the rating by its constant from an otherwise identical involvement (one test per weight).
-- [ ] A goalkeeper with saves in a defeat rates above one with none in the same defeat.
-- [ ] The Ratings tab and the Rat column show the same number for the same player and match.
-- [ ] The rating module remains the only place naming a weight, and its header comment states the current inputs.
+- [x] Each new weight moves the rating by its constant from an otherwise identical involvement (one test per weight).
+- [x] A goalkeeper with saves in a defeat rates above one with none in the same defeat.
+- [x] The Ratings tab and the Rat column show the same number for the same player and match.
+- [x] The rating module remains the only place naming a weight, and its header comment states the current inputs.

@@ -31,12 +31,11 @@ Shipped in map ticket 14:
 - The module's header comment, which said no event names a save or an assist, was rewritten to state
   the current inputs.
 
-Still proposed (not part of ticket 14):
+Shipped in map ticket 13 (on top of ticket 14's recorded defending):
 
 - Reading `assists`, `keyPasses`, `saves`, `fouls` and `offsides`, with weights `assist: 0.6`,
-  `keyPass: 0.15`, `save: 0.2`, `foul: -0.05`, `offside: -0.05`. The fold records these counts, but no
-  weight reads them yet; the assist/key-pass rule above remains the target if a tuning pass takes it
-  up.
+  `keyPass: 0.15`, `save: 0.2`, `foul: -0.05`, `offside: -0.05`. The fold records these counts; the
+  rating now reads them, and the weights live only in `matchRating.ts`.
 - **Committed matches re-rate on read.** A rating is a projection over a stored timeline, recomputed
   every read, never persisted (the Form line stores counts, not ratings —
   [player match lines are written at resolution](../architecture/2026-10-03-player-match-lines-are-written-at-resolution.md)).

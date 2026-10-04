@@ -1,12 +1,14 @@
 /**
  * Match Rating (group-g decision request 03, Option B): a player's 1–10 rating for one match.
  *
- * The Match Events name the scorer or shooter, whoever got a card or an injury, who went off and on,
- * and — from map ticket 12 — the defender credited with a tackle or interception, the winner of a
- * header duel and the player a foul brought down. A rating is a documented base, adjusted by the
- * player's own recorded involvement and by the share of the result their phase was on the pitch for.
- * Counts, not rates, are weighted, so every input is a recorded event (Agent Note: the match model
- * shows only what it produces).
+ * The Match Events name the scorer or shooter, the assister (`Goal.assistPlayerId`) and the creator
+ * of a chance (`KeyPass`), the goalkeeper who saved a shot (`ShotOnTarget.keeperId`), whoever got a
+ * card or an injury, who went off and on, the flagged attacker (`Offside`), the fouling player
+ * (`Foul`), and — from map ticket 12 — the defender credited with a tackle or interception, the
+ * winner of a header duel and the player a foul brought down. A rating is a documented base, adjusted
+ * by the player's own recorded involvement and by the share of the result their phase was on the
+ * pitch for. Counts, not rates, are weighted, so every input is a recorded event (Agent Note: the
+ * match model shows only what it produces).
  *
  * Pure. The caller folds the stored timeline into a `MatchInvolvement` per player, so a rating cannot
  * drift between two reads of the same match. The base and every weight are named here and nowhere
@@ -22,11 +24,17 @@ export const MATCH_RATING_MAX = 10.0;
 /** The player's own Match Events and recorded involvement. */
 export const MATCH_RATING_EVENT_WEIGHTS = {
   goal: 1.0,
+  assist: 0.6,
+  keyPass: 0.15,
   shotOnTarget: 0.3,
   bigChance: 0.1,
   shotMissed: -0.1,
+  save: 0.2,
   yellowCard: -0.5,
   redCard: -1.5,
+  /** The player's own fouls and offsides, the only recorded involvement that marks them down. */
+  foul: -0.05,
+  offside: -0.05,
   /** Winning the ball. A header lost and a derived tackle attempt carry no weight; a failed tackle is
    *  already the foul's penalty. */
   tackleWon: 0.1,
@@ -74,11 +82,22 @@ export interface MatchInvolvement {
   /** Still on the pitch at the end (full time, or the live cut). */
   readonly onAtEnd: boolean;
   readonly goals: number;
+  /** Chances the player created that were not converted (`KeyPass`). */
+  readonly keyPasses: number;
+  /** Goals the player set up (`Goal.assistPlayerId`). */
+  readonly assists: number;
+  /** Shots on target the player did not score, so a goal is weighted once. */
   readonly shotsOnTarget: number;
   readonly bigChances: number;
   readonly shotsMissed: number;
+  /** Shots the player saved, as the goalkeeper (`ShotOnTarget.keeperId`). */
+  readonly saves: number;
   readonly yellowCards: number;
   readonly redCards: number;
+  /** Fouls the player committed (the Fou column). */
+  readonly fouls: number;
+  /** Times the player was flagged offside. */
+  readonly offsides: number;
   /** Recorded defending, from the attribution pass. */
   readonly tacklesWon: number;
   readonly interceptions: number;
@@ -108,11 +127,16 @@ export const matchRating = (involvement: MatchInvolvement): number => {
   const raw =
     MATCH_RATING_BASE +
     involvement.goals * weights.goal +
+    involvement.assists * weights.assist +
+    involvement.keyPasses * weights.keyPass +
     involvement.shotsOnTarget * weights.shotOnTarget +
     involvement.bigChances * weights.bigChance +
     involvement.shotsMissed * weights.shotMissed +
+    involvement.saves * weights.save +
     involvement.yellowCards * weights.yellowCard +
     involvement.redCards * weights.redCard +
+    involvement.fouls * weights.foul +
+    involvement.offsides * weights.offside +
     involvement.tacklesWon * weights.tackleWon +
     involvement.interceptions * weights.interception +
     involvement.headersWon * weights.headerWon +

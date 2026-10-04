@@ -60,6 +60,9 @@ question. Plan only: no code in this effort.
 - 2026-10-04: ticket 18 resolved — `player_match_lines` is written in the Matchday commit transaction
   for the user's fixture and every squad-bearing AI fixture. Frontier: 13, 16, 17 (12, 14, 15 and 18
   resolved; 19 blocked by 13 and 18, 20 by 19).
+- 2026-10-04: ticket 13 resolved — the Match Rating reads assists, key passes, saves, fouls and
+  offsides, counted by the one Match Player Line fold the player table already reads. Frontier: 16,
+  17, then 19 (unblocked), 20.
 
 ## Not yet specified
 

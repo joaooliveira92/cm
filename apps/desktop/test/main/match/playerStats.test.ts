@@ -5,7 +5,7 @@ import path from "node:path";
 import { it as effectIt } from "@effect/vitest";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { Effect } from "effect";
-import { getMatchPlayerStats, resumeSimulation } from "../../../src/main/match/index.js";
+import { getMatchPlayerStats, getMatchRatings, resumeSimulation } from "../../../src/main/match/index.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 describe("getMatchPlayerStats over a seeded match", () => {
@@ -72,6 +72,32 @@ describe("getMatchPlayerStats over a seeded match", () => {
 
       // With no match id, the read resolves nothing until a match has been committed.
       expect(yield* getMatchPlayerStats(savesDir, save.id, null, null)).toBeNull();
+    }),
+  );
+
+  effectIt.effect("reads the same Match Rating in the Rat column and on the Ratings tab", () =>
+    Effect.gen(function* () {
+      const { save, fixtureId } = yield* atFirstFixture(savesDir);
+      const match = yield* startSeededMatch(savesDir, save.id, fixtureId, 7);
+      let cursor = 0;
+      let complete = false;
+      while (!complete) {
+        // oxlint-disable-next-line no-await-in-loop -- sequential by design: each chunk starts at the last cursor
+        const chunk = yield* resumeSimulation(savesDir, save.id, match.matchId, cursor, null);
+        cursor = chunk.cursor;
+        complete = chunk.isComplete;
+      }
+
+      const stats = (yield* getMatchPlayerStats(savesDir, save.id, match.matchId, null))!;
+      const ratings = (yield* getMatchRatings(savesDir, save.id, match.matchId, null))!;
+      const ratingById = new Map(
+        [...ratings.home, ...ratings.away].map((row) => [String(row.playerId), row.rating]),
+      );
+      for (const side of [stats.home, stats.away]) {
+        for (const row of side.rows) {
+          expect(row.rating).toBe(ratingById.get(String(row.playerId)) ?? null);
+        }
+      }
     }),
   );
 });

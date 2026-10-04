@@ -13,11 +13,16 @@ const quiet = (overrides: Partial<MatchInvolvement> = {}): MatchInvolvement => (
   started: true,
   onAtEnd: true,
   goals: 0,
+  keyPasses: 0,
+  assists: 0,
   shotsOnTarget: 0,
   bigChances: 0,
   shotsMissed: 0,
+  saves: 0,
   yellowCards: 0,
   redCards: 0,
+  fouls: 0,
+  offsides: 0,
   tacklesWon: 0,
   interceptions: 0,
   headersWon: 0,
@@ -94,6 +99,24 @@ describe("matchRating (group-g decision request 03, Option B)", () => {
     expect(MATCH_RATING_EVENT_WEIGHTS).not.toHaveProperty("headerLost");
     expect(MATCH_RATING_EVENT_WEIGHTS).not.toHaveProperty("tacklesAttempted");
     expect(matchRating(quiet({ headersWon: 0 }))).toBe(matchRating(quiet()));
+  });
+
+  it("moves the rating by each recorded-involvement weight from an otherwise identical involvement", () => {
+    // Attack phase, so no clean-sheet bonus and the base is a clean 6.0. Counts chosen so each move
+    // lands on the one-decimal grid the rating rounds to.
+    const baseline = matchRating(quiet({ position: "ST" }));
+    expect(baseline).toBe(MATCH_RATING_BASE);
+    expect(matchRating(quiet({ position: "ST", assists: 1 })) - baseline).toBeCloseTo(MATCH_RATING_EVENT_WEIGHTS.assist, 5);
+    expect(matchRating(quiet({ position: "ST", keyPasses: 2 })) - baseline).toBeCloseTo(2 * MATCH_RATING_EVENT_WEIGHTS.keyPass, 5);
+    expect(matchRating(quiet({ position: "ST", saves: 1 })) - baseline).toBeCloseTo(MATCH_RATING_EVENT_WEIGHTS.save, 5);
+    expect(matchRating(quiet({ position: "ST", fouls: 2 })) - baseline).toBeCloseTo(2 * MATCH_RATING_EVENT_WEIGHTS.foul, 5);
+    expect(matchRating(quiet({ position: "ST", offsides: 2 })) - baseline).toBeCloseTo(2 * MATCH_RATING_EVENT_WEIGHTS.offside, 5);
+  });
+
+  it("rates a goalkeeper with saves in a defeat above one who faced nothing", () => {
+    const exposed = quiet({ position: "GK", goalsAgainstWhileOn: 2, result: "loss" });
+    const busy = quiet({ position: "GK", goalsAgainstWhileOn: 2, result: "loss", saves: 8 });
+    expect(matchRating(busy)).toBeGreaterThan(matchRating(exposed));
   });
 
   it("gives the defence phase a smaller goals-against share now recorded defending carries some of it", () => {

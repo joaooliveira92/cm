@@ -1,9 +1,10 @@
 /**
  * Match Ratings (Screens 96/101, group-g-match-day ticket 10): a Match Rating for every player who
  * took part, from the match's stored timeline and the kickoff snapshot. The formula and its weights
- * are `matchRating` in `@cm-clone/shared`. This module only folds what the timeline records into each
- * player's `MatchInvolvement`, so the live and post-match screens rate from one fold, and nothing is
- * persisted (Agent Note: player ratings are derived projections).
+ * are `matchRating` in `@cm-clone/shared`. This module folds the Match Player Line over the timeline
+ * for each player's counts — the same fold the player table reads — and joins on the pitch and result
+ * projections, so the live and post-match screens rate from one fold, and nothing is persisted (Agent
+ * Note: player ratings are derived projections).
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
@@ -16,7 +17,13 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { matchRating, type MatchInvolvement, type MatchRatingResult } from "@cm-clone/shared";
+import {
+  EMPTY_MATCH_PLAYER_LINE_COUNTS,
+  foldMatchPlayerLineCounts,
+  matchRating,
+  type MatchInvolvement,
+  type MatchRatingResult,
+} from "@cm-clone/shared";
 import {
   HALFTIME_MINUTE,
   MATCH_STREAM_TYPE,
@@ -34,77 +41,6 @@ import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
 import { lastPlayedMatchId } from "./statistics.js";
 import { matchEventsOf } from "./timeline.js";
-
-type Counted = Pick<
-  MatchInvolvement,
-  | "goals"
-  | "shotsOnTarget"
-  | "bigChances"
-  | "shotsMissed"
-  | "yellowCards"
-  | "redCards"
-  | "tacklesWon"
-  | "interceptions"
-  | "headersWon"
-  | "foulsSuffered"
->;
-
-const NO_EVENTS: Counted = {
-  goals: 0,
-  shotsOnTarget: 0,
-  bigChances: 0,
-  shotsMissed: 0,
-  yellowCards: 0,
-  redCards: 0,
-  tacklesWon: 0,
-  interceptions: 0,
-  headersWon: 0,
-  foulsSuffered: 0,
-};
-
-/** The count a player's own event adds to. Typed from the event, so a new event kind is a compile
- *  error here rather than a silent zero. Events with no single named player (HeaderDuel, or a Foul's
- *  victim) are folded explicitly below. */
-const ownCount = (event: MatchEvent): keyof Counted | null => {
-  switch (event._tag) {
-    case "Goal":
-      return "goals";
-    case "ShotOnTarget":
-      return "shotsOnTarget";
-    case "ShotMissed":
-      return "shotsMissed";
-    case "YellowCard":
-      return "yellowCards";
-    case "RedCard":
-      return "redCards";
-    case "Tackle":
-      return "tacklesWon";
-    case "Interception":
-      return "interceptions";
-    case "Injury":
-    case "Substitution":
-    case "MatchStarted":
-    case "HalfTimeReached":
-    case "FullTimeWhistle":
-    case "ThroughBall":
-    case "Cross":
-    case "LongShot":
-    case "RunWithBall":
-    case "HoldUpLayOff":
-    case "Counter":
-    case "Foul":
-    case "HeaderDuel":
-    case "PossessionTally":
-    case "Offside":
-    case "BeatenTrap":
-    case "KeyPass":
-    case "Corner":
-    case "FreeKick":
-    case "Penalty":
-    case "TacticsChanged":
-      return null;
-  }
-};
 
 /** The score after `included`: the last event that carries one. */
 const scoreOf = (included: ReadonlyArray<MatchEvent>): { readonly home: number; readonly away: number } => {
@@ -146,10 +82,12 @@ export const rateSide = (
       position.set(slot.playerId, slot.position);
     }
   }
-  const starters = new Set((pitches[0] ?? []).map((slot) => slot.playerId));
+  const starters = new Set((pitches[0] ?? []).map((slot) => String(slot.playerId)));
   const onAtEnd = new Set((pitches[cut] ?? []).map((slot) => slot.playerId));
+  // One fold for every count the rating reads, so the Rat column, the Ratings tab and the player line
+  // share one set of counting rules (Agent Note: the match player line folds only recorded events).
+  const lines = foldMatchPlayerLineCounts(starters, included, null);
 
-  const counts = new Map<PlayerId, Counted>();
   const goalsFor = new Map<PlayerId, number>();
   const goalsAgainst = new Map<PlayerId, number>();
   const cameOn = new Map<PlayerId, number>();
@@ -165,12 +103,6 @@ export const rateSide = (
     if (event._tag === "Goal") {
       for (const playerId of onNow) bump(event.teamClubId === clubId ? goalsFor : goalsAgainst, playerId);
     }
-    // The fouled player is on the side that did not commit the foul, so this is read before the
-    // club gate below that credits only this side's own events.
-    if (event._tag === "Foul" && event.fouledPlayerId !== undefined) {
-      const current = counts.get(event.fouledPlayerId) ?? NO_EVENTS;
-      counts.set(event.fouledPlayerId, { ...current, foulsSuffered: current.foulsSuffered + 1 });
-    }
     if (
       event._tag === "MatchStarted" ||
       event._tag === "HalfTimeReached" ||
@@ -179,21 +111,11 @@ export const rateSide = (
     ) continue;
     if (event.teamClubId !== clubId) continue;
     if (event._tag === "Substitution") {
-      if (!starters.has(event.inPlayerId) && !cameOn.has(event.inPlayerId)) cameOn.set(event.inPlayerId, event.minute);
+      if (!starters.has(String(event.inPlayerId)) && !cameOn.has(event.inPlayerId)) cameOn.set(event.inPlayerId, event.minute);
       continue;
     }
     if (event._tag === "RedCard") sentOff.add(event.playerId);
     if (event._tag === "Injury") injured.add(event.playerId);
-    if (event._tag === "HeaderDuel") {
-      const current = counts.get(event.winnerId) ?? NO_EVENTS;
-      counts.set(event.winnerId, { ...current, headersWon: current.headersWon + 1 });
-      continue;
-    }
-    const key = ownCount(event);
-    if (key !== null && "playerId" in event) {
-      const current = counts.get(event.playerId) ?? NO_EVENTS;
-      counts.set(event.playerId, { ...current, [key]: current[key] + 1 });
-    }
   }
 
   // A player left at the event that took them off: the Substitution, or the red card or severe Injury
@@ -228,11 +150,27 @@ export const rateSide = (
   const result = isHome ? resultOf(score.home, score.away) : resultOf(score.away, score.home);
 
   return appeared.map((playerId) => {
+    const line = lines.get(String(playerId)) ?? EMPTY_MATCH_PLAYER_LINE_COUNTS;
     const involvement: MatchInvolvement = {
-      ...(counts.get(playerId) ?? NO_EVENTS),
       position: position.get(playerId)!,
-      started: starters.has(playerId),
+      started: starters.has(String(playerId)),
       onAtEnd: onAtEnd.has(playerId),
+      goals: line.goals,
+      // The fold counts a goal as a shot on target too; the rating weights it once, as a goal.
+      shotsOnTarget: line.shotsOnTarget - line.goals,
+      bigChances: 0,
+      shotsMissed: line.shots - line.shotsOnTarget,
+      yellowCards: line.yellowCards,
+      redCards: line.redCards,
+      tacklesWon: line.tacklesWon,
+      interceptions: line.interceptions,
+      headersWon: line.headersWon,
+      foulsSuffered: line.foulsSuffered,
+      keyPasses: line.keyPasses,
+      assists: line.assists,
+      saves: line.saves,
+      fouls: line.fouls,
+      offsides: line.offsides,
       goalsForWhileOn: goalsFor.get(playerId) ?? 0,
       goalsAgainstWhileOn: goalsAgainst.get(playerId) ?? 0,
       result,
