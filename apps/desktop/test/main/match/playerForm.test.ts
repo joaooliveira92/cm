@@ -79,6 +79,15 @@ const deleteTransfers = (saveId: SaveId, playerId: PlayerId) =>
     }),
   );
 
+const deleteLine = (saveId: SaveId, fixtureId: number, playerId: PlayerId) =>
+  withSave(
+    saveId,
+    Effect.gen(function* () {
+      const sql = yield* SqlClient;
+      yield* sql`DELETE FROM player_match_lines WHERE fixture_id = ${fixtureId} AND player_id = ${playerId}`;
+    }),
+  );
+
 it.effect("a played row carries the same Match Rating as the Ratings tab, and the strip counts it", () =>
   Effect.gen(function* () {
     const { save, fixtureId } = yield* atFirstFixture(savesDir);
@@ -143,5 +152,23 @@ it.effect("a player signed after a fixture gets no row before the day he joined"
       before.games.some((row) => row.fixtureId === fixtureId),
       "a fixture after the player joined is listed",
     );
+  }),
+);
+
+it.effect("a user's fixture the player was not selected for still opens its Match Report", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
+    yield* drain(save.id, match.matchId);
+    yield* commitMatchday(savesDir, save.id, fixtureId);
+
+    const { playerId } = yield* firstStarter(save.id, fixtureId);
+    // Drop his line: the fixture still has lines for others and keeps its timeline.
+    yield* deleteLine(save.id, fixtureId, playerId);
+    const form = yield* getPlayerForm(savesDir, save.id, playerId, null);
+    const game = form.games.find((row) => row.fixtureId === fixtureId);
+    ok(game !== undefined, "the fixture is still listed");
+    strictEqual(game.state, "notSelected", "with no line he reads Not selected");
+    strictEqual(game.matchId, String(fixtureId) as MatchId, "and the row still opens the report");
   }),
 );

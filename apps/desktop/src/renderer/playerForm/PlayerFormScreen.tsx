@@ -4,8 +4,8 @@
  * The recent games the player's club has played this season, newest first, cut at the later of the
  * season's start and the day he joined; the five-rating form strip above them. Each row is one of
  * four states — played, "Unused substitute", "Not selected" or "No player record" — and a row for
- * the user's own fixture opens its Match Report. The read is `getPlayerForm`; the season block
- * arrives with ticket 20.
+ * the user's own fixture opens its Match Report. Below them the season block totals the season by
+ * competition. The read is `getPlayerForm`.
  */
 import type { ClubId, PlayerFormGameRow, PlayerFormSeasonRow, PlayerFormView, PlayerId, SaveId } from "@cm-clone/contracts";
 import { useState } from "react";

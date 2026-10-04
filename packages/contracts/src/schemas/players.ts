@@ -87,7 +87,8 @@ export class PlayerFormGameRow extends Schema.Class<PlayerFormGameRow>("PlayerFo
   opponentClubName: Schema.String,
   isHome: Schema.Boolean,
   state: PlayerFormRowState,
-  /** The player's club's result, or null when he has no line on it. */
+  /** The player's club's result; null only for a fixture with no player record at all (a
+   *  `results-only` club), which has no score to read. Kept on a "Not selected" row. */
   result: Schema.NullOr(Schema.Literals(["win", "draw", "loss"])),
   card: MatchPlayerCard,
   started: Schema.Boolean,
@@ -122,7 +123,7 @@ export class PlayerFormClubOption extends Schema.Class<PlayerFormClubOption>("Pl
   clubName: Schema.String,
 }) {}
 
-/** One competition's season totals. Ticket 20 fills these; ticket 19 leaves the array empty. */
+/** One competition's season totals: League, Cup, Continental (when appeared) and Overall. */
 export class PlayerFormSeasonRow extends Schema.Class<PlayerFormSeasonRow>("PlayerFormSeasonRow")({
   kind: Schema.Literals(["league", "cup", "continental", "overall"]),
   label: Schema.String,
@@ -145,7 +146,7 @@ export class PlayerFormSeasonRow extends Schema.Class<PlayerFormSeasonRow>("Play
 }) {}
 
 /** A player's Form read: his clubs, the selected club's played fixtures this season with his line in
- *  each, and the five-rating form strip. The season block arrives with ticket 20. */
+ *  each, the five-rating form strip, and the season block. */
 export class PlayerFormView extends Schema.Class<PlayerFormView>("PlayerFormView")({
   playerId: PlayerId,
   clubs: Schema.Array(PlayerFormClubOption),
@@ -155,6 +156,6 @@ export class PlayerFormView extends Schema.Class<PlayerFormView>("PlayerFormView
   formRatings: Schema.Array(Schema.Finite),
   /** A goalkeeper: the Sav column is drawn. */
   goalkeeper: Schema.Boolean,
-  /** Season totals by competition; empty until ticket 20. */
+  /** Season totals by competition: League, Cup, Continental when he appeared in one, and Overall. */
   season: Schema.Array(PlayerFormSeasonRow),
 }) {}

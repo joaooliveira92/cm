@@ -235,17 +235,24 @@ const EMPTY_LINE = {
   foulsSuffered: null,
 } as const;
 
+/** A fixture's exact ratings and its Player of the Match, from the timeline it keeps. */
+interface FixtureRating {
+  readonly ratings: ReadonlyMap<PlayerId, number>;
+  readonly mom: PlayerId | null;
+}
+
 /**
  * The Match Ratings of every player in the fixtures that keep a timeline (the user's own), keyed by
- * fixture then player, so the Form read rates those rows exactly as the Ratings tab does. An AI
- * fixture keeps no stream and contributes nothing here.
+ * fixture, so the Form read rates those rows exactly as the Ratings tab does — including its Player
+ * of the Match, which for a shootout the timeline alone cannot decide. An AI fixture keeps no stream
+ * and contributes nothing here, which is what tells the two apart.
  */
 const loadFixtureRatings = (
   fixtureIds: ReadonlyArray<number>,
   named: (clubId: string) => string,
 ) =>
   Effect.gen(function* () {
-    const ratings = new Map<number, ReadonlyMap<PlayerId, number>>();
+    const ratings = new Map<number, FixtureRating>();
     yield* Effect.forEach(
       fixtureIds,
       (fixtureId) =>
@@ -259,21 +266,22 @@ const loadFixtureRatings = (
             [...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id),
           );
           const view = matchRatingsView(matchId, stream, events, named, nameOf, null);
-          ratings.set(
-            fixtureId,
-            new Map([...view.home, ...view.away].map((row) => [row.playerId, row.rating])),
-          );
+          ratings.set(fixtureId, {
+            ratings: new Map([...view.home, ...view.away].map((row) => [row.playerId, row.rating])),
+            mom: view.playerOfTheMatch,
+          });
         }),
       { concurrency: 8, discard: true },
     );
     return ratings;
   });
 
-/** The Player of the Match of each fixture the player appeared in, keyed by fixture id. A fixture
- *  that keeps a timeline rates every player exactly; an AI fixture rates from the stored counts. */
+/** The Player of the Match of each fixture, keyed by fixture id. A fixture that keeps a timeline
+ *  uses the ratings fold's own winner, so Form and the Ratings tab always name the same man; an AI
+ *  fixture rates from the stored counts, whose penalty-aware result stands in for the winning side. */
 const momFixturesOf = (
   lines: ReadonlyArray<FormLineRow>,
-  userRatings: ReadonlyMap<number, ReadonlyMap<PlayerId, number>>,
+  userRatings: ReadonlyMap<number, FixtureRating>,
   playerId: PlayerId,
 ): ReadonlySet<number> => {
   const byFixture = new Map<number, Array<FormLineRow>>();
@@ -285,13 +293,17 @@ const momFixturesOf = (
   const mom = new Set<number>();
   for (const [fixtureId, group] of byFixture) {
     const exact = userRatings.get(fixtureId);
+    if (exact !== undefined) {
+      if (exact.mom === playerId) mom.add(fixtureId);
+      continue;
+    }
     // Only players who took part are eligible: the ratings tab has no row for an unused substitute,
     // and a stored-line rating for one would invent a performance.
     const played = group.filter((line) => line.started === 1 || line.onMinute !== null);
     const winner = playerOfTheMatch(
       played.map((line) => ({
         playerId: String(line.playerId),
-        rating: exact?.get(line.playerId as PlayerId) ?? ratingOfLine(line),
+        rating: ratingOfLine(line),
         goals: line.goals,
         assists: line.assists,
         won: line.result === "win",
@@ -389,7 +401,7 @@ const seasonRow = (kind: "league" | "cup" | "continental" | "overall", label: st
 const seasonRowsOf = (
   lines: ReadonlyArray<FormLineRow>,
   momFixtures: ReadonlySet<number>,
-  userRatings: ReadonlyMap<number, ReadonlyMap<PlayerId, number>>,
+  userRatings: ReadonlyMap<number, FixtureRating>,
   playerId: PlayerId,
 ): ReadonlyArray<PlayerFormSeasonRow> => {
   const buckets = new Map<string, SeasonBucket>();
@@ -404,7 +416,7 @@ const seasonRowsOf = (
   for (const line of lines) {
     if (line.kind === "reserve") continue;
     if (line.started !== 1 && line.onMinute === null) continue;
-    const rating = userRatings.get(line.fixtureId)?.get(playerId) ?? ratingOfLine(line);
+    const rating = userRatings.get(line.fixtureId)?.ratings.get(playerId) ?? ratingOfLine(line);
     const mom = momFixtures.has(line.fixtureId);
     addToBucket(bucketFor(line.kind), line, rating, mom);
     addToBucket(overall, line, rating, mom);
@@ -429,13 +441,13 @@ export const playerFormView = (
   selectedClubId: ClubId | null,
   currentClubId: ClubId | null,
   clubs: ReadonlyArray<PlayerFormClubOption>,
-  userRatings: ReadonlyMap<number, ReadonlyMap<PlayerId, number>>,
+  userRatings: ReadonlyMap<number, FixtureRating>,
   momFixtures: ReadonlySet<number>,
   nameOf: (clubId: string) => string,
 ): PlayerFormView => {
   const linesByFixture = new Map(lines.map((line) => [line.fixtureId, line]));
   const ratingOf = (line: FormLineRow): number =>
-    userRatings.get(line.fixtureId)?.get(playerId) ?? ratingOfLine(line);
+    userRatings.get(line.fixtureId)?.ratings.get(playerId) ?? ratingOfLine(line);
 
   const games = fixtures.map((fixture) => {
     const isHome = fixture.homeClubId === selectedClubId;
@@ -554,20 +566,18 @@ export const getPlayerForm = (
         clubIds[0] ??
         null;
 
-      const userFixtureIds = [...new Set(lines.map((line) => line.fixtureId))];
+      const joinedOn = selectedClubId === null ? null : yield* loadJoinedOn(playerId, selectedClubId);
+      const fixtures = selectedClubId === null ? [] : yield* loadClubFixtures(selectedClubId, joinedOn);
+      const fixturesWithLines =
+        selectedClubId === null ? new Set<number>() : yield* loadFixturesWithLines(selectedClubId);
+
+      // A fixture is the user's own iff it keeps a timeline. Feeding the selected club's fixtures as
+      // well as the player's lines is what lets a "Not selected" row still open its Match Report.
+      const userFixtureIds = [
+        ...new Set([...lines.map((line) => line.fixtureId), ...fixtures.map((fixture) => fixture.id)]),
+      ];
       const userRatings = yield* loadFixtureRatings(userFixtureIds, named);
       const momFixtures = momFixturesOf(yield* loadFixtureLines(playerId), userRatings, playerId);
-
-      if (selectedClubId === null) {
-        return playerFormView(
-          playerId, lines, [], new Set(), null, currentClubId, clubs,
-          userRatings, momFixtures, named,
-        );
-      }
-
-      const joinedOn = yield* loadJoinedOn(playerId, selectedClubId);
-      const fixtures = yield* loadClubFixtures(selectedClubId, joinedOn);
-      const fixturesWithLines = yield* loadFixturesWithLines(selectedClubId);
 
       return playerFormView(
         playerId, lines, fixtures, fixturesWithLines, selectedClubId,
