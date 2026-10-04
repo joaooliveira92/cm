@@ -1,4 +1,4 @@
-import { pickRandom, regimenDecayModifier, type RandomSource, type TeamInstructions, type TeamSetPieces, type TakerList } from "@cm-clone/shared";
+import { legacyPositionOf, pickRandom, regimenDecayModifier, type RandomSource, type TeamInstructions, type TeamSetPieces, type TakerList } from "@cm-clone/shared";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM, type MatchCommand } from "../commands.js";
 import { START_CONDITION, conditionDecayPerMinute, newConditionLedger } from "../condition.js";
 import type { MatchEvent, MatchHalf } from "../events.js";
@@ -13,6 +13,7 @@ import type { MatchPlayerInput, MatchTeamSetup, PhaseStrengths, TacticalModifier
 import { HOME_ADVANTAGE_MULTIPLIER, clamp } from "./constants.js";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 import { resolveTeamTactics, viewTacticalState, type ResolvedTeamTactics, type TacticalState } from "./tacticalAdapter.js";
+import type { LineupChangeOrigin, LineupJournalEntry, LineupRecorder, RuntimeFrame } from "./lineupRecording.js";
 
 /**
  * Convenience: extract a {@link TacticalState} view from a team's runtime state.
@@ -72,6 +73,9 @@ export interface TeamRuntimeState {
   /** The manager's Regimen pillar value (1-5), snapshotted at kickoff. Affects Condition decay and
    *  injury severity. AI clubs use 3 (neutral). */
   readonly regimen: number;
+  /** Records this club's Lineup Frames and lineup changes while the run mutates it. Absent when no
+   *  one is recording (tests that drive the runtime state directly). */
+  readonly lineup?: LineupRecorder;
 }
 
 /** The point a substitution window opens at: a half and a minute within it. */
@@ -80,23 +84,53 @@ export interface SubstitutionWindowKey {
   readonly minute: number;
 }
 
-export const initTeamState = (setup: MatchTeamSetup, regimen: number): TeamRuntimeState => ({
-  clubId: setup.clubId,
-  playersById: new Map(setup.squad.map((player) => [player.id, player])),
-  resolved: resolveTeamTactics(setup.tactic, new Map(setup.squad.map((player) => [player.id, player]))),
-  teamInstructions: setup.tactic.team,
-  teamSetPieces: setup.tactic.teamSetPieces,
-  takers: setup.tactic.takers,
-  substitutionsUsed: 0,
-  windowsUsed: 0,
-  lastWindow: null,
-  conds: newConditionLedger(setup.squad.map((player) => player.id), setup.squad),
-  penalties: new Set(),
-  gkStandIns: new Set(),
-  bench: setup.tactic.bench,
-  beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
-  activeSpecificMarkings: new Map(setup.tactic.specificMarkings ?? []),
-  regimen,
+export const initTeamState = (setup: MatchTeamSetup, regimen: number, lineup?: LineupRecorder): TeamRuntimeState => {
+  const team: TeamRuntimeState = {
+    clubId: setup.clubId,
+    playersById: new Map(setup.squad.map((player) => [player.id, player])),
+    resolved: resolveTeamTactics(setup.tactic, new Map(setup.squad.map((player) => [player.id, player]))),
+    teamInstructions: setup.tactic.team,
+    teamSetPieces: setup.tactic.teamSetPieces,
+    takers: setup.tactic.takers,
+    substitutionsUsed: 0,
+    windowsUsed: 0,
+    lastWindow: null,
+    conds: newConditionLedger(setup.squad.map((player) => player.id), setup.squad),
+    penalties: new Set(),
+    gkStandIns: new Set(),
+    bench: setup.tactic.bench,
+    beenOn: new Set(setup.tactic.slots.map((slot) => slot.playerId)),
+    activeSpecificMarkings: new Map(setup.tactic.specificMarkings ?? []),
+    regimen,
+    ...(lineup === undefined ? {} : { lineup }),
+  };
+  // The kickoff frame is the segment every later change cuts; recording it at index 0 means a frame
+  // exists for every event even in a match no lineup change touches.
+  lineup?.record(lineupFrameOf(team), 0);
+  return team;
+};
+
+/**
+ * The single definition of a {@link RuntimeFrame}: reads the authoritative runtime state and
+ * projects it into a small immutable view. Pure — it draws no random numbers and mutates nothing —
+ * so it cannot change a seeded match. Slots are ordered by their stable kickoff index so the frame
+ * presents the same order as the pitch projections, even after a goalkeeper stand-in is appended.
+ */
+export const lineupFrameOf = (team: TeamRuntimeState): RuntimeFrame => ({
+  clubId: team.clubId,
+  slots: [...team.resolved.slots]
+    .sort((a, b) => a.slotIndex - b.slotIndex)
+    .map((slot) => ({
+      playerId: slot.playerId,
+      position: legacyPositionOf(slot.cell),
+      isGoalkeeper: slot.isGoalkeeper,
+    })),
+  beenOn: new Set(team.beenOn),
+  substitutes: team.bench.filter(
+    (id): id is PlayerId => id !== null && team.playersById.has(id) && !team.beenOn.has(id),
+  ),
+  substitutionsUsed: team.substitutionsUsed,
+  windowsUsed: team.windowsUsed,
 });
 
 /** Applies one `MatchCommand` to team state. A `ChangeTactics` is always live (the kickoff Tactic
@@ -113,7 +147,7 @@ export const applyCommand = (
   minute: number,
   half: MatchHalf,
   isHalftime: boolean,
-): { readonly accepted: boolean; readonly reason?: string } => {
+): { readonly accepted: boolean; readonly reason?: string; readonly openedWindow?: boolean } => {
   if (command._tag === "ChangeTactics") {
     // A live ChangeTactics changes only team instructions and team modifiers, never who is on the
     // pitch (decision request 01). Preserve the current slot array (player IDs, phases, fit closures)
@@ -183,12 +217,14 @@ export const applyCommand = (
   if (team.substitutionsUsed >= MAX_SUBSTITUTIONS_PER_TEAM) {
     return { accepted: false, reason: "substitution cap (5) already reached" };
   }
+  let openedWindow = false;
   if (!isHalftime && (team.lastWindow?.half !== half || team.lastWindow.minute !== minute)) {
     if (team.windowsUsed >= MAX_SUBSTITUTION_WINDOWS_PER_TEAM) {
       return { accepted: false, reason: "substitution window cap (3) already reached" };
     }
     team.windowsUsed += 1;
     team.lastWindow = { half, minute };
+    openedWindow = true;
   }
 
   const index = team.resolved.slots.findIndex((slot) => slot.playerId === command.outPlayerId);
@@ -198,7 +234,7 @@ export const applyCommand = (
   team.beenOn.add(command.inPlayerId);
   // A substitute comes on fresh.
   team.conds.set(command.inPlayerId, START_CONDITION);
-  return { accepted: true };
+  return { accepted: true, openedWindow };
 };
 
 export interface TeamStrengths {
@@ -334,28 +370,52 @@ export const forcePlayerOff = (
         forcedByInjury: true,
       });
       if (slot.isGoalkeeper) normalizeGoalkeeper(team, benchId);
+      // A forced bench Substitution is emitted after its slot mutation, so the new frame applies
+      // from the event after it; the injured player is still on at the Substitution's own frame.
+      noteLineup(team, {
+        appliesAt: events.length,
+        clubId: team.clubId,
+        kind: "substitution",
+        origin: "forced",
+        outPlayerId: playerId,
+        inPlayerId: benchId,
+        openedWindow: result.openedWindow === true,
+      });
     } else {
       // Substitution capped — empty the slot, play with 10.
-      emptySlot(team, slot, minute, half, events);
+      emptySlot(team, slot, minute, half, events, "forced");
     }
     return;
   }
 
-  emptySlot(team, slot, minute, half, events);
+  emptySlot(team, slot, minute, half, events, "forced");
+};
+
+/** Records the current frame and a lineup change at the index it takes effect before, when the
+ *  club is being recorded. The frame is read after the mutation, so `entry.appliesAt` must already
+ *  be the index the new lineup is first visible at. */
+const noteLineup = (team: TeamRuntimeState, entry: LineupJournalEntry): void => {
+  if (!team.lineup) return;
+  team.lineup.journal(entry);
+  team.lineup.record(lineupFrameOf(team), entry.appliesAt);
 };
 
 /** Empties the slot (10 men). If it was the GK and no other GK is on pitch, an on-pitch outfield
- * player is dragged into the goal at gk=1 so the match can resume with a keeper. */
+ * player is dragged into the goal at gk=1 so the match can resume with a keeper. Records the change
+ * as a `forceOff`, or as the goalkeeper `standIn` when an outfield is dragged in. */
 const emptySlot = (
   team: TeamRuntimeState,
   slot: ResolvedSlot,
   minute: number,
   half: MatchHalf,
   events: Array<MatchEvent>,
+  origin: LineupChangeOrigin,
+  forceOffApplied?: boolean,
 ): void => {
   const wasGoalkeeper = slot.isGoalkeeper && !team.resolved.slots.some((s) => s !== slot && s.isGoalkeeper);
   team.resolved.slots = team.resolved.slots.filter((s) => s.playerId !== slot.playerId);
 
+  let standInId: PlayerId | undefined;
   if (wasGoalkeeper) {
     const outfieldSlot = team.resolved.slots.find((s) => !s.isGoalkeeper);
     if (outfieldSlot) {
@@ -374,8 +434,26 @@ const emptySlot = (
         inPlayerId: outfieldSlot.playerId,
         forcedByInjury: true,
       });
+      standInId = outfieldSlot.playerId;
     }
   }
+
+  const forceOffFact = forceOffApplied === undefined ? {} : { forceOffApplied };
+  noteLineup(
+    team,
+    standInId === undefined
+      ? { appliesAt: events.length, clubId: team.clubId, kind: "forceOff", origin, playerId: slot.playerId, ...forceOffFact }
+      : {
+          appliesAt: events.length,
+          clubId: team.clubId,
+          kind: "standIn",
+          origin,
+          outPlayerId: slot.playerId,
+          inPlayerId: standInId,
+          role: "standIn",
+          ...forceOffFact,
+        },
+  );
 };
 
 /** Whether a player is a goalkeeper to the engine: they carry Goalkeeping attributes. */
@@ -393,16 +471,40 @@ const normalizeGoalkeeper = (team: TeamRuntimeState, playerId: PlayerId): void =
  *  red card (`resolveCards`). Drains the slot so the team plays with 10 through `emptySlot` — the
  *  fallback a severe Injury takes when `forcePlayerOff` finds no substitute — including its last-GK
  *  outfield stand-in, and consumes no substitution/window. One rule for every way a keeper leaves
- *  (decision request 06). Returns false if the player isn't on the pitch. */
+ *  (decision request 06). Returns false if the player isn't on the pitch.
+ *
+ *  `origin` says whether the manager commanded the bring-off or a card forced it; a manager command
+ *  that removed nothing still journals its refused fact, so the outcome needs no re-fold. */
 export const applyForcedOff = (
   team: TeamRuntimeState,
   playerId: PlayerId,
   minute: number,
   half: MatchHalf,
   events: Array<MatchEvent>,
+  origin: LineupChangeOrigin = "forced",
 ): boolean => {
   const index = team.resolved.slots.findIndex((slot) => slot.playerId === playerId);
-  if (index === -1) return false;
-  emptySlot(team, team.resolved.slots[index]!, minute, half, events);
+  if (index === -1) {
+    if (origin === "manager") {
+      noteLineup(team, {
+        appliesAt: events.length,
+        clubId: team.clubId,
+        kind: "forceOff",
+        origin: "manager",
+        playerId,
+        forceOffApplied: false,
+      });
+    }
+    return false;
+  }
+  emptySlot(
+    team,
+    team.resolved.slots[index]!,
+    minute,
+    half,
+    events,
+    origin,
+    origin === "manager" ? true : undefined,
+  );
   return true;
 };

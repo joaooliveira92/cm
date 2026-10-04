@@ -13,7 +13,7 @@ import { loadSeasonRow } from "../season/currentSeason.js";
 import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { loadFixtureSides, matchSummaryOf } from "./start.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
-import { MATCH_STREAM_TYPE, substitutionLedger } from "@cm-clone/game-engine";
+import { MATCH_STREAM_TYPE } from "@cm-clone/game-engine";
 import { buildResumeSimulationView } from "./view.js";
 
 /**
@@ -36,14 +36,7 @@ export const resumeSimulation = (
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
       const derived = yield* deriveStreamEvents(stream);
-      return yield* buildResumeSimulationView(
-        matchId,
-        stream,
-        derived.events,
-        cursor,
-        revealedEvents,
-        substitutionLedger(stream, derived.events),
-      );
+      return yield* buildResumeSimulationView(matchId, stream, derived, cursor, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 

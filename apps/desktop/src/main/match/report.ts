@@ -22,7 +22,7 @@ import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
 import { lastPlayedMatchId, matchStatisticsView } from "./statistics.js";
-import { matchEventsOf } from "./timeline.js";
+import { matchTimelineOf } from "./timeline.js";
 
 type ReportedEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" | "Substitution" }>;
 
@@ -99,7 +99,8 @@ const isCommitted = (matchId: MatchId) =>
  *  the save-scoped "the match just played" read so both compose the same view. */
 const reportOf = (matchId: MatchId, stream: ReadonlyArray<StreamEvent>) =>
   Effect.gen(function* () {
-    const events = yield* matchEventsOf(stream);
+    const derived = yield* matchTimelineOf(stream);
+    const events = derived.events;
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
     const reported = events.filter(isReported);
     const clubName = yield* displayNames;
@@ -122,8 +123,8 @@ const reportOf = (matchId: MatchId, stream: ReadonlyArray<StreamEvent>) =>
       awayScore: final.away,
       halfTimeHomeScore: halfTime.home,
       halfTimeAwayScore: halfTime.away,
-      events: reportEvents(events, substitutionLedger(stream, events).standIns, playerName),
-      statistics: matchStatisticsView(matchId, stream, events, clubName, null),
+      events: reportEvents(events, substitutionLedger(stream, events, derived.journal).standIns, playerName),
+      statistics: matchStatisticsView(matchId, stream, derived, clubName, null),
     });
   });
 

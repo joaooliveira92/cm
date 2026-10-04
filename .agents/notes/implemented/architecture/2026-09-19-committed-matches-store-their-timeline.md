@@ -86,10 +86,18 @@ the rule change waiting on it.
   **Settled 2026-09-21:** [saves are disposable during development](2026-09-21-saves-are-disposable-during-development.md).
   No migration or backfill: a save made before the storage exists is refused on open, so point 1's
   backfill gate no longer applies. Engine-rule fixes still wait for ticket 31 itself.
+- **The stored timeline carries the Lineup Journal too (2026-10-04).** The payload grew an optional
+  `lineup` field beside `events` — still additive JSON in the same column, so still no DDL, no
+  migration and no save-schema version move. A committed read materialises the Lineup Frames from the
+  stored journal and the kickoff setups in the stream's `MatchStarted`, so a post-match pitch,
+  ratings, statistics, report, summary or player-stats read never re-simulates. A timeline stored
+  before the journal has none and re-derives once from the stream, the fallback Conditions already
+  use (see [the engine records the lineup as it runs](2026-10-04-the-engine-records-the-lineup-as-it-runs.md)).
 - **Saves grow by one timeline per human match.** Background matches are results-only and unaffected.
   For a ten-season career this is on the order of a few hundred timelines — small against a football
   database, and the request's own assessment was that nothing important is foreclosed.
-- **`deriveMatchEvents` acquires a second caller shape**: live reads derive, committed reads load. That
-  seam is where the decision lives, and it is the place to test it.
+- **`deriveMatchEvents` acquires a second caller shape**: live reads derive, committed reads load —
+  the events always, and now the frames and journal from the stored Lineup Journal. That seam is where
+  the decision lives, and it is the place to test it.
 - **A `TRACEABILITY.md` row is owed** when it ships, with the engine-change-immunity test as its
   proving test.

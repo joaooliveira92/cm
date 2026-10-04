@@ -62,6 +62,7 @@ describe("applyCommand's live ChangeTactics", () => {
     expect(team.beenOn.has(reserves[0]!)).toBe(false);
     expect(applyCommand(team, { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: starter, inPlayerId: reserves[0]! }, 25, 1, false)).toEqual({
       accepted: true,
+      openedWindow: true,
     });
   });
 });

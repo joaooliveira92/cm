@@ -7,8 +7,22 @@ export {
   simulateMatchWithCounts,
   resolveSlice,
   type MatchPlayerCountEntry,
+  type RecordedLineup,
   type SimulateMatchInput,
 } from "./loop.js";
+
+export {
+  createLineupRecorder,
+  type LineupChangeKind,
+  type LineupChangeOrigin,
+  type LineupJournalEntry,
+  type LineupRecorder,
+  type LineupSubstitutionRole,
+  type RuntimeFrame,
+  type RuntimeSlot,
+} from "./lineupRecording.js";
+
+export { kickoffFrameOf, materialiseFrames } from "./materialiseFrames.js";
 
 export * from "./phaseStrengthResolver.js";
 export * from "./eventResolver.js";

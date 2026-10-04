@@ -21,6 +21,7 @@ import {
   revealedCut,
   substitutionLedger,
   type ChanceType,
+  type DerivedTimeline,
   type MatchEvent,
   type SubstitutionEvent,
 } from "@cm-clone/game-engine";
@@ -28,7 +29,7 @@ import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { matchEventsOf } from "./timeline.js";
+import { matchTimelineOf } from "./timeline.js";
 
 export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
   "goals",
@@ -225,10 +226,11 @@ const computeChancesByType = (
 export const matchStatisticsView = (
   matchId: MatchId,
   stream: ReadonlyArray<StreamEvent>,
-  events: ReadonlyArray<MatchEvent>,
+  derived: DerivedTimeline,
   nameOf: (id: string) => string,
   revealedEvents: number | null,
 ): MatchStatisticsView => {
+  const { events, journal } = derived;
   const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
   const included = includedEvents(events, revealedEvents);
   const last = included[included.length - 1];
@@ -242,7 +244,7 @@ export const matchStatisticsView = (
     events,
     started.homeClubId,
     revealedEvents,
-    countedSubstitutions(events, substitutionLedger(stream, events).standIns, revealedEvents),
+    countedSubstitutions(events, substitutionLedger(stream, events, journal).standIns, revealedEvents),
   );
   const rows = hasTally ? counted : counted.filter((row) => !RECORDED_INVOLVEMENT_KEYS.has(row.key));
   return new MatchStatisticsView({
@@ -295,8 +297,8 @@ export const getMatchStatistics = (
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      const events = yield* matchEventsOf(stream);
+      const derived = yield* matchTimelineOf(stream);
       const nameOf = yield* displayNames;
-      return matchStatisticsView(matchId, stream, events, nameOf, revealedEvents);
+      return matchStatisticsView(matchId, stream, derived, nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

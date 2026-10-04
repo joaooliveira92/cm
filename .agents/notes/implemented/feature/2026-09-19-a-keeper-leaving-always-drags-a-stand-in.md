@@ -53,16 +53,17 @@ without asking, and adding a prompt here would make the quick-result path diverg
 - The drag emits the same forced `Substitution` (`forcedByInjury: true`) a bring-off's stand-in does.
   The flag means "forced", not "injured"; the event field keeps its name, and the read model already
   asks for the severe Injury before it wherever it means an injury.
-- The read model needed one change. `classifySubstitutions` already classed any forced Substitution not
-  right after a severe Injury as a stand-in, so it spends nothing, and the Match Report lists it as a
-  **move into goal** ("moves into goal for", never "the injured") — ticket 30's reporting half, now
-  backed by the engine. The pitch fold (`foldPitch` in `apps/desktop/src/main/match/pitch.ts`) took a
-  red-carded player off at the card, which left the stand-in in their outfield slot; it now treats a
-  red card like a severe Injury and lets the forced Substitution that follows move the stand-in into
-  goal once revealed.
+- The read model needed one change, and it no longer re-derives the rule. The engine records the
+  drag as a **stand-in** Lineup Journal entry (`kind: "standIn"`, `role: "standIn"`) and adds the
+  dragged player to the runtime `gkStandIns` set the Lineup Frame reads; the pitch and substitution
+  projections read those recorded facts. The Match Report lists it as a **move into goal** ("moves
+  into goal for", never "the injured") — ticket 30's reporting half, now backed by the engine. The
+  reader-side `classifySubstitutions` and the pitch fold (`foldPitch` in the desktop main process)
+  are deleted; the recorded stand-in replaced them (Agent Note:
+  [the engine records the lineup as it runs](../architecture/2026-10-04-the-engine-records-the-lineup-as-it-runs.md)).
 - It changes what a seed produces for a live, re-derived match in which the last keeper is sent off;
   nothing else moves. Committed matches keep their stored timeline (ticket 31), and a timeline stored
   before this change never holds a red card followed by a stand-in, so none reads differently.
 - While here, `forcePlayerOff` flags a bench player as a goalkeeper stand-in only when he comes on in
-  the goalkeeper slot. Flagging an outfielder in an outfield slot moved no result — a missing
-  Goalkeeping attribute already rates 1 — so no seed moved.
+  the goalkeeper slot (`normalizeGoalkeeper`, adding to `gkStandIns`). Flagging an outfielder in an
+  outfield slot moved no result — a missing Goalkeeping attribute already rates 1 — so no seed moved.

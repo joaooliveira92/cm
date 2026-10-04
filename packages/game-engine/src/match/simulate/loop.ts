@@ -18,11 +18,17 @@ import {
   applyForcedOff,
   decayConditions,
   initTeamState,
+  lineupFrameOf,
   tacticalView,
   type TeamRuntimeState,
 } from "./teamState.js";
-import type { PlayerId } from "@cm-clone/contracts";
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
 import { reconcileTacticalDecision, viewTacticalState } from "./tacticalAdapter.js";
+import {
+  createLineupRecorder,
+  type LineupJournalEntry,
+  type RuntimeFrame,
+} from "./lineupRecording.js";
 
 export interface SimulateMatchInput {
   readonly seed: number;
@@ -72,6 +78,19 @@ interface SimulationResult {
   readonly home: TeamRuntimeState;
   readonly away: TeamRuntimeState;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
+  readonly frames: ReadonlyMap<ClubId, ReadonlyArray<RuntimeFrame>>;
+  readonly journal: ReadonlyArray<LineupJournalEntry>;
+}
+
+/** The Lineup Frames and Lineup Journal a run records: one frame per club per event, and one entry
+ *  per lineup change. Returned beside events, Conditions and counts through the existing entry
+ *  points; recording draws no random numbers and cannot change a seed's play. */
+export interface RecordedLineup {
+  /** Each club's frames, indexed by ClubId; entry `i` is the lineup just before event `i`, and the
+   *  last is the lineup at the end. */
+  readonly frames: ReadonlyMap<ClubId, ReadonlyArray<RuntimeFrame>>;
+  /** Each lineup change, in the order the engine applied them. */
+  readonly journal: ReadonlyArray<LineupJournalEntry>;
 }
 
 /**
@@ -178,8 +197,13 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
       ? null
       : { random: createSeededRng(deriveSeed(input.seed, "attribution")), homeSlices: 0, awaySlices: 0 };
   const events: Array<MatchEvent> = [];
-  const home = initTeamState(input.home, input.homeRegimen ?? 3);
-  const away = initTeamState(input.away, input.awayRegimen ?? 3);
+  // Both clubs' recorders share one journal so it holds the changes in the engine's own order; each
+  // carries its own frame segments. Recording is pure bookkeeping over state the run already holds.
+  const journal: Array<LineupJournalEntry> = [];
+  const homeRecorder = createLineupRecorder(journal);
+  const awayRecorder = createLineupRecorder(journal);
+  const home = initTeamState(input.home, input.homeRegimen ?? 3, homeRecorder);
+  const away = initTeamState(input.away, input.awayRegimen ?? 3, awayRecorder);
   const score = { home: 0, away: 0 };
   const counts: Array<MatchPlayerCountEntry> = [];
   let lastAiMinute = 0;
@@ -280,7 +304,17 @@ const runSimulation = (input: SimulateMatchInput): SimulationResult => {
     }
   }
 
-  return { events, home, away, counts };
+  return {
+    events,
+    home,
+    away,
+    counts,
+    frames: new Map<ClubId, ReadonlyArray<RuntimeFrame>>([
+      [home.clubId, homeRecorder.frames(events.length)],
+      [away.clubId, awayRecorder.frames(events.length)],
+    ]),
+    journal,
+  };
 };
 
 /** Deterministic match simulation from seed + input. Fully deterministic: same inputs always produce the same `MatchEvent` timeline. */
@@ -290,21 +324,24 @@ export const simulateMatch = (input: SimulateMatchInput): ReadonlyArray<MatchEve
 /** Deterministic twin of `simulateMatch` that also exposes each player's Condition (%) at full time — the read-model's per-player Condition surface (ticket 02). */
 export const simulateMatchWithCondition = (
   input: SimulateMatchInput,
-): { readonly events: ReadonlyArray<MatchEvent>; readonly conditions: ReadonlyMap<PlayerId, number> } => {
-  const { events, home, away } = runSimulation(input);
-  return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]) };
+): {
+  readonly events: ReadonlyArray<MatchEvent>;
+  readonly conditions: ReadonlyMap<PlayerId, number>;
+} & RecordedLineup => {
+  const { events, home, away, frames, journal } = runSimulation(input);
+  return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]), frames, journal };
 };
 
-/** Deterministic twin of `simulateMatch` that also returns each player's full-time Condition and the per-minute on-pitch head-count timeline for both clubs (ticket 11). */
+/** Deterministic twin of `simulateMatch` that also returns each player's full-time Condition and the per-minute on-pitch head-count timeline for both clubs (ticket 11), plus the recorded Lineup Frames and Lineup Journal. */
 export const simulateMatchWithCounts = (
   input: SimulateMatchInput,
 ): {
   readonly events: ReadonlyArray<MatchEvent>;
   readonly conditions: ReadonlyMap<PlayerId, number>;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
-} => {
-  const { events, home, away, counts } = runSimulation(input);
-  return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]), counts };
+} & RecordedLineup => {
+  const { events, home, away, counts, frames, journal } = runSimulation(input);
+  return { events, conditions: new Map<PlayerId, number>([...home.conds, ...away.conds]), counts, frames, journal };
 };
 
 const applyScheduledCommands = (
@@ -321,7 +358,7 @@ const applyScheduledCommands = (
     const team = command.clubId === home.clubId ? home : command.clubId === away.clubId ? away : undefined;
     if (!team) continue;
     if (command._tag === "ForceOff") {
-      applyForcedOff(team, command.playerId, minute, half, events);
+      applyForcedOff(team, command.playerId, minute, half, events, "manager");
       continue;
     }
     const result = applyCommand(team, command, minute, half, isHalftime);
@@ -335,6 +372,22 @@ const applyScheduledCommands = (
         inPlayerId: command.inPlayerId,
         forcedByInjury: false,
       });
+      // A manager's Substitution is emitted after its slot mutation, so the new frame applies from
+      // the event after it: the manager-ahead rule lets it appear once given, but the pitch at the
+      // Substitution's own frame still holds the player coming off.
+      if (team.lineup) {
+        team.lineup.journal({
+          appliesAt: events.length,
+          clubId: team.clubId,
+          kind: "substitution",
+          origin: "manager",
+          outPlayerId: command.outPlayerId,
+          inPlayerId: command.inPlayerId,
+          role: isHalftime ? "halftime" : "manager",
+          openedWindow: result.openedWindow === true,
+        });
+        team.lineup.record(lineupFrameOf(team), events.length);
+      }
     }
   }
 };

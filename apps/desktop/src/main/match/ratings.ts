@@ -32,6 +32,7 @@ import {
   matchStartedOf,
   pitchBeforeEachEvent,
   revealedCut,
+  type DerivedTimeline,
   type MatchEvent,
   type MatchTeamSetup,
   type PersistedForcedOff,
@@ -41,7 +42,7 @@ import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
 import { lastPlayedMatchId } from "./statistics.js";
-import { matchEventsOf } from "./timeline.js";
+import { matchTimelineOf } from "./timeline.js";
 
 /** The score after `included`: the last event that carries one. */
 const scoreOf = (included: ReadonlyArray<MatchEvent>): { readonly home: number; readonly away: number } => {
@@ -195,11 +196,12 @@ export const rateSide = (
 export const matchRatingsView = (
   matchId: MatchId,
   stream: ReadonlyArray<StreamEvent>,
-  events: ReadonlyArray<MatchEvent>,
+  derived: DerivedTimeline,
   clubName: (clubId: string) => string,
   playerName: (playerId: PlayerId) => string,
   revealedEvents: number | null,
 ): MatchRatingsView => {
+  const { events, frames } = derived;
   const started = matchStartedOf(stream);
   const cut = revealedCut(events, revealedEvents);
   const commands = journaledLineupCommands(stream);
@@ -207,7 +209,7 @@ export const matchRatingsView = (
     rateSide(
       setup,
       events,
-      pitchBeforeEachEvent(setup, events, commands),
+      pitchBeforeEachEvent(frames.get(setup.clubId) ?? []),
       cut,
       isHome,
       playerName,
@@ -265,10 +267,10 @@ export const getMatchRatings = (
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      const events = yield* matchEventsOf(stream);
+      const derived = yield* matchTimelineOf(stream);
       const clubName = yield* displayNames;
       const started = matchStartedOf(stream);
       const nameOf = yield* playerNames([...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id));
-      return matchRatingsView(matchId, stream, events, clubName, nameOf, revealedEvents);
+      return matchRatingsView(matchId, stream, derived, clubName, nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

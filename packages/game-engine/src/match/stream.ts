@@ -16,8 +16,18 @@ import type { StreamEvent } from "../eventStream.js";
 import type { AiController, TacticalDecision } from "./aiController.js";
 import type { MatchCommand } from "./commands.js";
 import type { MatchEvent } from "./events.js";
-import { simulateMatchWithCounts, type MatchPlayerCountEntry } from "./simulate/loop.js";
+import { simulateMatchWithCounts, type MatchPlayerCountEntry, type RecordedLineup } from "./simulate/loop.js";
 import { toMatchTactic, type MatchTeamSetup } from "./types.js";
+
+/**
+ * A match's Match Events beside the Lineup Frames and Lineup Journal the run recorded — the one
+ * shape every reader that needs pitch or substitution facts takes. `deriveMatchEvents` returns a
+ * superset (Conditions and per-minute counts); a committed read materialises the same shape from the
+ * stored timeline plus a re-derivation (the storage ticket stores the journal).
+ */
+export interface DerivedTimeline extends RecordedLineup {
+  readonly events: ReadonlyArray<MatchEvent>;
+}
 
 /**
  * The Match Decider's stream type (ADR-0007).
@@ -119,6 +129,9 @@ export const journaledLineupCommands = (
  *
  * When `aiPreferences` is provided, clubs with matching entries get an AI tactical controller
  * that may change their tactics mid-match based on deterministic rules.
+ *
+ * Also returns the recorded Lineup Frames and Lineup Journal the run produced, beside the events,
+ * Conditions and counts, so a stream reader materialises the lineup without re-folding the timeline.
  */
 export const deriveMatchEvents = (
   stream: ReadonlyArray<StreamEvent>,
@@ -127,7 +140,7 @@ export const deriveMatchEvents = (
   readonly events: ReadonlyArray<MatchEvent>;
   readonly conditions: ReadonlyMap<PlayerId, number>;
   readonly counts: ReadonlyArray<MatchPlayerCountEntry>;
-} => {
+} & RecordedLineup => {
   const started = matchStartedOf(stream);
 
   const commandsByMinute = new Map<number, Array<MatchCommand>>();

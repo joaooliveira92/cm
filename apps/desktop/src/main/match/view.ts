@@ -14,15 +14,14 @@ import {
   type PlayerId,
 } from "@cm-clone/contracts";
 import {
-  countedSubstitutions,
   hashString,
-  matchStartedOf,
   pitchAsOf,
   renderCommentary,
+  substitutionLedger,
   substitutionStatus,
   type CommentaryNameResolver,
+  type DerivedTimeline,
   type MatchEvent,
-  type SubstitutionLedger,
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
@@ -121,12 +120,13 @@ const scoreAsOf = (
 export const buildResumeSimulationView = (
   matchId: MatchId,
   stream: ReadonlyArray<StreamEvent>,
-  events: ReadonlyArray<MatchEvent>,
+  derived: DerivedTimeline,
   cursor: number,
   revealedEvents: number | null,
-  ledger: SubstitutionLedger,
 ) =>
   Effect.gen(function* () {
+    const { events, frames, journal } = derived;
+    const ledger = substitutionLedger(stream, events, journal);
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
 
     const sql = yield* SqlClient;
@@ -217,10 +217,8 @@ export const buildResumeSimulationView = (
       ];
     });
 
-    const substitutions = countedSubstitutions(events, ledger.standIns, revealedEvents);
-    const kickoff = matchStartedOf(stream);
-    const homePitch = pitchAsOf(kickoff.homeSetup, events, ledger.lineupCommands, revealedEvents);
-    const awayPitch = pitchAsOf(kickoff.awaySetup, events, ledger.lineupCommands, revealedEvents);
+    const homePitch = pitchAsOf(frames.get(started.homeClubId) ?? [], journal, revealedEvents);
+    const awayPitch = pitchAsOf(frames.get(started.awayClubId) ?? [], journal, revealedEvents);
 
     return new ResumeSimulationView({
       matchId,
@@ -229,8 +227,8 @@ export const buildResumeSimulationView = (
       homeScore,
       awayScore,
       lines,
-      homeSubs: substitutionStatus(started.homeClubId, substitutions, ledger.halftime),
-      awaySubs: substitutionStatus(started.awayClubId, substitutions, ledger.halftime),
+      homeSubs: substitutionStatus(started.homeClubId, frames.get(started.homeClubId) ?? [], journal, revealedEvents),
+      awaySubs: substitutionStatus(started.awayClubId, frames.get(started.awayClubId) ?? [], journal, revealedEvents),
       homePitch,
       awayPitch,
       injuredClubIds,

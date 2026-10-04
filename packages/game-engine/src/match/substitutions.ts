@@ -1,20 +1,30 @@
 /**
- * Substitution counts and a substitution command's outcome, read off the re-derived timeline and the
- * journal. Pure. The engine's runtime counters are not in the timeline, so this module rebuilds them
- * by the engine's own rules (`applyCommand` in `packages/game-engine/src/match/simulate/teamState.ts`):
+ * Substitution counts and a substitution command's outcome, read off the engine's recorded Lineup
+ * Frames and Lineup Journal. Pure.
  *
- * - a goalkeeper stand-in spends nothing;
- * - every other Substitution spends one substitution;
- * - a Substitution opens a window when its half and minute differ from those of the last window
- *   opened (first-half stoppage runs past minute 45, so the minute alone would not do), except a
- *   halftime instruction, which neither opens a window nor moves that point.
+ * The counters are a projection of recorded facts, not a re-enactment of the engine's window rule.
+ * The frame at a reveal cut already carries every change that took effect at or before it; a
+ * manager's own substitution is overlaid when it was journaled after the cut, because it counts
+ * once given. Each journaled substitution records whether it opened a window (`openedWindow`), set
+ * where the engine's window step ran, so the projection adds them rather than replaying the
+ * half/minute rule. A goalkeeper stand-in is a `standIn` entry and spends nothing.
  */
 import { SubstitutionStatusView, type ClubId, type PlayerId } from "@cm-clone/contracts";
 import type { StreamEvent } from "../eventStream.js";
 import { MAX_SUBSTITUTIONS_PER_TEAM, MAX_SUBSTITUTION_WINDOWS_PER_TEAM } from "./commands.js";
 import type { MatchEvent, SubstitutionEvent } from "./events.js";
-import { HALFTIME_MINUTE, lineupFacts, type LineupCommand } from "./pitch.js";
-import { journaledLineupCommands, matchStartedOf } from "./stream.js";
+import type { LineupCommand } from "./pitch.js";
+import type { LineupJournalEntry, RuntimeFrame } from "./simulate/lineupRecording.js";
+import { journaledLineupCommands } from "./stream.js";
+
+interface SubstitutionPair {
+  readonly clubId: ClubId;
+  readonly outPlayerId: PlayerId;
+  readonly inPlayerId: PlayerId;
+}
+
+const samePair = (event: SubstitutionEvent, command: SubstitutionPair): boolean =>
+  event.teamClubId === command.clubId && event.outPlayerId === command.outPlayerId && event.inPlayerId === command.inPlayerId;
 
 /**
  * The Substitutions that spend a substitution and that a read at `revealedEvents` counts (null: the
@@ -23,8 +33,7 @@ import { journaledLineupCommands, matchStartedOf } from "./stream.js";
  * Forced substitutions count once revealed. The manager's own count once journaled, wherever they sit:
  * the engine applies a command at the start of its minute, so a second command in the same minute,
  * or one stamped minute 1 before anything is revealed, lands at or past `revealedEvents` and a
- * position cut would drop it. So a manager substitution can count ahead of the reveal: a halftime
- * instruction counts from when it was given (group-g-match-day tickets 18, 23, 24).
+ * position cut would drop it. So a manager substitution can count ahead of the reveal.
  */
 export const countedSubstitutions = (
   events: ReadonlyArray<MatchEvent>,
@@ -38,132 +47,36 @@ export const countedSubstitutions = (
       (revealedEvents === null || index < revealedEvents || !event.forcedByInjury),
   );
 
-interface WindowLedger {
-  windowsUsed: number;
-  lastWindow: SubstitutionEvent | null;
-}
-
-/** Whether `event` falls in the last window opened: the same half and minute. */
-const inLastWindow = (ledger: WindowLedger, event: SubstitutionEvent): boolean =>
-  ledger.lastWindow !== null && ledger.lastWindow.half === event.half && ledger.lastWindow.minute === event.minute;
-
-/** The engine's window step for a non-halftime substitution it accepted. */
-const spendWindow = (ledger: WindowLedger, event: SubstitutionEvent): void => {
-  if (inLastWindow(ledger, event)) return;
-  ledger.windowsUsed += 1;
-  ledger.lastWindow = event;
-};
-
-interface SubstitutionPair {
-  readonly clubId: ClubId;
-  readonly outPlayerId: PlayerId;
-  readonly inPlayerId: PlayerId;
-}
-
-const samePair = (event: SubstitutionEvent, command: SubstitutionPair): boolean =>
-  event.teamClubId === command.clubId && event.outPlayerId === command.outPlayerId && event.inPlayerId === command.inPlayerId;
-
-/** What the engine had spent for one club at a point of the timeline. */
-interface ClubLedger extends WindowLedger {
-  substitutionsUsed: number;
-}
-
-/** Whether `applyCommand` would refuse a live substitution at `event`'s half and minute for its caps alone. */
-const capRefuses = (ledger: ClubLedger, event: SubstitutionEvent): boolean =>
-  ledger.substitutionsUsed >= MAX_SUBSTITUTIONS_PER_TEAM ||
-  (!inLastWindow(ledger, event) && ledger.windowsUsed >= MAX_SUBSTITUTION_WINDOWS_PER_TEAM);
-
-/** Which of a match's Substitutions are goalkeeper stand-ins, and which are halftime instructions. */
-export interface SubstitutionRoles {
-  /**
-   * The goalkeeper stand-ins: forced Substitutions that move an outfield player already on the pitch
-   * into goal when the last goalkeeper leaves with no substitute to replace them — injured, brought off
-   * or sent off. The engine spends no
-   * substitution and no window on them, and the team is a player down.
-   */
-  readonly standIns: ReadonlySet<SubstitutionEvent>;
-  /** The manager's Substitutions that are halftime instructions, which spend no window. */
-  readonly halftime: ReadonlySet<SubstitutionEvent>;
-}
-
 /**
- * Classifies a whole match's Substitutions by replaying the engine's counters per club, in timeline
- * order (`forcePlayerOff`, `emptySlot`, `applyForcedOff` and `applyCommand` in
- * `packages/game-engine/src/match/simulate/teamState.ts`).
- *
- * A forced Substitution comes from one of two places. A severe Injury calls `forcePlayerOff`, which
- * records the Injury and then, as the very next event, either the bench substitution or, when that is
- * refused, the stand-in `emptySlot` drags into goal. So one right after its player's severe Injury is
- * a stand-in when the caps refuse the bench path, or when no named bench player who had never been on
- * was left — the one fact the counters cannot give, taken from the pitch fold (`benchless`). Any other
- * forced Substitution is the stand-in `applyForcedOff` drags into goal after a bring-off or a red card
- * of the last goalkeeper (ticket 36): it never tries the bench. The event's `forcedByInjury` flag reads
- * "forced", not "injured": the engine sets it on every forced Substitution, including those two, so a
- * read that means an injury checks for the severe Injury before it. Reading this
- * off the counters rather than off who the fold has on the pitch keeps it right after a live tactics
- * change moves players the fold does not follow.
- *
- * A halftime instruction and a live command stamped minute 45 both emit a Substitution at minute 45 of
- * the first half: the live command's before `HalfTimeReached`, the halftime instruction's after it (or
- * before it, in a timeline committed before ticket 20 moved them). The journal tells them apart: in timeline order, a minute-45
- * Substitution is the live command's when a journaled minute-45 live command of the same pair is still
- * unmatched and the engine had a window for it; otherwise it is a halftime instruction. The engine
- * applies the live commands first, so matching in order is its order.
+ * One club's substitution counts from the recorded Lineup Frames and Lineup Journal at a reveal
+ * cut. The frame at the cut already carries the substitutions and windows the engine spent at or
+ * before it; a manager substitution journaled after the cut is overlaid, because a manager's own
+ * counts once given. Each overlaid substitution contributes its recorded `openedWindow` fact.
+ * `revealedEvents` is a count (null: the whole match), clamped to the frames' range.
  */
-export const classifySubstitutions = (
-  events: ReadonlyArray<MatchEvent>,
-  lineupCommands: ReadonlyArray<LineupCommand>,
-  benchless: ReadonlySet<SubstitutionEvent>,
-): SubstitutionRoles => {
-  const standIns = new Set<SubstitutionEvent>();
-  const halftime = new Set<SubstitutionEvent>();
-  const ledgers = new Map<ClubId, ClubLedger>();
-  const liveAt45 = lineupCommands.filter(
-    (command) => command._tag === "SubstitutionMade" && !command.isHalftime && command.minute === HALFTIME_MINUTE,
-  );
-  for (const [index, event] of events.entries()) {
-    if (event._tag !== "Substitution") continue;
-    const ledger = ledgers.get(event.teamClubId) ?? { substitutionsUsed: 0, windowsUsed: 0, lastWindow: null };
-    ledgers.set(event.teamClubId, ledger);
-
-    if (event.forcedByInjury) {
-      const previous = events[index - 1];
-      const afterSevereInjury =
-        previous?._tag === "Injury" &&
-        previous.tier === "red" &&
-        previous.teamClubId === event.teamClubId &&
-        previous.playerId === event.outPlayerId &&
-        previous.minute === event.minute;
-      if (!afterSevereInjury || capRefuses(ledger, event) || benchless.has(event)) {
-        standIns.add(event);
-        continue;
-      }
-    } else if (event.half === 1 && event.minute === HALFTIME_MINUTE) {
-      const live = liveAt45.findIndex((command) => command._tag === "SubstitutionMade" && samePair(event, command));
-      if (live === -1 || capRefuses(ledger, event)) {
-        halftime.add(event);
-        ledger.substitutionsUsed += 1;
-        continue;
-      }
-      liveAt45.splice(live, 1);
-    }
-    ledger.substitutionsUsed += 1;
-    spendWindow(ledger, event);
-  }
-  return { standIns, halftime };
-};
-
-/** One club's substitution counts from the Substitutions a read counts, in timeline order. */
 export const substitutionStatus = (
   clubId: ClubId,
-  counted: ReadonlyArray<SubstitutionEvent>,
-  halftime: ReadonlySet<SubstitutionEvent>,
+  frames: ReadonlyArray<RuntimeFrame>,
+  journal: ReadonlyArray<LineupJournalEntry>,
+  revealedEvents: number | null,
 ): SubstitutionStatusView => {
-  const subs = counted.filter((event) => event.teamClubId === clubId);
-  const used = subs.length;
-  const ledger: WindowLedger = { windowsUsed: 0, lastWindow: null };
-  for (const sub of subs) if (!halftime.has(sub)) spendWindow(ledger, sub);
-  const { windowsUsed } = ledger;
+  const lastFrame = frames.length - 1;
+  const cut = revealedEvents === null ? lastFrame : Math.min(lastFrame, Math.max(0, revealedEvents));
+  const frame = cut >= 0 ? frames[cut] : undefined;
+  let used = frame?.substitutionsUsed ?? 0;
+  let windowsUsed = frame?.windowsUsed ?? 0;
+  for (const entry of journal) {
+    if (
+      entry.clubId !== clubId ||
+      entry.kind !== "substitution" ||
+      entry.origin !== "manager" ||
+      entry.appliesAt <= cut
+    ) {
+      continue;
+    }
+    used += 1;
+    if (entry.openedWindow === true) windowsUsed += 1;
+  }
 
   return new SubstitutionStatusView({
     used,
@@ -174,12 +87,70 @@ export const substitutionStatus = (
   });
 };
 
-/** Everything a read needs to count a match's substitutions, from its stream and derived timeline. */
-export const substitutionLedger = (stream: ReadonlyArray<StreamEvent>, events: ReadonlyArray<MatchEvent>) => {
-  const kickoff = matchStartedOf(stream);
+/** The Substitution a substitution or stand-in journal entry records. */
+const substitutionOf = (
+  substitutions: ReadonlyArray<SubstitutionEvent>,
+  entry: LineupJournalEntry,
+  forcedByInjury: boolean,
+): SubstitutionEvent | undefined =>
+  substitutions.find(
+    (event) =>
+      event.forcedByInjury === forcedByInjury &&
+      event.teamClubId === entry.clubId &&
+      event.outPlayerId === entry.outPlayerId &&
+      event.inPlayerId === entry.inPlayerId,
+  );
+
+/**
+ * Whether each journaled bring-off removed its player, keyed by the command's position in
+ * `journaledLineupCommands(stream)`. The engine journals one manager `forceOff`/`standIn` entry per
+ * `ForceOffMade` command in application order, so matching them in order rebuilds the same map the
+ * pre-ticket-02 fold produced.
+ */
+const forceOffAppliedOf = (
+  journal: ReadonlyArray<LineupJournalEntry>,
+  lineupCommands: ReadonlyArray<LineupCommand>,
+): ReadonlyMap<number, boolean> => {
+  const managerForceOffs = journal.filter(
+    (entry): entry is LineupJournalEntry & { readonly forceOffApplied: boolean } =>
+      entry.origin === "manager" && entry.forceOffApplied !== undefined,
+  );
+  const applied = new Map<number, boolean>();
+  let next = 0;
+  for (const [position, command] of lineupCommands.entries()) {
+    if (command._tag !== "ForceOffMade") continue;
+    const entry = managerForceOffs[next];
+    next += 1;
+    if (entry !== undefined) applied.set(position, entry.forceOffApplied);
+  }
+  return applied;
+};
+
+/**
+ * Everything a read needs to count a match's substitutions. The goalkeeper stand-ins and halftime
+ * instructions come from the Lineup Journal's recorded roles, not from replaying the engine's
+ * counters; `forceOffApplied` is the recorded bring-off outcome, keyed by command position, as
+ * `apps/desktop/src/main/match/commands.ts` reads it.
+ */
+export const substitutionLedger = (
+  stream: ReadonlyArray<StreamEvent>,
+  events: ReadonlyArray<MatchEvent>,
+  journal: ReadonlyArray<LineupJournalEntry>,
+) => {
   const lineupCommands = journaledLineupCommands(stream);
-  const { benchless, forceOffApplied } = lineupFacts([kickoff.homeSetup, kickoff.awaySetup], events, lineupCommands);
-  return { ...classifySubstitutions(events, lineupCommands, benchless), forceOffApplied, lineupCommands };
+  const substitutions = events.filter((event): event is SubstitutionEvent => event._tag === "Substitution");
+  const standIns = new Set<SubstitutionEvent>();
+  const halftime = new Set<SubstitutionEvent>();
+  for (const entry of journal) {
+    if (entry.kind === "standIn") {
+      const event = substitutionOf(substitutions, entry, true);
+      if (event !== undefined) standIns.add(event);
+    } else if (entry.kind === "substitution" && entry.role === "halftime") {
+      const event = substitutionOf(substitutions, entry, false);
+      if (event !== undefined) halftime.add(event);
+    }
+  }
+  return { standIns, halftime, forceOffApplied: forceOffAppliedOf(journal, lineupCommands), lineupCommands };
 };
 
 export type SubstitutionLedger = ReturnType<typeof substitutionLedger>;

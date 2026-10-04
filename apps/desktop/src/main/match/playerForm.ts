@@ -37,7 +37,7 @@ import { loadStreamEvents, withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
 import { matchRatingsView } from "./ratings.js";
-import { matchEventsOf } from "./timeline.js";
+import { matchTimelineOf } from "./timeline.js";
 
 /** One stored line, as read from `player_match_lines` (the columns the Form row and rating need). */
 interface FormLineRow {
@@ -260,12 +260,12 @@ const loadFixtureRatings = (
           const matchId = String(fixtureId) as MatchId;
           const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
           if (stream.length === 0) return;
-          const events = yield* matchEventsOf(stream);
+          const derived = yield* matchTimelineOf(stream);
           const started = matchStartedOf(stream);
           const nameOf = yield* playerNames(
             [...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id),
           );
-          const view = matchRatingsView(matchId, stream, events, named, nameOf, null);
+          const view = matchRatingsView(matchId, stream, derived, named, nameOf, null);
           ratings.set(fixtureId, {
             ratings: new Map([...view.home, ...view.away].map((row) => [row.playerId, row.rating])),
             mom: view.playerOfTheMatch,

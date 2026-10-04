@@ -1,279 +1,208 @@
 /**
- * The substitution reconstruction as a pure table over synthetic timelines: which Substitutions are
- * goalkeeper stand-ins, which are halftime instructions, and the counts that follow. Each timeline is
- * one the engine can emit (`packages/game-engine/src/match/simulate/teamState.ts`, `loop.ts`).
+ * The substitution projection: `substitutionStatus` reads the engine's recorded Lineup Frames and
+ * Lineup Journal, not a re-enacted window rule (ticket 03). The constructed-frame tables pin the
+ * projection's arithmetic — a manager substitution counts once given, two in a minute share a
+ * window, a halftime instruction opens none, a stand-in spends nothing, a forced change counts only
+ * once revealed; the seeded tables pin what the engine records (each substitution's role and
+ * `openedWindow`, and the counters the frames carry) against a real run.
  */
-import type { ClubId, PlayerId } from "@cm-clone/contracts";
-import type { MatchEvent, MatchHalf, SubstitutionEvent } from "../../src/match/events.js";
-import type { MatchTeamSetup } from "../../src/match/types.js";
-import { builtInTemplate, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, type PlayerAttributes } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
-import { lineupFacts, pitchAsOf, type LineupCommand } from "../../src/match/pitch.js";
-import {
-  classifySubstitutions,
-  countedSubstitutions,
-  substitutionStatus,
-} from "../../src/match/substitutions.js";
+import type { ClubId, PlayerId } from "@cm-clone/contracts";
+import type { MatchCommand } from "../../src/match/commands.js";
+import type {
+  LineupJournalEntry,
+  LineupSubstitutionRole,
+  RuntimeFrame,
+} from "../../src/match/simulate/lineupRecording.js";
+import { simulateMatchWithCounts } from "../../src/match/simulate/index.js";
+import { substitutionStatus } from "../../src/match/substitutions.js";
+import { buildTeam, clubId as makeClubId, withNamedBench } from "./fixtures.js";
 
-const club = "me" as ClubId;
-const player = (id: string) => id as PlayerId;
-const half = (minute: number): MatchHalf => (minute > 45 ? 2 : 1);
+const club = makeClubId("me");
+const player = (id: string): PlayerId => id as PlayerId;
 
-const started: MatchEvent = { _tag: "MatchStarted", seed: 1, homeClubId: club, awayClubId: "them" as ClubId };
-const halfTime: MatchEvent = { _tag: "HalfTimeReached", minute: 45, homeScore: 0, awayScore: 0 };
-const fullTime: MatchEvent = { _tag: "FullTimeWhistle", minute: 90, homeScore: 0, awayScore: 0 };
+/** A frame with the given spent counters, everything else empty: the projection reads only these. */
+const frame = (substitutionsUsed = 0, windowsUsed = 0): RuntimeFrame => ({
+  clubId: club,
+  slots: [],
+  beenOn: new Set(),
+  substitutes: [],
+  substitutionsUsed,
+  windowsUsed,
+});
 
-const sub = (minute: number, out: string, on: string, forcedByInjury: boolean, eventHalf = half(minute)): SubstitutionEvent => ({
-  _tag: "Substitution",
-  minute,
-  half: eventHalf,
-  teamClubId: club,
+/** A manager substitution journal entry; `openedWindow` is the recorded window-step fact. */
+const subEntry = (
+  appliesAt: number,
+  out: string,
+  on: string,
+  openedWindow: boolean,
+  role: LineupSubstitutionRole = "manager",
+): LineupJournalEntry => ({
+  appliesAt,
+  clubId: club,
+  kind: "substitution",
+  origin: "manager",
   outPlayerId: player(out),
   inPlayerId: player(on),
-  forcedByInjury,
-});
-const injury = (minute: number, playerId: string, tier: "orange" | "red", eventHalf = half(minute)): MatchEvent => ({
-  _tag: "Injury",
-  minute,
-  half: eventHalf,
-  teamClubId: club,
-  playerId: player(playerId),
-  trigger: "non-contact",
-  severity: tier === "red" ? "severe" : "light",
-  tier,
-  type: "hamstring",
-});
-const severe = (minute: number, playerId: string, eventHalf = half(minute)) => injury(minute, playerId, "red", eventHalf);
-const knock = (minute: number, playerId: string) => injury(minute, playerId, "orange");
-
-const command = (minute: number, out: string, on: string, isHalftime = false): LineupCommand => ({
-  _tag: "SubstitutionMade",
-  minute,
-  isHalftime,
-  clubId: club,
-  outPlayerId: player(out),
-  inPlayerId: player(on),
-});
-const forceOff = (minute: number, playerId: string): LineupCommand => ({
-  _tag: "ForceOffMade",
-  minute,
-  isHalftime: false,
-  clubId: club,
-  playerId: player(playerId),
+  role,
+  openedWindow,
 });
 
-const read = (
-  events: ReadonlyArray<MatchEvent>,
-  commands: ReadonlyArray<LineupCommand> = [],
-  benchless: ReadonlySet<SubstitutionEvent> = new Set(),
-) => {
-  const { standIns, halftime } = classifySubstitutions(events, commands, benchless);
-  const status = substitutionStatus(club, countedSubstitutions(events, standIns, null), halftime);
-  return { standIns, halftime, status };
+const statusAt = (
+  frames: ReadonlyArray<RuntimeFrame>,
+  journal: ReadonlyArray<LineupJournalEntry>,
+  revealedEvents: number | null,
+) => substitutionStatus(club, frames, journal, revealedEvents);
+
+describe("substitutionStatus projects the recorded counters", () => {
+  it("counts a manager substitution once given, ahead of its reveal", () => {
+    // The engine records the window-opening substitution from event index 4 onward.
+    const frames = [frame(), frame(), frame(), frame(), frame(1, 1)];
+    const journal = [subEntry(4, "a", "x", true)];
+
+    // Before the reveal the frame is still at kickoff, but the manager's own change already counts.
+    expect(statusAt(frames, journal, 2)).toMatchObject({ used: 1, windowsUsed: 1 });
+    expect(statusAt(frames, journal, 4)).toMatchObject({ used: 1, windowsUsed: 1 });
+    expect(statusAt(frames, journal, null)).toMatchObject({ used: 1, windowsUsed: 1 });
+  });
+
+  it("shares one window between two substitutions in the same minute", () => {
+    // The second is recorded with openedWindow false: the engine's window step saw the first.
+    const frames = [frame(), frame(), frame(1, 1), frame(2, 1)];
+    const journal = [subEntry(2, "a", "x", true), subEntry(3, "b", "y", false)];
+
+    expect(statusAt(frames, journal, null)).toMatchObject({ used: 2, windowsUsed: 1 });
+    // Even before either is revealed, both manager changes count and share the one window.
+    expect(statusAt(frames, journal, 1)).toMatchObject({ used: 2, windowsUsed: 1 });
+  });
+
+  it("counts a halftime instruction as a substitution that opens no window", () => {
+    const frames = [frame(), frame(1, 0)];
+    const journal = [subEntry(1, "a", "x", false, "halftime")];
+    expect(statusAt(frames, journal, 1)).toMatchObject({ used: 1, windowsUsed: 0 });
+  });
+
+  it("counts a goalkeeper stand-in for nothing", () => {
+    const frames = [frame(), frame()];
+    const journal: ReadonlyArray<LineupJournalEntry> = [
+      { appliesAt: 1, clubId: club, kind: "standIn", origin: "forced", outPlayerId: player("gk"), inPlayerId: player("s1"), role: "standIn" },
+    ];
+    expect(statusAt(frames, journal, null)).toMatchObject({ used: 0, windowsUsed: 0 });
+  });
+
+  it("counts a forced substitution only once its event is revealed", () => {
+    const frames = [frame(), frame(), frame(1, 1)];
+    const journal: ReadonlyArray<LineupJournalEntry> = [
+      { appliesAt: 2, clubId: club, kind: "substitution", origin: "forced", outPlayerId: player("p"), inPlayerId: player("b"), openedWindow: true },
+    ];
+    // The frame carries it from index 2; no overlay applies to a forced change.
+    expect(statusAt(frames, journal, 1)).toMatchObject({ used: 0, windowsUsed: 0 });
+    expect(statusAt(frames, journal, 2)).toMatchObject({ used: 1, windowsUsed: 1 });
+  });
+
+  it("reads the cap from the recorded windows", () => {
+    const frames = [frame(5, 3)];
+    expect(statusAt(frames, [], null)).toMatchObject({ used: 5, remaining: 0, windowsUsed: 3, windowsRemaining: 0, capReached: true });
+  });
+});
+
+const HOME = makeClubId("home");
+const AWAY = makeClubId("away");
+
+/** A scheduled manager command: the minute the engine applies it at, and the command itself. */
+interface Scheduled {
+  readonly minute: number;
+  readonly isHalftime: boolean;
+  readonly command: MatchCommand;
+}
+
+const kickoff = (seed: number) => {
+  const home = withNamedBench(buildTeam(HOME, seed).setup);
+  const away = withNamedBench(buildTeam(AWAY, seed + 500).setup);
+  const bench = home.tactic.bench.filter((id): id is PlayerId => id !== null);
+  return { home, away, bench };
 };
 
-describe("classifySubstitutions — goalkeeper stand-ins by the engine's rule, not the pitch fold", () => {
-  it("a bench player forced on and then severely injured himself is replaced by another: both are substitutions", () => {
-    // The engine never forces the same player on twice (ticket 26), so the second brings on someone new.
-    const first = sub(70, "p", "b", true);
-    const second = sub(80, "b", "c", true);
-    const { standIns, status } = read([started, halfTime, severe(70, "p"), first, severe(80, "b"), second, fullTime]);
-    expect(standIns.size).toBe(0);
-    expect(status).toMatchObject({ used: 2, windowsUsed: 2, capReached: false });
-  });
+const play = (seed: number, home: ReturnType<typeof kickoff>["home"], away: ReturnType<typeof kickoff>["away"], scheduled: ReadonlyArray<Scheduled>) => {
+  const commandsByMinute = new Map<number, Array<MatchCommand>>();
+  const halftimeCommands: Array<MatchCommand> = [];
+  for (const entry of scheduled) {
+    if (entry.isHalftime) halftimeCommands.push(entry.command);
+    else {
+      const existing = commandsByMinute.get(entry.minute);
+      if (existing) existing.push(entry.command);
+      else commandsByMinute.set(entry.minute, [entry.command]);
+    }
+  }
+  return simulateMatchWithCounts({ seed, home, away, commandsByMinute, halftimeCommands });
+};
 
-  it("a severe Injury past the substitution cap drags a player into goal, which counts for nothing", () => {
-    const managerSubs = [sub(50, "a", "x1", false), sub(50, "b", "x2", false), sub(60, "c", "x3", false), sub(60, "d", "x4", false), sub(70, "e", "x5", false)];
-    const drag = sub(80, "gk", "f", true);
-    const { standIns, status } = read([started, halfTime, ...managerSubs, severe(80, "gk"), drag, fullTime]);
-    expect([...standIns]).toEqual([drag]);
-    expect(status).toMatchObject({ used: 5, windowsUsed: 3, capReached: true });
-  });
+const managerSubs = (journal: ReadonlyArray<LineupJournalEntry>, clubId: ClubId) =>
+  journal.filter((entry) => entry.kind === "substitution" && entry.origin === "manager" && entry.clubId === clubId);
 
-  it("with every window used, a severe Injury in a new minute is dragged, and one in the last window's minute is replaced", () => {
-    const managerSubs = [sub(50, "a", "x1", false), sub(60, "b", "x2", false), sub(70, "c", "x3", false)];
-    const sameMinute = sub(70, "d", "x4", true);
-    const drag = sub(80, "gk", "f", true);
-    const { standIns, status } = read([
-      started,
-      halfTime,
-      ...managerSubs,
-      severe(70, "d"),
-      sameMinute,
-      severe(80, "gk"),
-      drag,
-      fullTime,
+describe("the engine records the substitution facts the projection reads", () => {
+  it("records a manager substitution with role manager and a window opened", () => {
+    const { home, away, bench } = kickoff(11);
+    const out = home.tactic.slots[3]!.playerId;
+    const { frames, journal } = play(1, home, away, [
+      { minute: 1, isHalftime: false, command: { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: out, inPlayerId: bench[0]! } },
     ]);
-    expect([...standIns]).toEqual([drag]);
-    expect(status).toMatchObject({ used: 4, windowsUsed: 3 });
+
+    expect(managerSubs(journal, HOME)).toMatchObject([{ role: "manager", openedWindow: true }]);
+    expect(substitutionStatus(HOME, frames.get(HOME)!, journal, null)).toMatchObject({ used: 1, windowsUsed: 1 });
   });
 
-  it("a forced Substitution not right after a severe Injury of its player is a bring-off's stand-in", () => {
-    const drag = sub(30, "gk", "f", true);
-    const { standIns, status } = read([started, knock(29, "gk"), drag, halfTime, fullTime], [forceOff(30, "gk")]);
-    expect([...standIns]).toEqual([drag]);
-    expect(status).toMatchObject({ used: 0, windowsUsed: 0 });
+  it("records two substitutions in one minute: the first opens the window, the second shares it", () => {
+    const { home, away, bench } = kickoff(21);
+    const { frames, journal } = play(1, home, away, [
+      { minute: 2, isHalftime: false, command: { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: home.tactic.slots[4]!.playerId, inPlayerId: bench[0]! } },
+      { minute: 2, isHalftime: false, command: { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: home.tactic.slots[5]!.playerId, inPlayerId: bench[1]! } },
+    ]);
+
+    expect(managerSubs(journal, HOME).map((entry) => entry.openedWindow)).toEqual([true, false]);
+    expect(substitutionStatus(HOME, frames.get(HOME)!, journal, null)).toMatchObject({ used: 2, windowsUsed: 1 });
   });
 
-  it("with no one left on the bench, the pitch fold's answer decides", () => {
-    const drag = sub(80, "gk", "f", true);
-    const { standIns, status } = read([started, halfTime, severe(80, "gk"), drag, fullTime], [], new Set([drag]));
-    expect([...standIns]).toEqual([drag]);
-    expect(status.used).toBe(0);
-  });
-});
+  it("records a halftime instruction with role halftime and no window", () => {
+    const { home, away, bench } = kickoff(31);
+    const { frames, journal } = play(1, home, away, [
+      { minute: 45, isHalftime: true, command: { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: home.tactic.slots[6]!.playerId, inPlayerId: bench[0]! } },
+    ]);
 
-describe("classifySubstitutions — halftime instructions and windows", () => {
-  it("adjacent live minute-45 and halftime Substitutions: the live one opens a window, the halftime one does not", () => {
-    const live = sub(45, "a", "x1", false);
-    const atHalfTime = sub(45, "b", "x2", false);
-    const { halftime, status } = read(
-      [started, live, atHalfTime, halfTime, fullTime],
-      [command(45, "a", "x1"), command(45, "b", "x2", true)],
-    );
-    expect([...halftime]).toEqual([atHalfTime]);
-    expect(status).toMatchObject({ used: 2, windowsUsed: 1 });
+    expect(managerSubs(journal, HOME)).toMatchObject([{ role: "halftime", openedWindow: false }]);
+    expect(substitutionStatus(HOME, frames.get(HOME)!, journal, null)).toMatchObject({ used: 1, windowsUsed: 0 });
   });
 
-  it("a live minute-45 command the window cap refused leaves the halftime Substitution of the same pair windowless", () => {
-    const atHalfTime = sub(45, "d", "x4", false);
-    const { halftime, status } = read(
-      [started, sub(1, "a", "x1", false), sub(2, "b", "x2", false), sub(3, "c", "x3", false), atHalfTime, halfTime, fullTime],
-      [command(1, "a", "x1"), command(2, "b", "x2"), command(3, "c", "x3"), command(45, "d", "x4"), command(45, "d", "x4", true)],
-    );
-    expect([...halftime]).toEqual([atHalfTime]);
-    expect(status).toMatchObject({ used: 4, windowsUsed: 3 });
+  it("records a bring-off of the last goalkeeper as a stand-in that spends nothing", () => {
+    const { home, away } = kickoff(41);
+    const keeper = home.tactic.slots[0]!.playerId;
+    const { frames, journal } = play(1, home, away, [
+      { minute: 1, isHalftime: false, command: { _tag: "ForceOff", clubId: HOME, playerId: keeper } },
+    ]);
+
+    const standIn = journal.find((entry) => entry.kind === "standIn" && entry.origin === "manager");
+    expect(standIn).toMatchObject({ role: "standIn", outPlayerId: keeper });
+    expect(standIn!.inPlayerId).toBeDefined();
+    expect(substitutionStatus(HOME, frames.get(HOME)!, journal, null)).toMatchObject({ used: 0, windowsUsed: 0 });
+    // The stand-in is the goalkeeper from the frame after the forced Substitution.
+    const last = frames.get(HOME)!.at(-1)!;
+    expect(last.slots.find((slot) => slot.isGoalkeeper)?.playerId).toBe(standIn!.inPlayerId);
   });
 
-  // The engine keys a window by half and minute (ticket 29): first-half stoppage runs past 45, so its
-  // minute 48 and the second half's 48 are two windows. Each row is a timeline the engine emits.
-  const stoppage48 = [severe(48, "p", 1), sub(48, "p", "b", true, 1)];
-  it.each([
-    {
-      name: "stoppage 48, then second-half 48 alone: two windows",
-      events: [started, ...stoppage48, halfTime, sub(48, "c", "x2", false), fullTime],
-      commands: [command(48, "c", "x2")],
-      expected: { used: 2, windowsUsed: 2, capReached: false },
-    },
-    {
-      name: "stoppage 48, then second-half 47 and 48: three windows",
-      events: [started, ...stoppage48, halfTime, sub(47, "a", "x1", false), sub(48, "c", "x2", false), fullTime],
-      commands: [command(47, "a", "x1"), command(48, "c", "x2")],
-      expected: { used: 3, windowsUsed: 3, capReached: true },
-    },
-    {
-      name: "two second-half substitutions at 48: one window",
-      events: [started, halfTime, sub(48, "a", "x1", false), sub(48, "c", "x2", false), fullTime],
-      commands: [command(48, "a", "x1"), command(48, "c", "x2")],
-      expected: { used: 2, windowsUsed: 1, capReached: false },
-    },
-    {
-      name: "a first-half stoppage injury and its replacement at 48: one window",
-      events: [started, severe(48, "p", 1), sub(48, "p", "b", true, 1), severe(48, "q", 1), sub(48, "q", "b2", true, 1), halfTime, fullTime],
-      commands: [],
-      expected: { used: 2, windowsUsed: 1, capReached: false },
-    },
-  ])("$name", ({ events, commands, expected }) => {
-    expect(read(events, commands).status).toMatchObject(expected);
-  });
+  it("records a refused bring-off with forceOffApplied false and no lineup change", () => {
+    const { home, away } = kickoff(51);
+    const notOnHome = away.tactic.slots[7]!.playerId;
+    const kickoffSlots = home.tactic.slots.map((slot) => slot.playerId);
+    const { frames, journal } = play(1, home, away, [
+      { minute: 1, isHalftime: false, command: { _tag: "ForceOff", clubId: HOME, playerId: notOnHome } },
+    ]);
 
-  it("stoppage 48, second-half 48 and 60 spend every window, so a severe Injury at 70 drags a player into goal", () => {
-    const drag = sub(70, "gk", "f", true);
-    const { standIns, status } = read(
-      [started, ...stoppage48, halfTime, sub(48, "c", "x2", false), sub(60, "d", "x3", false), severe(70, "gk"), drag, fullTime],
-      [command(48, "c", "x2"), command(60, "d", "x3")],
-    );
-    expect([...standIns]).toEqual([drag]);
-    expect(status).toMatchObject({ used: 3, windowsUsed: 3, capReached: true });
-  });
-});
-
-/** Eleven starters, `gk` in goal, a named bench of one, `b`, and `r`, a squad player off the bench. */
-const thirteen: MatchTeamSetup = {
-  clubId: club,
-  squad: ["gk", "s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8", "s9", "s10", "b", "r"].map((id) => ({
-    id: player(id),
-    attributes: {} as PlayerAttributes,
-    positionalRatings: {
-      lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 },
-      sides: { R: 10, L: 10, C: 10 },
-      freeRole: 10,
-    },
-  })),
-  tactic: {
-    slots: builtInTemplate("4-4-2")!.slots.map((slot, index) => ({
-      cell: slot.cell,
-      run: null,
-      playerId: player(index === 0 ? "gk" : `s${index}`),
-    })),
-    bench: [player("b"), null, null, null, null, null, null],
-    team: { passing: "mixed", focusPassing: "mixed", tackling: "normal", closingDown: "default", mentality: "normal", offsideTrap: false, zonalMarking: false, counterAttack: false, menBehindTheBall: false },
-    slotInstructions: [],
-    teamSetPieces: DEFAULT_TEAM_SET_PIECES,
-    takers: EMPTY_TAKERS,
-  },
-};
-
-describe("lineupFacts — a forced Substitution bringing on someone who has been on is a stand-in (`forcePlayerOff`, ticket 26)", () => {
-  it("a bench player who has never been on is a substitution, not benchless", () => {
-    const replaced = sub(80, "s5", "b", true);
-    const { benchless } = lineupFacts([thirteen], [started, halfTime, severe(80, "s5"), replaced, fullTime], []);
-    expect(benchless.size).toBe(0);
-  });
-
-  it("a squad player off the named bench does not stop the last goalkeeper's severe Injury dragging a stand-in", () => {
-    // `b` came on and went off again, and `r` is not on the bench, so the engine drags `s1` into goal.
-    const drag = sub(80, "gk", "s1", true);
-    const commands = [command(60, "s5", "b"), command(60, "b", "s5")];
-    const events = [started, halfTime, sub(60, "s5", "b", false), sub(60, "b", "s5", false), severe(80, "gk"), drag, fullTime];
-    const { benchless } = lineupFacts([thirteen], events, commands);
-    expect([...benchless]).toEqual([drag]);
-    expect(read(events, commands, benchless).status).toMatchObject({ used: 2, windowsUsed: 1 });
-  });
-
-  it("a bench player sent off is not a bench either", () => {
-    const drag = sub(80, "gk", "s1", true);
-    const sentOff: MatchEvent = { _tag: "RedCard", minute: 30, half: 1, teamClubId: club, playerId: player("b") };
-    const events = [started, severe(20, "s5"), sub(20, "s5", "b", true), sentOff, halfTime, severe(80, "gk"), drag, fullTime];
-    const { benchless } = lineupFacts([thirteen], events, []);
-    expect([...benchless]).toEqual([drag]);
-  });
-});
-
-describe("a red card to the last goalkeeper (ticket 36): the stand-in `applyForcedOff` drags in", () => {
-  const sentOff = (minute: number, playerId: string): MatchEvent => ({
-    _tag: "RedCard",
-    minute,
-    half: half(minute),
-    teamClubId: club,
-    playerId: player(playerId),
-  });
-  const drag = sub(60, "gk", "s1", true);
-  const events = [started, halfTime, sentOff(60, "gk"), drag, fullTime];
-  const inGoal = (revealedEvents: number | null) =>
-    pitchAsOf(thirteen, events, [], revealedEvents).onPitch.find((slot) => slot.position === "GK")?.playerId;
-
-  it("is a stand-in, spending no substitution and no window, with a bench player still unused", () => {
-    const { benchless } = lineupFacts([thirteen], events, []);
-    const { standIns, status } = read(events, [], benchless);
-    expect([...standIns]).toEqual([drag]);
-    expect(status).toMatchObject({ used: 0, windowsUsed: 0 });
-  });
-
-  it("puts the stand-in in goal once revealed, leaving ten on the pitch and the bench untouched", () => {
-    const pitch = pitchAsOf(thirteen, events, [], null);
-    expect(inGoal(null)).toBe("s1");
-    expect(pitch.onPitch).toHaveLength(10);
-    expect(pitch.onPitch.map((slot) => slot.playerId)).not.toContain("gk");
-    expect(pitch.substitutes).toEqual(["b"]);
-    expect(inGoal(2)).toBe("gk");
-  });
-
-  it("an outfielder's red card only takes him off", () => {
-    const outfield = [started, halfTime, sentOff(60, "s5"), fullTime];
-    const pitch = pitchAsOf(thirteen, outfield, [], null);
-    expect(pitch.onPitch).toHaveLength(10);
-    expect(pitch.onPitch.map((slot) => slot.playerId)).not.toContain("s5");
-    expect(pitch.onPitch.find((slot) => slot.position === "GK")?.playerId).toBe("gk");
+    expect(journal.find((entry) => entry.kind === "forceOff" && entry.origin === "manager")).toMatchObject({
+      playerId: notOnHome,
+      forceOffApplied: false,
+    });
+    expect(substitutionStatus(HOME, frames.get(HOME)!, journal, null)).toMatchObject({ used: 0, windowsUsed: 0 });
+    for (const entry of frames.get(HOME)!) expect(entry.slots.map((slot) => slot.playerId)).toEqual(kickoffSlots);
   });
 });

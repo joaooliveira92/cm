@@ -106,15 +106,8 @@ export const submitMatchCommand = (
 
       const journaled = [...stream, { seq, tag, payload }];
       const derived = yield* Effect.sync(() => deriveMatchEvents(journaled, aiPrefs));
-      const ledger = substitutionLedger(journaled, derived.events);
-      const view = yield* buildResumeSimulationView(
-        matchId,
-        journaled,
-        derived.events,
-        cursor,
-        revealedEvents,
-        ledger,
-      );
+      const ledger = substitutionLedger(journaled, derived.events, derived.journal);
+      const view = yield* buildResumeSimulationView(matchId, journaled, derived, cursor, revealedEvents);
       return new SubmitMatchCommandView({
         ...view,
         substitutionApplied:

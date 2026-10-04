@@ -23,7 +23,7 @@ import {
   foldMatchPlayerLineCounts,
   type MatchPlayerLineCounts,
 } from "@cm-clone/shared";
-import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut, type MatchEvent, type MatchTeamSetup } from "@cm-clone/game-engine";
+import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut, type DerivedTimeline, type MatchTeamSetup } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
@@ -31,7 +31,7 @@ import { playerNames } from "./playerNames.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
 import { matchRatingsView } from "./ratings.js";
 import { lastPlayedMatchId } from "./statistics.js";
-import { matchEventsOf } from "./timeline.js";
+import { matchTimelineOf } from "./timeline.js";
 
 /** A matchday-squad member in draw order: the kickoff slots in slot order, then the named bench. */
 interface SquadMember {
@@ -110,12 +110,13 @@ const sideStats = (
 export const matchPlayerStatsView = (
   matchId: MatchId,
   stream: ReadonlyArray<StreamEvent>,
-  events: ReadonlyArray<MatchEvent>,
+  derived: DerivedTimeline,
   clubName: (clubId: string) => string,
   nameOf: (playerId: PlayerId) => string,
   revealedEvents: number | null,
   conditions: ReadonlyMap<PlayerId, number> | null,
 ): MatchPlayerStatsView => {
+  const { events } = derived;
   const started = matchStartedOf(stream);
   const starters = new Set<string>([
     ...started.homeSetup.tactic.slots.map((slot) => String(slot.playerId)),
@@ -123,7 +124,7 @@ export const matchPlayerStatsView = (
   ]);
   const counts = foldMatchPlayerLineCounts(starters, events, revealedEvents);
   const recordedDefending = events.some((event) => event._tag === "PossessionTally");
-  const ratings = matchRatingsView(matchId, stream, events, clubName, nameOf, revealedEvents);
+  const ratings = matchRatingsView(matchId, stream, derived, clubName, nameOf, revealedEvents);
   const ratingById = new Map<PlayerId, number>([...ratings.home, ...ratings.away].map((row) => [row.playerId, row.rating]));
   const last = events[revealedCut(events, revealedEvents) - 1];
   return new MatchPlayerStatsView({
@@ -150,7 +151,7 @@ export const getMatchPlayerStats = (
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
 
-      const events = yield* matchEventsOf(stream);
+      const derived = yield* matchTimelineOf(stream);
       const clubName = yield* displayNames;
       const started = matchStartedOf(stream);
       const squadIds = [...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id);
@@ -159,6 +160,6 @@ export const getMatchPlayerStats = (
       // Conditions come from the deterministic engine (the stored timeline carries no conditions).
       const conditions =
         revealedEvents === null ? (yield* deriveStreamEvents(stream)).conditions : null;
-      return matchPlayerStatsView(matchId, stream, events, clubName, nameOf, revealedEvents, conditions);
+      return matchPlayerStatsView(matchId, stream, derived, clubName, nameOf, revealedEvents, conditions);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

@@ -1,0 +1,741 @@
+[
+  {
+    "name": "uncommanded",
+    "seed": 1,
+    "homeSeed": 1,
+    "awaySeed": 501,
+    "namedBench": false,
+    "scheduled": [],
+    "eventCount": 157,
+    "cuts": [
+      0,
+      1,
+      2,
+      3,
+      25,
+      50,
+      157,
+      null
+    ],
+    "journal": [],
+    "home": {
+      "0": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "25": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "50": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "157": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "null": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      }
+    },
+    "away": {
+      "0": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "25": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "50": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "157": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      },
+      "null": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "",
+        "status": "0|5|0|3|false"
+      }
+    }
+  },
+  {
+    "name": "manager-commands",
+    "seed": 11,
+    "homeSeed": 11,
+    "awaySeed": 12,
+    "namedBench": true,
+    "scheduled": [
+      {
+        "minute": 1,
+        "isHalftime": false,
+        "_tag": "MakeSubstitution",
+        "clubId": "home",
+        "outPlayerId": "home-p3",
+        "inPlayerId": "home-p1"
+      },
+      {
+        "minute": 1,
+        "isHalftime": false,
+        "_tag": "ForceOff",
+        "clubId": "home",
+        "playerId": "home-p17"
+      },
+      {
+        "minute": 1,
+        "isHalftime": false,
+        "_tag": "ForceOff",
+        "clubId": "home",
+        "playerId": "home-p0"
+      }
+    ],
+    "eventCount": 168,
+    "cuts": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      25,
+      50,
+      168,
+      null
+    ],
+    "journal": [
+      {
+        "appliesAt": 2,
+        "clubId": "home",
+        "kind": "substitution",
+        "origin": "manager",
+        "outPlayerId": "home-p3",
+        "inPlayerId": "home-p1",
+        "role": "manager",
+        "openedWindow": true
+      },
+      {
+        "appliesAt": 2,
+        "clubId": "home",
+        "kind": "forceOff",
+        "origin": "manager",
+        "playerId": "home-p17",
+        "forceOffApplied": true
+      },
+      {
+        "appliesAt": 3,
+        "clubId": "home",
+        "kind": "standIn",
+        "origin": "manager",
+        "outPlayerId": "home-p0",
+        "inPlayerId": "home-p7",
+        "role": "standIn",
+        "forceOffApplied": true
+      }
+    ],
+    "home": {
+      "0": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "1": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "2": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "3": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "4": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "25": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "50": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "168": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "null": {
+        "onPitch": "home-p7:GK,home-p9:DL,home-p1:DC,home-p4:DC,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      }
+    },
+    "away": {
+      "0": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "4": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "25": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "50": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "168": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "null": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      }
+    }
+  },
+  {
+    "name": "two-in-a-minute",
+    "seed": 21,
+    "homeSeed": 21,
+    "awaySeed": 22,
+    "namedBench": true,
+    "scheduled": [
+      {
+        "minute": 2,
+        "isHalftime": false,
+        "_tag": "MakeSubstitution",
+        "clubId": "home",
+        "outPlayerId": "home-p4",
+        "inPlayerId": "home-p1"
+      },
+      {
+        "minute": 2,
+        "isHalftime": false,
+        "_tag": "MakeSubstitution",
+        "clubId": "home",
+        "outPlayerId": "home-p17",
+        "inPlayerId": "home-p2"
+      }
+    ],
+    "eventCount": 123,
+    "cuts": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      25,
+      50,
+      123,
+      null
+    ],
+    "journal": [
+      {
+        "appliesAt": 3,
+        "clubId": "home",
+        "kind": "substitution",
+        "origin": "manager",
+        "outPlayerId": "home-p4",
+        "inPlayerId": "home-p1",
+        "role": "manager",
+        "openedWindow": true
+      },
+      {
+        "appliesAt": 4,
+        "clubId": "home",
+        "kind": "substitution",
+        "origin": "manager",
+        "outPlayerId": "home-p17",
+        "inPlayerId": "home-p2",
+        "role": "manager",
+        "openedWindow": false
+      }
+    ],
+    "home": {
+      "0": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "1": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "2": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "3": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "4": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "5": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "25": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "50": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "123": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      },
+      "null": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p1:DC,home-p2:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "2|3|1|2|false"
+      }
+    },
+    "away": {
+      "0": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "4": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "5": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "25": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "50": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "123": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "null": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      }
+    }
+  },
+  {
+    "name": "halftime",
+    "seed": 31,
+    "homeSeed": 31,
+    "awaySeed": 32,
+    "namedBench": true,
+    "scheduled": [
+      {
+        "minute": 45,
+        "isHalftime": true,
+        "_tag": "MakeSubstitution",
+        "clubId": "home",
+        "outPlayerId": "home-p18",
+        "inPlayerId": "home-p1"
+      }
+    ],
+    "eventCount": 136,
+    "cuts": [
+      0,
+      1,
+      2,
+      3,
+      25,
+      50,
+      78,
+      79,
+      80,
+      136,
+      null
+    ],
+    "journal": [
+      {
+        "appliesAt": 79,
+        "clubId": "home",
+        "kind": "substitution",
+        "origin": "manager",
+        "outPlayerId": "home-p18",
+        "inPlayerId": "home-p1",
+        "role": "halftime",
+        "openedWindow": false
+      }
+    ],
+    "home": {
+      "0": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "1": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "2": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "3": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "25": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "50": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "78": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "79": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "80": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "136": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      },
+      "null": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p1:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|0|3|false"
+      }
+    },
+    "away": {
+      "0": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "25": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "50": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "78": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "79": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "80": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "136": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "null": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      }
+    }
+  },
+  {
+    "name": "forced-injury",
+    "seed": 2,
+    "homeSeed": 41,
+    "awaySeed": 42,
+    "namedBench": true,
+    "scheduled": [],
+    "eventCount": 117,
+    "cuts": [
+      0,
+      1,
+      2,
+      3,
+      8,
+      9,
+      10,
+      25,
+      50,
+      117,
+      null
+    ],
+    "journal": [
+      {
+        "appliesAt": 9,
+        "clubId": "home",
+        "kind": "substitution",
+        "origin": "forced",
+        "outPlayerId": "home-p22",
+        "inPlayerId": "home-p5",
+        "openedWindow": true
+      }
+    ],
+    "home": {
+      "0": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "0|5|0|3|false"
+      },
+      "8": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p22:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p5,home-p6,home-p8,home-p10,home-p11",
+        "status": "0|5|0|3|false"
+      },
+      "9": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p5:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "10": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p5:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "25": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p5:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "50": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p5:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "117": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p5:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      },
+      "null": {
+        "onPitch": "home-p0:GK,home-p7:DR,home-p9:DL,home-p3:DC,home-p4:DC,home-p17:MR,home-p18:ML,home-p14:MC,home-p15:MC,home-p5:ST,home-p23:ST",
+        "substitutes": "home-p1,home-p2,home-p6,home-p8,home-p10,home-p11",
+        "status": "1|4|1|2|false"
+      }
+    },
+    "away": {
+      "0": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "1": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "2": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "3": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "8": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "9": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "10": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "25": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "50": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "117": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      },
+      "null": {
+        "onPitch": "away-p0:GK,away-p7:DR,away-p9:DL,away-p3:DC,away-p4:DC,away-p17:MR,away-p18:ML,away-p14:MC,away-p15:MC,away-p22:ST,away-p23:ST",
+        "substitutes": "away-p1,away-p2,away-p5,away-p6,away-p8,away-p10,away-p11",
+        "status": "0|5|0|3|false"
+      }
+    }
+  }
+]

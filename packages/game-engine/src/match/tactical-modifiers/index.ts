@@ -9,7 +9,7 @@
  * Resolution re-runs on every live ChangeTactics and on kickoff.
  */
 
-import { phaseOfSlot, positionRatingAt, type Phase, type SetPieceRoles } from "@cm-clone/shared";
+import { phaseOfSlot, positionRatingAt, type Phase, type SetPieceRoles, type Slot } from "@cm-clone/shared";
 import type { MatchPlayerInput, MatchTactic, PhaseStrengths, TacticalModifiers } from "../types.js";
 import type { PlayerId } from "@cm-clone/contracts";
 import type { PerSlotBehaviour, TeamBehaviourModifiers } from "../resolveBehaviourVectors.js";
@@ -38,6 +38,18 @@ export interface ResolvedSlot {
   readonly phase: Phase;
   readonly runPhase: Phase | null;
   readonly isGoalkeeper: boolean;
+  /**
+   * The kickoff cell this slot stands in. The engine is tactic-blind and reads the resolved
+   * numbers, but it keeps the cell so the recorded Lineup Frame can name the slot's display
+   * Position (`legacyPositionOf`); a substitute inherits the cell of the player they replace.
+   */
+  readonly cell: Slot;
+  /**
+   * The slot's kickoff index, stable across substitutions and never reordered by a stand-in.
+   * The runtime slot array appends a goalkeeper stand-in at the end; ordering by this index
+   * restores the kickoff order the pitch projections present.
+   */
+  readonly slotIndex: number;
   readonly fit: (player: MatchPlayerInput) => SlotFit;
   readonly behaviour: PerSlotBehaviour;
   readonly setPieceRoles: SetPieceRoles;
@@ -69,6 +81,8 @@ export const resolveTeamTactics = (
       phase: phaseOfSlot(slot.cell),
       runPhase,
       isGoalkeeper,
+      cell: slot.cell,
+      slotIndex: index,
       fit: (p: MatchPlayerInput): SlotFit => ({ baseRating: positionRatingAt(p.attributes, slot.cell) }),
       behaviour,
       setPieceRoles,

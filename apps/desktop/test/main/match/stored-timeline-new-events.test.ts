@@ -24,7 +24,7 @@ const NEW_EVENTS: ReadonlyArray<MatchEvent> = [
 
 const read = (events: ReadonlyArray<MatchEvent>) =>
   Effect.gen(function* () {
-    const recorded = JSON.parse(JSON.stringify(timelineRecorded(events)));
+    const recorded = JSON.parse(JSON.stringify(timelineRecorded(events, [])));
     return yield* matchEventsOf([{ seq: 2, ...recorded }]);
   }).pipe(Effect.provide(SqliteClient.layer({ filename: ":memory:" })));
 

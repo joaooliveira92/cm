@@ -180,7 +180,9 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
     // never exist without it: later reads load these events rather than re-deriving them under
     // whatever engine is current then.
     const timelineSeq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);
-    yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, timelineSeq, [timelineRecorded(derived.events)]);
+    yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, timelineSeq, [
+      timelineRecorded(derived.events, derived.journal),
+    ]);
 
     // The human's per-player lines, folded from the same events, in the same transaction as the
     // result: the Form tab reads these rather than the timeline, so a Matchday never has a result

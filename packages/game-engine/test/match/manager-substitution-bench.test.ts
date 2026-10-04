@@ -44,7 +44,7 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
 
   it("accepts a bench player who has never been on", () => {
     const team = initTeamState(setup, 3);
-    expect(substitute(team, starter(5), bench[0]!)).toEqual({ accepted: true });
+    expect(substitute(team, starter(5), bench[0]!)).toEqual({ accepted: true, openedWindow: true });
     expect(team.resolved.slots.map((slot) => slot.playerId)).toContain(bench[0]);
   });
 
@@ -100,7 +100,7 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
 
     expect(spend(team)).toEqual(before);
     // The last window is still there for a valid substitution.
-    expect(substitute(team, starter(3), bench[3]!, 32)).toEqual({ accepted: true });
+    expect(substitute(team, starter(3), bench[3]!, 32)).toEqual({ accepted: true, openedWindow: true });
     expect(team.windowsUsed).toBe(3);
   });
 
@@ -111,7 +111,7 @@ describe("applyCommand — a manager's substitute comes from the named bench", (
       accepted: true,
     });
     expect(substitute(team, starter(5), offBench, 55)).toEqual({ accepted: false, reason: `${offBench} is not named on the bench` });
-    expect(substitute(team, starter(5), bench[0]!, 55)).toEqual({ accepted: true });
+    expect(substitute(team, starter(5), bench[0]!, 55)).toEqual({ accepted: true, openedWindow: true });
   });
 });
 

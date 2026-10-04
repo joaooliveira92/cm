@@ -5,7 +5,7 @@ import path from "node:path";
 import { it as effectIt } from "@effect/vitest";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 import { ClubId, PitchSlotView, PlayerId, type PitchSlotView as PitchSlot } from "@cm-clone/contracts";
-import { pitchBeforeEachEvent, type MatchEvent, type MatchTeamSetup, type PersistedForcedOff } from "@cm-clone/game-engine";
+import { type MatchEvent, type MatchTeamSetup, type PersistedForcedOff } from "@cm-clone/game-engine";
 import { MATCH_RATING_BASE } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { getMatchRatings, resumeSimulation } from "../../../src/main/match/index.js";
@@ -107,7 +107,7 @@ describe("rateSide", () => {
   });
 });
 
-/** A real kickoff setup for `pitchBeforeEachEvent`: three starters and two named substitutes. */
+/** A real kickoff setup: three starters and two named substitutes. */
 const kickoffSetup = {
   clubId: HOME,
   squad: ["gk", "dc", "st", "bench1", "bench2"].map((id) => ({ id: pid(id) })),
@@ -121,12 +121,20 @@ const kickoffSetup = {
   },
 } as unknown as MatchTeamSetup;
 
-const rateThroughPitch = (events: ReadonlyArray<MatchEvent>, forceOffs: ReadonlyArray<PersistedForcedOff> = []) =>
-  rateSide(kickoffSetup, events, pitchBeforeEachEvent(kickoffSetup, events, forceOffs), events.length, true, name, forceOffs);
+/**
+ * `rateSide` over hand-built pitch inputs, as `pitchBeforeEachEvent` presents them. These exercise
+ * the recorded-frame shape directly rather than folding the timeline: entry `i` is who was on
+ * before event `i`, and the extra tail entry is who was on at the end.
+ */
+const rateThroughPitch = (
+  events: ReadonlyArray<MatchEvent>,
+  pitches: ReadonlyArray<ReadonlyArray<PitchSlot>>,
+  forceOffs: ReadonlyArray<PersistedForcedOff> = [],
+) => rateSide(kickoffSetup, events, pitches, events.length, true, name, forceOffs);
 
-describe("rateSide over pitchBeforeEachEvent", () => {
+describe("rateSide over pitch timelines", () => {
   it("leaves a named substitute who never came on unrated", () => {
-    const rows = rateThroughPitch([started, fullTime(0, 0)]);
+    const rows = rateThroughPitch([started, fullTime(0, 0)], [KICKOFF, KICKOFF, KICKOFF]);
     expect(rows.map((row) => row.playerId)).toEqual(["gk", "dc", "st"].map(pid));
   });
 
@@ -137,7 +145,8 @@ describe("rateSide over pitchBeforeEachEvent", () => {
       { _tag: "Substitution", minute: 40, half: 1, teamClubId: HOME, outPlayerId: pid("dc"), inPlayerId: pid("bench1"), forcedByInjury: true },
       fullTime(0, 0),
     ];
-    const rows = rateThroughPitch(events);
+    const afterSub = [slot("gk", "GK"), slot("bench1", "DC"), slot("st", "ST")];
+    const rows = rateThroughPitch(events, [KICKOFF, KICKOFF, KICKOFF, afterSub, afterSub]);
     expect(rowOf(rows, "dc")).toMatchObject({ injured: true, wentOffMinute: 40, sentOff: false });
     expect(rowOf(rows, "bench1")).toMatchObject({ started: false, cameOnMinute: 40, position: "DC" });
   });
@@ -149,7 +158,8 @@ describe("rateSide over pitchBeforeEachEvent", () => {
       { _tag: "Substitution", minute: 50, half: 2, teamClubId: HOME, outPlayerId: pid("gk"), inPlayerId: pid("dc"), forcedByInjury: true },
       fullTime(0, 0),
     ];
-    const rows = rateThroughPitch(events);
+    const standIn = [slot("dc", "GK"), slot("st", "ST")];
+    const rows = rateThroughPitch(events, [KICKOFF, KICKOFF, KICKOFF, standIn, standIn]);
     expect(rowOf(rows, "gk")).toMatchObject({ sentOff: true, wentOffMinute: 50 });
     expect(rowOf(rows, "dc")).toMatchObject({ started: true, cameOnMinute: null, position: "GK" });
   });
@@ -157,7 +167,8 @@ describe("rateSide over pitchBeforeEachEvent", () => {
   it("dates a bring-off, which leaves no event, by its journaled minute", () => {
     const events: Array<MatchEvent> = [started, goal(20, HOME, "st", 1, 0), goal(80, HOME, "dc", 2, 0), fullTime(2, 0)];
     const broughtOff: PersistedForcedOff = { _tag: "ForceOffMade", minute: 55, isHalftime: false, clubId: HOME, playerId: pid("st") };
-    const rows = rateThroughPitch(events, [broughtOff]);
+    const afterBringOff = [slot("gk", "GK"), slot("dc", "DC")];
+    const rows = rateThroughPitch(events, [KICKOFF, KICKOFF, afterBringOff, afterBringOff, afterBringOff], [broughtOff]);
     expect(rowOf(rows, "st")).toMatchObject({ wentOffMinute: 55 });
   });
 });

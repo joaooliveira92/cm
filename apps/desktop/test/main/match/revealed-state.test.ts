@@ -171,10 +171,10 @@ it.effect("the pitch-derived head-count agrees with the engine's own count at fu
     let shorthanded = 0;
     for (let seed = 1; seed <= 400; seed++) {
       const reseeded = [{ ...stream[0]!, payload: { ...started, seed } }];
-      const { events, counts } = deriveMatchEvents(reseeded);
+      const { counts, frames, journal } = deriveMatchEvents(reseeded);
       const final = counts[counts.length - 1]!;
-      const home = pitchAsOf(started.homeSetup, events, [], null).onPitch.length;
-      const away = pitchAsOf(started.awaySetup, events, [], null).onPitch.length;
+      const home = pitchAsOf(frames.get(started.homeClubId) ?? [], journal, null).onPitch.length;
+      const away = pitchAsOf(frames.get(started.awayClubId) ?? [], journal, null).onPitch.length;
       deepStrictEqual([home, away], [final.homeCount, final.awayCount], `seed ${seed}`);
       if (home < 11 || away < 11) shorthanded += 1;
     }

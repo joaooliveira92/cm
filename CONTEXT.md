@@ -210,6 +210,27 @@ which carries an optional `fouledPlayerId` — `Offside`, `BeatenTrap`, `YellowC
 `FullTimeWhistle`, `TacticsChanged`). These are what the event-sourced game-engine persists and what
 commentary narrates from — not a separate commentary-only representation.
 
+**Lineup Frame**:
+One club's on-pitch lineup at one Match Event, recorded by the engine as it simulates: the on-pitch
+slots (player id, the display Position of the slot's cell, and whether the slot is the goalkeeper),
+the players who have been on, the substitutes still eligible (the kickoff Tactic's named bench minus
+anyone who has been on and anyone not in the squad), and the substitutions and windows used. It is a
+`RuntimeFrame` in `packages/game-engine/src/match/simulate/lineupRecording.ts`, built by the single
+`lineupFrameOf` beside the runtime state it reads. Frames are indexed so entry *i* is the lineup just
+before event *i* takes its own lineup consequence and the last is the lineup at full time. Recording
+projects state the run already computed and draws no random numbers, so it cannot change a seed's
+play; the projections read frames instead of re-folding the Match Event timeline.
+_Avoid_: pitch snapshot, formation frame
+
+**Lineup Journal**:
+One tagged entry per lineup change the engine made during a run: the event index it takes effect
+before, the club, its kind (`substitution` | `forceOff` | `standIn`), the players involved, and its
+origin (`manager` | `forced`). A substitution also carries its role (`manager` | `standIn` |
+`halftime`); a manager bring-off records whether it actually removed its player. It is the
+materialiser's input and the stored form of the recorded lineup: frames materialise from it by
+applying every entry whose index is at or before the frame's event.
+_Avoid_: substitution log, lineup diff
+
 **Match Rating**:
 A player's 1–10 rating for one match, to one decimal, derived from the match's stored timeline and
 never persisted. It is a base of 6.0, adjusted by the player's own Match Events (goals, shots, cards)
@@ -1035,10 +1056,13 @@ fix. Normal unresolved setup, not an error.
 The write-side boundary that accepts Commands and upholds one set of consistency invariants (e.g. Wage
 Budget never exceeded). There are three, and only one of them enforces its invariants by folding a
 Stream. The **Match Decider** owns one Stream per Fixture, keyed on that Fixture's id, holding the
-match seed plus mid-match `ChangeTactics`/`MakeSubstitution`; the timeline is folded from it on every
-read and never stored. The **Club Decider** owns Contracts, Transfer Budget, Wage Budget, Board
-Objective, and the Consecutive-Miss Counter, all of which are enforced against their own tables; its
-Stream is a ledger, exists only for the human's club, and records only what no table holds. The
+match seed plus mid-match `ChangeTactics`/`MakeSubstitution`; while a match is in progress its
+timeline is re-derived from that stream on every read, and once the result is committed the timeline
+is stored back onto the same stream as a `MatchTimelineRecorded` event, so a committed match reads
+its recorded account instead of replaying the current engine. The **Club Decider** owns Contracts,
+Transfer Budget, Wage Budget, Board Objective, and the Consecutive-Miss Counter, all of which are
+enforced against their own tables; its Stream is a ledger, exists only for the human's club, and
+records only what no table holds. The
 **Season/Calendar Decider** owns one Stream per Save — the current date, Fixture generation, and
 Transfer Window state — and is likewise a ledger. League Table is deliberately *not* a Decider —
 nothing commands it into a new state, so it's a projection, not an aggregate.
