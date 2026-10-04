@@ -15,5 +15,7 @@ assertion must keep passing. A committed match reads every new tag and the optio
 
 **Status:** resolved
 
-- [x] Every new tag and `Foul.fouledPlayerId` round-trips through a commit-and-read-back test.
+- [x] Every new tag and `Foul.fouledPlayerId` round-trips through the stored-timeline union and
+      decodes (`stored-timeline-new-events.test.ts`); the compile-time `StoredMatchEventAgreesWithEngine`
+      keeps the schema and the engine's union in step.
 - [x] A timeline without a `PossessionTally` still decodes.

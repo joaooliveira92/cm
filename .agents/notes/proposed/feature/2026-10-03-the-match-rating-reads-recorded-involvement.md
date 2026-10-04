@@ -18,16 +18,25 @@ columns, so a rating that ignores them visibly contradicts its own row.
 
 ## Proposal
 
-- `MatchInvolvement` will gain `assists`, `keyPasses`, `saves`, `fouls` and `offsides`, filled by the
-  Match Player Line fold ([the match player line folds only recorded events](2026-10-03-the-match-player-line-folds-only-recorded-events.md)),
-  so the counting rules (self-created chance is no key pass, assister must differ from scorer) are
-  defined once.
-- `MATCH_RATING_EVENT_WEIGHTS` will gain defaults: `assist: 0.6`, `keyPass: 0.15`, `save: 0.2`,
-  `foul: -0.05`, `offside: -0.05`. A key pass that became an assisted goal earns both weights; the
-  assist is the larger reward for the better outcome, not a double count of one action. They are
-  balance numbers, tuned by playing, and live only in that module.
-- The module's header comment, which says no event names a save or an assist, will be rewritten to
-  state the current inputs.
+Shipped in map ticket 14:
+
+- `MatchInvolvement` gained `tacklesWon`, `interceptions`, `headersWon` and `foulsSuffered`, filled by
+  the fold ([the match player line folds only recorded events](2026-10-03-the-match-player-line-folds-only-recorded-events.md)),
+  so the counting rules (a lost header is not a win) are defined once.
+- `MATCH_RATING_EVENT_WEIGHTS` gained `tackleWon: 0.1`, `interception: 0.1`, `headerWon: 0.05` and
+  `foulSuffered: 0.03`, and `MATCH_RATING_GOAL_AGAINST_SHARE.defense` moved from -0.4 to -0.3,
+  because recorded defending now carries part of what the goals-against proxy stood in for. A header
+  lost and the derived tackles-attempted carry no weight. They are balance numbers, tuned by playing,
+  and live only in that module.
+- The module's header comment, which said no event names a save or an assist, was rewritten to state
+  the current inputs.
+
+Still proposed (not part of ticket 14):
+
+- Reading `assists`, `keyPasses`, `saves`, `fouls` and `offsides`, with weights `assist: 0.6`,
+  `keyPass: 0.15`, `save: 0.2`, `foul: -0.05`, `offside: -0.05`. The fold records these counts, but no
+  weight reads them yet; the assist/key-pass rule above remains the target if a tuning pass takes it
+  up.
 - **Committed matches re-rate on read.** A rating is a projection over a stored timeline, recomputed
   every read, never persisted (the Form line stores counts, not ratings —
   [player match lines are written at resolution](../architecture/2026-10-03-player-match-lines-are-written-at-resolution.md)).

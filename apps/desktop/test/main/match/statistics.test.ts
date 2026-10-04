@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import { countedSubstitutions, type MatchEvent } from "@cm-clone/game-engine";
-import { aggregateMatchStatistics as aggregateWith, attackShare, matchPossession } from "../../../src/main/match/statistics.js";
+import { aggregateMatchStatistics as aggregateWith, attackShare, matchPossession, matchRecordsInvolvement } from "../../../src/main/match/statistics.js";
 
 /** The fold with the substitution count every read uses; this timeline has no goalkeeper stand-in. */
 const aggregateMatchStatistics = (events: ReadonlyArray<MatchEvent>, homeClubId: ClubId, revealedEvents: number | null) =>
@@ -165,12 +165,24 @@ describe("matchPossession — share of minute-slices, read from the last tally",
       tally(10, 6, 4),
       tally(45, 30, 15),
     ];
-    expect(matchPossession(events, home, null)).toMatchObject({ key: "possession", home: 67, away: 33 });
+    expect(matchPossession(events, null)).toMatchObject({ key: "possession", home: 67, away: 33 });
     // Cut before the second tally: the first is the last one revealed.
-    expect(matchPossession(events, home, 2)).toMatchObject({ key: "possession", home: 60, away: 40 });
+    expect(matchPossession(events, 2)).toMatchObject({ key: "possession", home: 60, away: 40 });
   });
 
   it("is unavailable on a timeline with no tally, never 0 or 50", () => {
-    expect(matchPossession(TIMELINE, home, null)).toBeNull();
+    expect(matchPossession(TIMELINE, null)).toBeNull();
+  });
+});
+
+describe("matchRecordsInvolvement — the marker for a timeline written before the new events", () => {
+  it("is true once a possession tally is revealed, false before it and on a pre-change timeline", () => {
+    const withTally: ReadonlyArray<MatchEvent> = [
+      TIMELINE[0]!,
+      at(10, "PossessionTally", home, { homeSlices: 6, awaySlices: 4 }),
+    ];
+    expect(matchRecordsInvolvement(withTally, null)).toBe(true);
+    expect(matchRecordsInvolvement(withTally, 1)).toBe(false);
+    expect(matchRecordsInvolvement(TIMELINE, null)).toBe(false);
   });
 });

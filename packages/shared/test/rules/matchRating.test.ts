@@ -88,9 +88,12 @@ describe("matchRating (group-g decision request 03, Option B)", () => {
     expect(matchRating(quiet({ position: "ST", foulsSuffered: 10 })) - baseline).toBeCloseTo(10 * MATCH_RATING_EVENT_WEIGHTS.foulSuffered, 5);
   });
 
-  it("carries no weight for a header lost (headers won only) and no separate tackle-attempt input", () => {
-    expect(matchRating(quiet())).toBe(matchRating(quiet({ headersWon: 0 })));
-    expect("tacklesAttempted" in quiet()).toBe(false);
+  it("has no weight for a header lost or a tackles-attempted input", () => {
+    // The involvement carries `headersWon` only; a lost header and the derived attempt are not
+    // inputs, so no weight names them.
+    expect(MATCH_RATING_EVENT_WEIGHTS).not.toHaveProperty("headerLost");
+    expect(MATCH_RATING_EVENT_WEIGHTS).not.toHaveProperty("tacklesAttempted");
+    expect(matchRating(quiet({ headersWon: 0 }))).toBe(matchRating(quiet()));
   });
 
   it("gives the defence phase a smaller goals-against share now recorded defending carries some of it", () => {

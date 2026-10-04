@@ -24,6 +24,9 @@ const STATISTIC: Readonly<Record<MatchStatisticKey, { readonly label: string; re
 
 const UNAVAILABLE_LABEL: Readonly<Record<UnavailableMatchStatistic, string>> = {
   possession: "Possession",
+  tacklesWon: "Tackles won",
+  interceptions: "Interceptions",
+  headersWon: "Headers won",
 };
 
 /**

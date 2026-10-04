@@ -54,7 +54,6 @@ export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
  *  possession stays unavailable rather than showing a fabricated 0 or 50. */
 export const matchPossession = (
   events: ReadonlyArray<MatchEvent>,
-  homeClubId: ClubId,
   revealedEvents: number | null,
 ): MatchStatisticRow | null => {
   const included = includedEvents(events, revealedEvents);
@@ -69,7 +68,27 @@ export const matchPossession = (
   return null;
 };
 
-export const UNAVAILABLE_MATCH_STATISTICS: ReadonlyArray<UnavailableMatchStatistic> = ["possession"];
+export const UNAVAILABLE_MATCH_STATISTICS: ReadonlyArray<UnavailableMatchStatistic> = [
+  "possession",
+  "tacklesWon",
+  "interceptions",
+  "headersWon",
+];
+
+/** The counted totals a pre-change timeline cannot know: possession and the recorded-defending rows. */
+const RECORDED_INVOLVEMENT_KEYS: ReadonlySet<MatchStatisticKey> = new Set([
+  "possession",
+  "tacklesWon",
+  "interceptions",
+  "headersWon",
+]);
+
+/** Whether the included timeline records involvement at all: a `PossessionTally` marks a timeline
+ *  written by an engine that also records tackles, interceptions and headers. */
+export const matchRecordsInvolvement = (
+  events: ReadonlyArray<MatchEvent>,
+  revealedEvents: number | null,
+): boolean => includedEvents(events, revealedEvents).some((event) => event._tag === "PossessionTally");
 
 /** Which totals one event adds to, and the side it credits — typed from the event itself, so a new
  *  counted event cannot fall to a default side. */
@@ -214,13 +233,17 @@ export const matchStatisticsView = (
   const last = included[included.length - 1];
   const attacks = attackShare(events, started.homeClubId, revealedEvents);
   const chancesByType = computeChancesByType(events, started.homeClubId, revealedEvents);
-  const possession = matchPossession(events, started.homeClubId, revealedEvents);
-  const rows = aggregateMatchStatistics(
+  // A timeline with no possession tally predates the recorded-involvement events, so possession and
+  // the defending totals are unavailable rather than a fabricated 0.
+  const hasTally = matchRecordsInvolvement(events, revealedEvents);
+  const possession = matchPossession(events, revealedEvents);
+  const counted = aggregateMatchStatistics(
     events,
     started.homeClubId,
     revealedEvents,
     countedSubstitutions(events, substitutionLedger(stream, events).standIns, revealedEvents),
   );
+  const rows = hasTally ? counted : counted.filter((row) => !RECORDED_INVOLVEMENT_KEYS.has(row.key));
   return new MatchStatisticsView({
     matchId,
     homeClubName: nameOf(started.homeClubId),
@@ -228,7 +251,7 @@ export const matchStatisticsView = (
     throughMinute:
       revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
     rows: possession === null ? rows : [...rows, possession],
-    unavailable: possession === null ? UNAVAILABLE_MATCH_STATISTICS : [],
+    unavailable: hasTally ? [] : UNAVAILABLE_MATCH_STATISTICS,
     homeAttackShare: attacks.home,
     awayAttackShare: attacks.away,
     chancesByType,

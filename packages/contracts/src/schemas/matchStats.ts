@@ -43,9 +43,10 @@ export type MatchStatisticKey = Schema.Schema.Type<typeof MatchStatisticKey>;
 
 /** Statistics a football reader expects that the match model does not simulate. Listed so the screen
  *  says they are unavailable rather than showing a zero (Screen 95 §17). A timeline stored before the
- *  `PossessionTally` event existed has none, so possession is unavailable for that match; the attack
- *  share is a separate derivation, not a stand-in for possession. */
-export const UnavailableMatchStatistic = Schema.Literals(["possession"]);
+ *  `PossessionTally` event existed has none, so possession and the recorded-defending totals are
+ *  unavailable for that match; the attack share is a separate derivation, not a stand-in for
+ *  possession. */
+export const UnavailableMatchStatistic = Schema.Literals(["possession", "tacklesWon", "interceptions", "headersWon"]);
 export type UnavailableMatchStatistic = Schema.Schema.Type<typeof UnavailableMatchStatistic>;
 
 export class MatchStatisticRow extends Schema.Class<MatchStatisticRow>("MatchStatisticRow")({
