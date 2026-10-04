@@ -35,9 +35,12 @@ of the players he scouts or buys.
   through the one pure fold, given the kickoff line-up and bench as input (the user's from the match
   stream, an AI club's from the `MatchTeamSetup` it was simulated with). A Matchday therefore never
   has results without lines, or lines without results.
-- **Counts, never a rating.** The Match Rating is computed on read from the row's counts by
-  `matchRating` ([the Match Rating reads recorded involvement](../feature/2026-10-03-the-match-rating-reads-recorded-involvement.md)),
-  so a tuned weight re-rates history consistently with the match screen. Condition is not stored:
+- **Counts, never a rating.** The Match Rating is computed on read by `matchRating`
+  ([the Match Rating reads recorded involvement](../feature/2026-10-03-the-match-rating-reads-recorded-involvement.md)),
+  so a tuned weight re-rates history consistently with the match screen. A fixture that keeps a
+  timeline (the user's own) re-rates through the ratings fold, exactly as the Ratings tab does; an AI
+  fixture keeps no timeline and rates from the row's counts through `matchRatingFromStoredLine`, whose
+  goals-while-on share and clean sheet cannot be recovered and read as zero. Condition is not stored:
   the Form tab has no Con column.
 - **Only squad-bearing fixtures.** A fixture settled by squad-strength collapse (a `results-only`
   club involved) has no engine timeline and gets no rows; the Form tab shows that fixture as "No
