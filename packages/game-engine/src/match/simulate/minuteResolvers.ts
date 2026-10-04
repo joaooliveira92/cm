@@ -122,14 +122,7 @@ export const resolveAttackingEvent = (
   random: RandomSource,
   events: Array<MatchEvent>,
 ): void => {
-  const eventCountBefore = events.length;
-  resolveChancePipeline(attacker, defender, homeAwayScore, isAttackerHome, random, events);
-
-  for (let i = eventCountBefore; i < events.length; i++) {
-    const e = events[i] as unknown as Record<string, unknown>;
-    if (e.minute === 999) e.minute = minute;
-    if (e.half === 1) e.half = half;
-  }
+  resolveChancePipeline(attacker, defender, minute, half, homeAwayScore, isAttackerHome, random, events);
 };
 
 export const resolveCards = (

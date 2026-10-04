@@ -72,6 +72,26 @@ describe("simulateMatch", () => {
     expect(halfTimeIndices[0]).toBeLessThan(fullTimeIndex);
   });
 
+  it("stamps the playing half onto every half-bearing event, second-half chances included", () => {
+    const chanceTags = new Set<string>([
+      "Goal", "ShotOnTarget", "ShotMissed", "ThroughBall", "Cross",
+      "LongShot", "RunWithBall", "HoldUpLayOff", "Counter", "KeyPass",
+    ]);
+    let sawSecondHalfChance = false;
+    for (let seed = 300; seed < 320; seed++) {
+      const events = simulateMatch(baseInput(seed));
+      const halfTimeIndex = events.findIndex((e) => e._tag === "HalfTimeReached");
+      for (const [i, event] of events.entries()) {
+        if ("minute" in event) expect(event.minute).not.toBe(999);
+        if (!("half" in event)) continue;
+        const expected = i < halfTimeIndex ? 1 : 2;
+        expect(event.half).toBe(expected);
+        if (expected === 2 && chanceTags.has(event._tag)) sawSecondHalfChance = true;
+      }
+    }
+    expect(sawSecondHalfChance).toBe(true);
+  });
+
   it("is fully deterministic: same seed and same commands reproduce an identical timeline", () => {
     const input = baseInput(3);
     const first = simulateMatch(input);

@@ -227,6 +227,8 @@ const resolveOutcome = (
 export const resolveChancePipeline = (
   attacker: TeamRuntimeState,
   defender: TeamRuntimeState,
+  minute: number,
+  half: MatchHalf,
   homeAwayScore: { home: number; away: number },
   isAttackerHome: boolean,
   random: RandomSource,
@@ -237,17 +239,14 @@ export const resolveChancePipeline = (
   const creatorId = onPitch[creatorIndex]?.playerId;
   if (!creatorId) return;
 
-  const base = (playerId: PlayerId) =>
-    ({ minute: 999, half: 1 as MatchHalf, teamClubId: attacker.clubId, playerId }) as const;
-
   const creatorBehaviour = onPitch[creatorIndex]?.behaviour;
   const finisherResult = pickFinisher(attacker, chanceType, creatorBehaviour, defender, random);
   if (!finisherResult) return;
   const { playerId: finisherId, player: finisher } = finisherResult;
 
   const chanceBase: ChanceEventBase = {
-    minute: 999,
-    half: 1 as MatchHalf,
+    minute,
+    half,
     teamClubId: attacker.clubId,
     playerId: finisherId,
     assistPlayerId: creatorId,
@@ -258,17 +257,18 @@ export const resolveChancePipeline = (
 
   events.push({
     _tag: "KeyPass",
-    ...base(creatorId),
-    minute: 999,
-    half: 1 as MatchHalf,
+    minute,
+    half,
+    teamClubId: attacker.clubId,
+    playerId: creatorId,
     chanceType,
   });
 
   const outcome = resolveOutcome(finisher, chanceType, defender, attacker, random);
 
   const outcomeBase = {
-    minute: 999,
-    half: 1 as MatchHalf,
+    minute,
+    half,
     teamClubId: attacker.clubId,
     playerId: finisherId,
     chanceType,
