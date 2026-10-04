@@ -86,8 +86,13 @@ question. Plan only: no code in this effort.
 - 2026-10-04: tickets 21 and 17 resolved — a committed-match store flips the bar to Post-match at
   Accept result, keeps it across tab clicks, keeps the Possession bar on every post-match tab and
   opens Report for the match just played. See [the post-match context
-  note](../../.agents/notes/proposed/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md).
+  note](../../.agents/notes/implemented/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md).
   Frontier: empty.
+- 2026-10-04: code review of the shipped post-match change — the post-match Commentary tab read the
+  season's awaiting Fixture and so showed "No match in play", and the scoreboard vanished at Accept
+  against [05](issues/05-one-tab-bar-for-two-tab-rows.md). The committed store now carries the final
+  score; Commentary, the scoreboard and the header all fall back to it, and the note was promoted to
+  `implemented/`. Frontier: empty.
 
 ## Not yet specified
 

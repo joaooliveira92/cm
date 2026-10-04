@@ -4,10 +4,12 @@ import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
 import { matchClock } from "../../../src/renderer/chrome/header/MatchHeader.js";
 import {
   clearActiveMatch,
+  clearCommittedMatch,
   recordHalfTimeRevealed,
   recordRevealedMinute,
   recordRevealedScore,
   setActiveMatch,
+  setCommittedMatch,
 } from "../../../src/renderer/match/session.js";
 import { MATCH_COLOURS } from "../match/matchColours.js";
 import { mountCareer, resetCareerHarness } from "./career-harness.js";
@@ -40,6 +42,7 @@ beforeEach(resetCareerHarness);
 
 afterEach(() => {
   clearActiveMatch(saveId);
+  clearCommittedMatch(saveId);
   cleanup();
 });
 
@@ -79,6 +82,30 @@ describe("the career header while a match is on", () => {
     startMatch("complete");
     await settle();
     expect(within(scoreboard()).getByText("FT")).toBeTruthy();
+  });
+
+  it("remains the scoreboard after the result is accepted, showing FT and the final score", async () => {
+    setCommittedMatch(
+      saveId,
+      {
+        matchId,
+        fixtureId: FixtureId.make(1),
+        homeClubId: ClubId.make("home"),
+        homeClubName: "Vasco da Gama",
+        awayClubId: ClubId.make("away"),
+        awayClubName: "Palmeiras",
+        ...MATCH_COLOURS,
+        isHome: false,
+      } as never,
+      { homeScore: 2, awayScore: 1 },
+    );
+    await mountCareer("in_season", "fixtures");
+    await settle();
+
+    expect(screen.getByRole("button", { name: "Vasco da Gama 2, Palmeiras 1, FT. Open Match day" })).toBeTruthy();
+    // The season band stays stepped aside, and Continue is no longer suspended.
+    expect(screen.queryByText("Season 3 · 17 Oct 2026")).toBeNull();
+    expect(screen.getByRole("button", { name: /Continue/ })).toBeTruthy();
   });
 
   it("mounts the Possession bar with the scoreboard, and takes it down when the result is accepted", async () => {

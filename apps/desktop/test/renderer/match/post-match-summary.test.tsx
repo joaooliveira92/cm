@@ -215,7 +215,7 @@ describe("Match day holds the Post-Match Summary back until the result is accept
         awayClubName: "Away FC",
         isHome: true,
       },
-    } as never);
+    } as never, { homeScore: 2, awayScore: 1 });
     (window as unknown as { cmClone: { call: unknown } }).cmClone = {
       call: async (method: string) => {
         if (method === "getPostMatchSummary") return { _tag: "Success", value: summary(EVENTS) };

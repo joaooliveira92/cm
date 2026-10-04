@@ -87,6 +87,11 @@ export function useMatchLifecycle(saveId: SaveId): {
       setPhase("complete");
       return;
     }
+    // The result is accepted: the live session ends, but the match — and the final score the commit
+    // reports — stays named so the post-match tab bar, the scoreboard, the Possession bar and the
+    // Summary can still read them.
+    setCommittedMatch(saveId, match, { homeScore: exit.value.homeGoals, awayScore: exit.value.awayGoals });
+    clearActiveMatch(saveId);
     setPhase("committed");
   }, [saveId, match, runCommitMatchday]);
 
@@ -141,14 +146,6 @@ export function useMatchLifecycle(saveId: SaveId): {
     if (match === null || phase === "committing" || phase === "committed") return;
     setActiveMatch({ saveId, match, phase, restoredAfterRestart, quick });
   }, [saveId, match, phase, restoredAfterRestart, quick]);
-
-  useEffect(() => {
-    if (phase !== "committed" || match === null) return;
-    // The result is accepted: the live session ends, but the match stays named so the post-match
-    // tab bar, the Possession bar and the Summary can still read it.
-    setCommittedMatch(saveId, match);
-    clearActiveMatch(saveId);
-  }, [phase, saveId, match]);
 
   useEffect(() => {
     const unreg = registerActionHandler("start-match", () => void startMatch("play"));

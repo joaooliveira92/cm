@@ -1,25 +1,29 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Effect, Result } from "effect";
 import type { CommentaryLineView, MatchId, SaveId } from "@cm-clone/contracts";
 import { leagueTableAtom, resumeSimulation, useAtomValue, POLL_INTERVAL_MS } from "../../rpc.js";
 import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 import { FOCUS_RING } from "../../focus.js";
-import { getActiveMatch, getRevealedEvents, revealedToFullTime } from "../session.js";
+import { getActiveMatch, getCommittedMatch, getRevealedEvents, revealedToFullTime, subscribeActiveMatch } from "../session.js";
 import { CommentaryFeed } from "../CommentaryFeed.js";
 
 /**
  * How many of the match's Commentary Lines this screen may show, or null for all of them. Bound the
  * way Match Statistics is: a live match up to the lines Match day has revealed; the awaiting match in
- * full only while this renderer holds it at full time; otherwise (e.g. the app restarted mid-match)
- * none. The screen never paces a reveal of its own, so it cannot show a line, a goal or the result
- * before Match day has. An accepted match is no longer awaited, so the season read never names it here.
+ * full only while this renderer holds it at full time, and the accepted match in full from the
+ * committed store; otherwise (e.g. the app restarted mid-match) none. The screen never paces a reveal
+ * of its own, so it cannot show a line, a goal or the result before Match day has. An accepted match
+ * is no longer awaited, so the season read never names it here and the committed store stands in.
  */
 const revealedLimit = (saveId: SaveId, matchId: string): number | null => {
   const session = getActiveMatch(saveId);
   if (session !== null && session.match.matchId === matchId && (session.phase === "live" || session.phase === "paused")) {
     return getRevealedEvents(saveId);
   }
-  return revealedToFullTime(saveId, matchId as MatchId) ? null : 0;
+  if (revealedToFullTime(saveId, matchId as MatchId)) return null;
+  const committed = getCommittedMatch(saveId);
+  if (committed !== null && committed.match.matchId === matchId) return null;
+  return 0;
 };
 
 export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) => {
@@ -36,7 +40,10 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
   // awaited, so nothing is bound until it lands.
   const seasonKnown = tableResult._tag === "Success" && !tableResult.waiting;
   const pending = seasonKnown ? tableResult.value.season.awaitingFixture : null;
-  const matchId = pending?.matchId ?? null;
+  // Once the result is accepted the season read stops naming the match, so the committed store is
+  // what still names it; without that fallback the tab would read as "No match in play".
+  const committed = useSyncExternalStore(subscribeActiveMatch, () => getCommittedMatch(saveId));
+  const matchId = pending?.matchId ?? committed?.match.matchId ?? null;
   // With no match started there is nothing to read, so only the season read is awaited.
   const waiting = !seasonKnown || (matchId !== null && loading);
 

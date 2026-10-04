@@ -1,22 +1,22 @@
 import type { MatchId, MatchSummary, SaveId } from "@cm-clone/contracts";
 import { notify } from "./activeMatch.js";
-import type { CommittedMatch } from "./types.js";
+import type { CommittedMatch, RevealedScore } from "./types.js";
 
 /**
  * The match a save has just had accepted, kept after `clearActiveMatch` takes the live session away.
  *
- * Accept result ends the live session by design: the scoreboard header, the mid-match commands and
- * the suspended Continue all key off it. But the match screens stay open on the result, and their
- * tab bar, the Possession bar and the post-match Summary still name that match. This is the
- * single-slot store that carries it from the commit until the next kickoff, the way `activeMatch`
- * carries the live one. In memory only, like the session it outlives. It shares the session's
- * notification bus (`notify` / `subscribeActiveMatch`), so a write here re-renders every
- * active-match subscriber too.
+ * Accept result ends the live session by design: the scoreboard header keys off it, and the mid-match
+ * commands and the suspended Continue do too. But the match screens stay open on the result, and their
+ * tab bar, the scoreboard, the Possession bar and the post-match Summary still name that match. This is
+ * the single-slot store that carries it — and its final score, which `MatchSummary` does not hold —
+ * from the commit until the next kickoff, the way `activeMatch` carries the live one. In memory only,
+ * like the session it outlives. It shares the session's notification bus (`notify` /
+ * `subscribeActiveMatch`), so a write here re-renders every active-match subscriber too.
  */
 let committed: CommittedMatch | null = null;
 
-export const setCommittedMatch = (saveId: SaveId, match: MatchSummary): void => {
-  committed = { saveId, match };
+export const setCommittedMatch = (saveId: SaveId, match: MatchSummary, score: RevealedScore): void => {
+  committed = { saveId, match, score };
   notify();
 };
 

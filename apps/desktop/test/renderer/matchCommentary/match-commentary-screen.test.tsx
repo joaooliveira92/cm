@@ -4,29 +4,33 @@ import { MatchId, SaveId, type CommentaryLineView } from "@cm-clone/contracts";
 import { MatchCommentaryScreen } from "../../../src/renderer/match/screens/CommentaryScreen.js";
 import {
   clearActiveMatch,
+  clearCommittedMatch,
   recordRevealedLines,
   setActiveMatch,
+  setCommittedMatch,
 } from "../../../src/renderer/match/session.js";
 import { POLL_INTERVAL_MS, RegistryProvider } from "../../../src/renderer/rpc.js";
 
 const s1 = SaveId.make("s1");
 
-const leagueTable = (matchId: string | null) => ({
+const leagueTable = (matchId: string | null, awaiting = true) => ({
   season: {
     seasonNumber: 1,
     currentDate: "2026-08-01",
     phase: "in_season",
-    awaitingFixture: {
-      fixtureId: 1,
-      date: "2026-08-01",
-      competitionId: "league_1",
-      opponentClubId: "away",
-      opponentClubName: "Away FC",
-      isHome: true,
-      matchId,
-      blockers: [],
-      advisories: [],
-    },
+    awaitingFixture: awaiting
+      ? {
+          fixtureId: 1,
+          date: "2026-08-01",
+          competitionId: "league_1",
+          opponentClubId: "away",
+          opponentClubName: "Away FC",
+          isHome: true,
+          matchId,
+          blockers: [],
+          advisories: [],
+        }
+      : null,
   },
   standings: [],
 });
@@ -57,11 +61,11 @@ const chunkAfter = (cursor: number) => ({
   awayOnPitchCount: 11,
 });
 
-const mount = async (matchId: string | null = "m1") => {
+const mount = async (matchId: string | null = "m1", awaiting = true) => {
   const reads: Array<Record<string, unknown>> = [];
   (window as unknown as { cmClone: { call: unknown } }).cmClone = {
     call: async (method: string, payload: Record<string, unknown>) => {
-      if (method === "getLeagueTable") return { _tag: "Success", value: leagueTable(matchId) };
+      if (method === "getLeagueTable") return { _tag: "Success", value: leagueTable(matchId, awaiting) };
       if (method === "resumeSimulation") {
         reads.push(payload);
         return { _tag: "Success", value: chunkAfter(payload.cursor as number) };
@@ -109,6 +113,7 @@ afterEach(() => {
   cleanup();
   clearActiveMatch(s1);
   clearActiveMatch(SaveId.make("s2"));
+  clearCommittedMatch(s1);
   vi.useRealTimers();
 });
 
@@ -185,5 +190,28 @@ describe("Match Commentary screen says why the feed is empty (group-g-match-day 
 
     expect(screen.queryByText(/Loading commentary/)).toBeNull();
     expect(screen.getByText("No match in play. Commentary appears here once one kicks off on Match day.")).toBeTruthy();
+  });
+});
+
+describe("Match Commentary screen after the result is accepted (map ticket 21)", () => {
+  it("lists the whole match from the committed store, not 'No match in play'", async () => {
+    setCommittedMatch(
+      s1,
+      {
+        matchId: MatchId.make("m1"),
+        fixtureId: 1,
+        homeClubId: "home",
+        homeClubName: "Home FC",
+        awayClubId: "away",
+        awayClubName: "Away FC",
+        isHome: true,
+      } as never,
+      { homeScore: 1, awayScore: 0 },
+    );
+    const reads = await mount(null, false);
+
+    expect(shown()).toHaveLength(LINES.length);
+    expect(screen.queryByText(/No match in play/)).toBeNull();
+    expect(reads[0]).toMatchObject({ matchId: "m1", revealedEvents: null });
   });
 });

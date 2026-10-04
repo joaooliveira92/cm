@@ -25,11 +25,13 @@ export interface ActiveMatchSession {
 
 /**
  * The match a save has just had accepted, kept after the live session is cleared at commit so the
- * post-match tab bar, the Possession bar and the Summary can still name it.
+ * post-match tab bar, the scoreboard, the Possession bar and the Summary can still name it. The
+ * final score rides along because `MatchSummary` carries none, and the scoreboard reads FT from it.
  */
 export interface CommittedMatch {
   readonly saveId: SaveId;
   readonly match: MatchSummary;
+  readonly score: RevealedScore;
 }
 
 export interface RevealedScore {

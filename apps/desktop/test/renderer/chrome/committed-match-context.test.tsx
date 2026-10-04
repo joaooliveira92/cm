@@ -7,6 +7,7 @@ import {
   setCommittedMatch,
 } from "../../../src/renderer/match/session.js";
 import { mountRoutedCareer, preload, resetCareerHarness, rid } from "./career-harness.js";
+import { MATCH_COLOURS } from "../match/matchColours.js";
 
 /**
  * The committed match's lifetime is owned by the always-mounted chrome, not by Match day, so
@@ -22,8 +23,11 @@ const summary = (matchId: string) =>
     homeClubName: "Home FC",
     awayClubId: "away",
     awayClubName: "Away FC",
+    ...MATCH_COLOURS,
     isHome: true,
   }) as never;
+
+const SCORE = { homeScore: 1, awayScore: 0 };
 
 /** A season read with an unstarted Fixture awaiting its kickoff. */
 const awaitingFixturePayload = {
@@ -58,7 +62,7 @@ afterEach(() => {
 
 describe("the committed match ends when a new Fixture awaits", () => {
   it("clears the committed match once the season names a different Fixture", async () => {
-    setCommittedMatch(rid("s1"), summary("m1"));
+    setCommittedMatch(rid("s1"), summary("m1"), SCORE);
     preload("in_season");
     const inner = (window as unknown as { cmClone: { call: (method: string, payload: unknown) => Promise<unknown> } }).cmClone.call;
     (window as unknown as { cmClone: { call: unknown } }).cmClone = {
@@ -72,7 +76,7 @@ describe("the committed match ends when a new Fixture awaits", () => {
   });
 
   it("keeps the committed match while the season names no Fixture", async () => {
-    setCommittedMatch(rid("s1"), summary("m1"));
+    setCommittedMatch(rid("s1"), summary("m1"), SCORE);
     preload("in_season");
 
     await mountRoutedCareer("league");

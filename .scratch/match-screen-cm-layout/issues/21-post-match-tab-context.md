@@ -44,4 +44,4 @@ A module-level committed-match store, written at commit and cleared when a diffe
 kickoff, carries the accepted match past `clearActiveMatch`. `CareerShell` reads it and passes a
 `matchPhaseOverride` to `ContextTabs`; `PossessionBar` and `MatchDayLayout` read it directly. The
 decision, alternatives and risks are in [the post-match context
-note](../../../.agents/notes/proposed/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md).
+note](../../../.agents/notes/implemented/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md).

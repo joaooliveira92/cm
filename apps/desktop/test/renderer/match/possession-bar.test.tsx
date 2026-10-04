@@ -188,7 +188,7 @@ describe("Possession bar", () => {
   });
 
   it("reads the accepted match's full-time possession once the live session is gone", async () => {
-    setCommittedMatch(s1, matchSummary("m7") as never);
+    setCommittedMatch(s1, matchSummary("m7") as never, { homeScore: 3, awayScore: 2 });
     const calls = mount((method) =>
       method === "getLeagueTable"
         ? { _tag: "Success", value: leagueTable(null) }

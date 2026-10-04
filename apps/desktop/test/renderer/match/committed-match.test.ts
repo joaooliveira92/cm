@@ -21,24 +21,27 @@ const match = (matchId = "m1") =>
     isHome: true,
   }) as never;
 
+const SCORE = { homeScore: 2, awayScore: 1 };
+
 afterEach(() => {
   clearCommittedMatch(s1);
   clearCommittedMatch(s2);
 });
 
 describe("the committed-match store", () => {
-  it("holds one match at a time, read back only for its own save", () => {
-    setCommittedMatch(s1, match("m1"));
+  it("holds one match and its final score at a time, read back only for its own save", () => {
+    setCommittedMatch(s1, match("m1"), SCORE);
     expect(getCommittedMatch(s1)?.match.matchId).toBe("m1");
+    expect(getCommittedMatch(s1)?.score).toEqual(SCORE);
     expect(getCommittedMatch(s2)).toBeNull();
 
-    setCommittedMatch(s2, match("m2"));
+    setCommittedMatch(s2, match("m2"), { homeScore: 0, awayScore: 0 });
     expect(getCommittedMatch(s1)).toBeNull();
     expect(getCommittedMatch(s2)?.match.matchId).toBe("m2");
   });
 
   it("clear affects only the save it names", () => {
-    setCommittedMatch(s1, match("m1"));
+    setCommittedMatch(s1, match("m1"), SCORE);
     clearCommittedMatch(s2);
     expect(getCommittedMatch(s1)?.match.matchId).toBe("m1");
 

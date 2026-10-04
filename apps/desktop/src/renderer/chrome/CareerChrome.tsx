@@ -63,7 +63,7 @@ const CareerChromeInner = ({
 
   const [preferencesOpen, setPreferencesOpen] = useState(false);
   const identity = useSyncExternalStore(subscribeScreenIdentity, getScreenIdentity, getScreenIdentity);
-  const liveMatch = useMatchScoreboard(saveId);
+  const matchScoreboard = useMatchScoreboard(saveId);
 
   const leading = (
     <span className="flex items-center gap-2">
@@ -93,8 +93,8 @@ const CareerChromeInner = ({
       <div className="relative isolate h-screen overflow-hidden [--header-height:calc(--spacing(18))]">
         <Backdrop src={backdropFor(saveId)} />
         <SidebarProvider className="flex h-full flex-col">
-          {liveMatch !== null ? (
-            <MatchHeader saveId={saveId} state={liveMatch} leading={leading} />
+          {matchScoreboard !== null ? (
+            <MatchHeader saveId={saveId} state={matchScoreboard} leading={leading} />
           ) : (
             <header
               className="club-header flex h-(--header-height) w-full shrink-0 flex-col text-header-fg"
@@ -174,7 +174,7 @@ const CareerChromeInner = ({
 
           {/* The bar spans the window, as the header does: Continue and the
               screen's verbs are the shell's, not the column's. */}
-          <CareerBottomBar matchInProgress={liveMatch !== null} />
+          <CareerBottomBar matchInProgress={matchScoreboard !== null && !matchScoreboard.committed} />
         </SidebarProvider>
         {preferencesOpen && <PreferencesDialog onClose={() => setPreferencesOpen(false)} />}
       </div>

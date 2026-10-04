@@ -38,7 +38,7 @@ export interface ContextTabsProps {
    * caller — which can see the committed match — supplies `post-match` after a result is accepted.
    * Ignored unless the route already reads as a live match, so pre-match and entity contexts keep
    * the phase their path names. See
-   * `.agents/notes/proposed/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md`.
+   * `.agents/notes/implemented/architecture/2026-10-04-post-match-context-follows-a-committed-match-store.md`.
    */
   readonly matchPhaseOverride?: "post-match" | null;
 }
