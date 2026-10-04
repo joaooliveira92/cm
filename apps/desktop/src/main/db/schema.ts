@@ -1215,8 +1215,108 @@ export const playerFitness = sqliteTable(
   ],
 );
 
+/**
+ * One player's Match Player Line for one fixture: the counts CM 03/04's Form tab and season block
+ * read, plus the squad facts that say whether and how he played. Written once per squad-bearing
+ * fixture in the Matchday's commit transaction — the user's fixture folded from its stored timeline,
+ * every AI fixture from the events its simulation produced — so a Matchday never has results without
+ * lines. See `.agents/notes/proposed/architecture/2026-10-03-player-match-lines-are-written-at-resolution.md`.
+ *
+ * **Counts, never a rating or Condition.** The Match Rating is recomputed on read from these counts,
+ * so a tuned weight re-rates history the same way everywhere; Condition has no reader here.
+ *
+ * **The engine counts are nullable, the others are not.** `tackles_won`, `interceptions`, `headers`,
+ * `headers_won` and `fouls_suffered` come only from the recorded-defending events a post-change
+ * engine emits, so a line folded from a timeline with no `PossessionTally` stores NULL and reads
+ * "-" rather than a fabricated 0 (the same marker the live table uses). The match-screen counts
+ * predate that change and are always present.
+ *
+ * A fixture settled by squad-strength collapse (a results-only club involved) has no engine timeline
+ * and gets no rows; the Form tab shows it as "No player record". `player_id` is a foreign key and
+ * `discardSquadsForClubs` deletes a departing club's rows with the rest of their player-keyed data.
+ *
+ * No index: the commit reads it by the fixture prefix of its key, and the Form read is by player
+ * over a table that grows one small matchday at a time; the primary key serves the former and the
+ * latter is a scan a later measured probe can promote if it ever bites.
+ */
+export const playerMatchLines = sqliteTable(
+  "player_match_lines",
+  {
+    fixtureId: integer("fixture_id")
+      .notNull()
+      .references(() => fixtures.id),
+    playerId: text("player_id")
+      .notNull()
+      .references(() => players.id),
+    /** The player's club in this fixture (home or away side). */
+    clubId: text("club_id")
+      .notNull()
+      .references(() => clubs.id),
+    seasonNumber: integer("season_number")
+      .notNull()
+      .references(() => season.seasonNumber),
+    competitionId: text("competition_id")
+      .notNull()
+      .references(() => competitions.id),
+    /** ISO `YYYY-MM-DD`, the fixture's own date. */
+    date: text("date").notNull(),
+    opponentClubId: text("opponent_club_id")
+      .notNull()
+      .references(() => clubs.id),
+    isHome: integer("is_home").notNull(),
+    /** The grid cell the player last held (`GK`, `D RC`), or NULL for an unused substitute. */
+    position: text("position"),
+    started: integer("started").notNull(),
+    /** The minute a substitute came on, or NULL when he started and never returned. */
+    onMinute: integer("on_minute"),
+    /** The minute the player went off, or NULL when he finished the match on the pitch. */
+    offMinute: integer("off_minute"),
+    onAtEnd: integer("on_at_end").notNull(),
+    /** The number shown beside him in the matchday squad: `1`-`11` or `SB1`-`SBn`. */
+    squadNumber: text("squad_number").notNull(),
+    /** The player's club's outcome: `win`, `draw` or `loss`. */
+    result: text("result").notNull(),
+
+    goals: integer("goals").notNull(),
+    assists: integer("assists").notNull(),
+    keyPasses: integer("key_passes").notNull(),
+    shots: integer("shots").notNull(),
+    shotsOnTarget: integer("shots_on_target").notNull(),
+    saves: integer("saves").notNull(),
+    offsides: integer("offsides").notNull(),
+    fouls: integer("fouls").notNull(),
+    yellowCards: integer("yellow_cards").notNull(),
+    redCards: integer("red_cards").notNull(),
+    runs: integer("runs").notNull(),
+
+    tacklesWon: integer("tackles_won"),
+    interceptions: integer("interceptions"),
+    headers: integer("headers"),
+    headersWon: integer("headers_won"),
+    foulsSuffered: integer("fouls_suffered"),
+  },
+  (table) => [
+    primaryKey({ columns: [table.fixtureId, table.playerId] }),
+    check("player_match_lines_is_home", sql`is_home IN (0,1)`),
+    check("player_match_lines_started", sql`started IN (0,1)`),
+    check("player_match_lines_on_at_end", sql`on_at_end IN (0,1)`),
+    check("player_match_lines_result", oneOf("result", ["win", "draw", "loss"])),
+    check("player_match_lines_on_minute", sql`on_minute IS NULL OR on_minute >= 0`),
+    check("player_match_lines_off_minute", sql`off_minute IS NULL OR off_minute >= 0`),
+    ...[
+      "goals", "assists", "key_passes", "shots", "shots_on_target", "saves", "offsides", "fouls",
+      "yellow_cards", "red_cards", "runs",
+    ].map((column) => check(`player_match_lines_${column}`, sql.raw(`${column} >= 0`))),
+    ...[
+      "tackles_won", "interceptions", "headers", "headers_won", "fouls_suffered",
+    ].map((column) =>
+      check(`player_match_lines_${column}`, sql.raw(`${column} IS NULL OR ${column} >= 0`)),
+    ),
+  ],
+);
+
 /** A player's active Contract (ticket 16 / ADR-0005) — 1-5 years, formula-derived wage, no
- * negotiation UI. A player with no row here (and `players.club_id IS NULL`) is a Free Agent,
+ *  negotiation UI. A player with no row here (and `players.club_id IS NULL`) is a Free Agent,
  * signable for Credits 0 via the normal signing flow. `years_remaining` is allowed to reach 0
  * transiently mid-expiry-sweep (`transfers.ts`'s `expireContractsForSeason` decrements every row
  * before deleting the ones that hit 0) — every row a Sign/Renew command writes is still 1-5.

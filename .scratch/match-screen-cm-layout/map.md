@@ -57,6 +57,9 @@ question. Plan only: no code in this effort.
 - 2026-10-03: the user approved every recommendation. The attack-share half of 03 shipped as
   `241584d0`. [Spec published](spec.md); implementation tickets 12–20 sliced under [issues/](issues/).
   Frontier: 16, 17 (12, 14 and 15 resolved).
+- 2026-10-04: ticket 18 resolved — `player_match_lines` is written in the Matchday commit transaction
+  for the user's fixture and every squad-bearing AI fixture. Frontier: 13, 16, 17 (12, 14, 15 and 18
+  resolved; 19 blocked by 13 and 18, 20 by 19).
 
 ## Not yet specified
 

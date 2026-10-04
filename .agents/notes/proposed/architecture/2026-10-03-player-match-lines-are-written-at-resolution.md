@@ -22,11 +22,13 @@ of the players he scouts or buys.
 - **Table.** `player_match_lines`, primary key `(fixture_id, player_id)`, with `club_id`,
   `season_number`, `competition_id`, `date`, `opponent_club_id`, `is_home`, `position` (the slot last
   held), `started`, `on_minute` (nullable), `off_minute` (nullable), `on_at_end`, `squad_number`, the
-  integer counts the Match Player Line defines (goals, assists, key passes, shots, shots on target,
-  big chances, shots missed, saves, offsides, fouls, yellow cards, red cards, goals for and against
-  while on) and `result` (win/draw/loss for this player's club). Unused substitutes get a row with
-  `started = 0`, `on_minute = null`, so "in the squad, did not play" is distinguishable from "not
-  selected" (no row).
+  count columns the Match Player Line fold defines (goals, assists, key passes, shots, shots on
+  target, saves, offsides, fouls, runs, yellow cards, red cards, and the recorded-defending counts
+  tackles won, interceptions, headers, headers won and fouls suffered) and `result` (win/draw/loss
+  for this player's club). The recorded-defending counts are nullable: a line folded from a timeline
+  with no `PossessionTally` stores NULL and reads "-", the same marker the live table uses. Unused
+  substitutes get a row with `started = 0`, `on_minute = null`, so "in the squad, did not play" is
+  distinguishable from "not selected" (no row).
 - **Written at resolution, in the commit transaction.** For the user's fixture, the rows are folded
   from the same events appended as `MatchTimelineRecorded`. For each AI fixture, `resolveFixtureScore`
   keeps the events it already simulates long enough to fold them, then discards them as today. Both go
@@ -40,9 +42,11 @@ of the players he scouts or buys.
 - **Only squad-bearing fixtures.** A fixture settled by squad-strength collapse (a `results-only`
   club involved) has no engine timeline and gets no rows; the Form tab shows that fixture as "No
   player record", never as "Not selected".
-- **Lifecycle.** Rows persist across seasons; nothing prunes them in this effort. The table joins the
-  player-keyed tables deleted by `discardSquadsForClubs`, whose doc comment counts them ("six tables")
-  and must become seven.
+- **Lifecycle.** Lines persist across seasons, and are deleted only when the fixture that carries them
+  is pruned (the retention that drops a rival competition's past fixtures) or when a player's squad is
+  discarded as his club crosses into a `results-only` tier. The table joins the player-keyed tables
+  deleted by `discardSquadsForClubs`, whose doc comment counts them ("six tables") and must become
+  seven.
 - **Save schema.** A new table changes the DDL-derived `SAVE_SCHEMA_VERSION`, so existing saves are
   refused with `SaveSchemaMismatchError` (saves are disposable during development, group-g ticket 32).
   No backfill: history begins with the first Matchday of a new save.

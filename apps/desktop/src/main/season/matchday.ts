@@ -25,6 +25,7 @@ import { loadSquadPlayers } from "../club/squad.js";
 import { loadPersistedTactic } from "../club/tactics.js";
 import { readGenerationManifest } from "../world/worldGeneration.js";
 import { positionalRatingSelectList, positionalRatingsOf, type PositionalRatingRow } from "../world/positionalRatingColumns.js";
+import { recordPlayerMatchLines } from "./playerMatchLines.js";
 
 /** Raised when `simulateMatch` returns without a `FullTimeWhistle` event — an invariant of the
  * engine's match simulation. */
@@ -252,6 +253,9 @@ export const resolveFixtureScore = (
   worldSeed: number,
   /** Knockout ties must produce a winner; a league fixture may draw. */
   mustProduceWinner: boolean,
+  /** The fixture's own row identity and date, so a resolved line carries them (ticket 18). */
+  fixtureId: number,
+  date: string,
 ) =>
   Effect.gen(function* () {
     const homeSquad = yield* loadSquadPlayers(homeClubId);
@@ -349,14 +353,35 @@ export const resolveFixtureScore = (
     // A shootout between two squad-bearing clubs is still decided outside the minute loop, from
     // the same collapse the depth boundary uses — the engine has no shootout to run.
     const score = { homeGoals: fullTime.homeScore, awayGoals: fullTime.awayScore };
-    if (!mustProduceWinner || score.homeGoals !== score.awayGoals) {
-      return { ...score, homePenalties: null, awayPenalties: null } satisfies FixtureScore;
-    }
-    return settle(
-      score,
-      yield* clubStrength(homeClubId, homeSquad, seasonNumber, worldSeed),
-      yield* clubStrength(awayClubId, awaySquad, seasonNumber, worldSeed),
+    const final: FixtureScore =
+      !mustProduceWinner || score.homeGoals !== score.awayGoals
+        ? { ...score, homePenalties: null, awayPenalties: null }
+        : settle(
+            score,
+            yield* clubStrength(homeClubId, homeSquad, seasonNumber, worldSeed),
+            yield* clubStrength(awayClubId, awaySquad, seasonNumber, worldSeed),
+          );
+
+    // The line is written with the result, in the caller's transaction, so a squad-bearing fixture
+    // never has a score without its per-player account (ticket 18).
+    yield* recordPlayerMatchLines(
+      {
+        fixtureId,
+        seasonNumber,
+        competitionId,
+        date,
+        homeClubId,
+        awayClubId,
+        homeGoals: final.homeGoals,
+        awayGoals: final.awayGoals,
+        homePenalties: final.homePenalties,
+        awayPenalties: final.awayPenalties,
+      },
+      home,
+      away,
+      events,
     );
+    return final;
   });
 
 /**
@@ -369,7 +394,7 @@ export const resolveFixtureScore = (
  * human ever saw them. If results-only players ever become visible, this becomes user-visible data
  * loss and the depth decision has to be reopened rather than patched.
  *
- * The six tables below are every table keyed on a player. A seventh added later and not added here
+ * The seven tables below are every table keyed on a player. An eighth added later and not added here
  * would fail loudly on the foreign key rather than silently orphan rows.
  */
 export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
@@ -391,6 +416,7 @@ export const discardSquadsForClubs = (clubIds: ReadonlyArray<string>) =>
     yield* sql`DELETE FROM retraining_targets WHERE ${doomed}`;
     yield* sql`DELETE FROM contracts WHERE ${doomed}`;
     yield* sql`DELETE FROM player_fitness WHERE ${doomed}`;
+    yield* sql`DELETE FROM player_match_lines WHERE ${doomed}`;
     // Slots go by club, not by player. A transfer can leave a club's tactic naming someone who has
     // since moved on, and deleting only the slots whose player is doomed would leave that row
     // behind to block the tactic it belongs to.
@@ -432,8 +458,10 @@ export const resolveOtherFixturesOn = (date: string, exceptFixtureId: FixtureId)
       competitionId: string;
       round: number;
       kind: string;
+      date: string;
     }>`SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
-              f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round, c.kind
+              f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round, c.kind,
+              f.scheduled_date as "date"
        FROM fixtures f JOIN competitions c ON c.id = f.competition_id
        WHERE f.played = 0 AND f.scheduled_date <= ${date} AND f.id != ${exceptFixtureId}
        ORDER BY f.scheduled_date ASC, f.id ASC`;
@@ -447,6 +475,8 @@ export const resolveOtherFixturesOn = (date: string, exceptFixtureId: FixtureId)
         fixture.round,
         manifest.worldSeed,
         fixture.kind === "cup",
+        fixture.id,
+        fixture.date,
       );
       yield* sql`UPDATE fixtures SET home_goals = ${score.homeGoals}, away_goals = ${score.awayGoals},
           home_penalties = ${score.homePenalties}, away_penalties = ${score.awayPenalties}, played = 1

@@ -42,6 +42,8 @@ it.effect("reads a past season's summary from the frozen rows, not from its fixt
       Effect.gen(function* () {
         const sql = yield* SqlClient;
         yield* sql`DELETE FROM events WHERE stream_type = 'match'`;
+        // A player's line is pruned with the fixture it describes, as the rollover does.
+        yield* sql`DELETE FROM player_match_lines WHERE fixture_id IN (SELECT id FROM fixtures WHERE season_number = 1)`;
         yield* sql`DELETE FROM fixtures WHERE season_number = 1`;
       }),
     );

@@ -33,7 +33,7 @@ import {
   seasonStartYear,
   seasonWindows,
 } from "@cm-clone/shared";
-import { MATCH_STREAM_TYPE } from "@cm-clone/game-engine";
+import { MATCH_STREAM_TYPE, matchStartedOf } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadSquadPlayers } from "../club/squad.js";
@@ -48,6 +48,7 @@ import { withAdvanceLock } from "./advanceLock.js";
 import { loadSeasonRow, type SeasonPhase } from "./currentSeason.js";
 import { appendStreamEvents, loadStreamEvents, nextStreamSeq, withExistingSave } from "./decider.js";
 import { recordMatchdayConditions, resolveOtherFixturesOn } from "./matchday.js";
+import { recordPlayerMatchLines } from "./playerMatchLines.js";
 import { stepCalendarTo } from "./resolveThrough.js";
 import { STREAM_TYPE } from "./start.js";
 
@@ -180,6 +181,28 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
     // whatever engine is current then.
     const timelineSeq = yield* nextStreamSeq(MATCH_STREAM_TYPE, matchId);
     yield* appendStreamEvents(MATCH_STREAM_TYPE, matchId, timelineSeq, [timelineRecorded(derived.events)]);
+
+    // The human's per-player lines, folded from the same events, in the same transaction as the
+    // result: the Form tab reads these rather than the timeline, so a Matchday never has a result
+    // without its lines (ticket 18).
+    const started = matchStartedOf(stream);
+    yield* recordPlayerMatchLines(
+      {
+        fixtureId,
+        seasonNumber: fixture.seasonNumber,
+        competitionId: fixture.competitionId,
+        date: fixture.date,
+        homeClubId: fixture.homeClubId,
+        awayClubId: fixture.awayClubId,
+        homeGoals: fullTime.homeScore,
+        awayGoals: fullTime.awayScore,
+        homePenalties,
+        awayPenalties,
+      },
+      started.homeSetup,
+      started.awaySetup,
+      derived.events,
+    );
 
     // The rest of the Matchday, in the same transaction as the human's own result. The League table
     // is never allowed to show a Matchday the player has played and the division has not, or the

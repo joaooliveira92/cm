@@ -33,6 +33,7 @@ describe("generated DDL", () => {
         "manager_status",
         "club_budgets",
         "player_fitness",
+        "player_match_lines",
         "contracts",
         "training_focus",
         "retraining_targets",

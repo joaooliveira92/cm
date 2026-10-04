@@ -13,10 +13,10 @@ failure aborts the transaction like any other.
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] After one commit, every squad member of every squad-bearing fixture has exactly one line; unused substitutes have started false and no on-minute.
-- [ ] The user's fixture's lines equal the fold of its stored timeline; an AI fixture's lines equal the fold of a same-seed re-simulation.
-- [ ] A failure inside the commit leaves neither results nor lines.
-- [ ] Squad discard deletes the lines, and its comment counts seven tables.
-- [ ] The DB schema gate passes with the generated migration; commit duration is measured before and after and recorded in the commit body.
+- [x] After one commit, every squad member of every squad-bearing fixture has exactly one line; unused substitutes have started false and no on-minute.
+- [x] The user's fixture's lines equal the fold of its stored timeline; an AI fixture's lines equal the fold of a same-seed re-simulation.
+- [x] A failure inside the commit leaves neither results nor lines.
+- [x] Squad discard deletes the lines, and its comment counts seven tables.
+- [x] The DB schema gate passes with the generated migration; commit duration is measured before and after and recorded in the commit body.

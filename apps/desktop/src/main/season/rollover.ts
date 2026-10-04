@@ -161,6 +161,8 @@ const pruneConcludedSeason = (concludedSeason: number) =>
     // the ids are the same values rendered as text.
     const streamIds = doomed.map((row) => String(row.id));
     yield* sql`DELETE FROM events WHERE stream_type = 'match' AND ${sql.in("stream_id", streamIds)}`;
+    // A player's line describes a fixture, so it is pruned exactly when the fixture is.
+    yield* sql`DELETE FROM player_match_lines WHERE ${sql.in("fixture_id", doomed.map((row) => row.id))}`;
     yield* sql`DELETE FROM fixtures WHERE ${sql.in("id", doomed.map((row) => row.id))}`;
   });
 

@@ -28,9 +28,10 @@ const resolveDueFixtures = (throughDate: string) =>
         round: number;
         depth: string;
         kind: string;
+        date: string;
       }>`SELECT f.id, f.home_club_id as "homeClubId", f.away_club_id as "awayClubId",
                 f.season_number as "seasonNumber", f.competition_id as "competitionId", f.round,
-                c.depth, c.kind
+                c.depth, c.kind, f.scheduled_date as "date"
          FROM fixtures f
          JOIN competitions c ON c.id = f.competition_id
          WHERE f.played = 0 AND f.scheduled_date <= ${throughDate}
@@ -46,6 +47,8 @@ const resolveDueFixtures = (throughDate: string) =>
           fixture.round,
           manifest.worldSeed,
           fixture.kind === "cup",
+          fixture.id,
+          fixture.date,
         );
         yield* sql`UPDATE fixtures SET home_goals = ${score.homeGoals}, away_goals = ${score.awayGoals},
             home_penalties = ${score.homePenalties}, away_penalties = ${score.awayPenalties}, played = 1
