@@ -157,7 +157,7 @@ describe("ContextTabs — match context (§7–§9)", () => {
   it("renders live-match tabs for /live-match/:matchId route", async () => {
     mountAtPath(["live-match", "301"], undefined, { matchTabVisibility: { "live-table": true } });
     const nav = await screen.findByRole("navigation", { name: "Live Match tabs" });
-    const expected = ["Match", "Commentary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Tactics", "Opposition", "Live Table"];
+    const expected = ["Match", "Commentary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Latest Scores", "Tactics", "Opposition", "Live Table"];
     for (const label of expected) {
       expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
     }
@@ -166,10 +166,20 @@ describe("ContextTabs — match context (§7–§9)", () => {
   it("renders post-match tabs for /post-match/:matchId route", async () => {
     mountAtPath(["post-match", "401"], undefined, { matchTabVisibility: { "table": true } });
     const nav = await screen.findByRole("navigation", { name: "Post-match tabs" });
-    const expected = ["Summary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Commentary", "Other Results", "Table"];
+    const expected = ["Summary", "Statistics", "Home Stats", "Away Stats", "Player Ratings", "Report", "Commentary", "Latest Scores", "Table"];
     for (const label of expected) {
       expect(within(nav).getByRole("tab", { name: label })).toBeTruthy();
     }
+  });
+
+  it("shows Report only post-match, never live or pre-match", async () => {
+    mountAtPath(["live-match", "301"]);
+    const live = await screen.findByRole("navigation", { name: "Live Match tabs" });
+    expect(within(live).queryByRole("tab", { name: "Report" })).toBeNull();
+    cleanup();
+    mountAtPath(["pre-match", "201"]);
+    const pre = await screen.findByRole("navigation", { name: "Pre-match tabs" });
+    expect(within(pre).queryByRole("tab", { name: "Report" })).toBeNull();
   });
 
   it("marks the correct pre-match tab active from the route", async () => {

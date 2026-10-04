@@ -134,3 +134,29 @@ describe("Match Report (Screen 103)", () => {
     expect(calls).toHaveLength(2);
   });
 });
+
+/** The post-match Report tab carries no match id; the save-scoped read resolves the match itself. */
+const mountLatest = (impl: (method: string, payload: Record<string, unknown>) => unknown) => {
+  const calls: Array<{ method: string; payload: Record<string, unknown> }> = [];
+  (window as unknown as { cmClone: { call: unknown } }).cmClone = {
+    call: async (method: string, payload: Record<string, unknown>) => {
+      calls.push({ method, payload });
+      return impl(method, payload);
+    },
+  };
+  render(<MatchReportScreen saveId={SaveId.make("s1")} />);
+  return calls;
+};
+
+describe("Match Report — the save-scoped post-match Report tab", () => {
+  it("reads the match just played when no match id is supplied", async () => {
+    const calls = mountLatest(() => ({ _tag: "Success", value: report() }));
+    expect(await screen.findByRole("heading", { name: "Home FC 2 - 1 Away FC" })).toBeTruthy();
+    expect(calls).toEqual([{ method: "getLatestMatchReport", payload: { saveId: "s1" } }]);
+  });
+
+  it("says no report is available when the club has played no match", async () => {
+    mountLatest(() => ({ _tag: "Success", value: null }));
+    expect(await screen.findByText("No match report is available yet.")).toBeTruthy();
+  });
+});

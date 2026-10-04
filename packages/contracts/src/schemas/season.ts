@@ -104,6 +104,47 @@ export class FixturesView extends Schema.Class<FixturesView>("FixturesView")({
   fixtures: Schema.Array(FixtureView),
 }) {}
 
+/**
+ * One other Fixture on the user's Matchday, as Latest Scores lists it.
+ *
+ * Carries the shootout penalties beside the score for the reason `PostMatchSummaryView` does: a
+ * drawn cup tie's penalties are part of how the tie was decided, and `1-1` alone hides the winner.
+ */
+export class LatestScoreFixtureView extends Schema.Class<LatestScoreFixtureView>("LatestScoreFixtureView")({
+  id: FixtureId,
+  homeClubId: ClubId,
+  homeClubName: Schema.String,
+  awayClubId: ClubId,
+  awayClubName: Schema.String,
+  homeGoals: Schema.NullOr(Schema.Finite),
+  awayGoals: Schema.NullOr(Schema.Finite),
+  /** Shootout score, `null` unless a drawn cup tie went to penalties (paired by the schema's CHECK). */
+  homePenalties: Schema.NullOr(Schema.Finite),
+  awayPenalties: Schema.NullOr(Schema.Finite),
+}) {}
+
+/** One competition's block of the Latest Scores list. */
+export class LatestScoresGroupView extends Schema.Class<LatestScoresGroupView>("LatestScoresGroupView")({
+  competitionId: CompetitionId,
+  competitionName: Schema.String,
+  fixtures: Schema.Array(LatestScoreFixtureView),
+}) {}
+
+/**
+ * Latest Scores: every other Fixture on the user's Matchday date, grouped by competition.
+ *
+ * `resolved` is whether the user's own result has been accepted. Until then the sibling fixtures are
+ * unresolved (their scores are NULL in `fixtures`), so the read nulls every score rather than trusting
+ * each row's own `played` flag, and the screen captions "Results come in at full time." Scores appear
+ * only once the Matchday's commit transaction has resolved the whole date.
+ */
+export class LatestScoresView extends Schema.Class<LatestScoresView>("LatestScoresView")({
+  /** ISO `YYYY-MM-DD`: the user's fixture date these fixtures share. */
+  date: Schema.String,
+  resolved: Schema.Boolean,
+  groups: Schema.Array(LatestScoresGroupView),
+}) {}
+
 /** One League Table row — points → goal difference → goals scored tie-break order (ADR-0004),
  * no head-to-head. */
 export class LeagueTableRow extends Schema.Class<LeagueTableRow>("LeagueTableRow")({

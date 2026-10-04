@@ -6,12 +6,13 @@ import { Button } from "../../components/ui/button.js";
 import { FOCUS_RING } from "../../focus.js";
 import { formatMinute } from "../../format.js";
 import { MatchStatsView } from "../MatchStatsView.js";
-import { getMatchReport } from "../../rpc.js";
+import { getLatestMatchReport, getMatchReport } from "../../rpc.js";
 import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 
 type ReportState =
   | { readonly _tag: "loading" }
   | { readonly _tag: "notComplete" }
+  | { readonly _tag: "empty" }
   | { readonly _tag: "failed"; readonly message: string }
   | { readonly _tag: "ready"; readonly report: MatchReportView };
 
@@ -49,18 +50,35 @@ const eventText = (event: MatchReportEventView, clubName: string): string => {
  * goalscorers, every goal, card, injury and substitution in match order, and the full-match team
  * statistics. Everything is read from `getMatchReport`; the screen composes sentences and computes
  * nothing about the match.
+ *
+ * `matchId` is a named match when the report was reached from a link that carries one. The post-match
+ * Report tab carries none — the match session is gone once the result is committed — so the screen
+ * omits it and the save-scoped `getLatestMatchReport` resolves the match just played.
  */
-export const MatchReportScreen = ({ saveId, matchId }: { readonly saveId: SaveId; readonly matchId: MatchId }) => {
+export const MatchReportScreen = ({
+  saveId,
+  matchId,
+}: {
+  readonly saveId: SaveId;
+  readonly matchId?: MatchId | null;
+}) => {
   const [state, setState] = useState<ReportState>({ _tag: "loading" });
 
   const load = useCallback(async () => {
     setState({ _tag: "loading" });
-    const outcome = await Effect.runPromise(getMatchReport({ saveId, matchId }).pipe(Effect.result));
+    const named = matchId !== undefined && matchId !== null;
+    const read: Effect.Effect<
+      MatchReportView | null,
+      RpcClientError<"getMatchReport"> | RpcClientError<"getLatestMatchReport">
+    > = named ? getMatchReport({ saveId, matchId }) : getLatestMatchReport({ saveId });
+    const outcome = await Effect.runPromise(read.pipe(Effect.result));
     if (Result.isSuccess(outcome)) {
-      setState({ _tag: "ready", report: outcome.success });
+      setState(
+        outcome.success === null ? { _tag: "empty" } : { _tag: "ready", report: outcome.success },
+      );
       return;
     }
-    const failure = outcome.failure as RpcClientError<"getMatchReport">;
+    const failure = outcome.failure;
     setState(
       failure._tag === "RemoteFailure" && failure.error._tag === "MatchNotCompleteError"
         ? { _tag: "notComplete" }
@@ -83,6 +101,9 @@ export const MatchReportScreen = ({ saveId, matchId }: { readonly saveId: SaveId
       {state._tag === "loading" && <p className="text-text-secondary italic">Loading the match report...</p>}
       {state._tag === "notComplete" && (
         <p className="text-text-secondary">The match report is available once the result has been accepted.</p>
+      )}
+      {state._tag === "empty" && (
+        <p className="text-text-secondary">No match report is available yet.</p>
       )}
       {state._tag === "failed" && (
         <Alert variant="destructive">

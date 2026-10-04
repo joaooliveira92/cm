@@ -194,6 +194,8 @@ const matchRouteToTabId = (routeSegment: string): string => {
     "match-match-tactics": "tactics",
     "match-substitutions": "substitutions",
     "match-latest-scores": "other-results",
+    "match-report": "report",
+    "match-report-latest": "report",
     "match-live-table": "live-table",
     "match-preview": "overview",
     "match-home-team": "opposition",

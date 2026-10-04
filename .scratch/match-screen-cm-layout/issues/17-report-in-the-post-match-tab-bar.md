@@ -6,7 +6,7 @@ Defined in [05](05-one-tab-bar-for-two-tab-rows.md).
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Report appears in the post-match tab bar and opens the report for the current match.
-- [ ] The tab is absent live and pre-match.
+- [x] Report appears in the post-match tab bar and opens the report for the current match.
+- [x] The tab is absent live and pre-match.

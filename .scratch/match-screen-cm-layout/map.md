@@ -69,6 +69,9 @@ question. Plan only: no code in this effort.
 - 2026-10-04: ticket 20 resolved — the Form season block (League/Cup/Continental/Overall) and Player
   of the Match ship; Player of the Match is marked on the post-match Ratings tab and joins
   `CONTEXT.md`. Frontier: 16, 17. This unblocks match-engine-detail ticket 18.
+- 2026-10-04: tickets 16 and 17 resolved — Latest Scores ships (unresolved before acceptance with no
+  score, then the day's other results grouped by competition with cup penalties) and Report joins
+  the post-match tab bar, opening the save-scoped report for the match just played. Frontier: empty.
 
 ## Not yet specified
 

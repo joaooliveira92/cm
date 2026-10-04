@@ -51,6 +51,7 @@ import {
   SquadDevelopmentView,
   CollidingOverrideError,
   FixturesView,
+  LatestScoresView,
   InsufficientTransferBudgetError,
   InvalidBidActionError,
   InvalidBindingShapeError,
@@ -387,6 +388,14 @@ commitCareer: {
     success: FixturesView,
     error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
   },
+  /** Latest Scores: the other fixtures on the user's Matchday date, grouped by competition, live
+   *  (unresolved, no scores) and post-match (resolved). Save-scoped because the route names no match;
+   *  the handler resolves the user's own fixture date itself. */
+  getLatestScores: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: LatestScoresView,
+    error: Schema.Union([SaveNotFoundError, PendingFixtureIntegrityError]),
+  },
   advanceCalendar: {
     payload: Schema.Struct({ saveId: SaveId }),
     success: AdvanceCalendarResult,
@@ -532,6 +541,14 @@ commitCareer: {
   getMatchReport: {
     payload: Schema.Struct({ saveId: SaveId, matchId: MatchId }),
     success: MatchReportView,
+    error: Schema.Union([SaveNotFoundError, MatchNotFoundError, MatchNotCompleteError]),
+  },
+  /** The Match Report of the controlled club's most recently played Fixture, or `null` before it has
+   *  played one. The post-match Report tab names no match, so this read resolves it; a still-uncommitted
+   *  match fails with `MatchNotCompleteError` exactly as `getMatchReport` does. */
+  getLatestMatchReport: {
+    payload: Schema.Struct({ saveId: SaveId }),
+    success: Schema.NullOr(MatchReportView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError, MatchNotCompleteError]),
   },
   /** Ticket 14: appends a mid-match `ChangeTactics`/`MakeSubstitution` command to the Match

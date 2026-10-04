@@ -548,6 +548,9 @@ const matchReportRoute = createRoute({
   path: "match-report/$matchId",
   component: () => <CareerMatchChildView screenId="matchReport" Screen={MatchReportScreen} />,
 });
+/** The post-match Report tab's save-scoped entry: no match id in the path, the read resolves the
+ *  match just played. */
+const matchLatestReportRoute = defineCareerChild("match-report-latest", "matchReport", MatchReportScreen);
 const matchPreviewRoute = defineCareerChild("match-preview", "matchPreview", MatchPreviewScreen);
 
 // ---------------------------------------------------------------------------
@@ -678,6 +681,7 @@ managerRoute.addChildren([
       matchCommentaryRoute,
       matchReplaysRoute,
       matchReportRoute,
+      matchLatestReportRoute,
       matchPreviewRoute,
     ]),
   ]),

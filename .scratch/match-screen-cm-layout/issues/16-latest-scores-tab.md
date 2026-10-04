@@ -8,8 +8,8 @@ latest-scores placeholder. Defined in [07](07-latest-scores-during-a-live-match.
 
 **Blocked by:** None (can start immediately)
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Before acceptance no score is shown for any other fixture; after acceptance every one is.
-- [ ] A drawn cup tie shows its penalties.
-- [ ] Both tab bars label the tab "Latest Scores".
+- [x] Before acceptance no score is shown for any other fixture; after acceptance every one is.
+- [x] A drawn cup tie shows its penalties.
+- [x] Both tab bars label the tab "Latest Scores".

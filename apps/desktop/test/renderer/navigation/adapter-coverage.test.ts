@@ -110,6 +110,7 @@ const CAREER_DESTINATIONS: SamplesOf<CareerDestination> = {
   matchHomeStats: { type: "matchHomeStats", saveId },
   matchAwayStats: { type: "matchAwayStats", saveId },
   matchReport: { type: "matchReport", saveId, matchId },
+  matchLatestReport: { type: "matchLatestReport", saveId },
   matchCommentary: { type: "matchCommentary", saveId },
   matchLatestScores: { type: "matchLatestScores", saveId },
   matchLiveTable: { type: "matchLiveTable", saveId },

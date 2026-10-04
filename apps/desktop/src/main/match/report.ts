@@ -18,10 +18,10 @@ import {
 import { MATCH_STREAM_TYPE, substitutionLedger, type MatchEvent, type SubstitutionEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave } from "../season/decider.js";
+import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
 import { playerNames } from "./playerNames.js";
-import { matchStatisticsView } from "./statistics.js";
+import { lastPlayedMatchId, matchStatisticsView } from "./statistics.js";
 import { matchEventsOf } from "./timeline.js";
 
 type ReportedEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" | "Substitution" }>;
@@ -95,38 +95,61 @@ const isCommitted = (matchId: MatchId) =>
     return rows[0]?.played === 1;
   });
 
+/** The report body over an already-loaded stream and its events. Shared by the named-match read and
+ *  the save-scoped "the match just played" read so both compose the same view. */
+const reportOf = (matchId: MatchId, stream: ReadonlyArray<StreamEvent>) =>
+  Effect.gen(function* () {
+    const events = yield* matchEventsOf(stream);
+    const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
+    const reported = events.filter(isReported);
+    const clubName = yield* displayNames;
+    const playerName = yield* playerNames(reported.flatMap(playersOf));
+
+    let halfTime = { home: 0, away: 0 };
+    let final = { home: 0, away: 0 };
+    for (const event of events) {
+      if (event._tag === "HalfTimeReached") halfTime = { home: event.homeScore, away: event.awayScore };
+      if (event._tag === "Goal" || event._tag === "FullTimeWhistle") final = { home: event.homeScore, away: event.awayScore };
+    }
+
+    return new MatchReportView({
+      matchId,
+      homeClubId: started.homeClubId,
+      homeClubName: clubName(started.homeClubId),
+      awayClubId: started.awayClubId,
+      awayClubName: clubName(started.awayClubId),
+      homeScore: final.home,
+      awayScore: final.away,
+      halfTimeHomeScore: halfTime.home,
+      halfTimeAwayScore: halfTime.away,
+      events: reportEvents(events, substitutionLedger(stream, events).standIns, playerName),
+      statistics: matchStatisticsView(matchId, stream, events, clubName, null),
+    });
+  });
+
 export const getMatchReport = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
       if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
       if (!(yield* isCommitted(matchId))) return yield* new MatchNotCompleteError({ matchId });
+      return yield* reportOf(matchId, stream);
+    }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
+  );
 
-      const events = yield* matchEventsOf(stream);
-      const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
-      const reported = events.filter(isReported);
-      const clubName = yield* displayNames;
-      const playerName = yield* playerNames(reported.flatMap(playersOf));
-
-      let halfTime = { home: 0, away: 0 };
-      let final = { home: 0, away: 0 };
-      for (const event of events) {
-        if (event._tag === "HalfTimeReached") halfTime = { home: event.homeScore, away: event.awayScore };
-        if (event._tag === "Goal" || event._tag === "FullTimeWhistle") final = { home: event.homeScore, away: event.awayScore };
-      }
-
-      return new MatchReportView({
-        matchId,
-        homeClubId: started.homeClubId,
-        homeClubName: clubName(started.homeClubId),
-        awayClubId: started.awayClubId,
-        awayClubName: clubName(started.awayClubId),
-        homeScore: final.home,
-        awayScore: final.away,
-        halfTimeHomeScore: halfTime.home,
-        halfTimeAwayScore: halfTime.away,
-        events: reportEvents(events, substitutionLedger(stream, events).standIns, playerName),
-        statistics: matchStatisticsView(matchId, stream, events, clubName, null),
-      });
+/**
+ * The Match Report for the controlled club's most recently played Fixture, or `null` before it has
+ * played one. The post-match Report tab is save-scoped and names no match, so the read resolves the
+ * match itself — the same fallback `getMatchStatistics` and friends use.
+ */
+export const getLatestMatchReport = (savesDir: string, saveId: SaveId) =>
+  withExistingSave(savesDir, saveId, (filename) =>
+    Effect.gen(function* () {
+      const matchId = yield* lastPlayedMatchId;
+      if (matchId === null) return null;
+      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
+      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+      if (!(yield* isCommitted(matchId))) return yield* new MatchNotCompleteError({ matchId });
+      return yield* reportOf(matchId, stream);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

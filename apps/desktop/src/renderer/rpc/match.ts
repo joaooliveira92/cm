@@ -27,6 +27,12 @@ export const getPostMatchSummary = (input: RpcPayload<"getPostMatchSummary">): R
 export const getMatchReport = (input: RpcPayload<"getMatchReport">): RpcRead<"getMatchReport"> =>
   call("getMatchReport", input);
 
+export const getLatestMatchReport = (input: RpcPayload<"getLatestMatchReport">): RpcRead<"getLatestMatchReport"> =>
+  call("getLatestMatchReport", input);
+
+export const getLatestScores = (input: RpcPayload<"getLatestScores">): RpcRead<"getLatestScores"> =>
+  call("getLatestScores", input);
+
 export const getMatchStatistics = (input: RpcPayload<"getMatchStatistics">): RpcRead<"getMatchStatistics"> =>
   call("getMatchStatistics", input);
 

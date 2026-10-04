@@ -65,6 +65,8 @@ import {
 } from "../match/commentaryFile.js";
 import {
   getAwaitingMatch,
+  getLatestMatchReport,
+  getLatestScores,
   getMatchOverview,
   getMatchPlayerStats,
   getMatchRatings,
@@ -355,6 +357,12 @@ const handlers: { readonly [M in AppRpcMethod]: Handler<M> } = {
   ),
   getMatchReport: handle("getMatchReport", ({ saveId, matchId }, ctx) =>
     getMatchReport(ctx.savesDir, saveId, matchId),
+  ),
+  getLatestMatchReport: handle("getLatestMatchReport", ({ saveId }, ctx) =>
+    getLatestMatchReport(ctx.savesDir, saveId),
+  ),
+  getLatestScores: handle("getLatestScores", ({ saveId }, ctx) =>
+    getLatestScores(ctx.savesDir, saveId),
   ),
   getMatchPlayerStats: handle("getMatchPlayerStats", ({ saveId, matchId, revealedEvents }, ctx) =>
     getMatchPlayerStats(ctx.savesDir, saveId, matchId, revealedEvents),

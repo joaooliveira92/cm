@@ -14,6 +14,8 @@
 export { submitMatchCommand } from "./commands.js";
 export { getPostMatchSummary } from "./postMatchSummary.js";
 export { getMatchReport, reportEvents } from "./report.js";
+export { getLatestMatchReport } from "./report.js";
+export { getLatestScores, latestScoresFromRows } from "./latestScores.js";
 export { aggregateMatchStatistics, getMatchStatistics } from "./statistics.js";
 export { getMatchRatings } from "./ratings.js";
 export { getMatchPlayerStats } from "./playerStats.js";
