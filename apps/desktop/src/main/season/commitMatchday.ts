@@ -185,7 +185,7 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
     // The human's per-player lines, folded from the same events, in the same transaction as the
     // result: the Form tab reads these rather than the timeline, so a Matchday never has a result
     // without its lines (ticket 18).
-    const started = matchStartedOf(stream);
+    const kickoff = matchStartedOf(stream);
     yield* recordPlayerMatchLines(
       {
         fixtureId,
@@ -199,8 +199,8 @@ const runCommit = (saveId: SaveId, fixtureId: FixtureId) =>
         homePenalties,
         awayPenalties,
       },
-      started.homeSetup,
-      started.awaySetup,
+      kickoff.homeSetup,
+      kickoff.awaySetup,
       derived.events,
     );
 

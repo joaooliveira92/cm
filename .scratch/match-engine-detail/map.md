@@ -6,9 +6,11 @@ Label: `wayfinder:map`
 > left to decide. [Spec published](spec.md); implementation tickets 12–19 sliced under
 > [issues/](issues/). Tickets 12–16 and 19 are resolved (the fold, rating, stored-timeline decode,
 > silent commentary, statistics read and docs all shipped). 17 and 18 remain: the match-screen
-> line-table ticket they extend shipped 2026-10-04, so 17 is now unblocked; 18 is still blocked on
-> the Form tickets ([match-screen 19](../match-screen-cm-layout/issues/19-form-tab-recent-games.md)
-> and [20](../match-screen-cm-layout/issues/20-form-season-block-and-player-of-the-match.md)).
+> line-table ticket they extend shipped 2026-10-04, so 17 is unblocked and its nullable count
+> columns already went into that table under its own "add them to match-screen 18 if it has not
+> shipped" rule, leaving only its read-side check; 18 is still blocked on the Form tickets
+> ([match-screen 19](../match-screen-cm-layout/issues/19-form-tab-recent-games.md) and
+> [20](../match-screen-cm-layout/issues/20-form-season-block-and-player-of-the-match.md)).
 
 ## Destination
 

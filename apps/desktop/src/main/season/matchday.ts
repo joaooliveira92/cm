@@ -174,7 +174,8 @@ export const recordMatchdayConditions = (
 
 /**
  * Resolves one un-watched Fixture: recovers both clubs' Conditions (ticket 10), loads squads and
- * Tactics, simulates, and returns the full-time score plus the fitness write-backs. The match seed
+ * Tactics, simulates, writes both squads' player match lines (ticket 18), and returns the full-time
+ * score plus the fitness write-backs. The match seed
  * is **derived, never drawn**: a pure hash of the save's world seed with the Fixture's own stored
  * identity — the season, the Matchday (this schema's Round), and the two clubs — so a regenerated
  * world reproduces the same clubs and the same fixture list and therefore plays this Fixture to the
