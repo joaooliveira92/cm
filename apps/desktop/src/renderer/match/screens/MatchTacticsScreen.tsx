@@ -29,10 +29,27 @@ export const validateLiveTactic = (tactic: Tactic, ready: LiveMatchReady): strin
  *  normal save flow and validated against the revealed pitch. */
 export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const commands = useLiveMatchCommands(saveId);
+  // The draft lives here, not in the ready-only child, so it survives a
+  // transient non-ready view the way it did before the frame gated its children.
+  const [draftTactic, setDraftTactic] = useState<Tactic | null>(null);
+  const [undoStack, setUndoStack] = useState<Array<Tactic>>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
 
   return (
     <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands} fill>
-      {(ready) => <MatchTacticsReady saveId={saveId} ready={ready} commands={commands} />}
+      {(ready) => (
+        <MatchTacticsReady
+          saveId={saveId}
+          ready={ready}
+          commands={commands}
+          draftTactic={draftTactic}
+          setDraftTactic={setDraftTactic}
+          undoStack={undoStack}
+          setUndoStack={setUndoStack}
+          validationError={validationError}
+          setValidationError={setValidationError}
+        />
+      )}
     </LiveCommandFrame>
   );
 };
@@ -40,20 +57,29 @@ export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId })
 /**
  * The command surface's body, its own component so the callbacks are hooks at
  * the top level of a function component rather than inside the frame's render
- * prop.
+ * prop. The draft it edits is owned by the parent.
  */
 const MatchTacticsReady = ({
   saveId,
   ready,
   commands,
+  draftTactic,
+  setDraftTactic,
+  undoStack,
+  setUndoStack,
+  validationError,
+  setValidationError,
 }: {
   readonly saveId: SaveId;
   readonly ready: LiveMatchReady;
   readonly commands: LiveMatchCommands;
+  readonly draftTactic: Tactic | null;
+  readonly setDraftTactic: (tactic: Tactic | null) => void;
+  readonly undoStack: ReadonlyArray<Tactic>;
+  readonly setUndoStack: (stack: Tactic[]) => void;
+  readonly validationError: string | null;
+  readonly setValidationError: (error: string | null) => void;
 }) => {
-  const [draftTactic, setDraftTactic] = useState<Tactic | null>(null);
-  const [undoStack, setUndoStack] = useState<Array<Tactic>>([]);
-  const [validationError, setValidationError] = useState<string | null>(null);
   const tactic = draftTactic ?? ready.tactic;
 
   const onEdit = useCallback(
