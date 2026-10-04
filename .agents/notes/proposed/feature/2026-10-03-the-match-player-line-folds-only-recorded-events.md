@@ -13,12 +13,13 @@ Both stay active; neither is archived by the other.
 
 The CM 03/04 per-player match table (the *Club Stats* tab, also reused by the player *Form* tab) has
 twenty columns: No., card, Inf., Pas, Cmp, Key, Tck, Won, Hea, Won, Key (headers), Int, Run, Off, Fou,
-Fld, Ast, She, Sat, Con, Rat, Gls. The game's Match Event stream now carries more than when the
-statistics rule was set: `Foul` names the fouling defender, `Offside` the flagged attacker, `KeyPass`
-the chance creator, every `Goal`/`ShotOnTarget`/`ShotMissed` names a creator in `assistPlayerId` and
-the goalkeeper in `keeperId`, and `Corner`/`FreeKick`/`Penalty` name the taker. There is still no pass,
-tackle, header or interception event, and `Foul` does not name the player fouled. The table needs a
-fixed column set that a fold over the stream can fill honestly.
+Fld, Ast, She, Sat, Con, Rat, Gls. The game's Match Event stream carries: `Foul` names the fouling
+defender and, since map ticket 12, the player fouled; `Tackle` and `Interception` name the credited
+defender; `HeaderDuel` names the winner and loser; `RunWithBall` names a creator; `Offside` the
+flagged attacker, `KeyPass` the chance creator, every `Goal`/`ShotOnTarget`/`ShotMissed` names a
+creator in `assistPlayerId` and the goalkeeper in `keeperId`, and `Corner`/`FreeKick`/`Penalty` name
+the taker. There is still no pass event. The table needs a fixed column set that a fold over the
+stream can fill honestly.
 
 ## Proposal
 
@@ -36,8 +37,15 @@ will all call it, so the three can never disagree.
 | C. | `YellowCard`, `RedCard` | A red card glyph wins over a yellow; text alternative "Booked" / "Sent off". |
 | Inf. | `Substitution` | `off 53` when the player went off, `on 53` when he came on, both when both happened; a goalkeeper stand-in move is not a substitution and writes nothing. |
 | Key | `KeyPass` | Counted for the creator, except when the creator is the finisher of the chance event the `KeyPass` follows: a self-created chance is not a key pass. |
+| Tck | `Tackle` + `Foul` | Tackles attempted, derived as tackles won plus fouls committed (map ticket 12). |
+| Won | `Tackle` | Tackles the player was credited with winning. |
+| Hea | `HeaderDuel` | Header duels contested, won or lost. |
+| Won | `HeaderDuel` | Header duels won. |
+| Int | `Interception` | Balls the player was credited with reading. |
+| Run | `RunWithBall.assistPlayerId` | The creator of a run-with-the-ball chance; the event names the finisher and the creator, and the run is credited to the creator. |
 | Off | `Offside` | For the flagged player. |
 | Fou | `Foul` | For the fouling player. |
+| Fld | `Foul.fouledPlayerId` | Fouls suffered, counted only where the victim is recorded. |
 | Ast | `Goal.assistPlayerId` | Only on a `Goal`, and only when the assister differs from the scorer. A creator on a saved or missed shot is a key pass, not an assist. |
 | She | `Goal`, `ShotOnTarget`, `ShotMissed` | All three, for the shooter. Penalties count: their outcome is one of these three events. |
 | Sat | `Goal`, `ShotOnTarget` | For the shooter. |
@@ -52,12 +60,13 @@ play, so zero would claim something. The captain carries `(c)`.
 
 ### Absent columns
 
-Pas, Cmp, Tck, Won (tackles), Hea, Won (headers), Key (headers), Int, Run and Fld are **not drawn**.
+Pas, Cmp and Key (headers) are **not drawn**: nothing in the engine decides a pass, and a key header
+is not a recorded fact distinct from a header duel. The recorded-defending columns (Tck, Won, Hea,
+Won, Int, Run and Fld) are drawn now that the engine records the events behind them (map ticket 12;
+see [the match player line's absent list was amended by the engine effort](../../../../.scratch/match-engine-detail/map.md)).
 Unlike the four team statistics that screen 95 names as unavailable, a missing per-player column is
 not listed as unavailable either: eight columns of "not tracked" in a dense table is noise, and the
-screen states the rule once in its caption ("Only what the match records is shown."). `Run` is left
-out although a `RunWithBall` event exists, because it names the chance's finisher and creator, not a
-player who ran with the ball; counting it would re-label a chance type as a per-player action.
+screen states the rule once in its caption ("Only what the match records is shown.").
 
 ## Alternatives considered
 
@@ -82,8 +91,9 @@ engine effort listed under this map's Out of scope.
   the three agree for one seeded match.
 - A test per counting rule above: self-created chance yields no Key, a creator on a saved shot yields
   Key but no Ast, a penalty goal yields She, Sat and Gls, a goalkeeper stand-in writes no Inf. note.
+  The recorded-defending columns carry their own tests (map ticket 14).
 - An unused substitute's row renders empty and dimmed, never `0`.
-- No Pas/Cmp/Tck/Hea/Int/Run/Fld column exists in the table, and the caption states the rule.
+- No Pas, Cmp or Key (headers) column exists in the table, and the caption states the rule.
 
 ## Risks
 

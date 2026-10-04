@@ -15,8 +15,15 @@ export const PLAYER_LINE_GLOSSARY = {
   card: "Card",
   substitution: "Substitution",
   keyPasses: "Key passes",
+  tacklesAttempted: "Tackles attempted",
+  tacklesWon: "Tackles won",
+  headers: "Headers attempted",
+  headersWon: "Headers won",
+  interceptions: "Interceptions",
+  runs: "Runs",
   offsides: "Offsides",
   fouls: "Fouls committed",
+  foulsSuffered: "Fouls suffered",
   assists: "Assists",
   shots: "Shots",
   shotsOnTarget: "Shots on target",
@@ -72,8 +79,15 @@ export interface PlayerLineRow extends TableRowShape {
   readonly cameOnMinute: number | null;
   readonly wentOffMinute: number | null;
   readonly keyPasses: number;
+  readonly tacklesAttempted: number | null;
+  readonly tacklesWon: number | null;
+  readonly headers: number | null;
+  readonly headersWon: number | null;
+  readonly interceptions: number | null;
+  readonly runs: number | null;
   readonly offsides: number;
   readonly fouls: number;
+  readonly foulsSuffered: number | null;
   readonly assists: number;
   readonly shots: number;
   readonly shotsOnTarget: number;
@@ -97,8 +111,15 @@ export const playerLineRowOf = (row: MatchPlayerLineRow): PlayerLineRow => ({
   cameOnMinute: row.cameOnMinute,
   wentOffMinute: row.wentOffMinute,
   keyPasses: row.keyPasses,
+  tacklesAttempted: row.tacklesAttempted,
+  tacklesWon: row.tacklesWon,
+  headers: row.headers,
+  headersWon: row.headersWon,
+  interceptions: row.interceptions,
+  runs: row.runs,
   offsides: row.offsides,
   fouls: row.fouls,
+  foulsSuffered: row.foulsSuffered,
   assists: row.assists,
   shots: row.shots,
   shotsOnTarget: row.shotsOnTarget,
@@ -110,6 +131,10 @@ export const playerLineRowOf = (row: MatchPlayerLineRow): PlayerLineRow => ({
 
 /** An empty cell for a player who did not play; a counted value otherwise. Never `0` for no-show. */
 const countCell = (played: boolean, value: number) => (played ? String(value) : "");
+
+/** A counted value that may be absent: a row from a timeline stored before the event existed reads
+ *  "-", and an unused substitute reads empty. */
+const nullableCell = (played: boolean, value: number | null) => (value === null ? (played ? "-" : "") : String(value));
 
 const muted = (played: boolean): string => (played ? "" : "text-text-muted");
 
@@ -126,6 +151,21 @@ export const playerLineColumns = (showSaves: boolean): ReadonlyArray<AppColumnDe
     cell: (info) => {
       const row = info.row.original;
       return <span className={`tabular-nums ${muted(row.played)}`}>{countCell(row.played, row[id] as number)}</span>;
+    },
+  });
+
+  const nullableNumeric = (
+    id: keyof PlayerLineRow & string,
+    short: string,
+    full: string,
+  ): AppColumnDef<PlayerLineRow> => ({
+    id,
+    accessorFn: (row) => row[id] as number | null,
+    header: () => <AbbrHeader short={short} full={full} />,
+    enableSorting: true,
+    cell: (info) => {
+      const row = info.row.original;
+      return <span className={`tabular-nums ${muted(row.played)}`}>{nullableCell(row.played, row[id] as number | null)}</span>;
     },
   });
 
@@ -173,8 +213,15 @@ export const playerLineColumns = (showSaves: boolean): ReadonlyArray<AppColumnDe
       ),
     },
     numeric("keyPasses", "Key", PLAYER_LINE_GLOSSARY.keyPasses),
+    nullableNumeric("tacklesAttempted", "Tck", PLAYER_LINE_GLOSSARY.tacklesAttempted),
+    nullableNumeric("tacklesWon", "Won", PLAYER_LINE_GLOSSARY.tacklesWon),
+    nullableNumeric("headers", "Hea", PLAYER_LINE_GLOSSARY.headers),
+    nullableNumeric("headersWon", "Won", PLAYER_LINE_GLOSSARY.headersWon),
+    nullableNumeric("interceptions", "Int", PLAYER_LINE_GLOSSARY.interceptions),
+    nullableNumeric("runs", "Run", PLAYER_LINE_GLOSSARY.runs),
     numeric("offsides", "Off", PLAYER_LINE_GLOSSARY.offsides),
     numeric("fouls", "Fou", PLAYER_LINE_GLOSSARY.fouls),
+    nullableNumeric("foulsSuffered", "Fld", PLAYER_LINE_GLOSSARY.foulsSuffered),
     numeric("assists", "Ast", PLAYER_LINE_GLOSSARY.assists),
     numeric("shots", "She", PLAYER_LINE_GLOSSARY.shots),
     numeric("shotsOnTarget", "Sat", PLAYER_LINE_GLOSSARY.shotsOnTarget),

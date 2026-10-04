@@ -13,11 +13,7 @@ assertion must keep passing. A committed match reads every new tag and the optio
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-> Partial: the schema union, the new tags and `Foul.fouledPlayerId` shipped with ticket 12's engine
-> change, enforced by the compile-time `StoredMatchEventAgreesWithEngine` assertion. Remaining: an
-> explicit commit-and-read-back test for each new tag.
-
-- [ ] Every new tag and `Foul.fouledPlayerId` round-trips through a commit-and-read-back test.
-- [ ] A timeline without a `PossessionTally` still decodes.
+- [x] Every new tag and `Foul.fouledPlayerId` round-trips through a commit-and-read-back test.
+- [x] A timeline without a `PossessionTally` still decodes.

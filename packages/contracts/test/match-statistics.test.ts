@@ -27,8 +27,22 @@ describe("Match Statistics (Screens 95/100)", () => {
 
   it("rejects a statistic the match model does not produce as a row", () => {
     expect(() =>
-      Schema.decodeUnknownSync(MatchStatisticsView)({ ...wire, rows: [{ key: "possession", home: 55, away: 45 }] }),
+      Schema.decodeUnknownSync(MatchStatisticsView)({ ...wire, rows: [{ key: "passes", home: 55, away: 45 }] }),
     ).toThrow();
+  });
+
+  it("accepts the recorded-defending and possession rows", () => {
+    const view = {
+      ...wire,
+      rows: [
+        { key: "possession", home: 55, away: 45 },
+        { key: "tacklesWon", home: 11, away: 8 },
+        { key: "interceptions", home: 9, away: 10 },
+        { key: "headersWon", home: 4, away: 6 },
+      ],
+      unavailable: [],
+    };
+    expect(Schema.encodeSync(MatchStatisticsView)(Schema.decodeUnknownSync(MatchStatisticsView)(view))).toEqual(view);
   });
 
   it("the RPC allows no match (none played yet) as a success", () => {

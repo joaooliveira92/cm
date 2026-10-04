@@ -35,12 +35,36 @@ import { playerNames } from "./playerNames.js";
 import { lastPlayedMatchId } from "./statistics.js";
 import { matchEventsOf } from "./timeline.js";
 
-type Counted = Pick<MatchInvolvement, "goals" | "shotsOnTarget" | "bigChances" | "shotsMissed" | "yellowCards" | "redCards">;
+type Counted = Pick<
+  MatchInvolvement,
+  | "goals"
+  | "shotsOnTarget"
+  | "bigChances"
+  | "shotsMissed"
+  | "yellowCards"
+  | "redCards"
+  | "tacklesWon"
+  | "interceptions"
+  | "headersWon"
+  | "foulsSuffered"
+>;
 
-const NO_EVENTS: Counted = { goals: 0, shotsOnTarget: 0, bigChances: 0, shotsMissed: 0, yellowCards: 0, redCards: 0 };
+const NO_EVENTS: Counted = {
+  goals: 0,
+  shotsOnTarget: 0,
+  bigChances: 0,
+  shotsMissed: 0,
+  yellowCards: 0,
+  redCards: 0,
+  tacklesWon: 0,
+  interceptions: 0,
+  headersWon: 0,
+  foulsSuffered: 0,
+};
 
 /** The count a player's own event adds to. Typed from the event, so a new event kind is a compile
- *  error here rather than a silent zero. */
+ *  error here rather than a silent zero. Events with no single named player (HeaderDuel, or a Foul's
+ *  victim) are folded explicitly below. */
 const ownCount = (event: MatchEvent): keyof Counted | null => {
   switch (event._tag) {
     case "Goal":
@@ -53,6 +77,10 @@ const ownCount = (event: MatchEvent): keyof Counted | null => {
       return "yellowCards";
     case "RedCard":
       return "redCards";
+    case "Tackle":
+      return "tacklesWon";
+    case "Interception":
+      return "interceptions";
     case "Injury":
     case "Substitution":
     case "MatchStarted":
@@ -65,8 +93,6 @@ const ownCount = (event: MatchEvent): keyof Counted | null => {
     case "HoldUpLayOff":
     case "Counter":
     case "Foul":
-    case "Tackle":
-    case "Interception":
     case "HeaderDuel":
     case "PossessionTally":
     case "Offside":
@@ -139,6 +165,12 @@ export const rateSide = (
     if (event._tag === "Goal") {
       for (const playerId of onNow) bump(event.teamClubId === clubId ? goalsFor : goalsAgainst, playerId);
     }
+    // The fouled player is on the side that did not commit the foul, so this is read before the
+    // club gate below that credits only this side's own events.
+    if (event._tag === "Foul" && event.fouledPlayerId !== undefined) {
+      const current = counts.get(event.fouledPlayerId) ?? NO_EVENTS;
+      counts.set(event.fouledPlayerId, { ...current, foulsSuffered: current.foulsSuffered + 1 });
+    }
     if (
       event._tag === "MatchStarted" ||
       event._tag === "HalfTimeReached" ||
@@ -152,6 +184,11 @@ export const rateSide = (
     }
     if (event._tag === "RedCard") sentOff.add(event.playerId);
     if (event._tag === "Injury") injured.add(event.playerId);
+    if (event._tag === "HeaderDuel") {
+      const current = counts.get(event.winnerId) ?? NO_EVENTS;
+      counts.set(event.winnerId, { ...current, headersWon: current.headersWon + 1 });
+      continue;
+    }
     const key = ownCount(event);
     if (key !== null && "playerId" in event) {
       const current = counts.get(event.playerId) ?? NO_EVENTS;

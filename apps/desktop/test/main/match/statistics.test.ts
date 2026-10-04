@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import { countedSubstitutions, type MatchEvent } from "@cm-clone/game-engine";
-import { aggregateMatchStatistics as aggregateWith, attackShare } from "../../../src/main/match/statistics.js";
+import { aggregateMatchStatistics as aggregateWith, attackShare, matchPossession } from "../../../src/main/match/statistics.js";
 
 /** The fold with the substitution count every read uses; this timeline has no goalkeeper stand-in. */
 const aggregateMatchStatistics = (events: ReadonlyArray<MatchEvent>, homeClubId: ClubId, revealedEvents: number | null) =>
@@ -70,6 +70,9 @@ describe("aggregateMatchStatistics — team totals folded from the Match Events"
       redCards: [1, 0],
       injuries: [1, 0],
       substitutions: [1, 0],
+      tacklesWon: [0, 0],
+      interceptions: [0, 0],
+      headersWon: [0, 0],
     });
   });
 
@@ -132,5 +135,42 @@ describe("attackShare — each side's share of the chance-type events, never cal
 
   it("is null on both sides before the first attack, never 50-50", () => {
     expect(attackShare(attacks, home, 1)).toEqual({ home: null, away: null });
+  });
+});
+
+describe("aggregateMatchStatistics — recorded defending totals", () => {
+  it("counts a credited tackle, interception and header won for the side each event names", () => {
+    const defending: ReadonlyArray<MatchEvent> = [
+      TIMELINE[0]!,
+      at(10, "Tackle", home),
+      at(20, "Interception", home),
+      at(30, "Tackle", away),
+      { _tag: "HeaderDuel", minute: 40, half: 1, teamClubId: away, winnerId: p, loserId: p, attacking: false } as unknown as MatchEvent,
+    ];
+    expect(table(aggregateMatchStatistics(defending, home, null))).toMatchObject({
+      tacklesWon: [1, 1],
+      interceptions: [1, 0],
+      headersWon: [0, 1],
+    });
+  });
+});
+
+describe("matchPossession — share of minute-slices, read from the last tally", () => {
+  const tally = (minute: number, homeSlices: number, awaySlices: number): MatchEvent =>
+    ({ _tag: "PossessionTally", minute, half: minute <= 45 ? 1 : 2, homeSlices, awaySlices }) as unknown as MatchEvent;
+
+  it("returns whole percentages from the last tally at or before the revealed position", () => {
+    const events: ReadonlyArray<MatchEvent> = [
+      TIMELINE[0]!,
+      tally(10, 6, 4),
+      tally(45, 30, 15),
+    ];
+    expect(matchPossession(events, home, null)).toMatchObject({ key: "possession", home: 67, away: 33 });
+    // Cut before the second tally: the first is the last one revealed.
+    expect(matchPossession(events, home, 2)).toMatchObject({ key: "possession", home: 60, away: 40 });
+  });
+
+  it("is unavailable on a timeline with no tally, never 0 or 50", () => {
+    expect(matchPossession(TIMELINE, home, null)).toBeNull();
   });
 });

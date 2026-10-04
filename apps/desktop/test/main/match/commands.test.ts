@@ -415,7 +415,9 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
       row("yellowCards").home + row("yellowCards").away,
       lines.filter((line) => line.tag === "YellowCard").length,
     );
-    deepStrictEqual([...full.unavailable], ["possession"]);
+    // The engine now records possession, so it is a counted row, not an unavailable statistic.
+    deepStrictEqual([...full.unavailable], []);
+    strictEqual(row("possession").home + row("possession").away, 100);
     strictEqual(row("redCards").home + row("redCards").away, lines.filter((line) => line.tag === "RedCard").length);
     deepStrictEqual(
       [row("substitutions").home, row("substitutions").away],
@@ -433,6 +435,9 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
       "the cut's goals equal the score at that point of the timeline",
     );
     for (const [index, cut] of firstHalf.rows.entries()) {
+      // Possession is a share that can fall as the match goes on, so it is not monotonic; the counted
+      // totals never exceed their full-time value.
+      if (cut.key === "possession") continue;
       ok(cut.home <= full.rows[index]!.home && cut.away <= full.rows[index]!.away, `${cut.key} never exceeds full time`);
     }
 

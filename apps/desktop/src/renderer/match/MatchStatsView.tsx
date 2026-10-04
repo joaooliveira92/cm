@@ -16,6 +16,10 @@ const STATISTIC: Readonly<Record<MatchStatisticKey, { readonly label: string; re
   redCards: { label: "Red cards", definition: "Red cards shown" },
   injuries: { label: "Injuries", definition: "Players injured" },
   substitutions: { label: "Substitutions", definition: "Substitutions made" },
+  possession: { label: "Possession", definition: "Share of minutes with the ball" },
+  tacklesWon: { label: "Tackles won", definition: "Balls won in the tackle" },
+  interceptions: { label: "Interceptions", definition: "Balls read and intercepted" },
+  headersWon: { label: "Headers won", definition: "Aerial duels won" },
 };
 
 const UNAVAILABLE_LABEL: Readonly<Record<UnavailableMatchStatistic, string>> = {
@@ -44,6 +48,14 @@ export const MatchStatsView = ({ view }: { readonly view: MatchStatisticsView })
         </tr>
       </thead>
       <tbody>
+        <tr className="border-b border-border-subtle">
+          <td className="py-1 pr-4 text-right tabular-nums">{view.homeAttackShare ?? "-"}</td>
+          <th scope="row" className="py-1 text-center font-normal" title="Each side's share of the chance-type events">
+            Attacks
+            <span className="block text-data text-text-muted">Each side's share of the chance-type events</span>
+          </th>
+          <td className="py-1 pl-4 tabular-nums">{view.awayAttackShare ?? "-"}</td>
+        </tr>
         {view.rows.map((row) => (
           <tr key={row.key} className="border-b border-border-subtle">
             <td className="py-1 pr-4 text-right tabular-nums">{row.home}</td>

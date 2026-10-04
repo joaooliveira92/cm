@@ -56,6 +56,7 @@ const squadMembers = (setup: MatchTeamSetup): ReadonlyArray<SquadMember> => {
 const sideStats = (
   setup: MatchTeamSetup,
   counts: ReadonlyMap<string, MatchPlayerLineCounts>,
+  recordedDefending: boolean,
   ratings: ReadonlyMap<PlayerId, number>,
   conditions: ReadonlyMap<PlayerId, number> | null,
   clubName: (clubId: string) => string,
@@ -66,6 +67,9 @@ const sideStats = (
     const folded = counts.get(String(playerId));
     const line = folded ?? EMPTY_MATCH_PLAYER_LINE_COUNTS;
     const played = starter || folded !== undefined;
+    // A timeline without a possession tally predates the recorded-defending events, so those columns
+    // read "-" rather than a fabricated 0 (map ticket 12, user story 13).
+    const defended = played && recordedDefending;
     return new MatchPlayerLineRow({
       playerId,
       playerName: nameOf(playerId),
@@ -79,6 +83,13 @@ const sideStats = (
       keyPasses: line.keyPasses,
       offsides: line.offsides,
       fouls: line.fouls,
+      tacklesWon: defended ? line.tacklesWon : null,
+      tacklesAttempted: defended ? line.tacklesAttempted : null,
+      headers: defended ? line.headers : null,
+      headersWon: defended ? line.headersWon : null,
+      interceptions: defended ? line.interceptions : null,
+      runs: defended ? line.runs : null,
+      foulsSuffered: defended ? line.foulsSuffered : null,
       assists: line.assists,
       shots: line.shots,
       shotsOnTarget: line.shotsOnTarget,
@@ -111,6 +122,7 @@ export const matchPlayerStatsView = (
     ...started.awaySetup.tactic.slots.map((slot) => String(slot.playerId)),
   ]);
   const counts = foldMatchPlayerLineCounts(starters, events, revealedEvents);
+  const recordedDefending = events.some((event) => event._tag === "PossessionTally");
   const ratings = matchRatingsView(matchId, stream, events, clubName, nameOf, revealedEvents);
   const ratingById = new Map<PlayerId, number>([...ratings.home, ...ratings.away].map((row) => [row.playerId, row.rating]));
   const last = events[revealedCut(events, revealedEvents) - 1];
@@ -119,8 +131,8 @@ export const matchPlayerStatsView = (
     homeClubName: clubName(started.homeClubId),
     awayClubName: clubName(started.awayClubId),
     throughMinute: revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
-    home: sideStats(started.homeSetup, counts, ratingById, conditions, clubName, nameOf),
-    away: sideStats(started.awaySetup, counts, ratingById, conditions, clubName, nameOf),
+    home: sideStats(started.homeSetup, counts, recordedDefending, ratingById, conditions, clubName, nameOf),
+    away: sideStats(started.awaySetup, counts, recordedDefending, ratingById, conditions, clubName, nameOf),
   });
 };
 

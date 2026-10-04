@@ -14,8 +14,8 @@ Statistics row. `computePossession` becomes `attackShare` and is labelled Attack
 
 **Blocked by:** 12, 13
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] Possession is cut at the revealed position and returns the last tally at or before it.
-- [ ] A pre-change timeline shows possession unavailable, not 0 or 50.
-- [ ] Tackles, interceptions and headers won read per side; old data reads "-".
+- [x] Possession is cut at the revealed position and returns the last tally at or before it.
+- [x] A pre-change timeline shows possession unavailable, not 0 or 50.
+- [x] Tackles, interceptions and headers won read per side; old data reads "-".

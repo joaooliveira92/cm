@@ -76,6 +76,51 @@ describe("foldMatchPlayerLineCounts — the Match Player Line, folded from recor
     expect(line(events, "b").offsides).toBe(1);
   });
 
+  it("counts fouls suffered for the player brought down, only where the victim is recorded", () => {
+    const named = fold([event("Foul", { playerId: "a", fouledPlayerId: "b" })]);
+    expect(named.get("b")).toMatchObject({ foulsSuffered: 1, fouls: 0 });
+    expect(named.get("a")).toMatchObject({ fouls: 1, foulsSuffered: 0 });
+
+    const unnamed = fold([event("Foul", { playerId: "a" })]);
+    expect(unnamed.get("a")).toMatchObject({ fouls: 1, foulsSuffered: 0 });
+  });
+
+  it("counts a credited tackle and interception for the defending player", () => {
+    const events = [
+      event("Tackle", { playerId: "d" }),
+      event("Interception", { playerId: "d" }),
+    ];
+    expect(line(events, "d")).toMatchObject({ tacklesWon: 1, interceptions: 1 });
+  });
+
+  it("derives tackles attempted as tackles won plus fouls committed", () => {
+    const events = [
+      event("Tackle", { playerId: "d" }),
+      event("Tackle", { playerId: "d" }),
+      event("Foul", { playerId: "d" }),
+      event("Foul", { playerId: "d" }),
+      event("Foul", { playerId: "d" }),
+    ];
+    expect(line(events, "d")).toMatchObject({ tacklesWon: 2, fouls: 3, tacklesAttempted: 5 });
+  });
+
+  it("counts a header duel attempted for both players and won for the winner", () => {
+    const events = [event("HeaderDuel", { winnerId: "w", loserId: "l" })];
+    const lines = fold(events);
+    expect(lines.get("w")).toMatchObject({ headers: 1, headersWon: 1 });
+    expect(lines.get("l")).toMatchObject({ headers: 1, headersWon: 0 });
+  });
+
+  it("counts a run for the RunWithBall creator, not its finisher", () => {
+    const events = [event("RunWithBall", { playerId: "finisher", assistPlayerId: "creator" })];
+    const lines = fold(events);
+    expect(lines.get("creator")).toMatchObject({ runs: 1 });
+    expect(lines.get("finisher")).toBeUndefined();
+
+    const solo = fold([event("RunWithBall", { playerId: "finisher" })]);
+    expect(solo.get("finisher")).toBeUndefined();
+  });
+
   it("counts a yellow and a red card so a red glyph can win", () => {
     const events = [event("YellowCard", { playerId: "a" }), event("RedCard", { playerId: "a" })];
     expect(line(events, "a")).toMatchObject({ yellowCards: 1, redCards: 1 });

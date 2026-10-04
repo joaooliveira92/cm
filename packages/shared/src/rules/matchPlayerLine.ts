@@ -1,11 +1,11 @@
 /**
  * The Match Player Line: the per-player counts CM 03/04's Club Stats table shows, folded from the
- * Match Event stream (map ticket 12, decision 02).
+ * Match Event stream (map ticket 12, decision 02; extended by ticket 14).
  *
- * The match model records no pass, tackle, header or interception, so the line carries only what an
- * event backs: key passes, assists, shots, shots on target, saves, goals, fouls, offsides, cards and
- * the substitution note. A column the stream does not back is not drawn (Agent Note: the match
- * player line folds only recorded events).
+ * The line carries only what an event backs: key passes, tackles and tackles won, headers attempted
+ * and won, interceptions, runs, assists, shots, shots on target, saves, goals, fouls committed and
+ * suffered, offsides, cards and the substitution note. A column the stream does not back is not
+ * drawn (Agent Note: the match player line folds only recorded events).
  *
  * Pure and dependency-free. `packages/shared` cannot import the engine's `MatchEvent`, so the fold
  * reads a structural event shape: every `MatchEvent` satisfies it, and the caller passes the
@@ -25,19 +25,37 @@ export interface MatchPlayerLineEvent {
   readonly keeperId?: string;
   readonly outPlayerId?: string;
   readonly inPlayerId?: string;
+  readonly winnerId?: string;
+  readonly loserId?: string;
+  readonly fouledPlayerId?: string;
 }
 
 /** One player's folded part in a match, before it is joined onto the matchday squad. */
 export interface MatchPlayerLineCounts {
   readonly keyPasses: number;
   readonly offsides: number;
+  /** Fouls the player committed (the Fou column). */
   readonly fouls: number;
+  /** Fouls the player suffered (the Fld column); counted only where `fouledPlayerId` is recorded. */
+  readonly foulsSuffered: number;
   readonly assists: number;
   /** Goals, shots on target and shots missed: every recorded attempt. */
   readonly shots: number;
   readonly shotsOnTarget: number;
   readonly saves: number;
   readonly goals: number;
+  /** Slices where the player was credited with winning the ball (the Won column). */
+  readonly tacklesWon: number;
+  /** Tackles won plus fouls committed: the attempt count (the Tck column). */
+  readonly tacklesAttempted: number;
+  /** Header duels the player contested, won or lost (the Hea column). */
+  readonly headers: number;
+  /** Header duels the player won. */
+  readonly headersWon: number;
+  /** Slices where the player was credited with reading the ball. */
+  readonly interceptions: number;
+  /** Chances the player created with a `RunWithBall`. */
+  readonly runs: number;
   readonly yellowCards: number;
   readonly redCards: number;
   /** The minute the player came on, or null when they started and never returned. */
@@ -50,11 +68,18 @@ export const EMPTY_MATCH_PLAYER_LINE_COUNTS: MatchPlayerLineCounts = {
   keyPasses: 0,
   offsides: 0,
   fouls: 0,
+  foulsSuffered: 0,
   assists: 0,
   shots: 0,
   shotsOnTarget: 0,
   saves: 0,
   goals: 0,
+  tacklesWon: 0,
+  tacklesAttempted: 0,
+  headers: 0,
+  headersWon: 0,
+  interceptions: 0,
+  runs: 0,
   yellowCards: 0,
   redCards: 0,
   cameOnMinute: null,
@@ -141,6 +166,29 @@ export const foldMatchPlayerLineCounts = (
       }
       case "Foul": {
         if (event.playerId !== undefined) bump(event.playerId, "fouls");
+        if (event.fouledPlayerId !== undefined) bump(event.fouledPlayerId, "foulsSuffered");
+        break;
+      }
+      case "Tackle": {
+        if (event.playerId !== undefined) bump(event.playerId, "tacklesWon");
+        break;
+      }
+      case "Interception": {
+        if (event.playerId !== undefined) bump(event.playerId, "interceptions");
+        break;
+      }
+      case "HeaderDuel": {
+        // Attempted for both players; won for the winner only.
+        if (event.winnerId !== undefined) {
+          bump(event.winnerId, "headers");
+          bump(event.winnerId, "headersWon");
+        }
+        if (event.loserId !== undefined) bump(event.loserId, "headers");
+        break;
+      }
+      case "RunWithBall": {
+        // The run is credited to the chance's creator, not its finisher.
+        if (event.assistPlayerId !== undefined) bump(event.assistPlayerId, "runs");
         break;
       }
       case "Offside": {
@@ -167,6 +215,11 @@ export const foldMatchPlayerLineCounts = (
       default:
         break;
     }
+  }
+
+  // Tackles attempted is derived, not a separate event: a won tackle plus a foul is an attempt.
+  for (const line of lines.values()) {
+    line.tacklesAttempted = line.tacklesWon + line.fouls;
   }
 
   return lines;

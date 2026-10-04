@@ -7,6 +7,7 @@ export * from "./club-selection.js";
 export * from "./tactics.js";
 export * from "./season.js";
 export * from "./match.js";
+export * from "./matchStats.js";
 export * from "./transfers.js";
 export * from "./training.js";
 export * from "./trainingSchedule.js";

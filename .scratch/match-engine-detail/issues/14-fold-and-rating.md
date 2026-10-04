@@ -18,9 +18,9 @@ attempted carry no weight. The live table, post-match table and stored line stil
 
 **Blocked by:** 12
 
-**Status:** ready-for-agent
+**Status:** resolved
 
-- [ ] One test per new column and per rating weight; the defence share is -0.3.
-- [ ] Tackles attempted equals tackles won plus fouls committed.
-- [ ] The fold note's absent-column list is amended, or ticket 11 revisited, before the fold changes.
-- [ ] `matchRating.ts` remains the only file naming a rating weight.
+- [x] One test per new column and per rating weight; the defence share is -0.3.
+- [x] Tackles attempted equals tackles won plus fouls committed.
+- [x] The fold note's absent-column list is amended, or ticket 11 revisited, before the fold changes.
+- [x] `matchRating.ts` remains the only file naming a rating weight.

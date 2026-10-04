@@ -81,17 +81,17 @@ describe("the career header while a match is on", () => {
     expect(within(scoreboard()).getByText("FT")).toBeTruthy();
   });
 
-  it("mounts the Attacks bar with the scoreboard, and takes it down when the result is accepted", async () => {
+  it("mounts the Possession bar with the scoreboard, and takes it down when the result is accepted", async () => {
     await mountCareer("in_season", "fixtures");
-    expect(screen.queryByText("Attacks")).toBeNull();
+    expect(screen.queryByText("Possession")).toBeNull();
 
     startMatch();
     await settle();
-    expect(screen.getByText("Attacks")).toBeTruthy();
+    expect(screen.getByText("Possession")).toBeTruthy();
 
     clearActiveMatch(saveId);
     await settle();
-    expect(screen.queryByText("Attacks")).toBeNull();
+    expect(screen.queryByText("Possession")).toBeNull();
   });
 });
 

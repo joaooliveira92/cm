@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   MATCH_RATING_BASE,
+  MATCH_RATING_EVENT_WEIGHTS,
+  MATCH_RATING_GOAL_AGAINST_SHARE,
   matchRating,
   matchRatingPhaseOf,
   type MatchInvolvement,
@@ -16,6 +18,10 @@ const quiet = (overrides: Partial<MatchInvolvement> = {}): MatchInvolvement => (
   shotsMissed: 0,
   yellowCards: 0,
   redCards: 0,
+  tacklesWon: 0,
+  interceptions: 0,
+  headersWon: 0,
+  foulsSuffered: 0,
   goalsForWhileOn: 0,
   goalsAgainstWhileOn: 0,
   result: "draw",
@@ -69,5 +75,25 @@ describe("matchRating (group-g decision request 03, Option B)", () => {
     expect(matchRatingPhaseOf("DL")).toBe("defense");
     expect(matchRatingPhaseOf("DM")).toBe("midfield");
     expect(matchRatingPhaseOf("AMC")).toBe("attack");
+  });
+
+  it("moves the rating by each recorded-defending weight from an otherwise identical involvement", () => {
+    // Attack phase, so no clean-sheet bonus and the base is a clean 6.0.
+    const baseline = matchRating(quiet({ position: "ST" }));
+    expect(baseline).toBe(MATCH_RATING_BASE);
+    // Counts chosen so each move lands exactly on the one-decimal grid the rating rounds to.
+    expect(matchRating(quiet({ position: "ST", tacklesWon: 1 })) - baseline).toBeCloseTo(MATCH_RATING_EVENT_WEIGHTS.tackleWon, 5);
+    expect(matchRating(quiet({ position: "ST", interceptions: 1 })) - baseline).toBeCloseTo(MATCH_RATING_EVENT_WEIGHTS.interception, 5);
+    expect(matchRating(quiet({ position: "ST", headersWon: 2 })) - baseline).toBeCloseTo(2 * MATCH_RATING_EVENT_WEIGHTS.headerWon, 5);
+    expect(matchRating(quiet({ position: "ST", foulsSuffered: 10 })) - baseline).toBeCloseTo(10 * MATCH_RATING_EVENT_WEIGHTS.foulSuffered, 5);
+  });
+
+  it("carries no weight for a header lost (headers won only) and no separate tackle-attempt input", () => {
+    expect(matchRating(quiet())).toBe(matchRating(quiet({ headersWon: 0 })));
+    expect("tacklesAttempted" in quiet()).toBe(false);
+  });
+
+  it("gives the defence phase a smaller goals-against share now recorded defending carries some of it", () => {
+    expect(MATCH_RATING_GOAL_AGAINST_SHARE.defense).toBe(-0.3);
   });
 });

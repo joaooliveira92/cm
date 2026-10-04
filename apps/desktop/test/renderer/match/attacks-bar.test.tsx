@@ -51,15 +51,18 @@ const leagueTable = (matchId: string | null) => ({
   standings: [],
 });
 
-const statistics = (homeAttackShare: number | null, awayAttackShare: number | null) => ({
+const statistics = (homePossession: number | null, awayPossession: number | null) => ({
   matchId: "m1",
   homeClubName: "Home FC",
   awayClubName: "Away FC",
   throughMinute: null,
-  rows: [{ key: "goals", home: 1, away: 0 }],
-  unavailable: ["possession"],
-  homeAttackShare,
-  awayAttackShare,
+  rows: [
+    { key: "goals", home: 1, away: 0 },
+    ...(homePossession === null ? [] : [{ key: "possession", home: homePossession, away: awayPossession }]),
+  ],
+  unavailable: homePossession === null ? ["possession"] : [],
+  homeAttackShare: null,
+  awayAttackShare: null,
   chancesByType: null,
 });
 
@@ -84,8 +87,8 @@ afterEach(() => {
   clearActiveMatch(s1);
 });
 
-describe("Attacks bar (map ticket 14)", () => {
-  it("prints both sides' share under the live tabs, cut after the revealed events", async () => {
+describe("Possession bar (map ticket 14/16)", () => {
+  it("prints both sides' possession under the live tabs, cut after the revealed events", async () => {
     liveSession();
     recordRevealedLines(s1, MatchId.make("m1"), [
       { minute: 1, tag: "MatchStarted", text: "Kick-off." },
@@ -100,14 +103,14 @@ describe("Attacks bar (map ticket 14)", () => {
 
     expect(await screen.findByText("67%")).toBeTruthy();
     expect(screen.getByText("33%")).toBeTruthy();
-    expect(screen.getByText("Attacks")).toBeTruthy();
+    expect(screen.getByText("Possession")).toBeTruthy();
     expect(calls.find((call) => call.method === "getMatchStatistics")?.payload).toMatchObject({
       matchId: "m1",
       revealedEvents: 3,
     });
   });
 
-  it("shows a neutral track reading 'No attacks yet' before the first attack, never 50-50", async () => {
+  it("shows a neutral track reading 'Not tracked' before any tally, never 50-50", async () => {
     liveSession();
     mount((method) =>
       method === "getLeagueTable"
@@ -115,12 +118,11 @@ describe("Attacks bar (map ticket 14)", () => {
         : { _tag: "Success", value: statistics(null, null) },
     );
 
-    expect(await screen.findByText("No attacks yet")).toBeTruthy();
+    expect(await screen.findByText("Not tracked")).toBeTruthy();
     expect(screen.queryByText("50%")).toBeNull();
-    expect(screen.queryByText("Possession")).toBeNull();
   });
 
-  it("does not claim 'No attacks yet' when the read has not landed", async () => {
+  it("does not claim 'Not tracked' when the read has not landed", async () => {
     liveSession();
     const calls = mount((method) =>
       method === "getLeagueTable"
@@ -132,8 +134,8 @@ describe("Attacks bar (map ticket 14)", () => {
     await act(async () => {
       await Promise.resolve();
     });
-    expect(screen.getByText("Attacks")).toBeTruthy();
-    expect(screen.queryByText("No attacks yet")).toBeNull();
+    expect(screen.getByText("Possession")).toBeTruthy();
+    expect(screen.queryByText("Not tracked")).toBeNull();
   });
 
   it("moves with the revealed position as Match day reveals more of the match", async () => {
@@ -177,6 +179,6 @@ describe("Attacks bar (map ticket 14)", () => {
         : { _tag: "Success", value: statistics(50, 50) },
     );
 
-    expect(screen.queryByText("Attacks")).toBeNull();
+    expect(screen.queryByText("Possession")).toBeNull();
   });
 });

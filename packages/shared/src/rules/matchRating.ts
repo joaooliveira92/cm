@@ -1,12 +1,12 @@
 /**
  * Match Rating (group-g decision request 03, Option B): a player's 1–10 rating for one match.
  *
- * The Match Events name only the scorer or shooter, whoever got a card or an injury, and who went off
- * and on. No event names a save, a tackle or an assist. So a rating is a documented base, adjusted
- * by the player's own events and by the share of the result their phase was on the pitch for. A
- * goalkeeper's rating moves with the goals conceded while they played: a proxy, but one derived from
- * the result rather than an invented save count (Agent Note: the match model shows only what it
- * produces).
+ * The Match Events name the scorer or shooter, whoever got a card or an injury, who went off and on,
+ * and — from map ticket 12 — the defender credited with a tackle or interception, the winner of a
+ * header duel and the player a foul brought down. A rating is a documented base, adjusted by the
+ * player's own recorded involvement and by the share of the result their phase was on the pitch for.
+ * Counts, not rates, are weighted, so every input is a recorded event (Agent Note: the match model
+ * shows only what it produces).
  *
  * Pure. The caller folds the stored timeline into a `MatchInvolvement` per player, so a rating cannot
  * drift between two reads of the same match. The base and every weight are named here and nowhere
@@ -19,7 +19,7 @@ export const MATCH_RATING_BASE = 6.0;
 export const MATCH_RATING_MIN = 1.0;
 export const MATCH_RATING_MAX = 10.0;
 
-/** The player's own Match Events. */
+/** The player's own Match Events and recorded involvement. */
 export const MATCH_RATING_EVENT_WEIGHTS = {
   goal: 1.0,
   shotOnTarget: 0.3,
@@ -27,6 +27,12 @@ export const MATCH_RATING_EVENT_WEIGHTS = {
   shotMissed: -0.1,
   yellowCard: -0.5,
   redCard: -1.5,
+  /** Winning the ball. A header lost and a derived tackle attempt carry no weight; a failed tackle is
+   *  already the foul's penalty. */
+  tackleWon: 0.1,
+  interception: 0.1,
+  headerWon: 0.05,
+  foulSuffered: 0.03,
 } as const;
 
 export type MatchRatingPhase = keyof typeof PHASE_POSITIONS;
@@ -43,7 +49,7 @@ export const MATCH_RATING_GOAL_FOR_SHARE: Readonly<Record<MatchRatingPhase, numb
 export const MATCH_RATING_GOAL_AGAINST_SHARE: Readonly<Record<MatchRatingPhase, number>> = {
   attack: -0.1,
   midfield: -0.2,
-  defense: -0.4,
+  defense: -0.3,
 };
 
 /** A player who started, was still on at full time, and saw their club concede nothing, by phase. Only
@@ -73,6 +79,11 @@ export interface MatchInvolvement {
   readonly shotsMissed: number;
   readonly yellowCards: number;
   readonly redCards: number;
+  /** Recorded defending, from the attribution pass. */
+  readonly tacklesWon: number;
+  readonly interceptions: number;
+  readonly headersWon: number;
+  readonly foulsSuffered: number;
   readonly goalsForWhileOn: number;
   readonly goalsAgainstWhileOn: number;
   /** The club's result at the end (full time, or the score so far). */
@@ -102,6 +113,10 @@ export const matchRating = (involvement: MatchInvolvement): number => {
     involvement.shotsMissed * weights.shotMissed +
     involvement.yellowCards * weights.yellowCard +
     involvement.redCards * weights.redCard +
+    involvement.tacklesWon * weights.tackleWon +
+    involvement.interceptions * weights.interception +
+    involvement.headersWon * weights.headerWon +
+    involvement.foulsSuffered * weights.foulSuffered +
     involvement.goalsForWhileOn * MATCH_RATING_GOAL_FOR_SHARE[phase] +
     involvement.goalsAgainstWhileOn * MATCH_RATING_GOAL_AGAINST_SHARE[phase] +
     cleanSheet +

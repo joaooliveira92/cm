@@ -44,7 +44,30 @@ export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
   "redCards",
   "injuries",
   "substitutions",
+  "tacklesWon",
+  "interceptions",
+  "headersWon",
 ];
+
+/** Possession is not a count of events: it is the share of minute-slices with the ball, read from the
+ *  last `PossessionTally` at or before the revealed position. A timeline with no tally predates it, so
+ *  possession stays unavailable rather than showing a fabricated 0 or 50. */
+export const matchPossession = (
+  events: ReadonlyArray<MatchEvent>,
+  homeClubId: ClubId,
+  revealedEvents: number | null,
+): MatchStatisticRow | null => {
+  const included = includedEvents(events, revealedEvents);
+  for (let i = included.length - 1; i >= 0; i--) {
+    const event = included[i]!;
+    if (event._tag !== "PossessionTally") continue;
+    const total = event.homeSlices + event.awaySlices;
+    if (total <= 0) return null;
+    const home = Math.round((event.homeSlices / total) * 100);
+    return new MatchStatisticRow({ key: "possession", home, away: 100 - home });
+  }
+  return null;
+};
 
 export const UNAVAILABLE_MATCH_STATISTICS: ReadonlyArray<UnavailableMatchStatistic> = ["possession"];
 
@@ -76,6 +99,12 @@ const countedFor = (
       return { clubId: event.teamClubId, keys: ["redCards"] };
     case "Injury":
       return { clubId: event.teamClubId, keys: ["injuries"] };
+    case "Tackle":
+      return { clubId: event.teamClubId, keys: ["tacklesWon"] };
+    case "Interception":
+      return { clubId: event.teamClubId, keys: ["interceptions"] };
+    case "HeaderDuel":
+      return { clubId: event.teamClubId, keys: ["headersWon"] };
     // Counted from `countedSubstitutions`, as the substitution panel counts them.
     case "Substitution":
     case "MatchStarted":
@@ -89,6 +118,7 @@ const countedFor = (
     case "Counter":
     case "BeatenTrap":
     case "KeyPass":
+    case "PossessionTally":
       return null;
     default:
       return null;
@@ -184,19 +214,21 @@ export const matchStatisticsView = (
   const last = included[included.length - 1];
   const attacks = attackShare(events, started.homeClubId, revealedEvents);
   const chancesByType = computeChancesByType(events, started.homeClubId, revealedEvents);
+  const possession = matchPossession(events, started.homeClubId, revealedEvents);
+  const rows = aggregateMatchStatistics(
+    events,
+    started.homeClubId,
+    revealedEvents,
+    countedSubstitutions(events, substitutionLedger(stream, events).standIns, revealedEvents),
+  );
   return new MatchStatisticsView({
     matchId,
     homeClubName: nameOf(started.homeClubId),
     awayClubName: nameOf(started.awayClubId),
     throughMinute:
       revealedEvents === null ? null : last === undefined || last._tag === "MatchStarted" ? 0 : last.minute,
-    rows: aggregateMatchStatistics(
-      events,
-      started.homeClubId,
-      revealedEvents,
-      countedSubstitutions(events, substitutionLedger(stream, events).standIns, revealedEvents),
-    ),
-    unavailable: UNAVAILABLE_MATCH_STATISTICS,
+    rows: possession === null ? rows : [...rows, possession],
+    unavailable: possession === null ? UNAVAILABLE_MATCH_STATISTICS : [],
     homeAttackShare: attacks.home,
     awayAttackShare: attacks.away,
     chancesByType,
