@@ -1,5 +1,6 @@
 import { Outlet, useLocation } from "@tanstack/react-router";
 import { useLayoutEffect, useRef, useSyncExternalStore } from "react";
+import type { SaveId } from "@cm-clone/contracts";
 import { CareerChrome } from "../../chrome/CareerChrome.js";
 import { RegistryProvider } from "../../rpc.js";
 import { ContextTabs } from "../../navigation/components/ContextTabs.js";
@@ -17,7 +18,15 @@ import { RouteParamErrorScreen } from "./RouteParamErrorScreen.js";
 export const CareerShell = () => {
   const save = useCareerSaveScope();
   if (save._tag === "Malformed") return <RouteParamErrorScreen reason={save.reason} />;
-  const saveId = save.success;
+  return <CareerShellContent saveId={save.success} />;
+};
+
+/**
+ * The malformed-address branch returns before any hook, so the save-scoped
+ * shell is its own component: every hook here runs unconditionally, keyed on
+ * the decoded `saveId`.
+ */
+const CareerShellContent = ({ saveId }: { readonly saveId: SaveId }) => {
   const handleTabChange = useCareerTabNavigation(saveId);
 
   // The flat match routes parse as `live-match`, so the bar can only tell live from accepted by the

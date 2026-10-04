@@ -11,7 +11,7 @@ import { TacticsScreenFrame } from "./TacticsScreenFrame.js";
 import { TeamSelectionPanel } from "./TeamSelectionPanel.js";
 import { isModifiedFromTemplate } from "./tacticEdits.js";
 import type { ColumnVisibility, InMatchTactics, Mode } from "./tacticsTypes.js";
-import { useTacticDraft } from "./useTacticDraft.js";
+import { useTacticDraft, type TacticDraft } from "./useTacticDraft.js";
 import { useTacticEditing } from "./useTacticEditing.js";
 import { useTacticsActionHandlers } from "./useTacticsActionHandlers.js";
 import { useTacticsShortcuts } from "./useTacticsShortcuts.js";
@@ -20,31 +20,58 @@ export type { InMatchTactics } from "./tacticsTypes.js";
 
 // ── The screen ──────────────────────────────────────────────────
 
-export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; readonly inMatch?: InMatchTactics }) => {
+/**
+ * The Tactics screen has two data sources — the persisted draft (a route) and
+ * the live match (a command surface) — and `useTacticDraft` may only run on
+ * the route. Each source is its own component so the hook is called
+ * unconditionally; the workspace below is shared and takes whichever draft the
+ * source produced.
+ */
+export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; readonly inMatch?: InMatchTactics }) =>
+  inMatch === undefined ? (
+    <StandaloneTacticsScreen saveId={saveId} />
+  ) : (
+    <InMatchTacticsScreen saveId={saveId} inMatch={inMatch} />
+  );
+
+const StandaloneTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
+  const draft = useTacticDraft(saveId, {
+    saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
+  });
+  return <TacticsWorkspace saveId={saveId} draft={draft} />;
+};
+
+const InMatchTacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; readonly inMatch: InMatchTactics }) => (
+  <TacticsWorkspace saveId={saveId} inMatch={inMatch} draft={null} />
+);
+
+const TacticsWorkspace = ({
+  saveId,
+  inMatch,
+  draft,
+}: {
+  readonly saveId: SaveId;
+  readonly inMatch?: InMatchTactics;
+  readonly draft: TacticDraft | null;
+}) => {
   const isInMatch = inMatch !== undefined;
 
   // ── Data sources ──────────────────────────────────────────────
-
-  const draftHooks = !isInMatch
-    ? useTacticDraft(saveId, {
-        saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
-      })
-    : null;
 
   const viewResult = isInMatch
     ? ({
         _tag: "Success" as const,
         value: { squad: inMatch!.squad, club: { name: inMatch!.clubName }, tactic: inMatch!.tactic, revision: 0 },
       } as const)
-    : draftHooks!.viewResult;
-  const viewError = isInMatch ? null : draftHooks!.viewError;
-  const tactic = isInMatch ? inMatch!.tactic : draftHooks!.tactic;
-  const revision = isInMatch ? 0 : draftHooks!.revision;
-  const conflict = isInMatch ? null : draftHooks!.conflict;
-  const status = isInMatch ? null : draftHooks!.status;
-  const setTactic = isInMatch ? inMatch!.setTactic : draftHooks!.setTactic;
-  const save = isInMatch ? (() => Promise.resolve(false)) : draftHooks!.save;
-  const refresh = isInMatch ? (() => {}) : draftHooks!.refresh;
+    : draft!.viewResult;
+  const viewError = isInMatch ? null : draft!.viewError;
+  const tactic = isInMatch ? inMatch!.tactic : draft!.tactic;
+  const revision = isInMatch ? 0 : draft!.revision;
+  const conflict = isInMatch ? null : draft!.conflict;
+  const status = isInMatch ? null : draft!.status;
+  const setTactic = isInMatch ? inMatch!.setTactic : draft!.setTactic;
+  const save = isInMatch ? (() => Promise.resolve(false)) : draft!.save;
+  const refresh = isInMatch ? (() => {}) : draft!.refresh;
 
   const squad: ReadonlyArray<SquadPlayerView> = isInMatch
     ? inMatch!.squad

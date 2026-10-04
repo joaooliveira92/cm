@@ -75,11 +75,10 @@ const WarningPrompt = () => {
 };
 
 const HiddenSelectedNotice = () => {
-  const { state: { view } } = useLeagueSelectionContext();
+  const { state: { view }, actions: { dispatch } } = useLeagueSelectionContext();
   const hiddenCount = view?.hiddenSelectedCount ?? 0;
   if (hiddenCount === 0) return null;
 
-  const { actions: { dispatch } } = useLeagueSelectionContext();
   return (
     <p role="status" className="mt-3 rounded-panel bg-text-warning/10 p-2 text-body text-text-warning">
       {hiddenCount} selected nation

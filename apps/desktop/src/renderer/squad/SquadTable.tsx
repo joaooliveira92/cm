@@ -390,6 +390,14 @@ const SquadToolbarControls = ({
  *  two-column position list or the DataTable, whichever the chosen view draws.
  *  Owns no state — everything flows from the SquadProvider context. */
 export const SquadTable = () => {
+  const { state } = useSquad();
+  if (state.viewState._tag === "LoadError") {
+    return <SquadLoadError message={state.viewState.error.message} copy={state.copy} />;
+  }
+  return <SquadTableLoaded />;
+};
+
+const SquadTableLoaded = () => {
   const { state, actions, lineup } = useSquad();
   const {
     allPlayers,
@@ -429,10 +437,6 @@ export const SquadTable = () => {
     clearFilterCommand,
     clearFitContext,
   } = actions;
-
-  if (viewState._tag === "LoadError") {
-    return <SquadLoadError message={viewState.error.message} copy={copy} />;
-  }
 
   const view = squadViewById(viewId);
 

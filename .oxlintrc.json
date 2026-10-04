@@ -60,7 +60,7 @@
     "react/exhaustive-effect-dependencies": "warn",
     "react/todo": "warn",
     "react/memo-dependencies": "warn",
-    "react/hooks": "warn",
+    "react/hooks": "error",
     "react/immutability": "warn",
     "react/static-components": "warn",
     "react/rule-suppression": "warn",

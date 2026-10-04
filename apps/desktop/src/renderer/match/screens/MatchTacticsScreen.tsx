@@ -1,7 +1,7 @@
 import { useCallback, useState } from "react";
 import type { SaveId, Tactic } from "@cm-clone/contracts";
 import { LiveCommandFrame } from "../LiveCommandFrame.js";
-import { useLiveMatchCommands, type LiveMatchReady } from "../useLiveMatchCommands.js";
+import { useLiveMatchCommands, type LiveMatchCommands, type LiveMatchReady } from "../useLiveMatchCommands.js";
 import { TacticsScreen } from "../../tactics/TacticsScreen.js";
 
 /**
@@ -29,84 +29,99 @@ export const validateLiveTactic = (tactic: Tactic, ready: LiveMatchReady): strin
  *  normal save flow and validated against the revealed pitch. */
 export const MatchMatchTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const commands = useLiveMatchCommands(saveId);
-  const [draftTactic, setDraftTactic] = useState<Tactic | null>(null);
-  const [undoStack, setUndoStack] = useState<Array<Tactic>>([]);
-  const [validationError, setValidationError] = useState<string | null>(null);
 
   return (
     <LiveCommandFrame saveId={saveId} focusId="matchMatchTactics" title="Match Tactics" commands={commands} fill>
-      {(ready) => {
-        const tactic = draftTactic ?? ready.tactic;
-
-        const onEdit = useCallback(
-          (newTactic: Tactic) => {
-            // Push the pre-edit tactic onto the undo stack before updating
-            const currentStack = undoStack;
-            const nextStack = [...currentStack, tactic];
-            setUndoStack(nextStack);
-            setDraftTactic(newTactic);
-            setValidationError(null);
-          },
-          [ready.tactic, tactic, undoStack, setUndoStack, setDraftTactic, setValidationError],
-        );
-
-        const onConfirm = useCallback(
-          () => {
-            // Validate against the revealed pitch
-            const error = validateLiveTactic(tactic, ready);
-            if (error !== null) {
-              setValidationError(error);
-              return;
-            }
-            setValidationError(null);
-            // Clear the undo stack — changes are now in the match
-            setUndoStack([]);
-            setDraftTactic(null);
-            void commands.submit({ _tag: "ChangeTactics", clubId: ready.clubId, tactic });
-          },
-          [tactic, ready, commands, setUndoStack, setDraftTactic, setValidationError],
-        );
-
-        const onUndoLast = useCallback(
-          () => {
-            const stack = undoStack;
-            if (stack.length === 0) return;
-            const previous = stack[stack.length - 1];
-            if (previous === undefined) return;
-            setUndoStack(stack.slice(0, -1));
-            setDraftTactic(previous);
-            setValidationError(null);
-          },
-          [undoStack, setUndoStack, setDraftTactic, setValidationError],
-        );
-
-        const onCancel = useCallback(
-          () => {
-            setDraftTactic(null);
-            setUndoStack([]);
-            setValidationError(null);
-          },
-          [setDraftTactic, setUndoStack, setValidationError],
-        );
-
-        return (
-          <TacticsScreen
-            saveId={saveId}
-            inMatch={{
-              tactic,
-              squad: ready.squad,
-              clubName: ready.match.isHome ? ready.match.homeClubName : ready.match.awayClubName,
-              setTactic: onEdit,
-              onConfirm,
-              onUndoLast,
-              onCancel,
-              pendingCount: undoStack.length,
-              validationError,
-              isPending: commands.status?._tag === "pending",
-            }}
-          />
-        );
-      }}
+      {(ready) => <MatchTacticsReady saveId={saveId} ready={ready} commands={commands} />}
     </LiveCommandFrame>
+  );
+};
+
+/**
+ * The command surface's body, its own component so the callbacks are hooks at
+ * the top level of a function component rather than inside the frame's render
+ * prop.
+ */
+const MatchTacticsReady = ({
+  saveId,
+  ready,
+  commands,
+}: {
+  readonly saveId: SaveId;
+  readonly ready: LiveMatchReady;
+  readonly commands: LiveMatchCommands;
+}) => {
+  const [draftTactic, setDraftTactic] = useState<Tactic | null>(null);
+  const [undoStack, setUndoStack] = useState<Array<Tactic>>([]);
+  const [validationError, setValidationError] = useState<string | null>(null);
+  const tactic = draftTactic ?? ready.tactic;
+
+  const onEdit = useCallback(
+    (newTactic: Tactic) => {
+      // Push the pre-edit tactic onto the undo stack before updating
+      const currentStack = undoStack;
+      const nextStack = [...currentStack, tactic];
+      setUndoStack(nextStack);
+      setDraftTactic(newTactic);
+      setValidationError(null);
+    },
+    [tactic, undoStack, setUndoStack, setDraftTactic, setValidationError],
+  );
+
+  const onConfirm = useCallback(
+    () => {
+      // Validate against the revealed pitch
+      const error = validateLiveTactic(tactic, ready);
+      if (error !== null) {
+        setValidationError(error);
+        return;
+      }
+      setValidationError(null);
+      // Clear the undo stack — changes are now in the match
+      setUndoStack([]);
+      setDraftTactic(null);
+      void commands.submit({ _tag: "ChangeTactics", clubId: ready.clubId, tactic });
+    },
+    [tactic, ready, commands, setUndoStack, setDraftTactic, setValidationError],
+  );
+
+  const onUndoLast = useCallback(
+    () => {
+      const stack = undoStack;
+      if (stack.length === 0) return;
+      const previous = stack[stack.length - 1];
+      if (previous === undefined) return;
+      setUndoStack(stack.slice(0, -1));
+      setDraftTactic(previous);
+      setValidationError(null);
+    },
+    [undoStack, setUndoStack, setDraftTactic, setValidationError],
+  );
+
+  const onCancel = useCallback(
+    () => {
+      setDraftTactic(null);
+      setUndoStack([]);
+      setValidationError(null);
+    },
+    [setDraftTactic, setUndoStack, setValidationError],
+  );
+
+  return (
+    <TacticsScreen
+      saveId={saveId}
+      inMatch={{
+        tactic,
+        squad: ready.squad,
+        clubName: ready.match.isHome ? ready.match.homeClubName : ready.match.awayClubName,
+        setTactic: onEdit,
+        onConfirm,
+        onUndoLast,
+        onCancel,
+        pendingCount: undoStack.length,
+        validationError,
+        isPending: commands.status?._tag === "pending",
+      }}
+    />
   );
 };
