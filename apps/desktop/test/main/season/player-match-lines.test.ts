@@ -17,6 +17,7 @@ import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
 import { discardSquadsForClubs } from "../../../src/main/season/index.js";
 import { resolveFixtureScore } from "../../../src/main/season/matchday.js";
+import { recordPlayerMatchLines, type PlayerMatchLineFixture } from "../../../src/main/season/playerMatchLines.js";
 import { atFirstFixture, startSeededMatch } from "../match/seededMatch.js";
 
 /**
@@ -335,6 +336,48 @@ it.effect("an AI fixture's lines equal the fold of a same-seed re-simulation", (
     );
 
     deepStrictEqual(yield* linesForFixture(save.id, ai.id), committed);
+  }),
+);
+
+it.effect("a pre-change timeline with no possession tally reads the recorded-defending counts as unavailable", () =>
+  Effect.gen(function* () {
+    const { save, fixtureId } = yield* atFirstFixture(savesDir);
+    const match = yield* startSeededMatch(savesDir, save.id, fixtureId, ANY_MATCH_SEED);
+    yield* drain(save.id, match.matchId);
+
+    // A timeline written before the recorded-involvement events carries no `PossessionTally`; strip it
+    // from a full match so the line is otherwise real, then write it through the one writer. The five
+    // recorded-defending columns must store NULL, the marker the read side renders "-".
+    const stream = yield* withSave(save.id, loadStreamEvents(MATCH_STREAM_TYPE, match.matchId));
+    const started = matchStartedOf(stream);
+    const events = (yield* withSave(save.id, matchEventsOf(stream))).filter(
+      (event) => event._tag !== "PossessionTally",
+    );
+    const detail = yield* fixtureDetail(save.id, fixtureId);
+    const fixture: PlayerMatchLineFixture = {
+      fixtureId,
+      seasonNumber: detail.seasonNumber,
+      competitionId: detail.competitionId,
+      date: detail.date,
+      homeClubId: detail.homeClubId,
+      awayClubId: detail.awayClubId,
+      homeGoals: 0,
+      awayGoals: 0,
+      homePenalties: null,
+      awayPenalties: null,
+    };
+    yield* withSave(save.id, recordPlayerMatchLines(fixture, started.homeSetup, started.awaySetup, events));
+
+    const rows = yield* linesForFixture(save.id, fixtureId);
+    ok(rows.length > 0, "the matchday squad should get lines");
+    for (const row of rows) {
+      strictEqual(typeof row.goals, "number", "a count the whole timeline backs is still a number");
+      strictEqual(row.tackles_won, null, "no tally reads tackles won as unavailable");
+      strictEqual(row.interceptions, null, "no tally reads interceptions as unavailable");
+      strictEqual(row.headers, null, "no tally reads headers as unavailable");
+      strictEqual(row.headers_won, null, "no tally reads headers won as unavailable");
+      strictEqual(row.fouls_suffered, null, "no tally reads fouls suffered as unavailable");
+    }
   }),
 );
 

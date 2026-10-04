@@ -4,11 +4,10 @@ Label: `wayfinder:map`
 
 > Status: complete 2026-10-03, every ticket resolved autonomously at the user's approval. Nothing is
 > left to decide. [Spec published](spec.md); implementation tickets 12–19 sliced under
-> [issues/](issues/). Tickets 12–16 and 19 are resolved (the fold, rating, stored-timeline decode,
-> silent commentary, statistics read and docs all shipped). 17 and 18 remain: the match-screen
-> line-table ticket they extend shipped 2026-10-04, so 17 is unblocked and its nullable count
-> columns already went into that table under its own "add them to match-screen 18 if it has not
-> shipped" rule, leaving only its read-side check; 18 is still blocked on the Form tickets
+> [issues/](issues/). Tickets 12–17 and 19 are resolved (the fold, rating, stored-timeline decode,
+> silent commentary, statistics read, player match lines and docs all shipped). 18 remains: the
+> match-screen line-table ticket it extends shipped 2026-10-04, so 17's nullable count columns went
+> into that table and its read-side check resolved against it; 18 is still blocked on the Form tickets
 > ([match-screen 19](../match-screen-cm-layout/issues/19-form-tab-recent-games.md) and
 > [20](../match-screen-cm-layout/issues/20-form-season-block-and-player-of-the-match.md)).
 
@@ -57,6 +56,9 @@ balance, timeline size, commentary) or ruled out with a reason.
   nothing restarts; the stored-timeline union must gain the new kinds; old matches read "-".
 - [Screen follow-through](issues/11-screen-follow-through.md): new columns and rows extend the
   match-screen fold after its tickets 12 and 18.
+- [player_match_lines gain the new counts](issues/17-player-match-lines.md): the nullable
+  recorded-defending columns shipped with match-screen 18; a pre-change timeline stores NULL and
+  reads "-", proven by the read-back test.
 
 ## Not yet specified
 

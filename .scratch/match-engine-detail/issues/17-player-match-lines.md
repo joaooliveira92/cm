@@ -13,7 +13,7 @@ when this lands, its columns are added to match-screen ticket 18 instead.
 
 **Blocked by:** 14, [match-screen 18](../../match-screen-cm-layout/issues/18-match-lines-written-at-matchday-commit.md)
 
-**Status:** blocked
+**Status:** resolved
 
-- [ ] Committed lines carry the new counts; the save schema version moves with its migration.
-- [ ] Pre-change rows read "-".
+- [x] Committed lines carry the new counts; the save schema version moves with its migration.
+- [x] Pre-change rows read "-".
