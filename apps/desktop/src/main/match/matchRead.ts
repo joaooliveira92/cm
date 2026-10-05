@@ -7,6 +7,11 @@
  * step by hand; they live here once, so a reader that names a match and a reader that falls back to
  * the latest one cannot disagree about what loading a match means.
  *
+ * The invariant has three entry points: {@link loadMatchRead} for a save-scoped read (named or
+ * latest), {@link loadMatchReadOf} for a named read that must exist, and
+ * {@link loadMatchReadIfPresent} for a named fixture that may keep no stream (an AI match). A reader
+ * that only needs the raw stream to re-derive a live match takes {@link loadMatchStreamOrFail}.
+ *
  * Read-time only: the timeline is still derived per call, never materialised (Agent Note:
  * `.agents/notes/proposed/architecture/2026-09-02-event-streams-and-read-models.md`).
  */
@@ -52,14 +57,34 @@ export interface MatchRead {
 export const squadPlayerIds = (started: PersistedMatchStarted): ReadonlyArray<PlayerId> =>
   [...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id);
 
-/** The prologue for a read that names its match. Fails `MatchNotFoundError` when it has no stream. */
-export const loadMatchReadOf = (matchId: MatchId) =>
+/** A named match's stream, or `MatchNotFoundError` when it keeps none. The one home of that
+ *  invariant for the callers that re-derive a live match (resume, commands, team sheet) rather than
+ *  read a committed one through {@link loadMatchReadOf}. */
+export const loadMatchStreamOrFail = (matchId: MatchId) =>
   Effect.gen(function* () {
     const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
     if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+    return stream;
+  });
+
+/** The prologue for a read of a named match that may keep no stream (an AI fixture): the read, or
+ *  `null` when the stream is empty. Takes the club-name resolver so a caller iterating fixtures
+ *  resolves the save's pack once rather than per match. */
+export const loadMatchReadIfPresent = (matchId: MatchId, clubName: (id: string) => string) =>
+  Effect.gen(function* () {
+    const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
+    if (stream.length === 0) return null;
     const started = matchStartedOf(stream);
-    const clubName = yield* displayNames;
     return { matchId, stream, started, clubName } satisfies MatchRead;
+  });
+
+/** The prologue for a read that names its match. Fails `MatchNotFoundError` when it has no stream. */
+export const loadMatchReadOf = (matchId: MatchId) =>
+  Effect.gen(function* () {
+    const clubName = yield* displayNames;
+    const read = yield* loadMatchReadIfPresent(matchId, clubName);
+    if (read === null) return yield* new MatchNotFoundError({ matchId });
+    return read;
   });
 
 /** The prologue for a save-scoped read: the named match, or the one just played. `null` before the

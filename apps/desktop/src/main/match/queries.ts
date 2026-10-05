@@ -10,11 +10,11 @@ import { SqliteClient } from "@effect/sql-sqlite-node";
 import { FixtureId, FixtureNotPendingError, MatchNotFoundError, type MatchId, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { loadSeasonRow } from "../season/currentSeason.js";
-import { loadStreamEvents, withExistingSave } from "../season/decider.js";
+import { withExistingSave } from "../season/decider.js";
 import { loadFixtureSides, matchSummaryOf } from "./start.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
-import { MATCH_STREAM_TYPE } from "@cm-clone/game-engine";
 import { buildResumeSimulationView } from "./view.js";
+import { loadMatchStreamOrFail } from "./matchRead.js";
 
 /**
  * `ResumeSimulation` (ticket 13, extended by ticket 14): re-derives the full event timeline from
@@ -32,8 +32,7 @@ export const resumeSimulation = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+      const stream = yield* loadMatchStreamOrFail(matchId);
 
       const derived = yield* deriveStreamEvents(stream);
       return yield* buildResumeSimulationView(matchId, stream, derived, cursor, revealedEvents);
@@ -53,10 +52,8 @@ export const resumeSimulation = (
 export const getAwaitingMatch = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-
       // A match stream's id is its Fixture's id (`startMatch`).
+      yield* loadMatchStreamOrFail(matchId);
       const fixtureId = FixtureId.make(Number(matchId));
       const season = yield* loadSeasonRow;
       if (season.awaitingMatchId !== matchId) return yield* new FixtureNotPendingError({ fixtureId });

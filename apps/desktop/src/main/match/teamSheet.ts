@@ -1,6 +1,5 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
-  MatchNotFoundError,
   TeamSheetView,
   TeamSheetClubView,
   TeamSheetPlayerView,
@@ -10,9 +9,10 @@ import {
 import { rowCountLabel, slotLabel } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave } from "../season/decider.js";
+import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { MATCH_STREAM_TYPE, type PersistedMatchStarted } from "@cm-clone/game-engine";
+import { type PersistedMatchStarted } from "@cm-clone/game-engine";
+import { loadMatchStreamOrFail } from "./matchRead.js";
 
 interface NameRow {
   readonly id: string;
@@ -38,10 +38,7 @@ const loadPlayerNames = (ids: ReadonlyArray<string>) =>
 export const getTeamSheet = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) {
-        return yield* new MatchNotFoundError({ matchId });
-      }
+      const stream = yield* loadMatchStreamOrFail(matchId);
 
       const started = stream[0]!.payload as PersistedMatchStarted;
 

@@ -5,7 +5,6 @@
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
-  MatchNotFoundError,
   type ChangeTacticsCommandPayload,
   type ForceOffCommandPayload,
   type MakeSubstitutionCommandPayload,
@@ -26,9 +25,10 @@ import {
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
-import { appendStreamEvents, loadStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
+import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
 import { buildResumeSimulationView } from "./view.js";
 import { matchAiPreferences } from "./aiPreferences.js";
+import { loadMatchStreamOrFail } from "./matchRead.js";
 
 type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCommandPayload | ForceOffCommandPayload;
 
@@ -75,8 +75,7 @@ export const submitMatchCommand = (
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       yield* assertSaveNotArchived(saveId);
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+      const stream = yield* loadMatchStreamOrFail(matchId);
 
       // Load AI preferences for non-user clubs for in-match AI adjustments
       const aiPrefs = yield* matchAiPreferences(stream);
