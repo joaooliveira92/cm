@@ -130,10 +130,12 @@ equal the event-derived ones across seeds, commands and reveal cuts, then the ol
   entry points — the simulation result and the stream re-derivation — beside events, Conditions and
   counts. There is no new public `foldRuntime`; the existing names carry the new field.
 - **Projections read frames.** `pitchBeforeEachEvent` returns the before-each-event array from the
-  frames; `pitchAsOf` returns the pitch as of a reveal cut from the frames; the substitution status
-  and counted substitutions read the frames and their factual roles. The command-outcome read stays,
-  because deciding whether a submitted substitution took effect inherently compares emitted
-  substitution events against journaled commands.
+  frames; `pitchAsOf` returns the pitch as of a reveal cut from the frames; `substitutionStatus`
+  projects the counters from the frames and the journaled manager substitutions' recorded roles and
+  `openedWindow` facts. The command-outcome read stays, because deciding whether a submitted
+  substitution took effect inherently compares emitted substitution events against journaled commands;
+  the statistics count (`countedSubstitutions`) stays event-based for the same reason, taking the
+  ledger's recorded stand-in set rather than re-enacting the classification.
 - **The reveal cut is a pure projection.** A manager-origin change is journaled by construction, so it
   is present in the whole-match frames and appears and counts once given, ahead of the reveal; a
   forced-origin change (red card, severe injury, goalkeeper stand-in) applies and counts only when its
@@ -180,19 +182,21 @@ They never assert on private helpers. The fewest, highest seams win.
    change. Prior art: the committed-timeline and stored-timeline specs.
 4. **Behavioural contract (unchanged).** The existing group-g match-day desktop specs —
    revealed-pitch, revealed-state, revealed-substitutions, substitution-accuracy, ratings,
-   statistics, red-card-stand-in — stay exactly as they are and must pass without edits, proving the
-   consolidation is behaviour-preserving.
+   statistics, red-card-stand-in — keep their assertions and must pass, proving the consolidation is
+   behaviour-preserving. Their `pitchAsOf` call sites changed mechanically with the new signature
+   (frames plus journal); no assertion moved.
 
 ### Definition of Done
 
 - [ ] The simulation run returns Lineup Frames and a tagged Lineup Journal beside events,
       Conditions and counts; recording draws no random numbers.
-- [ ] `lineupFrameOf` is the frame's single definition; the frame is a small immutable view of the
-      runtime state.
+- [ ] `lineupFrameOf` is the runtime frame's single definition; the frame is a small immutable view of
+      the runtime state. The stored path rebuilds the kickoff frame from the `MatchStarted` snapshot
+      (`kickoffFrameOf`), kept honest by a test.
 - [ ] The pitch and substitution projections read frames; the classification, fold-ordering, window,
       cap and inference machinery is deleted; the command-outcome read remains.
 - [ ] The reveal cut is a pure projection over frames and factual roles, and the group-g desktop specs
-      pass untouched.
+      pass (their `pitchAsOf` call sites updated mechanically for the new signature).
 - [ ] The permanent cross-check sweep passes across seeds, commands and reveal cuts before the old
       machinery is deleted.
 - [ ] The committed-timeline record carries the optional Lineup Journal additively; a committed read

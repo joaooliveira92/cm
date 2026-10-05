@@ -4,7 +4,7 @@
  * live table, the post-match table and (ticket 18) the stored line can never disagree. This module
  * only joins the fold onto the kickoff squads, the Match Ratings and the full-time Conditions.
  *
- * Nothing is persisted. The counts come from `matchEventsOf` — the stored timeline once a result is
+ * Nothing is persisted. The counts come from `matchTimelineOf` — the stored timeline once a result is
  * committed, the re-derived one while a match is in play — while the rating reuses the existing
  * rating fold (`matchRatingsView`), so a player's Rat column equals the Ratings tab.
  */

@@ -20,8 +20,9 @@ services.
 
 **Status:** resolved
 
-- [x] `pitchBeforeEachEvent`, `pitchAsOf`, the substitution status and the counted-substitutions read
-      take frames (and roles) instead of the timeline.
+- [x] `pitchBeforeEachEvent`, `pitchAsOf` and the substitution status take frames (and roles) instead
+      of the timeline; the statistics count keeps its event-based forced-reveal filter, taking the
+      ledger's recorded stand-in set.
 - [x] Production live and committed reads use the frame-based projections.
 - [x] The reveal-cut law is preserved exactly: manager-origin ahead of reveal, forced-origin only
       once revealed, stand-in spends nothing, halftime spends no window, bring-off outcome a fact.
@@ -29,5 +30,6 @@ services.
 - [x] The cross-check sweep covers the command, forced-off and stand-in cases across several reveal
       cuts, and fails if any output differs.
 - [x] The group-g desktop read specs (`revealed-pitch`, `revealed-state`, `revealed-substitutions`,
-      `substitution-accuracy`, `ratings`, `statistics`, `red-card-stand-in`) are unmodified and pass.
+      `substitution-accuracy`, `ratings`, `statistics`, `red-card-stand-in`) keep their assertions and
+      pass; the `pitchAsOf` call sites changed mechanically for the new signature.
 - [x] `pnpm check:all` is green; small Conventional Commits on `dev`.

@@ -216,7 +216,8 @@ slots (player id, the display Position of the slot's cell, and whether the slot 
 the players who have been on, the substitutes still eligible (the kickoff Tactic's named bench minus
 anyone who has been on and anyone not in the squad), and the substitutions and windows used. It is a
 `RuntimeFrame` in `packages/game-engine/src/match/simulate/lineupRecording.ts`, built by the single
-`lineupFrameOf` beside the runtime state it reads. Frames are indexed so entry *i* is the lineup just
+`lineupFrameOf` beside the runtime state it reads; the stored path rebuilds the kickoff frame from the
+stream's `MatchStarted` snapshot instead. Frames are indexed so entry *i* is the lineup just
 before event *i* takes its own lineup consequence and the last is the lineup at full time. Recording
 projects state the run already computed and draws no random numbers, so it cannot change a seed's
 play; the projections read frames instead of re-folding the Match Event timeline.
@@ -225,8 +226,8 @@ _Avoid_: pitch snapshot, formation frame
 **Lineup Journal**:
 One tagged entry per lineup change the engine made during a run: the event index it takes effect
 before, the club, its kind (`substitution` | `forceOff` | `standIn`), the players involved, and its
-origin (`manager` | `forced`). A substitution also carries its role (`manager` | `standIn` |
-`halftime`); a manager bring-off records whether it actually removed its player. It is the
+origin (`manager` | `forced`). A manager substitution also carries its role (`manager` | `standIn` |
+`halftime`), and a manager bring-off records whether it actually removed its player. It is the
 materialiser's input and the stored form of the recorded lineup: frames materialise from it by
 applying every entry whose index is at or before the frame's event.
 _Avoid_: substitution log, lineup diff

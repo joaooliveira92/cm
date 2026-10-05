@@ -24,7 +24,7 @@ The slice keeps the projection edge unchanged; only implementation disappears.
       journal, not the deleted helpers.
 - [x] The equivalence sweep's oracle is retired and replaced by a committed golden guard over the
       frame projections.
-- [x] The group-g desktop read specs are unmodified and pass.
+- [x] The group-g desktop read specs keep their assertions and pass.
 - [x] The keeper-leaving Agent Note is updated; the new architecture note is promoted to
       implemented.
 - [x] `pnpm check:all` is green; small Conventional Commits on `dev`.

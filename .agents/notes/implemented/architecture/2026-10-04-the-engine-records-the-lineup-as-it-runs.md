@@ -30,12 +30,15 @@ runtime that decided it. The committed timeline's readers did the same reconstru
   the players who have been on, the substitutes still eligible, and the substitutions and windows
   used. One `lineupFrameOf(team)` reads the runtime state and is the frame's only definition; it
   lives beside the runtime state it reads (`packages/game-engine/src/match/simulate/teamState.ts`).
-  Frames are indexed so entry *i* is the lineup just before event *i* takes its own lineup
+  The stored path rebuilds the kickoff frame from the stream's `MatchStarted` snapshot instead
+  (`kickoffFrameOf` in `materialiseFrames.ts`), a mirror kept honest by a test rather than a second
+  definition. Frames are indexed so entry *i* is the lineup just before event *i* takes its own lineup
   consequence, matching the existing before-each-event contract.
 - **Lineup Journal.** The run also records a compact, tagged journal: one entry per lineup change,
   carrying the event index it takes effect before, the club, the kind (`substitution`, `forceOff`,
-  `standIn`), the players involved, its origin (`manager` or `forced`), and, for a substitution, its
-  role (`manager`, `standIn`, `halftime`). A substitution records whether it opened a window
+  `standIn`), the players involved, its origin (`manager` or `forced`), and, for a manager
+  substitution, its role (`manager`, `standIn`, `halftime`) — a forced bench replacement carries
+  none. A substitution records whether it opened a window
   (`openedWindow`), so no reader re-enacts the half/minute window rule. A manager `ForceOff` records
   whether it actually removed its player. The journal is the materialiser's input and the stored form;
   frames materialise from it by applying entries whose index is at or before the frame's event.
@@ -79,7 +82,8 @@ frame. The frame must be taken before the lineup mutation that the event registe
   counts; no caller changes. A frame exists per club per event, entry *i* the lineup just before event
   *i*'s lineup consequence.
 - Recording draws no random numbers: every seed's events, Conditions and counts are byte-identical to
-  before, and the group-g desktop read specs pass untouched.
+  before, and the group-g desktop read specs pass. Their `pitchAsOf` call sites changed mechanically
+  with the signature (frames plus journal); no assertion changed.
 - The permanent guard (`packages/game-engine/test/match/lineup-frames-cross-check.test.ts`) pins the
   exact projected on-pitch shape, substitutes and substitution status for a fixed set of seeded
   scenarios and cuts, plus the journal, against committed golden values captured from the deleted

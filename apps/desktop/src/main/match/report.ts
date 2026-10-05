@@ -46,8 +46,9 @@ const followsSevereInjury = (event: SubstitutionEvent, previous: MatchEvent | un
 
 /**
  * Pure: the report's timeline entries, with names resolved through `nameOf`. A goalkeeper stand-in
- * (`standIns`, from `classifySubstitutions`) is listed as its own kind, not as a Substitution, so the
- * listed substitutions are the ones the substitutions statistic counts.
+ * (`standIns`, from `substitutionLedger`'s recorded `standIn` journal entries) is listed as its own
+ * kind, not as a Substitution, so the listed substitutions are the ones the substitutions statistic
+ * counts.
  */
 export const reportEvents = (
   events: ReadonlyArray<MatchEvent>,
