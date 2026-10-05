@@ -347,8 +347,8 @@ How far the manager's reveal has reached in a live match: a count of the Comment
 also a position in the Match Event timeline — a position, never a minute, since minutes are not
 monotonic (first-half stoppage runs past 45, half time is stamped 45 and the second half restarts at
 46). The renderer owns the pace, counting the lines it has shown, and hands the position back on every
-read; main owns the cut, through the single `revealedAt` law in `@cm-clone/shared`, so a read can
-never show a Match Event the manager has not seen.
+read; main owns the cut, through the single `revealedCut` law in `@cm-clone/shared` (applied by
+`revealedAt`), so a read can never show a Match Event the manager has not seen.
 _Avoid_: Revealed-event count (it is a position, not a total); cursor (the `ResumeSimulationView.cursor`
 is the chunk cursor, a different position)
 

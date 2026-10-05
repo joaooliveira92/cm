@@ -3,9 +3,10 @@
  *
  * The manager's revealed position is a count of Commentary Lines, not a minute (minutes are not
  * monotonic). The name for it is `RevealedEvents` in `@cm-clone/contracts`; it is typed here as a
- * plain `number | null` because `shared` cannot depend on that package. Generic over the item, so
- * the Match Event timeline, its Lineup Frames and the Match Player Line fold all cut with the one
- * function rather than each re-wrapping its own slice.
+ * plain `number | null` because `shared` cannot depend on that package. `revealedCut` is the clamp
+ * law and `revealedAt` applies it; both are generic over the item, so the Match Event timeline, the
+ * Match Player Line fold and any other reader cut with the one law rather than each re-wrapping its
+ * own slice.
  */
 
 /**
