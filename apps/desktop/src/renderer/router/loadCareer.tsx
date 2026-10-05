@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import { useState } from "react";
 import type { SaveId, SaveSummary } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
 import { Trash2 } from "lucide-react";
-import { describeRpcError, deleteSave, listSaves, loadSave } from "../rpc.js";
-import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
-import type { RpcClientError } from "../rpc/errors.js";
+import { describeRpcError, deleteSave, loadSave } from "../rpc.js";
+import { dispatchAction } from "../actions/dispatch.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { PANEL } from "../theme.js";
@@ -12,10 +11,12 @@ import { FOCUS_RING } from "../focus.js";
 import { Header } from "../chrome/header/index.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
+import { CreditsDialog } from "../components/shared/CreditsDialog.js";
 import { LightweightDialog } from "../dialog/LightweightDialog.js";
 import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { Backdrop } from "../backdrop/Backdrop.js";
 import { MENU_BACKDROP } from "../backdrop/backdrops.js";
+import { useSaveList } from "./useSaveList.js";
 
 const formatDate = (iso: string): string => {
   const d = new Date(iso);
@@ -49,30 +50,88 @@ const SAVE_CARD =
 const INFO_LABEL = "text-data text-text-muted";
 const INFO_VALUE = "text-body text-text-primary";
 
+/**
+ * One saved career as a card: its identity, the metadata that places it in the world, and the two
+ * verbs — Continue and Delete. The first button in the card is Continue, so `closest("li")` and a
+ * first-button walk both land on the primary action.
+ */
+const SaveCard = ({
+  entry,
+  deleting,
+  onContinue,
+  onDelete,
+}: {
+  readonly entry: SaveSummary;
+  readonly deleting: boolean;
+  readonly onContinue: () => void;
+  readonly onDelete: () => void;
+}) => (
+  <li className={SAVE_CARD}>
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-2">
+          <h3 className="truncate text-heading text-text-primary">{entry.name}</h3>
+          {entry.archivedCause !== null && (
+            <Badge variant="secondary" className="shrink-0">Archived</Badge>
+          )}
+        </div>
+
+        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
+          <div>
+            <span className={INFO_LABEL}>Manager</span>
+            <p className={INFO_VALUE}>{entry.managerName}</p>
+          </div>
+          <div>
+            <span className={INFO_LABEL}>Club</span>
+            <p className={INFO_VALUE}>{entry.userClubName}</p>
+          </div>
+          <div>
+            <span className={INFO_LABEL}>Season</span>
+            <p className={INFO_VALUE}>Season {entry.seasonNumber}{" -- "}{formatGameDate(entry.gameDate)}</p>
+          </div>
+          <div>
+            <span className={INFO_LABEL}>Created</span>
+            <p className={INFO_VALUE}>{formatDate(entry.createdAt)}</p>
+          </div>
+          <div>
+            <span className={INFO_LABEL}>Last played</span>
+            <p className={INFO_VALUE}>{timeAgo(entry.lastModifiedAt)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex shrink-0 flex-col gap-1.5 pt-1">
+        <Button type="button" size="sm" onClick={onContinue}>
+          Continue
+        </Button>
+        <Button
+          type="button"
+          variant="destructive"
+          size="sm"
+          disabled={deleting}
+          onClick={onDelete}
+        >
+          <Trash2 className="size-3.5" />
+          {deleting ? "Deleting..." : "Delete"}
+        </Button>
+      </div>
+    </div>
+  </li>
+);
+
+/**
+ * Load Career (`/load`): the saved-game browser, and the only place a save is
+ * opened or deleted. The repository read and its `retry-save-list` Action come
+ * from the shared `useSaveList` hook; this screen owns the open/delete flows and
+ * the local layers around them.
+ */
 export const LoadCareerScreen = () => {
-  const [saves, setSaves] = useState<ReadonlyArray<SaveSummary>>([]);
-  const [listSavesError, setListSavesError] = useState<RpcClientError<"listSaves"> | null>(null);
+  const { saves, failed, refresh } = useSaveList();
   const [openPreferences, setOpenPreferences] = useState(false);
   const [openCredits, setOpenCredits] = useState(false);
   const [openFailure, setOpenFailure] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<SaveId | null>(null);
   const [deleting, setDeleting] = useState<SaveId | null>(null);
-
-  const refresh = useCallback(async () => {
-    setListSavesError(null);
-    const outcome = await Effect.runPromise(listSaves.pipe(Effect.result));
-    if (Result.isFailure(outcome)) {
-      setListSavesError(outcome.failure);
-      return;
-    }
-    setSaves(outcome.success);
-  }, []);
-
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
-
-  useEffect(() => registerActionHandler("retry-save-list", () => void refresh()), [refresh]);
 
   const handleContinue = async (id: SaveId): Promise<void> => {
     setOpenFailure(null);
@@ -149,7 +208,7 @@ export const LoadCareerScreen = () => {
           className={`mx-auto w-full max-w-3xl flex-1 overflow-y-auto space-y-4 p-8 ${FOCUS_RING.join(" ")}`}
           onKeyDown={handleKeyDown}
         >
-          {listSavesError && (
+          {failed && (
             <section className={PANEL}>
               <p className="text-body text-destructive">Failed to load saves.</p>
               <Button
@@ -164,7 +223,7 @@ export const LoadCareerScreen = () => {
             </section>
           )}
 
-          {!listSavesError && saves.length === 0 && (
+          {!failed && saves.length === 0 && (
             <section className={PANEL}>
               <h2 className="text-heading">Saved careers</h2>
               <p className="mt-2 text-body text-text-secondary">
@@ -180,68 +239,18 @@ export const LoadCareerScreen = () => {
             </section>
           )}
 
-          {!listSavesError && saves.length > 0 && (
+          {!failed && saves.length > 0 && (
             <section>
               <h2 className="mb-3 text-heading">Saved careers</h2>
               <ul className="space-y-3">
                 {saves.map((entry) => (
-                  <li key={entry.id} className={SAVE_CARD}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="truncate text-heading text-text-primary">
-                            {entry.name}
-                          </h3>
-                          {entry.archivedCause !== null && (
-                            <Badge variant="secondary" className="shrink-0">Archived</Badge>
-                          )}
-                        </div>
-
-                        <div className="mt-2 grid grid-cols-2 gap-x-4 gap-y-1">
-                          <div>
-                            <span className={INFO_LABEL}>Manager</span>
-                            <p className={INFO_VALUE}>{entry.managerName}</p>
-                          </div>
-                          <div>
-                            <span className={INFO_LABEL}>Club</span>
-                            <p className={INFO_VALUE}>{entry.userClubName}</p>
-                          </div>
-                          <div>
-                            <span className={INFO_LABEL}>Season</span>
-                            <p className={INFO_VALUE}>Season {entry.seasonNumber}{" -- "}{formatGameDate(entry.gameDate)}</p>
-                          </div>
-                          <div>
-                            <span className={INFO_LABEL}>Created</span>
-                            <p className={INFO_VALUE}>{formatDate(entry.createdAt)}</p>
-                          </div>
-                          <div>
-                            <span className={INFO_LABEL}>Last played</span>
-                            <p className={INFO_VALUE}>{timeAgo(entry.lastModifiedAt)}</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex shrink-0 flex-col gap-1.5 pt-1">
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => void handleContinue(entry.id)}
-                        >
-                          Continue
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="destructive"
-                          size="sm"
-                          disabled={deleting === entry.id}
-                          onClick={() => setDeleteTarget(entry.id)}
-                        >
-                          <Trash2 className="size-3.5" />
-                          {deleting === entry.id ? "Deleting..." : "Delete"}
-                        </Button>
-                      </div>
-                    </div>
-                  </li>
+                  <SaveCard
+                    key={entry.id}
+                    entry={entry}
+                    deleting={deleting === entry.id}
+                    onContinue={() => void handleContinue(entry.id)}
+                    onDelete={() => setDeleteTarget(entry.id)}
+                  />
                 ))}
               </ul>
             </section>
@@ -256,27 +265,7 @@ export const LoadCareerScreen = () => {
           <PreferencesDialog onClose={() => setOpenPreferences(false)} />
         )}
 
-        {openCredits && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-            <div className="mx-4 max-w-md rounded-panel bg-panel-bg p-6 shadow-panel">
-              <h2 className="text-heading">Credits</h2>
-              <p className="mt-2 text-body text-text-soft">
-                cm-clone -- a local single-player football-management simulation.
-              </p>
-              <p className="mt-2 text-body text-text-soft">
-                Built with Electron, React, Effect, and TypeScript.
-              </p>
-              <Button
-                type="button"
-                variant="secondary"
-                className="mt-4"
-                onClick={() => setOpenCredits(false)}
-              >
-                Close
-              </Button>
-            </div>
-          </div>
-        )}
+        {openCredits && <CreditsDialog onClose={() => setOpenCredits(false)} />}
 
         {deleteTarget !== null && (
           <LightweightDialog

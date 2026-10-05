@@ -1,14 +1,15 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import type { SaveSummary } from "@cm-clone/contracts";
 import { Effect, Result } from "effect";
-import { describeRpcError, listSaves, loadSave } from "../rpc.js";
-import { dispatchAction, registerActionHandler } from "../actions/dispatch.js";
+import { describeRpcError, loadSave } from "../rpc.js";
+import { dispatchAction } from "../actions/dispatch.js";
 import { navigate, navigateCareer } from "../navigation/adapter.js";
 import { RouteView } from "./RouteView.js";
 import { Header } from "../chrome/header/index.js";
 import { ShellBottomBar, EMPTY_BOTTOM_BAR } from "../chrome/bottom-bar/index.js";
 import { PreferencesDialog } from "../appearance/PreferencesDialog.js";
 import { Button } from "../components/ui/button.js";
+import { CreditsDialog } from "../components/shared/CreditsDialog.js";
 import {
   PANEL,
   PANEL_STRONG,
@@ -17,6 +18,7 @@ import { Backdrop } from "../backdrop/Backdrop.js";
 import { Dialog } from "../components/shared/Dialog.js";
 import { MENU_BACKDROP } from "../backdrop/backdrops.js";
 import { APP_VERSION, DATABASE_EDITION } from "../appInfo.js";
+import { useSaveList } from "./useSaveList.js";
 
 /** The product identity (spec §3.3) — the clone's own title, no licensed artwork. */
 const PRODUCT_TITLE = "Championship Manager Clone";
@@ -105,18 +107,84 @@ const menuItems = (resumable: SaveSummary | null): ReadonlyArray<MenuItem> =>
     ];
 
 /**
- * How the save repository answered the menu's probe (spec §8 `hasSavedGames`,
- * §10.1 repository unavailable). Derived on mount rather than stored: the menu
- * asks the repository, it does not keep a Boolean of its own.
+ * One menu row: its button, the sentence beside it, and — for `Load Career` when there are no saves
+ * — the passive hint. The screen owns the roving focus; this leaf only draws the structure.
  */
-type SaveRepositoryState =
-  | { readonly status: "probing" }
-  | {
-    readonly status: "ready";
-    readonly hasSavedGames: boolean;
-    readonly resumable: SaveSummary | null;
-  }
-  | { readonly status: "unavailable" };
+const MainMenuItem = ({
+  item,
+  index,
+  tabIndex,
+  describedBy,
+  hint,
+  buttonRef,
+  onFocus,
+  onActivate,
+}: {
+  readonly item: MenuItem;
+  readonly index: number;
+  readonly tabIndex: number;
+  readonly describedBy: string;
+  readonly hint: string | null;
+  readonly buttonRef: (node: HTMLButtonElement | null) => void;
+  readonly onFocus: () => void;
+  readonly onActivate: () => void;
+}) => (
+  <li
+    style={{ animationDelay: `${index * 0.08}s` }}
+    className={`grid grid-cols-[minmax(10rem,14rem)_1fr] items-center gap-6 motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both] ${item.command === "request_application_exit" ? "mt-8" : ""
+      }`}
+  >
+    <Button
+      ref={buttonRef}
+      type="button"
+      variant="outline"
+      size="lg"
+      tabIndex={tabIndex}
+      data-focus-id={`mainMenu.${item.key}`}
+      aria-describedby={describedBy}
+      className="w-full active:bg-surface"
+      onFocus={onFocus}
+      onClick={onActivate}
+    >
+      {item.label}
+    </Button>
+    <div className="text-body text-text-secondary">
+      <p id={`${item.key}-description`}>{item.description}</p>
+      {/* The hint sits outside the control so it describes `Load Career` without becoming part of
+          its accessible name. */}
+      {hint !== null && (
+        <p id="menu-load-hint" className="mt-1 text-caption text-text-muted">
+          {hint}
+        </p>
+      )}
+    </div>
+  </li>
+);
+
+/** Exit confirmation (spec §7): modal, default focus on Cancel, the destructive action styled
+ *  distinctly, Escape cancels. No career is loaded at the menu, so it must not warn about losing
+ *  career progress. */
+const ExitDialog = ({
+  onCancel,
+  onConfirm,
+}: {
+  readonly onCancel: () => void;
+  readonly onConfirm: () => void;
+}) => (
+  <Dialog title="Exit application?" onClose={onCancel}>
+    <p className="text-body text-text-secondary">
+      No career is loaded, so nothing will be lost.
+    </p>
+    <div className="mt-4 flex items-center justify-end gap-2">
+      <Button type="button" variant="secondary" autoFocus onClick={onCancel}>
+        Cancel
+      </Button>
+      <Button type="button" variant="destructive" onClick={onConfirm}>
+        Exit
+      </Button>
+    </div>
+  </Dialog>
+);
 
 /**
  * The Main Menu (`/`): the application's entry point (app-shell spec, Screen 1).
@@ -129,43 +197,19 @@ type SaveRepositoryState =
  * it opt-in.
  *
  * The saved-game browser is not here: `Load Career` navigates to `/load`, which
- * owns the list, its empty state, and its errors.
+ * owns the list, its empty state, and its errors. The repository probe and its
+ * `retry-save-list` Action are the shared `useSaveList` hook's; this screen only
+ * derives the resume hint and the resume target from the answer.
  */
 export const MainMenuScreen = () => {
-  const [repository, setRepository] = useState<SaveRepositoryState>({ status: "probing" });
+  const { saves, failed, probing } = useSaveList();
   const [openPreferences, setOpenPreferences] = useState(false);
   const [openCredits, setOpenCredits] = useState(false);
   const [openExit, setOpenExit] = useState(false);
   const [resumeFailure, setResumeFailure] = useState<string | null>(null);
   const menuRefs = useRef<Array<HTMLButtonElement | null>>([]);
 
-  const probeSaveRepository = useCallback(async () => {
-    setRepository({ status: "probing" });
-    const outcome = await Effect.runPromise(listSaves.pipe(Effect.result));
-    setRepository(
-      Result.isFailure(outcome)
-        ? { status: "unavailable" }
-        : {
-          status: "ready",
-          hasSavedGames: outcome.success.length > 0,
-          resumable: latestLiveSave(outcome.success),
-        },
-    );
-  }, []);
-
-  useEffect(() => {
-    void probeSaveRepository();
-  }, [probeSaveRepository]);
-
-  // The retry affordance is a registered Action, not a bare onClick: the
-  // registry holds the structure (`retry-save-list`, mainMenu scope) and this
-  // live handler closes over the probe, so the button, palette, and help
-  // overlay dispatch by the same stable id (ADR-0012).
-  useEffect(() => registerActionHandler("retry-save-list", () => void probeSaveRepository()), [
-    probeSaveRepository,
-  ]);
-
-  const resumable = repository.status === "ready" ? repository.resumable : null;
+  const resumable = failed ? null : latestLiveSave(saves);
   const items = menuItems(resumable);
 
   // Roving tabindex: exactly one menu item is the tab stop (spec §4.1).
@@ -244,7 +288,7 @@ export const MainMenuScreen = () => {
    *  a disabled control. `Load Career` stays enabled with no saves, because the
    *  spec puts that empty state on the load screen (§5.2). */
   const loadHint =
-    repository.status === "ready" && !repository.hasSavedGames ? "No saved careers yet" : null;
+    !failed && !probing && saves.length === 0 ? "No saved careers yet" : null;
 
   return (
     <RouteView screenId="mainMenu">
@@ -280,42 +324,22 @@ export const MainMenuScreen = () => {
                     ? `${descriptionId} menu-load-hint`
                     : descriptionId;
                 return (
-                  <li
+                  <MainMenuItem
                     key={item.key}
-                    style={{ animationDelay: `${index * 0.08}s` }}
-                    className={`grid grid-cols-[minmax(10rem,14rem)_1fr] items-center gap-6 motion-reduce:animate-none animate-[menu-fade-in_0.3s_ease-out_both] ${item.command === "request_application_exit" ? "mt-8" : ""
-                      }`}
-                  >
-                    <Button
-                      ref={(node) => {
-                        menuRefs.current[index] = node;
-                      }}
-                      type="button"
-                      variant="outline"
-                      size="lg"
-                      tabIndex={index === activeIndex ? 0 : -1}
-                      data-focus-id={`mainMenu.${item.key}`}
-                      aria-describedby={describedBy}
-                      className="w-full active:bg-surface"
-                      onFocus={() => setActiveIndex(index)}
-                      onClick={() => {
-                        setActiveIndex(index);
-                        runCommand(item.command);
-                      }}
-                    >
-                      {item.label}
-                    </Button>
-                    <div className="text-body text-text-secondary">
-                      <p id={descriptionId}>{item.description}</p>
-                      {/* The hint sits outside the control so it describes
-                          `Load Career` without becoming part of its accessible name. */}
-                      {item.command === "open_load_game" && loadHint !== null && (
-                        <p id="menu-load-hint" className="mt-1 text-caption text-text-muted">
-                          {loadHint}
-                        </p>
-                      )}
-                    </div>
-                  </li>
+                    item={item}
+                    index={index}
+                    tabIndex={index === activeIndex ? 0 : -1}
+                    describedBy={describedBy}
+                    hint={item.command === "open_load_game" ? loadHint : null}
+                    buttonRef={(node) => {
+                      menuRefs.current[index] = node;
+                    }}
+                    onFocus={() => setActiveIndex(index)}
+                    onActivate={() => {
+                      setActiveIndex(index);
+                      runCommand(item.command);
+                    }}
+                  />
                 );
               })}
             </ul>
@@ -329,7 +353,7 @@ export const MainMenuScreen = () => {
 
           {/* Save repository unavailable (spec §10.1): explained, retryable, and
               nonblocking — every menu item above stays usable. */}
-          {repository.status === "unavailable" && (
+          {failed && (
             <div
               role="status"
               className={`mt-4 w-full ${PANEL} flex items-center justify-between gap-3`}
@@ -365,47 +389,13 @@ export const MainMenuScreen = () => {
           <PreferencesDialog onClose={() => setOpenPreferences(false)} />
         )}
 
-        {/* Credits (spec §5.4): informational, scrollable, with a Back action. */}
-        {openCredits && (
-          <Dialog title="Credits" onClose={() => setOpenCredits(false)}>
-            <div className="max-h-64 overflow-y-auto text-body text-text-secondary">
-              <p>{PRODUCT_TITLE} — an original football management simulation.</p>
-              <p className="mt-2">
-                Every club, competition, and person in this game is fictional. No licensed
-                imagery, database, or interface text from any other game is used.
-              </p>
-              <p className="mt-2">Built with Electron, React, and Effect.</p>
-            </div>
-            <div className="mt-4 flex items-center justify-end">
-              <Button
-                type="button"
-                variant="secondary"
-                autoFocus
-                onClick={() => setOpenCredits(false)}
-              >
-                Back
-              </Button>
-            </div>
-          </Dialog>
-        )}
+        {openCredits && <CreditsDialog onClose={() => setOpenCredits(false)} />}
 
-        {/* Exit confirmation (spec §7): modal, default focus on Cancel, the
-            destructive action styled distinctly, Escape cancels. No career is
-            loaded here, so it must not warn about losing career progress. */}
         {openExit && (
-          <Dialog title="Exit application?" onClose={() => setOpenExit(false)}>
-            <p className="text-body text-text-secondary">
-              No career is loaded, so nothing will be lost.
-            </p>
-            <div className="mt-4 flex items-center justify-end gap-2">
-              <Button type="button" variant="secondary" autoFocus onClick={() => setOpenExit(false)}>
-                Cancel
-              </Button>
-              <Button type="button" variant="destructive" onClick={handleQuitConfirmed}>
-                Exit
-              </Button>
-            </div>
-          </Dialog>
+          <ExitDialog
+            onCancel={() => setOpenExit(false)}
+            onConfirm={handleQuitConfirmed}
+          />
         )}
       </div>
     </RouteView>

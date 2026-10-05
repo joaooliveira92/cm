@@ -17,6 +17,7 @@
  * The one-shot key capture is the app's only "press any key" listener, so it attaches directly in
  * capture phase rather than through the binding seam: it is not a binding registration, it must
  * win over every seam-registered hotkey for exactly one keystroke, and it tears down immediately.
+ * It lives in `useRebindCapture`, so this component only composes tabs, rows, and status.
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Effect } from "effect";
@@ -42,7 +43,6 @@ import {
   resetAllKeyBindings,
   resetKeyBinding,
   setKeyBindingOverride,
-  type RpcClientError,
 } from "../rpc.js";
 
 export type HelpTabMode = "all" | "global" | "current";
@@ -61,18 +61,188 @@ const matchesTab = (action: Action, mode: HelpTabMode): boolean => {
   return action.scope !== "app-global" && action.scope !== "career-global";
 };
 
+/** The label a rebind status message names an Action by. */
+const labelOf = (actionId: string): string =>
+  ALL_ACTIONS.find((candidate) => candidate.id === actionId)?.label ?? actionId;
+
+const rejectionMessage = (rejection: OverrideRejection): string => rejection.message;
+
 /** A rebind outcome rendered in the overlay's status region. */
 type RebindStatus =
   | { readonly _tag: "idle" }
   | { readonly _tag: "error"; readonly message: string }
   | { readonly _tag: "saved"; readonly message: string };
 
-const rejectionMessage = (rejection: OverrideRejection): string => rejection.message;
+/**
+ * The rebinding state machine: which row is capturing the next keystroke, the status it reports,
+ * and the three seam calls a rebind can make (set one, reset one, reset all). It owns the one-shot
+ * capture-phase listener and the focus handle the capturing row needs; the overlay reads the
+ * returned status and wires the buttons.
+ */
+const useRebindCapture = (
+  overrides: KeyBindingOverrides,
+  onOverridesChange: (next: KeyBindingOverrides) => void,
+) => {
+  const [capturing, setCapturing] = useState<string | null>(null);
+  const [status, setStatus] = useState<RebindStatus>({ _tag: "idle" });
+  const captureHintRef = useRef<HTMLSpanElement | null>(null);
 
-/** Render a seam failure (a main-side guard or transport issue) as a rebind status message. The
- *  description function already pattern-matches every `RpcClientError` branch. */
-const errorMessage = (error: RpcClientError<"setKeyBindingOverride">): string =>
-  describeRpcError(error);
+  // While a row is capturing, a capture-phase window listener owns exactly the next keystroke:
+  // Escape cancels, an unboundable key is rejected with a reason, and a valid key is validated and
+  // persisted. `overrides` is stable while capturing (the seam only changes it through
+  // `onOverridesChange`, which exits capture first).
+  useEffect(() => {
+    if (capturing === null) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.repeat) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (event.key === "Escape") {
+        setCapturing(null);
+        setStatus({ _tag: "idle" });
+        return;
+      }
+      const keystroke = keyOf(event);
+      const binding = bindingFromKeystroke(keystroke);
+      const actionId = capturing;
+      if (binding === null) {
+        setCapturing(null);
+        setStatus({
+          _tag: "error",
+          message: `"${event.key}" cannot be bound. Press a letter or digit key, Space, or a Cmd/Ctrl+key chord.`,
+        });
+        return;
+      }
+      const rejection = validateOverride(ALL_ACTIONS, overrides, actionId, binding);
+      if (rejection !== null) {
+        setCapturing(null);
+        setStatus({ _tag: "error", message: rejectionMessage(rejection) });
+        return;
+      }
+      Effect.runPromise(Effect.result(setKeyBindingOverride(actionId, binding))).then((result) => {
+        if (result._tag === "Success") {
+          setStatus({ _tag: "saved", message: `${labelOf(actionId)} is now bound to ${binding}.` });
+          onOverridesChange(result.success);
+        } else {
+          setStatus({ _tag: "error", message: describeRpcError(result.failure) });
+        }
+        setCapturing(null);
+      });
+    };
+    window.addEventListener("keydown", onKeyDown, { capture: true });
+    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
+  }, [capturing, overrides, onOverridesChange]);
+
+  const beginRebind = useCallback((actionId: string) => {
+    setStatus({ _tag: "idle" });
+    setCapturing(actionId);
+    // Focus the capture hint so the next keystroke lands where the player is looking.
+    requestAnimationFrame(() => captureHintRef.current?.focus());
+  }, []);
+
+  const doReset = useCallback(
+    (actionId: string) => {
+      Effect.runPromise(Effect.result(resetKeyBinding(actionId))).then((result) => {
+        if (result._tag === "Success") {
+          setStatus({ _tag: "saved", message: `${labelOf(actionId)} is back to its default.` });
+          onOverridesChange(result.success);
+        } else {
+          setStatus({ _tag: "error", message: describeRpcError(result.failure) });
+        }
+      });
+    },
+    [onOverridesChange],
+  );
+
+  const doResetAll = useCallback(() => {
+    Effect.runPromise(Effect.result(resetAllKeyBindings)).then((result) => {
+      if (result._tag === "Success") {
+        setStatus({ _tag: "saved", message: "All bindings are back to their defaults." });
+        onOverridesChange(result.success);
+      } else {
+        setStatus({ _tag: "error", message: describeRpcError(result.failure) });
+      }
+    });
+  }, [onOverridesChange]);
+
+  return { capturing, status, beginRebind, doReset, doResetAll, captureHintRef };
+};
+
+/** One Action row: its label, its availability check, its effective binding, and its rebind/reset
+ *  controls — or, while it is the capturer, the "press a key" prompt in their place. */
+const ShortcutRow = ({
+  action,
+  available,
+  binding,
+  overridden,
+  capturing,
+  captureHintRef,
+  onRebind,
+  onReset,
+}: {
+  readonly action: Action;
+  readonly available: boolean;
+  readonly binding: string | undefined;
+  readonly overridden: boolean;
+  readonly capturing: boolean;
+  readonly captureHintRef: React.RefObject<HTMLSpanElement | null>;
+  readonly onRebind: () => void;
+  readonly onReset: () => void;
+}) => (
+  <div
+    data-action-id={action.id}
+    className="flex items-center justify-between gap-3 border-b border-border-subtle/60 py-0.5 text-data"
+  >
+    <span className={available ? "text-text-strong" : "text-text-muted"}>{action.label}</span>
+    {capturing ? (
+      <span
+        ref={captureHintRef}
+        tabIndex={-1}
+        role="status"
+        className="rounded-control border border-text-highlight/60 bg-surface px-2 py-0.5 font-mono text-data text-text-highlight"
+      >
+        Press a key… (Escape cancels)
+      </span>
+    ) : (
+      <span className="flex shrink-0 items-center gap-2">
+        {available && (
+          <span aria-label="available" className="text-data text-text-success">
+            ✓
+          </span>
+        )}
+        {binding !== undefined && (
+          <Kbd
+            aria-label={overridden ? `Binding ${binding}, rebound` : `Binding ${binding}`}
+            className={overridden ? "bg-text-highlight/20 text-text-highlight" : undefined}
+          >
+            {binding}
+            {overridden ? " *" : ""}
+          </Kbd>
+        )}
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          aria-label={`Rebind ${action.label}`}
+          onClick={onRebind}
+        >
+          Rebind
+        </Button>
+        {overridden && (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            aria-label={`Reset ${action.label} binding`}
+            onClick={onReset}
+          >
+            Reset
+          </Button>
+        )}
+      </span>
+    )}
+  </div>
+);
 
 export const HelpOverlay = ({
   screen,
@@ -90,10 +260,9 @@ export const HelpOverlay = ({
 }) => {
   const [tab, setTab] = useState<HelpTabMode>("all");
   const tabsRef = useRef<Array<HTMLButtonElement | null>>([]);
-  const [capturing, setCapturing] = useState<string | null>(null);
-  const [status, setStatus] = useState<RebindStatus>({ _tag: "idle" });
-  const captureHintRef = useRef<HTMLSpanElement | null>(null);
   const seam = useSeamHotkeysContext();
+  const { capturing, status, beginRebind, doReset, doResetAll, captureHintRef } =
+    useRebindCapture(overrides, onOverridesChange);
 
   // Every row is the live registry snapshot for the current scope union, with overrides layered
   // over the coded defaults — the same projection the spine's resolver and the palette consume.
@@ -145,95 +314,6 @@ export const HelpOverlay = ({
     tabsRef.current[activeTabIndex]?.focus();
   }, [activeTabIndex]);
 
-  // The one-shot "press a key" capture. While a row is capturing, a capture-phase window listener
-  // owns exactly the next keystroke: Escape cancels, an unboundable key is rejected with a
-  // reason, and a valid key is validated and persisted. `overrides` is stable while capturing
-  // (the seam only changes it through `onOverridesChange`, which exits capture first).
-  useEffect(() => {
-    if (capturing === null) return;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.repeat) return;
-      event.preventDefault();
-      event.stopPropagation();
-      if (event.key === "Escape") {
-        setCapturing(null);
-        setStatus({ _tag: "idle" });
-        return;
-      }
-      const keystroke = keyOf(event);
-      const binding = bindingFromKeystroke(keystroke);
-      const actionId = capturing;
-      if (binding === null) {
-        setCapturing(null);
-        setStatus({
-          _tag: "error",
-          message: `"${event.key}" cannot be bound. Press a letter or digit key, Space, or a Cmd/Ctrl+key chord.`,
-        });
-        return;
-      }
-      const rejection = validateOverride(ALL_ACTIONS, overrides, actionId, binding);
-      if (rejection !== null) {
-        setCapturing(null);
-        setStatus({ _tag: "error", message: rejectionMessage(rejection) });
-        return;
-      }
-      Effect.runPromise(Effect.result(setKeyBindingOverride(actionId, binding))).then((result) => {
-        if (result._tag === "Success") {
-          setStatus({
-            _tag: "saved",
-            message: `${visibleLabel(actionId)} is now bound to ${binding}.`,
-          });
-          onOverridesChange(result.success);
-        } else {
-          setStatus({ _tag: "error", message: errorMessage(result.failure) });
-        }
-        setCapturing(null);
-      });
-    };
-    window.addEventListener("keydown", onKeyDown, { capture: true });
-    return () => window.removeEventListener("keydown", onKeyDown, { capture: true });
-  }, [capturing, overrides, onOverridesChange]);
-
-  const beginRebind = useCallback(
-    (actionId: string) => {
-      setStatus({ _tag: "idle" });
-      setCapturing(actionId);
-      // Focus the capture hint so the next keystroke lands where the player is looking.
-      requestAnimationFrame(() => captureHintRef.current?.focus());
-    },
-    [],
-  );
-
-  const doReset = useCallback(
-    (actionId: string) => {
-      Effect.runPromise(Effect.result(resetKeyBinding(actionId))).then((result) => {
-        if (result._tag === "Success") {
-          setStatus({ _tag: "saved", message: `${visibleLabel(actionId)} is back to its default.` });
-          onOverridesChange(result.success);
-        } else {
-          setStatus({ _tag: "error", message: describeRpcError(result.failure) });
-        }
-      });
-    },
-    [onOverridesChange],
-  );
-
-  const doResetAll = useCallback(() => {
-    Effect.runPromise(Effect.result(resetAllKeyBindings)).then((result) => {
-      if (result._tag === "Success") {
-        setStatus({ _tag: "saved", message: "All bindings are back to their defaults." });
-        onOverridesChange(result.success);
-      } else {
-        setStatus({ _tag: "error", message: describeRpcError(result.failure) });
-      }
-    });
-  }, [onOverridesChange]);
-
-  const visibleLabel = (actionId: string): string => {
-    const action = ALL_ACTIONS.find((candidate) => candidate.id === actionId);
-    return action?.label ?? actionId;
-  };
-
   // The close affordance reads the seam's live registration (the seam lowercases
   // its hotkey strings, so present them capitalised; absent registration falls
   // back to the still-correct default).
@@ -281,70 +361,19 @@ export const HelpOverlay = ({
           ))}
         </div>
         <div role="tabpanel" className="flex-1 overflow-y-auto px-4 py-3">
-          {visibleRows.map((action) => {
-            const available = action.available(state);
-            const binding = effectiveBinding(action, overrides);
-            const overridden = overrides[action.id] !== undefined;
-            const isCapturing = capturing === action.id;
-            return (
-              <div
-                key={action.id}
-                data-action-id={action.id}
-                className="flex items-center justify-between gap-3 border-b border-border-subtle/60 py-0.5 text-data"
-              >
-                <span className={available ? "text-text-strong" : "text-text-muted"}>{action.label}</span>
-                {isCapturing ? (
-                  <span
-                    ref={captureHintRef}
-                    tabIndex={-1}
-                    role="status"
-                    className="rounded-control border border-text-highlight/60 bg-surface px-2 py-0.5 font-mono text-data text-text-highlight"
-                  >
-                    Press a key… (Escape cancels)
-                  </span>
-                ) : (
-                  <span className="flex shrink-0 items-center gap-2">
-                    {available && (
-                      <span aria-label="available" className="text-data text-text-success">
-                        ✓
-                      </span>
-                    )}
-                    {binding !== undefined && (
-                      <Kbd
-                        aria-label={overridden ? `Binding ${binding}, rebound` : `Binding ${binding}`}
-                        className={
-                          overridden ? "bg-text-highlight/20 text-text-highlight" : undefined
-                        }
-                      >
-                        {binding}
-                        {overridden ? " *" : ""}
-                      </Kbd>
-                    )}
-                    <Button
-                      type="button"
-                      variant="outline"
-                      size="sm"
-                      aria-label={`Rebind ${action.label}`}
-                      onClick={() => beginRebind(action.id)}
-                    >
-                      Rebind
-                    </Button>
-                    {overridden && (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        aria-label={`Reset ${action.label} binding`}
-                        onClick={() => doReset(action.id)}
-                      >
-                        Reset
-                      </Button>
-                    )}
-                  </span>
-                )}
-              </div>
-            );
-          })}
+          {visibleRows.map((action) => (
+            <ShortcutRow
+              key={action.id}
+              action={action}
+              available={action.available(state)}
+              binding={effectiveBinding(action, overrides)}
+              overridden={overrides[action.id] !== undefined}
+              capturing={capturing === action.id}
+              captureHintRef={captureHintRef}
+              onRebind={() => beginRebind(action.id)}
+              onReset={() => doReset(action.id)}
+            />
+          ))}
           {visibleRows.length === 0 && (
             <p className="py-4 text-center text-body text-text-muted">Nothing in this scope.</p>
           )}
