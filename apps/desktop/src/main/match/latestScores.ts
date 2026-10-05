@@ -22,7 +22,7 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { loadPendingFixture, loadSeasonRow } from "../season/currentSeason.js";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { controlledClubLastPlayedFixture } from "./statistics.js";
+import { controlledClubLastPlayedFixture } from "./matchRead.js";
 
 /** One raw `fixtures` row of the Matchday, before grouping and name resolution. */
 export interface LatestScoreRow {

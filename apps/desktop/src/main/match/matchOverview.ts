@@ -23,13 +23,12 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut, type MatchEvent } from "@cm-clone/game-engine";
+import { matchStartedOf, revealedCut, type MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { withExistingSave, type StreamEvent } from "../season/decider.js";
 import { playerNames } from "./playerNames.js";
-import { lastPlayedMatchId } from "./statistics.js";
+import { loadMatchRead, squadPlayerIds } from "./matchRead.js";
 import { matchEventsOf } from "./timeline.js";
 
 /** Whether the Goal at `index` is a penalty: the event directly before it is the same player's
@@ -130,25 +129,19 @@ export const getMatchOverview = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const matchId = requestedMatchId ?? (yield* lastPlayedMatchId);
-      if (matchId === null) return null;
+      const read = yield* loadMatchRead(requestedMatchId);
+      if (read === null) return null;
 
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-
-      const events = yield* matchEventsOf(stream);
-      const clubName = yield* displayNames;
-      const started = matchStartedOf(stream);
-      const players = [...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id);
-      const nameOf = yield* playerNames(players);
-      const fixtureRow = yield* loadFixturePanelRow(matchId);
-      if (fixtureRow === undefined) return yield* new MatchNotFoundError({ matchId });
+      const events = yield* matchEventsOf(read.stream);
+      const nameOf = yield* playerNames(squadPlayerIds(read.started));
+      const fixtureRow = yield* loadFixturePanelRow(read.matchId);
+      if (fixtureRow === undefined) return yield* new MatchNotFoundError({ matchId: read.matchId });
       const fixture = new MatchFixturePanel({
-        competitionName: clubName(fixtureRow.competitionId),
+        competitionName: read.clubName(fixtureRow.competitionId),
         round: fixtureRow.round,
         gameDate: fixtureRow.gameDate,
         venue: `${fixtureRow.stadiumName}, ${fixtureRow.cityName}`,
       });
-      return matchOverviewView(matchId, stream, events, clubName, nameOf, fixture, revealedEvents);
+      return matchOverviewView(read.matchId, read.stream, events, read.clubName, nameOf, fixture, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

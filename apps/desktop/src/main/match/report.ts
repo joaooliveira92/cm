@@ -7,7 +7,6 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   MatchNotCompleteError,
-  MatchNotFoundError,
   MatchReportEventView,
   MatchReportReplacedView,
   MatchReportView,
@@ -15,13 +14,13 @@ import {
   type PlayerId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { MATCH_STREAM_TYPE, substitutionLedger, type MatchEvent, type SubstitutionEvent } from "@cm-clone/game-engine";
+import { substitutionLedger, type MatchEvent, type SubstitutionEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { withExistingSave } from "../season/decider.js";
 import { playerNames } from "./playerNames.js";
-import { lastPlayedMatchId, matchStatisticsView } from "./statistics.js";
+import { loadMatchRead, loadMatchReadOf, type MatchRead } from "./matchRead.js";
+import { matchStatisticsView } from "./statistics.js";
 import { matchTimelineOf } from "./timeline.js";
 
 type ReportedEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" | "Substitution" }>;
@@ -96,15 +95,14 @@ const isCommitted = (matchId: MatchId) =>
     return rows[0]?.played === 1;
   });
 
-/** The report body over an already-loaded stream and its events. Shared by the named-match read and
- *  the save-scoped "the match just played" read so both compose the same view. */
-const reportOf = (matchId: MatchId, stream: ReadonlyArray<StreamEvent>) =>
+/** The report body over an already-loaded match read. Shared by the named-match read and the
+ *  save-scoped "the match just played" read so both compose the same view. */
+const reportOf = (read: MatchRead) =>
   Effect.gen(function* () {
-    const derived = yield* matchTimelineOf(stream);
+    const derived = yield* matchTimelineOf(read.stream);
     const events = derived.events;
     const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
     const reported = events.filter(isReported);
-    const clubName = yield* displayNames;
     const playerName = yield* playerNames(reported.flatMap(playersOf));
 
     let halfTime = { home: 0, away: 0 };
@@ -115,27 +113,26 @@ const reportOf = (matchId: MatchId, stream: ReadonlyArray<StreamEvent>) =>
     }
 
     return new MatchReportView({
-      matchId,
+      matchId: read.matchId,
       homeClubId: started.homeClubId,
-      homeClubName: clubName(started.homeClubId),
+      homeClubName: read.clubName(started.homeClubId),
       awayClubId: started.awayClubId,
-      awayClubName: clubName(started.awayClubId),
+      awayClubName: read.clubName(started.awayClubId),
       homeScore: final.home,
       awayScore: final.away,
       halfTimeHomeScore: halfTime.home,
       halfTimeAwayScore: halfTime.away,
-      events: reportEvents(events, substitutionLedger(stream, events, derived.journal).standIns, playerName),
-      statistics: matchStatisticsView(matchId, stream, derived, clubName, null),
+      events: reportEvents(events, substitutionLedger(read.stream, events, derived.journal).standIns, playerName),
+      statistics: matchStatisticsView(read.matchId, read.stream, derived, read.clubName, null),
     });
   });
 
 export const getMatchReport = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
+      const read = yield* loadMatchReadOf(matchId);
       if (!(yield* isCommitted(matchId))) return yield* new MatchNotCompleteError({ matchId });
-      return yield* reportOf(matchId, stream);
+      return yield* reportOf(read);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
 
@@ -147,11 +144,9 @@ export const getMatchReport = (savesDir: string, saveId: SaveId, matchId: MatchI
 export const getLatestMatchReport = (savesDir: string, saveId: SaveId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const matchId = yield* lastPlayedMatchId;
-      if (matchId === null) return null;
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-      if (!(yield* isCommitted(matchId))) return yield* new MatchNotCompleteError({ matchId });
-      return yield* reportOf(matchId, stream);
+      const read = yield* loadMatchRead(null);
+      if (read === null) return null;
+      if (!(yield* isCommitted(read.matchId))) return yield* new MatchNotCompleteError({ matchId: read.matchId });
+      return yield* reportOf(read);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

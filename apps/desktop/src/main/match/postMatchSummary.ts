@@ -1,18 +1,17 @@
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
   FixtureId,
-  MatchNotFoundError,
   PostMatchEventView,
   PostMatchSummaryView,
   type MatchId,
   type SaveId,
 } from "@cm-clone/contracts";
-import { MATCH_STREAM_TYPE, type MatchEvent } from "@cm-clone/game-engine";
+import { type MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { withExistingSave } from "../season/decider.js";
 import { playerNames } from "./playerNames.js";
+import { loadMatchReadOf } from "./matchRead.js";
 import { matchEventsOf } from "./timeline.js";
 
 type KeyEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" }>;
@@ -41,14 +40,11 @@ const loadFixtureSummaryRow = (fixtureId: FixtureId) =>
 export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: MatchId) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-
-      const events = yield* matchEventsOf(stream);
+      const read = yield* loadMatchReadOf(matchId);
+      const events = yield* matchEventsOf(read.stream);
       const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
       const keyEvents = events.filter(isKeyEvent);
 
-      const nameOf = yield* displayNames;
       const playerName = yield* playerNames(keyEvents.map((event) => event.playerId));
 
       let homeScore = 0;
@@ -62,18 +58,18 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
 
       // The matchId is String(fixtureId) — see startMatch in Main. This is the one link
       // between the match stream and the fixture row, and it never goes stale.
-      const fixtureId = FixtureId.make(Number(matchId));
+      const fixtureId = FixtureId.make(Number(read.matchId));
       const fixtureRow = yield* loadFixtureSummaryRow(fixtureId);
       const isCup = fixtureRow?.competitionKind === "cup";
       const homePenalties = fixtureRow?.homePenalties ?? null;
       const awayPenalties = fixtureRow?.awayPenalties ?? null;
 
       return new PostMatchSummaryView({
-        matchId,
+        matchId: read.matchId,
         homeClubId: started.homeClubId,
-        homeClubName: nameOf(started.homeClubId),
+        homeClubName: read.clubName(started.homeClubId),
         awayClubId: started.awayClubId,
-        awayClubName: nameOf(started.awayClubId),
+        awayClubName: read.clubName(started.awayClubId),
         homeScore,
         awayScore,
         homePenalties,

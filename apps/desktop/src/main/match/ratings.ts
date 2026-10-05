@@ -8,7 +8,6 @@
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
-  MatchNotFoundError,
   MatchRatingRow,
   MatchRatingsView,
   type ClubId,
@@ -27,7 +26,6 @@ import {
 } from "@cm-clone/shared";
 import {
   HALFTIME_MINUTE,
-  MATCH_STREAM_TYPE,
   journaledLineupCommands,
   matchStartedOf,
   pitchBeforeEachEvent,
@@ -38,10 +36,9 @@ import {
   type PersistedForcedOff,
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
-import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { withExistingSave, type StreamEvent } from "../season/decider.js";
 import { playerNames } from "./playerNames.js";
-import { lastPlayedMatchId } from "./statistics.js";
+import { loadMatchRead, squadPlayerIds } from "./matchRead.js";
 import { matchTimelineOf } from "./timeline.js";
 
 /** The score after `included`: the last event that carries one. */
@@ -261,16 +258,11 @@ export const getMatchRatings = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const matchId = requestedMatchId ?? (yield* lastPlayedMatchId);
-      if (matchId === null) return null;
+      const read = yield* loadMatchRead(requestedMatchId);
+      if (read === null) return null;
 
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-
-      const derived = yield* matchTimelineOf(stream);
-      const clubName = yield* displayNames;
-      const started = matchStartedOf(stream);
-      const nameOf = yield* playerNames([...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id));
-      return matchRatingsView(matchId, stream, derived, clubName, nameOf, revealedEvents);
+      const derived = yield* matchTimelineOf(read.stream);
+      const nameOf = yield* playerNames(squadPlayerIds(read.started));
+      return matchRatingsView(read.matchId, read.stream, derived, read.clubName, nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

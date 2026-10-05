@@ -10,7 +10,6 @@
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
-  MatchNotFoundError,
   MatchPlayerLineRow,
   MatchPlayerStatsView,
   MatchPlayerTeamStats,
@@ -23,14 +22,13 @@ import {
   foldMatchPlayerLineCounts,
   type MatchPlayerLineCounts,
 } from "@cm-clone/shared";
-import { MATCH_STREAM_TYPE, matchStartedOf, revealedCut, type DerivedTimeline, type MatchTeamSetup } from "@cm-clone/game-engine";
+import { matchStartedOf, revealedCut, type DerivedTimeline, type MatchTeamSetup } from "@cm-clone/game-engine";
 import { Effect } from "effect";
-import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { withExistingSave, type StreamEvent } from "../season/decider.js";
 import { playerNames } from "./playerNames.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
+import { loadMatchRead, squadPlayerIds } from "./matchRead.js";
 import { matchRatingsView } from "./ratings.js";
-import { lastPlayedMatchId } from "./statistics.js";
 import { matchTimelineOf } from "./timeline.js";
 
 /** A matchday-squad member in draw order: the kickoff slots in slot order, then the named bench. */
@@ -145,21 +143,15 @@ export const getMatchPlayerStats = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const matchId = requestedMatchId ?? (yield* lastPlayedMatchId);
-      if (matchId === null) return null;
+      const read = yield* loadMatchRead(requestedMatchId);
+      if (read === null) return null;
 
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-
-      const derived = yield* matchTimelineOf(stream);
-      const clubName = yield* displayNames;
-      const started = matchStartedOf(stream);
-      const squadIds = [...started.homeSetup.squad, ...started.awaySetup.squad].map((player) => player.id);
-      const nameOf = yield* playerNames(squadIds);
+      const derived = yield* matchTimelineOf(read.stream);
+      const nameOf = yield* playerNames(squadPlayerIds(read.started));
       // Condition has no per-cut surface, so a live table shows none; the whole match's full-time
       // Conditions come from the deterministic engine (the stored timeline carries no conditions).
       const conditions =
-        revealedEvents === null ? (yield* deriveStreamEvents(stream)).conditions : null;
-      return matchPlayerStatsView(matchId, stream, derived, clubName, nameOf, revealedEvents, conditions);
+        revealedEvents === null ? (yield* deriveStreamEvents(read.stream)).conditions : null;
+      return matchPlayerStatsView(read.matchId, read.stream, derived, read.clubName, nameOf, revealedEvents, conditions);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

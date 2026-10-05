@@ -5,18 +5,15 @@
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
 import {
-  MatchNotFoundError,
   MatchStatisticRow,
   MatchStatisticsView,
-  MatchId,
   type ClubId,
-  type FixtureId,
+  type MatchId,
   type MatchStatisticKey,
   type SaveId,
   type UnavailableMatchStatistic,
 } from "@cm-clone/contracts";
 import {
-  MATCH_STREAM_TYPE,
   countedSubstitutions,
   revealedCut,
   substitutionLedger,
@@ -26,9 +23,8 @@ import {
   type SubstitutionEvent,
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
-import { SqlClient } from "effect/unstable/sql/SqlClient";
-import { loadStreamEvents, withExistingSave, type StreamEvent } from "../season/decider.js";
-import { displayNames } from "../world/displayNames.js";
+import { withExistingSave, type StreamEvent } from "../season/decider.js";
+import { loadMatchRead } from "./matchRead.js";
 import { matchTimelineOf } from "./timeline.js";
 
 export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
@@ -261,28 +257,8 @@ export const matchStatisticsView = (
   });
 };
 
-/** The controlled club's most recent played Fixture that has a match stream, with its date, if any.
- *  The single answer to "the match just played", shared by every save-scoped read that names no
- *  match — statistics, ratings, the latest report and Latest Scores — so none of them can disagree
- *  about which Matchday that was. */
-export const controlledClubLastPlayedFixture = Effect.gen(function* () {
-  const sql = yield* SqlClient;
-  const rows = yield* sql<{ id: FixtureId; date: string }>`
-    SELECT f.id, f.scheduled_date as "date" FROM fixtures f
-    JOIN clubs c ON c.is_user_club = 1 AND (f.home_club_id = c.id OR f.away_club_id = c.id)
-    WHERE f.played = 1
-      AND EXISTS (SELECT 1 FROM events e WHERE e.stream_type = ${MATCH_STREAM_TYPE} AND e.stream_id = CAST(f.id AS TEXT))
-    ORDER BY f.scheduled_date DESC, f.id DESC
-    LIMIT 1`;
-  return rows[0] ?? null;
-});
-
-/** The controlled club's most recent played Fixture that has a match stream, if any. */
-export const lastPlayedMatchId = Effect.map(
-  controlledClubLastPlayedFixture,
-  (fixture) => (fixture === null ? null : MatchId.make(String(fixture.id))),
-);
-
+/** Match Statistics for a named match or, when none is named, the controlled club's most recently
+ *  played one. `null` before the club has played a match. */
 export const getMatchStatistics = (
   savesDir: string,
   saveId: SaveId,
@@ -291,14 +267,10 @@ export const getMatchStatistics = (
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
-      const matchId = requestedMatchId ?? (yield* lastPlayedMatchId);
-      if (matchId === null) return null;
+      const read = yield* loadMatchRead(requestedMatchId);
+      if (read === null) return null;
 
-      const stream = yield* loadStreamEvents(MATCH_STREAM_TYPE, matchId);
-      if (stream.length === 0) return yield* new MatchNotFoundError({ matchId });
-
-      const derived = yield* matchTimelineOf(stream);
-      const nameOf = yield* displayNames;
-      return matchStatisticsView(matchId, stream, derived, nameOf, revealedEvents);
+      const derived = yield* matchTimelineOf(read.stream);
+      return matchStatisticsView(read.matchId, read.stream, derived, read.clubName, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
