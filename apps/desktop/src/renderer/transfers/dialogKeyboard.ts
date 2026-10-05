@@ -34,9 +34,15 @@ export const useDialogKeyboard = ({
 } => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef(initialFocus);
-  initialFocusRef.current = initialFocus;
   const onEscapeRef = useRef(onEscape);
-  onEscapeRef.current = onEscape;
+  // Latest-callback refs, written in effects so no ref is touched during render. The open effect
+  // below reads `initialFocusRef`; this writer is declared first, so it runs first on open.
+  useEffect(() => {
+    initialFocusRef.current = initialFocus;
+  }, [initialFocus]);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   // Give the dialog the keyboard on open and hand it back on close, through the
   // focus coordinator's overlay helpers — the same contract the palette/help/

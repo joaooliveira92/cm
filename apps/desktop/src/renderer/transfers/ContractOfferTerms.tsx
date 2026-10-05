@@ -215,7 +215,11 @@ const useContractOfferTerms = (
   const wageValid = offer !== undefined && wageIsWithinFigure(wage, offer.wage);
   const terms: ContractTerms | null =
     offer !== undefined && wageValid ? { years, wage } : null;
-  termsRef.current = terms;
+  // Mirror the live terms for the stable `sign-free-agent` Action handler after commit, never
+  // during render.
+  useEffect(() => {
+    termsRef.current = terms;
+  }, [terms, termsRef]);
 
   return { years, setYears, wageInput, setWageInput, wageValid, terms };
 };

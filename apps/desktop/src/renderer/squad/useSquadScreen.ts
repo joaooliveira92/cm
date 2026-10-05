@@ -183,10 +183,6 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     squad: [] as ReadonlyArray<SquadPlayerView>,
     lineup,
   });
-  latest.current.sort = sort;
-  latest.current.filters = filters;
-  latest.current.activeId = activeId;
-  latest.current.bookmark = bookmark;
 
   const error = typedError(squadResult);
   const view = Option.getOrUndefined(AsyncResult.value(squadResult));
@@ -194,10 +190,18 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     () => (view !== undefined ? view.players : []).map(squadRowOf),
     [view],
   );
-  latest.current.players = allPlayers;
-  latest.current.playerIds = view !== undefined ? view.players.map((player) => player.id) : [];
-  latest.current.squad = view !== undefined ? view.players : [];
-  latest.current.lineup = lineup;
+  // One latest-value snapshot for the stable handlers registered below and for the consumer effects
+  // declared later in the hook. Written after commit, so no ref is touched during render.
+  useEffect(() => {
+    latest.current.sort = sort;
+    latest.current.filters = filters;
+    latest.current.activeId = activeId;
+    latest.current.bookmark = bookmark;
+    latest.current.players = allPlayers;
+    latest.current.playerIds = view !== undefined ? view.players.map((player) => player.id) : [];
+    latest.current.squad = view !== undefined ? view.players : [];
+    latest.current.lineup = lineup;
+  }, [sort, filters, activeId, bookmark, allPlayers, view, lineup]);
 
   const blockingFailure = error !== null && view === undefined;
   const filtered = applyFilters(allPlayers, filters);
@@ -333,7 +337,9 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
   }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const orderedIdsRef = useRef(orderedIds);
-  orderedIdsRef.current = orderedIds;
+  useEffect(() => {
+    orderedIdsRef.current = orderedIds;
+  }, [orderedIds]);
 
   const onSortCycle = useCallback(
     (next: typeof sort) => {

@@ -1001,7 +1001,11 @@ function useEventCalendarSelector<TData = unknown, TSelected = unknown>(
   const isEqual = options?.isEqual ?? Object.is
   const lastRef = useRef<{ value: TSelected } | null>(null)
   const selectorRef = useRef(selector)
-  selectorRef.current = selector
+  // Written in a layout effect, not a passive one: `getSnapshot` reads the selector during and
+  // immediately after render, so the write must land before paint to avoid a stale frame.
+  useLayoutEffect(() => {
+    selectorRef.current = selector
+  }, [selector])
 
   const getSnapshot = () => {
     const next = selectorRef.current(

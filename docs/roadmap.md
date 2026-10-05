@@ -78,9 +78,9 @@ referenced throughout.
 
 ## In flight
 
-- **[.scratch/react-compiler-adoption/](../.scratch/react-compiler-adoption/)** — 1/8. The React
+- **[.scratch/react-compiler-adoption/](../.scratch/react-compiler-adoption/)** — 2/8. The React
   Compiler rule set (the `react` plugin's Rules-of-React rules) is adopted in `.oxlintrc.json`; the
-  `react/hooks` bucket is clear and graduated to `error`. The remaining buckets — `react/refs`,
+  `react/hooks` and `react/refs` buckets are clear and graduated to `error`. The remaining buckets —
   `set-state-in-effect`, `exhaustive-effect-dependencies`, `todo`, `memo-dependencies`, the small
   buckets, and `oxc-transform-react` — are at `warn`.
 

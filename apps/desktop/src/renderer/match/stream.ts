@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import type { CommentaryLineView, RpcSuccess } from "@cm-clone/contracts";
 import { shouldPollMatch } from "./engine/pace.js";
 import type { PlaybackPart } from "./engine/playback.js";
@@ -107,9 +107,15 @@ export const useMatchStream = ({
   const [playing, setPlayingState] = useState<PlayingLine | null>(null);
 
   const readRef = useRef(read);
-  readRef.current = read;
   const revealRef = useRef(reveal);
-  revealRef.current = reveal;
+  // Latest injected callbacks, written after commit. The `stream` port reads them at call time, so
+  // freshness is preserved without touching a ref during render.
+  useEffect(() => {
+    readRef.current = read;
+  }, [read]);
+  useEffect(() => {
+    revealRef.current = reveal;
+  }, [reveal]);
 
   const stream = useMemo(
     (): MatchStream => ({

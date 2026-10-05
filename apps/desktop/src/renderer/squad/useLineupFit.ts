@@ -36,7 +36,9 @@ export const useLineupFit = (tactic: Tactic): LineupFitControl => {
   // than closing over it — the match-day bar's slots are not memoised on these, but an unstable
   // `toggle` would drag a new `onClick` onto every one of the eighteen slots each render.
   const tacticRef = useRef(tactic);
-  tacticRef.current = tactic;
+  useEffect(() => {
+    tacticRef.current = tactic;
+  }, [tactic]);
 
   const slot = order === null ? undefined : lineupSlotsOf(tactic)[order];
   const selectable = isEmptyStarter(slot);

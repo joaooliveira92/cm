@@ -49,9 +49,12 @@ export const useSquadBottomBar = (
   }, [saveLine]);
 
   // Read through a ref: a caller's `refresh` need not be stable, and a new
-  // function each render would re-publish the bar each render.
+  // function each render would re-publish the bar each render. Written after commit, so no ref is
+  // touched during render.
   const refresh = useRef(lineup.refresh);
-  refresh.current = lineup.refresh;
+  useEffect(() => {
+    refresh.current = lineup.refresh;
+  }, [lineup.refresh]);
 
   const { conflicted } = lineup;
   const bar = useMemo((): ScreenBottomBarActions => {

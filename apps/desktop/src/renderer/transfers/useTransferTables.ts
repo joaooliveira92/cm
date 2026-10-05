@@ -118,10 +118,15 @@ export const useTransferTables = ({
 
   const marketIds = marketTableData.rowIds;
   const freeIds = freeTableData.rowIds;
-  marketIdsRef.current = marketIds;
-  freeIdsRef.current = freeIds;
-  marketActiveRef.current = market.active;
-  freeActiveRef.current = free.active;
+  // Latest-order refs, written after commit. Effects run in declaration order, so this writer runs
+  // before the palette handlers (declared later in the assembly) and before the consumer effects
+  // that read these refs from `useTransfersScreen`.
+  useEffect(() => {
+    marketIdsRef.current = marketIds;
+    freeIdsRef.current = freeIds;
+    marketActiveRef.current = market.active;
+    freeActiveRef.current = free.active;
+  }, [marketIds, freeIds, market.active, free.active]);
   const marketIdsKey = marketIds.join(",");
   const freeIdsKey = freeIds.join(",");
 

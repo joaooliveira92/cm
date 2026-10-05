@@ -18,6 +18,9 @@ The lint side is adopted in [.oxlintrc.json](../../.oxlintrc.json):
 - The classic (non-compiler) `react/*` and `react-hooks/*` rules that the plugin would
   auto-enable are turned `off` — the classic plugin is a separate, unevaluated adoption.
 
+Buckets clear so far: `react/hooks` (ticket 06) and `react/refs` (ticket 01) are `error` with zero
+findings.
+
 ## What is deliberately not shipped (yet)
 
 `oxc-transform-react` — the compiler's automatic memoization — is not wired into the build.
@@ -31,7 +34,7 @@ Findings counted on 2026-09-16 at `b19c3b8` with this config:
 
 | # | Rule | Findings | What it flags in this codebase |
 |---|---|---|---|
-| 01 | `react/refs` | 125 | `ref.current = …` writes during render — the deliberate latest-value-ref memoization idiom; also what stops the compiler optimising these components |
+| 01 | `react/refs` | 104 | `ref.current = …` writes and reads during render — the deliberate latest-value-ref memoization idiom; also what stops the compiler optimising these components. **Cleared (ticket 01); rule now `error`.** |
 | 02 | `react/set-state-in-effect` | 43 | setState calls from inside effects |
 | 03 | `react/exhaustive-effect-dependencies` | 29 | deliberately scoped effect dependency arrays (some carry `eslint-disable-line react-hooks/exhaustive-deps`) |
 | 04 | `react/todo` | 19 | constructors the compiler would emit Todo diagnostics for |

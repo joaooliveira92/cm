@@ -45,7 +45,11 @@ export interface BidDraftValue {
 export const useBidDraft = (): BidDraftValue => {
   const [draftState, setDraftState] = useState<BidDraftState>(BID_DRAFT_EMPTY);
   const draftRef = useRef(draftState);
-  draftRef.current = draftState;
+  // Keep the ref fresh after commit. `setDraft` writes it synchronously as well, so its
+  // own callers read the value they just set.
+  useEffect(() => {
+    draftRef.current = draftState;
+  }, [draftState]);
   const setDraft = useCallback((next: BidDraftState) => {
     draftRef.current = next;
     setDraftState(next);

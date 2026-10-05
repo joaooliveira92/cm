@@ -3,8 +3,10 @@ import {
   startTransition,
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
+  useState,
 } from "react";
 import * as React from "react";
 import type {
@@ -22,7 +24,6 @@ import { resolveLeagueSelection, RegistryProvider, useAtom, useAtomValue } from 
 import { toDomainIndex } from "./adapters.js";
 import {
   createActiveLeaguesAtoms,
-  type ActiveLeaguesAtoms,
   type ActiveLeaguesValidation,
   type AddableLeagueView,
   type GridRowView,
@@ -128,9 +129,10 @@ const ActiveLeaguesInner = ({
   readonly initial: ActiveLeaguesSetupState;
   readonly children: React.ReactNode;
 }) => {
-  const atomsRef = useRef<ActiveLeaguesAtoms | null>(null);
-  atomsRef.current ??= createActiveLeaguesAtoms(index, initial);
-  const atoms = atomsRef.current;
+  // Created once per mount. The provider is keyed on the seed, so a changed index or seed remounts
+  // rather than being folded into a stale atom set; `useState`'s lazy initializer is the
+  // render-safe way to run the factory exactly once.
+  const [atoms] = useState(() => createActiveLeaguesAtoms(index, initial));
 
   const [state, setState] = useAtom(atoms.stateAtom);
   const [slot, setSlot] = useAtom(atoms.resolvedSlotAtom);
@@ -138,12 +140,20 @@ const ActiveLeaguesInner = ({
 
   // Latest-value refs the async edge reads through: a settled resolve or a cancelled dispatch can
   // never act on a stale closure — the same discipline the squad screen applies to its handlers.
+  // Written in layout effects so they land in the commit phase, before the debounce timer's
+  // microtask can observe them; the resolve effect below is declared later, so it too reads fresh.
   const stateRef = useRef(state);
-  stateRef.current = state;
   const slotRef = useRef(slot);
-  slotRef.current = slot;
   const setSlotRef = useRef(setSlot);
-  setSlotRef.current = setSlot;
+  useLayoutEffect(() => {
+    stateRef.current = state;
+  }, [state]);
+  useLayoutEffect(() => {
+    slotRef.current = slot;
+  }, [slot]);
+  useLayoutEffect(() => {
+    setSlotRef.current = setSlot;
+  }, [setSlot]);
 
   const domainIndex = useMemo(() => toDomainIndex(index), [index]);
 

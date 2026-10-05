@@ -240,28 +240,34 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**Desktop-suite-red 20 resolved 2026-10-01** (`5bf2a2fc`):
-`e2e/globalSetup.ts` checks build staleness (newest src mtime vs oldest dist mtime) and fails with a
-message naming the correct command when sources are newer. Six specs prove both branches.
+**react-compiler-adoption 01 resolved 2026-10-05**: the `react/refs` bucket is cleared. The measured
+baseline was 104 findings across 17 renderer files (the spec's 125 and the ticket's 73 were both
+stale). Ref reads/writes moved out of render into commit-phase effects; lazy-init refs became
+`useState`; the rule graduated `warn`→`error` in `.oxlintrc.json`. `pnpm check:all` green (2823
+passed), `pnpm lint` zero `react/refs`. See [report](reports/react-compiler-adoption.md).
 
-The plan originally named squad-instructions 05 next, but it carries a stale `claimed` lock — claimed
-2026-09-28 with no Comments, no Answer section, and all acceptance checkboxes still unchecked.
-Its effort issue 03 was named a stale lock on the same pass and was to be resolved when the effort
-closes; 05 is in the same condition. The next open, unblocked, unclaimed build tickets across all
-live efforts are now:
+**Group-j 10 and training-schedule-and-delegation 04 resolved 2026-10-05.**
+**player-positional-model 19 moved to `needs-triage`** — its premise that "no code reads the legacy
+projection" is false (ten-plus live call sites remain), so a human must re-scope or split it before it
+is buildable; it is no longer a build ticket.
 
-1. [group-j 10](../.scratch/group-j-transfers-contracts-and-negotiations/issues/10-make-offer-from-the-player-profile.md) —
-   **Make offer from the player profile**, ready-for-agent, unblocked.
-2. [training-schedule-and-delegation 04](../.scratch/training-schedule-and-delegation/issues/04-schedule-moves-condition.md) —
-   **Schedule moves condition**, ready-for-agent, unblocked.
-3. [player-positional-model 19](../.scratch/player-positional-model/issues/19-contract-the-legacy-projection-and-reconcile-docs.md) —
-   **Contract the legacy projection**, ready-for-agent, blocked by 14, 15, 16, 17.
+The next open, unblocked, unclaimed build tickets across all live efforts are now:
 
-`dev` had gone red overnight, the shared Select is back on Base UI's Select primitive
-([19](../.scratch/desktop-suite-red/issues/19-select-popup-has-no-listbox.md)), and the rest was
-fixed in four commits. [18](../.scratch/desktop-suite-red/issues/18-two-unreproduced-e2e-failure-shapes.md)
-closed as not reproducible. Before calling a red e2e run a regression, check `pmset -g log` for a
-sleep inside its window, and remember that e2e is outside `check:all`.
+1. [react-compiler-adoption 02](../.scratch/react-compiler-adoption/issues/02-set-state-in-effect.md) —
+   **`react/set-state-in-effect`**, ready-for-agent.
+2. [react-compiler-adoption 03](../.scratch/react-compiler-adoption/issues/03-exhaustive-effect-dependencies.md) —
+   **`react/exhaustive-effect-dependencies`**, ready-for-agent.
+3. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
+   **Extract `@cm-clone/rpc-client`**, ready-for-agent, but carries a deliberate
+   decide-before-starting caveat.
+
+Six filed findings await triage (not build tickets): desktop-suite-red 21, navbar-keyboard-intent 05
+and 06, match-engine-detail 20, formations-and-instructions 36, player-positional-model 19.
+
+Before calling a red e2e run a regression, check `pmset -g log` for a sleep inside its window, and
+remember that e2e is outside `check:all`. The desktop unit suite has a load-sensitive timing flake in
+`leagueSelection/screen.test.tsx` ("issues one request for a burst of rapid changes") that reproduces
+on a clean tree under `pnpm -r test` load and passes in isolation — not a regression when seen.
 2. **Group G 42 resolved 2026-09-27** (`eeff2cd8`): Quick result skips the live reveal.
 3. **Queue refilled 2026-09-28 from two human rulings.** In order:
    [group-e 04](../.scratch/group-e-squad-management/issues/04-attribute-threshold-filter.md)

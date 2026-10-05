@@ -5,10 +5,11 @@ import { useMatchControlContext } from "../matchControlContext.js";
 
 export const PanelHeader = () => {
   const { state, meta } = useMatchControlContext();
+  const { toggleRef } = meta;
   return (
     <button
       type="button"
-      ref={meta.toggleRef}
+      ref={toggleRef}
       data-action-id="toggle-control-panel"
       className={`flex w-full items-center justify-between px-4 py-2 text-left text-heading ${FOCUS_RING.join(" ")}`}
       onClick={() => void dispatchAction("toggle-control-panel")}

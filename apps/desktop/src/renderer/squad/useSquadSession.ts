@@ -9,7 +9,7 @@
  * the part of the screen that changes at interaction time but stays put across
  * rerenders, so it composes cleanly beside the data and column concerns.
  */
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import {
   readTableSession,
   updateTableSession,
@@ -63,22 +63,26 @@ export const useSquadSession = (
   readonly session: SquadSessionState;
   readonly sessionActions: SquadSessionActions;
 } => {
-  const initialSession = useRef(readTableSession(TABLE_ID) ?? seedFromRestored(restored));
-  const [sort, setSortState] = useState(initialSession.current?.sort ?? null);
+  // Read once, through the lazy initializer: `seedFromRestored` seeds the session store when a
+  // navigation restores one, and that side effect must not run on every render.
+  const [initialSession] = useState(
+    () => readTableSession(TABLE_ID) ?? seedFromRestored(restored),
+  );
+  const [sort, setSortState] = useState(initialSession?.sort ?? null);
   const [filters, setFiltersState] = useState<readonly FilterClause[]>(
-    initialSession.current?.filters ?? [],
+    initialSession?.filters ?? [],
   );
   const [activeId, setActiveId] = useState<string | null>(
-    initialSession.current?.focusBookmark?.itemId ?? null,
+    initialSession?.focusBookmark?.itemId ?? null,
   );
   const [selectedId, setSelectedId] = useState<string | null>(
-    initialSession.current?.selectedId ?? null,
+    initialSession?.selectedId ?? null,
   );
   const [bookmark, setBookmarkState] = useState<TableFocusBookmark | null>(
-    initialSession.current?.focusBookmark ?? null,
+    initialSession?.focusBookmark ?? null,
   );
   const [scrollLeft, setScrollLeft] = useState(
-    initialSession.current?.scrollLeft ?? 0,
+    initialSession?.scrollLeft ?? 0,
   );
 
   const setSort = useCallback((next: SortState | null) => {

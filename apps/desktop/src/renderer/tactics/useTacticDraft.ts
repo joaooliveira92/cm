@@ -117,8 +117,11 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
   // conditional early return.
   const pendingView = viewResult._tag === "Success" ? viewResult.value : null;
   const tactic = draft ?? pendingView?.tactic ?? defaultTacticFor("4-4-2");
-  tacticRef.current = tactic;
-  revisionRef.current = revision;
+  // Latest-value refs for the stable `save`/`refresh` callbacks, written after commit.
+  useEffect(() => {
+    tacticRef.current = tactic;
+    revisionRef.current = revision;
+  }, [tactic, revision]);
 
   // The newest edit waiting for an autosave, and whether a save is already on the wire. Saves run one
   // at a time: two in flight would carry the same expected revision, and the second would lose to the

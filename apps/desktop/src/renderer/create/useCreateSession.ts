@@ -33,7 +33,7 @@ import { DEFAULT_AVATAR } from "./managerStyleCopy.js";
 import { personalDetailsComplete } from "./personalDetails.js";
 import { setProvisionalCareer } from "./provisionalCareer.js";
 import { suggestedSaveName } from "./suggestedSaveName.js";
-import { buildBottomBarPlan } from "./bottomBarPlan.js";
+import { buildBottomBarPlan, type BuildBottomBarPlanInput } from "./bottomBarPlan.js";
 import { advanceManagerStep, setManagerStep as setManagerStepInternal } from "./stepGuards.js";
 import type { CreateSessionApi, CreationSession, ManagerSubStep } from "../router/createSessionContext.js";
 
@@ -68,6 +68,15 @@ const createEmptySession = (): CreationSession => ({
 });
 
 export type CreationStep = "leagues" | "1" | "2" | "3";
+
+/**
+ * Derive the shell's bottom-bar plan for the creation flow. A hook rather than a bare call because
+ * several callbacks it receives read the session guard refs at call time; those ref reads are
+ * correct in a click handler but would be flagged by the React Compiler's `react/refs` rule if the
+ * callbacks were handed straight to the plain `buildBottomBarPlan` during render.
+ */
+const useCreationBottomBarPlan = (input: BuildBottomBarPlanInput): BottomBarPlan =>
+  buildBottomBarPlan(input);
 
 export const stepOf = (pathname: string): CreationStep => {
   if (pathname.endsWith("/leagues")) {
@@ -501,7 +510,7 @@ export const useCreateSession = (): CreateFlowSession => {
     ],
   );
 
-  const bottomBarPlan = buildBottomBarPlan({
+  const bottomBarPlan = useCreationBottomBarPlan({
     step,
     session,
     registeredBar,

@@ -12,7 +12,7 @@
  * ref writes and the TanStack instantiations interleave — see
  * `useTransferTables.ts`.
  */
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 import { Option } from "effect";
 import { type RpcClientError } from "../rpc/errors.js";
@@ -136,25 +136,33 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   const viewResult = useAtomValue(transfersAtom(saveId));
   const refresh = useAtomRefresh(transfersAtom(saveId));
   // Live view ref: the stable action handlers (registered once per saveId) read
-  // the current wire payload through this ref, never a load-time closure.
+  // the current wire payload through this ref, never a load-time closure. Written after commit;
+  // this writer is declared before every effect that reads it.
   const viewResultRef = useRef(viewResult);
-  viewResultRef.current = viewResult;
+  useEffect(() => {
+    viewResultRef.current = viewResult;
+  }, [viewResult]);
 
   // --- session-scoped per-table interaction state: sort/filters/focus
-  //  bookmark survive navigation; selection + draft are cleared.
-  const initialMarket = useRef(readTableSession(MARKET));
-  const initialFree = useRef(readTableSession(FREE));
-  const marketSeed = useRef({
-    sort: initialMarket.current?.sort ?? null,
-    filters: initialMarket.current?.filters ?? [],
-    activeId: initialMarket.current?.focusBookmark?.itemId ?? null,
-    bookmark: initialMarket.current?.focusBookmark ?? null,
+  //  bookmark survive navigation; selection + draft are cleared. Read once, through the lazy
+  //  initializers, so `readTableSession` is not re-run on every render.
+  const [marketSeed] = useState(() => {
+    const initial = readTableSession(MARKET);
+    return {
+      sort: initial?.sort ?? null,
+      filters: initial?.filters ?? [],
+      activeId: initial?.focusBookmark?.itemId ?? null,
+      bookmark: initial?.focusBookmark ?? null,
+    };
   });
-  const freeSeed = useRef({
-    sort: initialFree.current?.sort ?? null,
-    filters: initialFree.current?.filters ?? [],
-    activeId: initialFree.current?.focusBookmark?.itemId ?? null,
-    bookmark: initialFree.current?.focusBookmark ?? null,
+  const [freeSeed] = useState(() => {
+    const initial = readTableSession(FREE);
+    return {
+      sort: initial?.sort ?? null,
+      filters: initial?.filters ?? [],
+      activeId: initial?.focusBookmark?.itemId ?? null,
+      bookmark: initial?.focusBookmark ?? null,
+    };
   });
 
   const {
@@ -169,7 +177,7 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
     recordBookmark,
     speak,
     update,
-  } = useTransferTableState(marketSeed.current, freeSeed.current);
+  } = useTransferTableState(marketSeed, freeSeed);
 
   // Live row-set refs for the stable palette handlers (announcement counts).
   const marketRowsRef = useRef<readonly MarketPlayerRow[]>([]);
@@ -198,7 +206,9 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   }, []);
   const [selected, setSelected] = useState<SelectedPlayer | null>(null);
   const selectedRef = useRef(selected);
-  selectedRef.current = selected;
+  useEffect(() => {
+    selectedRef.current = selected;
+  }, [selected]);
 
   // One-shot: a Make Offer action from the Player Profile set a target player.
   // Stored in a ref so it survives until the view data loads.
@@ -259,25 +269,31 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   const marketRows = view !== undefined ? view.marketPlayers.map(marketPlayerRowOf) : [];
   const freeAgentRows = view !== undefined ? view.freeAgents.map(marketPlayerRowOf) : [];
   const datasetIds = [...marketRows, ...freeAgentRows].map((p) => p.id);
-  marketRowsRef.current = marketRows;
-  freeAgentRowsRef.current = freeAgentRows;
+  // Live row-set refs for the stable palette handlers (announcement counts), written after commit.
+  useEffect(() => {
+    marketRowsRef.current = marketRows;
+    freeAgentRowsRef.current = freeAgentRows;
+  }, [marketRows, freeAgentRows]);
 
-  // One-shot: a Make Offer action from the Player Profile set a target player.
-  // After rows are loaded, select the player and switch to the right tab.
-  const pending = pendingRef.current;
-  if (pending !== null && view !== undefined && marketRows.length + freeAgentRows.length > 0) {
+  // One-shot: a Make Offer action from the Player Profile set a target player. After rows are
+  // loaded, select the player and switch to the right tab. Run after commit, guarded on the
+  // one-shot pending marker, so no state is derived during render.
+  useEffect(() => {
+    const pending = pendingRef.current;
+    if (pending === null) return;
+    if (view === undefined || marketRows.length + freeAgentRows.length === 0) return;
     pendingRef.current = null;
     const marketRow = marketRows.find((r) => r.id === String(pending.playerId));
     if (marketRow !== undefined) {
       setSelected({ tableId: MARKET, player: marketRow });
-    } else {
-      const freeRow = freeAgentRows.find((r) => r.id === String(pending.playerId));
-      if (freeRow !== undefined) {
-        setTabState("free-agents");
-        setSelected({ tableId: FREE, player: freeRow });
-      }
+      return;
     }
-  }
+    const freeRow = freeAgentRows.find((r) => r.id === String(pending.playerId));
+    if (freeRow !== undefined) {
+      setTabState("free-agents");
+      setSelected({ tableId: FREE, player: freeRow });
+    }
+  }, [view, marketRows, freeAgentRows]);
 
   const {
     marketFiltered,

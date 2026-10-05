@@ -10,6 +10,7 @@ import { Alert } from "../components/ui/alert.js";
 import {
   describeActiveLeaguesBottomBar,
   ShellBottomBar,
+  type ActiveLeaguesBottomBarInput,
   type BottomBarPlan,
 } from "../chrome/bottom-bar/index.js";
 import { LeagueSelectionScreen } from "../leagueSelection/LeagueSelectionScreen.js";
@@ -59,6 +60,27 @@ import { NARROW_LAYOUT_QUERY, useMediaQuery } from "./useViewportWidth.js";
 
 const runAtEdge = <A, E>(effect: Effect.Effect<A, E>): Promise<Result.Result<A, E>> =>
   Effect.runPromise(Effect.result(effect));
+
+/**
+ * The bottom-bar plan, described once per set of inputs. This is a hook rather than a bare
+ * `useMemo` so `onContinue` — a stable callback that reads the submission guard ref — enters as a
+ * parameter here instead of being passed to a plain function during render. Reading that ref is
+ * correct at click time, but passing a known ref-reading callback to a plain function during render
+ * is what the React Compiler's `react/refs` rule rejects.
+ */
+const useActiveLeaguesBottomBarPlan = (input: ActiveLeaguesBottomBarInput): BottomBarPlan =>
+  useMemo(
+    () => describeActiveLeaguesBottomBar(input),
+    [
+      input.canContinue,
+      input.stale,
+      input.submitting,
+      input.hasActiveLeagues,
+      input.blockingMessages,
+      input.onCancel,
+      input.onContinue,
+    ],
+  );
 
 /** What the screen needs before it can render anything: the catalogue and a starting setup. */
 type Boot =
@@ -167,7 +189,9 @@ const ActiveLeaguesSetup = ({ onContinue, onCancel }: ActiveLeaguesScreenProps) 
     idleOperation<LeagueSelectionSnapshot>(),
   );
   const submissionRef = useRef(submission);
-  submissionRef.current = submission;
+  useEffect(() => {
+    submissionRef.current = submission;
+  }, [submission]);
 
   const narrow = useMediaQuery(NARROW_LAYOUT_QUERY);
   const createApi = useContext(CreateSessionContext);
@@ -175,24 +199,25 @@ const ActiveLeaguesSetup = ({ onContinue, onCancel }: ActiveLeaguesScreenProps) 
   // ---- Draft persistence -------------------------------------------------
   // One saver for the screen's lifetime. Every configuration change schedules a write; the saver
   // debounces the burst into one, supersedes anything a newer change has replaced, and flushes
-  // whatever is still outstanding when the screen is disposed of.
-  const saverRef = useRef<DraftSaver | null>(null);
-  saverRef.current ??= createDraftSaver({
-    save: async (payload) => {
-      const outcome = await runAtEdge(
-        saveSetupDraft({
-          intents: payload.intents,
-          advancedOptions: payload.advancedOptions,
-          // The tree's own view state is not this screen's to own; it keeps whatever it had.
-          searchQuery: "",
-          regionFilterId: null,
-          statusFilter: "all",
-        }),
-      );
-      return Result.isFailure(outcome) ? describeRpcError(outcome.failure) : null;
-    },
-  });
-  const saver = saverRef.current;
+  // whatever is still outstanding when the screen is disposed of. Held in state so creation runs
+  // once, through the lazy initializer, with no ref touched during render.
+  const [saver] = useState<DraftSaver>(() =>
+    createDraftSaver({
+      save: async (payload) => {
+        const outcome = await runAtEdge(
+          saveSetupDraft({
+            intents: payload.intents,
+            advancedOptions: payload.advancedOptions,
+            // The tree's own view state is not this screen's to own; it keeps whatever it had.
+            searchQuery: "",
+            regionFilterId: null,
+            statusFilter: "all",
+          }),
+        );
+        return Result.isFailure(outcome) ? describeRpcError(outcome.failure) : null;
+      },
+    }),
+  );
 
   useEffect(() => {
     saver.schedule({ intents, advancedOptions });
@@ -289,19 +314,15 @@ const ActiveLeaguesSetup = ({ onContinue, onCancel }: ActiveLeaguesScreenProps) 
 
   // ---- The shell's bottom bar -------------------------------------------
   const submitting = isPending(submission);
-  const bottomBar: BottomBarPlan = useMemo(
-    () =>
-      describeActiveLeaguesBottomBar({
-        canContinue,
-        submitting,
-        stale,
-        hasActiveLeagues: validation.hasAtLeastOneActiveLeague,
-        blockingMessages: validation.blockingMessages,
-        onCancel,
-        onContinue: handleContinue,
-      }),
-    [canContinue, handleContinue, onCancel, stale, submitting, validation],
-  );
+  const bottomBar: BottomBarPlan = useActiveLeaguesBottomBarPlan({
+    canContinue,
+    submitting,
+    stale,
+    hasActiveLeagues: validation.hasAtLeastOneActiveLeague,
+    blockingMessages: validation.blockingMessages,
+    onCancel,
+    onContinue: handleContinue,
+  });
 
   const registerBottomBar = createApi?.registerBottomBar;
   useEffect(() => {

@@ -95,17 +95,20 @@ export const useMatchControl = ({
   }, [open, orangeInjury, subsStatus.capReached, isShorthanded, outPlayerId, inPlayerId, hasRedInjury, injuryPrompt]);
 
   // The panel-scoped key handlers read a fresh snapshot each keystroke (the
-  // seam keeps the functions themselves stable — no re-subscription churn).
+  // seam keeps the functions themselves stable — no re-subscription churn). The snapshot is
+  // written after commit, so no ref is touched during render.
   const panelRef = useRef({
     open,
     mode,
     subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
   });
-  panelRef.current = {
-    open,
-    mode,
-    subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
-  };
+  useEffect(() => {
+    panelRef.current = {
+      open,
+      mode,
+      subDraftStarted: outPlayerId !== "" || inPlayerId !== "",
+    };
+  }, [open, mode, outPlayerId, inPlayerId]);
 
   // Each new injury to the controlled club opens the panel, even one the manager closed on an
   // earlier injury that is still pending.
@@ -199,15 +202,18 @@ export const useMatchControl = ({
 
   // Stable refs for action callbacks so the registerActionHandler effect
   // never re-runs when the callbacks change (which happens on every tactic
-  // edit). The effect reads the latest callback from each ref.
+  // edit). The effect reads the latest callback from each ref; the latest values are written after
+  // commit, so no ref is touched during render.
   const onApplyTacticsRef = useRef(onApplyTactics);
-  onApplyTacticsRef.current = onApplyTactics;
   const onBringOffRef = useRef(onBringOff);
-  onBringOffRef.current = onBringOff;
   const onMakeSubstitutionRef = useRef(onMakeSubstitution);
-  onMakeSubstitutionRef.current = onMakeSubstitution;
   const onDecisionResolvedRef = useRef(onDecisionResolved);
-  onDecisionResolvedRef.current = onDecisionResolved;
+  useEffect(() => {
+    onApplyTacticsRef.current = onApplyTactics;
+    onBringOffRef.current = onBringOff;
+    onMakeSubstitutionRef.current = onMakeSubstitution;
+    onDecisionResolvedRef.current = onDecisionResolved;
+  }, [onApplyTactics, onBringOff, onMakeSubstitution, onDecisionResolved]);
 
   // Register the panel Actions so buttons and the key map dispatch the same registered handlers
   // (ADR-0012). Decided before the early return so hook order never depends on tactic load.

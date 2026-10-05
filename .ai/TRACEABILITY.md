@@ -82,4 +82,5 @@ test, or the reviewer — never by memory alone.
 | Same seed → same match, incl. after resimulation | determinism tests + the gate's determinism step |
 | Save → load → continue preserves future outcomes | save/load tests |
 | Domain language matches CONTEXT.md | review dimension 2 |
+| Renderer follows the Rules of React (no ref access during render) | `oxlint` `react/refs: error` in `.oxlintrc.json` |
 | Markdown links resolve | `verify-md-links` in `pnpm check:all` |
