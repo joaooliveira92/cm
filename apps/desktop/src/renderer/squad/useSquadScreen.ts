@@ -334,7 +334,9 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // The handlers read volatile screen state through `latest`/`orderedIdsRef`; the deps are the
+    // stable per-save callbacks plus `clearFilterCommand`, which changes when the squad size does.
+  }, [recordBookmark, applySort, setSort, applyFilter, clearFilterCommand, refreshSquad, applyPreferences]);
 
   const orderedIdsRef = useRef(orderedIds);
   useEffect(() => {
@@ -481,14 +483,14 @@ export const useSquadScreen = (saveId: SaveId): SquadScreenValue => {
     if (resolved === null) return;
     setActiveAndBookmark(resolved, makeTableFocusBookmark(TABLE_ID, orderedIds, resolved));
     focusRow(resolved);
-  }, [orderedIds, squadResult.waiting]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [orderedIds, squadResult.waiting, activeId, setActiveAndBookmark, focusRow]);
 
   const selectionOut = selectedId !== null && !orderedIds.includes(selectedId);
   useEffect(() => {
     if (!selectionOut) return;
     setSelection(null);
     speak("selection-hidden", "The selected player is hidden by the current filters.");
-  }, [selectionOut]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selectionOut, setSelection, speak]);
 
   // Restore scroll position when arriving via back/forward
   useEffect(() => {

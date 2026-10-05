@@ -10,7 +10,7 @@
  * load-bearing; see `useTransfersScreen.ts`.
  */
 import { useCallback, useEffect, useRef, useState } from "react";
-import type { BidId, SaveId } from "@cm-clone/contracts";
+import type { BidId } from "@cm-clone/contracts";
 import type { TableId } from "../table/types.js";
 import { MARKET } from "./tableIds.js";
 import {
@@ -86,8 +86,8 @@ export const useBidDraft = (): BidDraftValue => {
 
 export interface ClearDraftOnUnavailableParams {
   readonly selectedRef: React.MutableRefObject<{ readonly tableId: TableId; readonly player: { readonly id: string } } | null>;
-  readonly marketIdsRef: React.MutableRefObject<readonly string[]>;
-  readonly freeIdsRef: React.MutableRefObject<readonly string[]>;
+  readonly marketIds: readonly string[];
+  readonly freeIds: readonly string[];
   readonly draftRef: React.MutableRefObject<BidDraftState>;
   readonly datasetIds: readonly string[];
   readonly datasetKey: string;
@@ -105,8 +105,8 @@ export interface ClearDraftOnUnavailableParams {
  */
 export const useClearDraftOnUnavailable = ({
   selectedRef,
-  marketIdsRef,
-  freeIdsRef,
+  marketIds,
+  freeIds,
   draftRef,
   datasetIds,
   datasetKey,
@@ -117,11 +117,50 @@ export const useClearDraftOnUnavailable = ({
   setBidAlert,
   speak,
 }: ClearDraftOnUnavailableParams): void => {
+  // The visible id arrays and the dataset array are rebuilt every render, so the effect is keyed by
+  // their joined id strings and reads the arrays through a store keyed by them. That keeps the
+  // dependency array honest — it names exactly the keys the body reads — while the body still sees
+  // the current array for each key.
+  const storeRef = useRef<{
+    readonly datasetKey: string;
+    readonly datasetIds: readonly string[];
+    readonly marketKey: string;
+    readonly marketIds: readonly string[];
+    readonly freeKey: string;
+    readonly freeIds: readonly string[];
+  }>({
+    datasetKey,
+    datasetIds,
+    marketKey: marketIdsKey,
+    marketIds,
+    freeKey: freeIdsKey,
+    freeIds,
+  });
   useEffect(() => {
+    storeRef.current = {
+      datasetKey,
+      datasetIds,
+      marketKey: marketIdsKey,
+      marketIds,
+      freeKey: freeIdsKey,
+      freeIds,
+    };
+  }, [datasetKey, datasetIds, marketIdsKey, marketIds, freeIdsKey, freeIds]);
+
+  useEffect(() => {
+    const store = storeRef.current;
+    if (store.datasetKey !== datasetKey) return;
     const current = selectedRef.current;
     if (current === null) return;
-    const visibleIds = current.tableId === MARKET ? marketIdsRef.current : freeIdsRef.current;
-    if (!datasetIds.includes(current.player.id)) {
+    const visibleIds =
+      current.tableId === MARKET
+        ? store.marketKey === marketIdsKey
+          ? store.marketIds
+          : []
+        : store.freeKey === freeIdsKey
+          ? store.freeIds
+          : [];
+    if (!store.datasetIds.includes(current.player.id)) {
       setDraft(reduceBidDraft(draftRef.current, { _tag: "playerUnavailable" }));
       setSelected(null);
       setBidAlert("The selected player is no longer available for a bid.");
@@ -134,16 +173,16 @@ export const useClearDraftOnUnavailable = ({
       setBidAlert(null);
       speak(current.tableId, "selection-hidden", "The selected player is hidden by the current filters.");
     }
-  }, [datasetKey, marketIdsKey, freeIdsKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [datasetKey, marketIdsKey, freeIdsKey, selectedRef, draftRef, setDraft, setSelected, setBidAlert, speak]);
 };
 
-/** A different save is a different market: the draft starts empty again. */
+/** A different save is a different market: the draft starts empty again. The screen remounts per
+ *  save, so resetting on mount is the reset on save change. */
 export const useResetDraftOnSaveChange = (
-  saveId: SaveId,
   draftRef: React.MutableRefObject<BidDraftState>,
   setDraft: (next: BidDraftState) => void,
 ): void => {
   useEffect(() => {
     setDraft(reduceBidDraft(draftRef.current, { _tag: "savedReloaded" }));
-  }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [draftRef, setDraft]);
 };

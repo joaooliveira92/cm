@@ -6,10 +6,11 @@ what was **observed**, not what was expected.
 ## Sprints
 
 - Effort: `.scratch/react-compiler-adoption/`
-- Tickets closed: `01-refs-latest-value-refs`, `02-set-state-in-effect`
+- Tickets closed: `01-refs-latest-value-refs`, `02-set-state-in-effect`,
+  `03-exhaustive-effect-dependencies`
 - Branch: `dev` (off `dev`)
-- Commits: `f4f1e232 chore(lint): clear react/refs and enforce the rule as an error`; ticket 02 in
-  the commit this report ships with.
+- Commits: `f4f1e232 chore(lint): clear react/refs…`; `99aac826 chore(lint): clear
+  set-state-in-effect…`; ticket 03 in the commit this report ships with.
 
 ## Acceptance criteria → evidence
 
@@ -28,6 +29,14 @@ what was **observed**, not what was expected.
 | 1 | Rule graduates `warn` → `error` | `.oxlintrc.json:59` | pass |
 | 2 | `pnpm lint` zero `react/set-state-in-effect` | `pnpm lint` | pass — 0 (baseline 27) |
 | 3 | Behaviour change justified per site | per-site in ticket 02 `## Answer` + report | pass after repair |
+
+### Ticket 03 — `react/exhaustive-effect-dependencies`
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Rule graduates `warn` → `error` | `.oxlintrc.json:60` | pass |
+| 2 | `pnpm lint` zero `react/exhaustive-effect-dependencies` | `pnpm lint` | pass — 0 (baseline 25) |
+| 3 | No `eslint-disable-line react-hooks/exhaustive-deps` in the renderer | `grep -rn` | pass — none (was 9) |
 
 ## Gate
 
@@ -93,3 +102,10 @@ behind `void Promise.resolve().then(load)`) and high (`useLiveMatchCommands` `ru
 two medium (`squadBottomBar` no longer mirrored its two effects; `CareerStateProvider` changed
 `advance.waiting` semantics) and one low. All repaired; re-review verdict **APPROVE** with one
 low key-completeness follow-up, applied here.
+
+**Ticket 03** — verdict **APPROVE**, no blocker/high. The reviewer traced every changed effect's
+re-run set and found no effect that loops, extra-fetches, or misses a refresh. Four low notes: the
+vendored `components/reui/` `-next-line` suppressions leave the bucket cleared only modulo suppression
+(deferred to bucket 07, recorded on the ticket); `useScrollEdges`' empty-table guard; `CareerShell` no
+longer resets scroll on the mount pass (a likely fix, noted in the commit body); and missing
+hook-level tests for the refactors. None is a gate.

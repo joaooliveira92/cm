@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Effect, Result } from "effect";
 import type { CommentaryFileStatusView } from "@cm-clone/contracts";
 import { Button } from "../components/ui/button.js";
@@ -28,7 +28,7 @@ export const CommentaryFileSection = () => {
   const [error, setError] = useState<string | null>(null);
   const [confirmingReset, setConfirmingReset] = useState(false);
 
-  const run = (request: Effect.Effect<CommentaryFileStatusView, RpcClientError<FileMethod>>): void => {
+  const run = useCallback((request: Effect.Effect<CommentaryFileStatusView, RpcClientError<FileMethod>>): void => {
     void Effect.runPromise(request.pipe(Effect.result)).then((outcome) => {
       if (Result.isFailure(outcome)) {
         setError(describeRpcError(outcome.failure));
@@ -37,9 +37,9 @@ export const CommentaryFileSection = () => {
       setError(null);
       setStatus(outcome.success);
     });
-  };
+  }, []);
 
-  useEffect(() => run(getCommentaryFileStatus), []);
+  useEffect(() => run(getCommentaryFileStatus), [run]);
 
   return (
     <fieldset className="flex flex-col gap-2">

@@ -243,7 +243,6 @@ export const useDiscardTableSelectionOnUnmount = (): void => {
 };
 
 export interface TransferTableFocusParams {
-  readonly viewResultRef: React.MutableRefObject<{ readonly waiting?: boolean }>;
   readonly viewWaiting: boolean | undefined;
   readonly market: PerTableState;
   readonly free: PerTableState;
@@ -260,7 +259,6 @@ export interface TransferTableFocusParams {
  * next → old prev → first visible row → the screen primary.
  */
 export const useTransferTableFocusRestoration = ({
-  viewResultRef,
   viewWaiting,
   market,
   free,
@@ -282,14 +280,26 @@ export const useTransferTableFocusRestoration = ({
     [],
   );
 
+  // The visible id arrays are rebuilt every render, so the effects are keyed by their joined id
+  // string and the arrays are read through a store keyed by it. That keeps the dependency array
+  // honest — it names exactly the key the body reads — while the callback still sees the current
+  // array for that key.
+  const idsByKeyRef = useRef<Record<string, readonly string[]>>({});
+  useEffect(() => {
+    idsByKeyRef.current = { [marketIdsKey]: marketIds, [freeIdsKey]: freeIds };
+  }, [marketIdsKey, marketIds, freeIdsKey, freeIds]);
+
   const restoreFocusFor = useCallback(
     (
       key: TableId,
       active: string | null,
       bookmark: TableFocusBookmark | null,
-      ids: readonly string[],
+      idsKey: string,
+      waiting: boolean | undefined,
     ) => {
-      if (viewResultRef.current.waiting === true) return;
+      if (waiting === true) return;
+      const ids = idsByKeyRef.current[idsKey];
+      if (ids === undefined) return;
       if (active === null || ids.includes(active)) return;
       const resolved = resolveTableFocus(
         bookmark !== null && bookmark.tableId === key ? bookmark : null,
@@ -302,13 +312,13 @@ export const useTransferTableFocusRestoration = ({
         focusSemanticTarget({ screen: "transfers" });
       }
     },
-    [onActiveChangeFor, focusRowFor, viewResultRef],
+    [onActiveChangeFor, focusRowFor],
   );
 
   useEffect(() => {
-    restoreFocusFor(MARKET, market.active, market.bookmark, marketIds);
-  }, [marketIdsKey, viewWaiting, market.active, market.bookmark]); // eslint-disable-line react-hooks/exhaustive-deps
+    restoreFocusFor(MARKET, market.active, market.bookmark, marketIdsKey, viewWaiting);
+  }, [marketIdsKey, viewWaiting, market.active, market.bookmark, restoreFocusFor]);
   useEffect(() => {
-    restoreFocusFor(FREE, free.active, free.bookmark, freeIds);
-  }, [freeIdsKey, viewWaiting, free.active, free.bookmark]); // eslint-disable-line react-hooks/exhaustive-deps
+    restoreFocusFor(FREE, free.active, free.bookmark, freeIdsKey, viewWaiting);
+  }, [freeIdsKey, viewWaiting, free.active, free.bookmark, restoreFocusFor]);
 };

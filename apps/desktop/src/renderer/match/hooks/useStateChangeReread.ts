@@ -42,7 +42,7 @@ export const useStateChangeReread = ({
     if (match === null) return;
     const restoring = restoreReadRef.current;
     restoreReadRef.current = false;
-    if (!restoring && (lastRevealedTag === undefined || !changesClubView(lastRevealedTag))) return;
+    if (!restoring && (lines.length === 0 || lastRevealedTag === undefined || !changesClubView(lastRevealedTag))) return;
     const revealedEvents = getRevealedEvents(saveId);
     const stamp = stream.stamp();
     const resume = resumeSimulation({ saveId, matchId: match.matchId, cursor: stream.cursor(), revealedEvents });
@@ -55,5 +55,5 @@ export const useStateChangeReread = ({
       },
       () => undefined,
     );
-  }, [lines.length, lastRevealedTag, match, saveId, stream, read.polled]);
+  }, [lines.length, lastRevealedTag, match, saveId, stream, read]);
 };

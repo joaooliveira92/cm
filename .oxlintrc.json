@@ -57,7 +57,7 @@
     "react/capitalized-calls": "error",
     "react/refs": "error",
     "react/set-state-in-effect": "error",
-    "react/exhaustive-effect-dependencies": "warn",
+    "react/exhaustive-effect-dependencies": "error",
     "react/todo": "warn",
     "react/memo-dependencies": "warn",
     "react/hooks": "error",

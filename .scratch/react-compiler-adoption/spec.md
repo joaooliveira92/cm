@@ -18,8 +18,9 @@ The lint side is adopted in [.oxlintrc.json](../../.oxlintrc.json):
 - The classic (non-compiler) `react/*` and `react-hooks/*` rules that the plugin would
   auto-enable are turned `off` — the classic plugin is a separate, unevaluated adoption.
 
-Buckets clear so far: `react/hooks` (ticket 06), `react/refs` (ticket 01) and
-`react/set-state-in-effect` (ticket 02) are `error` with zero findings.
+Buckets clear so far: `react/hooks` (ticket 06), `react/refs` (ticket 01),
+`react/set-state-in-effect` (ticket 02) and `react/exhaustive-effect-dependencies` (ticket 03) are
+`error` with zero findings.
 
 ## What is deliberately not shipped (yet)
 
@@ -36,7 +37,7 @@ Findings counted on 2026-09-16 at `b19c3b8` with this config:
 |---|---|---|---|
 | 01 | `react/refs` | 104 | `ref.current = …` writes and reads during render — the deliberate latest-value-ref memoization idiom; also what stops the compiler optimising these components. **Cleared (ticket 01); rule now `error`.** |
 | 02 | `react/set-state-in-effect` | 27 | setState calls from inside effects. **Cleared (ticket 02); rule now `error`.** |
-| 03 | `react/exhaustive-effect-dependencies` | 29 | deliberately scoped effect dependency arrays (some carry `eslint-disable-line react-hooks/exhaustive-deps`) |
+| 03 | `react/exhaustive-effect-dependencies` | 25 | deliberately scoped effect dependency arrays (some carry `eslint-disable-line react-hooks/exhaustive-deps`). **Cleared (ticket 03); rule now `error`.** |
 | 04 | `react/todo` | 19 | constructors the compiler would emit Todo diagnostics for |
 | 05 | `react/memo-dependencies` | 16 | memo/effect dependencies on Effect atom reads |
 | 06 | `react/hooks` | 12 | Rules-of-Hooks violations (compiler variant of `rules-of-hooks`) |

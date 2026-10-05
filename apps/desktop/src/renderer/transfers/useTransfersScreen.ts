@@ -333,8 +333,8 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
 
   useClearDraftOnUnavailable({
     selectedRef,
-    marketIdsRef,
-    freeIdsRef,
+    marketIds,
+    freeIds,
     draftRef,
     datasetIds,
     datasetKey,
@@ -348,10 +348,9 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
 
   useDiscardTableSelectionOnUnmount();
 
-  useResetDraftOnSaveChange(saveId, draftRef, setDraft);
+  useResetDraftOnSaveChange(draftRef, setDraft);
 
   useTransferTableFocusRestoration({
-    viewResultRef,
     viewWaiting: viewResult.waiting,
     market,
     free,
@@ -363,7 +362,6 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   });
 
   useTransferCommandHandlers({
-    saveId,
     draftRef,
     offerTermsRef,
     amountInputRef,
@@ -377,7 +375,6 @@ export const useTransfersScreen = (saveId: SaveId): TransfersScreenValue => {
   });
 
   useTablePaletteHandlers({
-    saveId,
     marketIdsRef,
     freeIdsRef,
     marketActiveRef,

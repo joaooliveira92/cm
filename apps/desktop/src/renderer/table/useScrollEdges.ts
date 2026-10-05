@@ -21,16 +21,16 @@ export const scrollEdges = (metrics: {
 };
 
 /**
- * Measures on mount, on window resize, and whenever `extraDeps` change (pass
- * whatever alters the content width: row count, visible columns). Wire the
- * returned `syncEdges` to the container's `onScroll`; a programmatic
- * `scrollLeft` write fires `scroll` in a browser, so that covers keyboard
- * scrolling too. Declare a scroll-offset restore before this hook so the
- * mount measurement reads the restored offset.
+ * Measures on mount, on window resize, and whenever the content that sets the
+ * scroll width changes (`rowCount`, `columnCount`). Wire the returned `syncEdges`
+ * to the container's `onScroll`; a programmatic `scrollLeft` write fires `scroll`
+ * in a browser, so that covers keyboard scrolling too. Declare a scroll-offset
+ * restore before this hook so the mount measurement reads the restored offset.
  */
 export const useScrollEdges = (
   scrollRef: RefObject<HTMLDivElement | null>,
-  extraDeps: readonly unknown[] = [],
+  rowCount: number,
+  columnCount: number,
 ): { readonly edges: ScrollEdges; readonly syncEdges: () => void } => {
   const [edges, setEdges] = useState<ScrollEdges>({ left: false, right: false });
 
@@ -43,10 +43,14 @@ export const useScrollEdges = (
   }, [scrollRef]);
 
   useLayoutEffect(() => {
+    // An empty table has no width to measure, so there is nothing to wire until it has content.
+    // `rowCount` and `columnCount` are read here because they are what changes the measured
+    // width, which is what the effect's dependency array names.
+    if (rowCount === 0 && columnCount === 0) return;
     syncEdges();
     window.addEventListener("resize", syncEdges);
     return () => window.removeEventListener("resize", syncEdges);
-  }, [syncEdges, ...extraDeps]);
+  }, [syncEdges, rowCount, columnCount]);
 
   return { edges, syncEdges };
 };

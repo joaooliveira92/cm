@@ -42,7 +42,12 @@ const CareerShellContent = ({ saveId }: { readonly saveId: SaveId }) => {
   // applies — the page itself does not scroll).
   const scrollRef = useRef<HTMLDivElement | null>(null);
   const pathname = useLocation().pathname;
+  const lastPathnameRef = useRef(pathname);
   useLayoutEffect(() => {
+    // Reset only when the route actually changed: reading `pathname` here is what makes the
+    // dependency honest, and the guard keeps the mount pass (already at the top) a no-op.
+    if (lastPathnameRef.current === pathname) return;
+    lastPathnameRef.current = pathname;
     if (scrollRef.current !== null) scrollRef.current.scrollTop = 0;
   }, [pathname]);
 

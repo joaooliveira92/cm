@@ -159,7 +159,7 @@ const SpineOrchestrator = ({
     }
 
     return () => { for (const unregister of unregisters) unregister(); };
-  }, [nav, saveId, currentScreen, openOverlay]);
+  }, [nav, saveId, openOverlay]);
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent) => {

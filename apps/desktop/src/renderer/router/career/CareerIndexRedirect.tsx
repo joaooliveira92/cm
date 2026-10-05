@@ -10,8 +10,9 @@ export const CareerIndexRedirect = () => {
   const saveId = params.saveId ?? "";
   const decoded = decodeSaveId(saveId);
   useEffect(() => {
-    if (decoded._tag === "Success") {
-      navigateCareer({ type: "squad", saveId: decoded.success }, "pointer");
+    const current = decodeSaveId(saveId);
+    if (current._tag === "Success") {
+      navigateCareer({ type: "squad", saveId: current.success }, "pointer");
     }
   }, [saveId]);
   return decoded._tag === "Malformed" ? (

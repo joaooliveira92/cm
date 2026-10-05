@@ -134,8 +134,9 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
     return () => {
       cancelled = true;
     };
-    // `match` is re-read from the session store every render; its id is the stable identity.
-  }, [saveId, matchId, attemptKey]);
+    // `match` is re-read from the session store every render; it is listed (rather than only its
+    // id) because the closure reads the summary itself, and its identity is stable per match.
+  }, [saveId, match, attemptKey]);
 
   const view: LiveMatchView = ((): LiveMatchView => {
     if (match === null) return { _tag: "no-live-match" };

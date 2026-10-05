@@ -148,6 +148,9 @@ export const ContextTabs = ({ onChangeTab, matchTabVisibility, matchPhaseOverrid
   const [focusedTabIndex, setFocusedTabIndex] = useState<number | null>(null);
 
   useLayoutEffect(() => {
+    // A null resolution means no tab is active (the row renders nothing); there is no element to
+    // scroll into view, and reading the id here is what makes the dependency honest.
+    if (resolvedTabId === null) return;
     const activeEl = tabListRef.current?.querySelector<HTMLButtonElement>(
       '[aria-current="page"]',
     );

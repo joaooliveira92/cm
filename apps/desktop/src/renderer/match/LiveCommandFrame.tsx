@@ -109,14 +109,16 @@ export const LiveCommandFrame = ({
 
 const CommandStatusLine = ({ status }: { readonly status: CommandStatus | null }) => {
   const ref = useRef<HTMLParagraphElement | null>(null);
-  const settled = status !== null && status._tag !== "pending";
   // A settled command can re-key the form (a new tactic in play), dropping focus to the body; land
   // it on the outcome instead, and never pull focus away from a control the manager moved to.
+  // Reading `status` (not a derived `settled` boolean) keeps the dependency honest: the effect
+  // re-runs on every status change, which is exactly when a settled outcome can appear.
   useEffect(() => {
-    if (settled && (document.activeElement === null || document.activeElement === document.body)) {
+    if (status === null || status._tag === "pending") return;
+    if (document.activeElement === null || document.activeElement === document.body) {
       ref.current?.focus();
     }
-  }, [settled, status]);
+  }, [status]);
   return (
     <p
       ref={ref}

@@ -78,10 +78,10 @@ referenced throughout.
 
 ## In flight
 
-- **[.scratch/react-compiler-adoption/](../.scratch/react-compiler-adoption/)** — 3/8. The React
+- **[.scratch/react-compiler-adoption/](../.scratch/react-compiler-adoption/)** — 4/8. The React
   Compiler rule set (the `react` plugin's Rules-of-React rules) is adopted in `.oxlintrc.json`; the
-  `react/hooks`, `react/refs` and `react/set-state-in-effect` buckets are clear and graduated to
-  `error`. The remaining buckets — `exhaustive-effect-dependencies`, `todo`, `memo-dependencies`, the
+  `react/hooks`, `react/refs`, `react/set-state-in-effect` and `react/exhaustive-effect-dependencies`
+  buckets are clear and graduated to `error`. The remaining buckets — `todo`, `memo-dependencies`, the
   small buckets, and `oxc-transform-react` — are at `warn`.
 
 The other efforts under `.scratch/` are not indexed here. `gate-red-on-dev` and the `group-*`

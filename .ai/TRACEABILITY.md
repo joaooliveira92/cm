@@ -84,4 +84,5 @@ test, or the reviewer — never by memory alone.
 | Domain language matches CONTEXT.md | review dimension 2 |
 | Renderer follows the Rules of React (no ref access during render) | `oxlint` `react/refs: error` in `.oxlintrc.json` |
 | Renderer follows the Rules of React (no synchronous setState in an effect) | `oxlint` `react/set-state-in-effect: error` in `.oxlintrc.json` |
+| Renderer effect dependency arrays are exhaustive | `oxlint` `react/exhaustive-effect-dependencies: error` in `.oxlintrc.json` |
 | Markdown links resolve | `verify-md-links` in `pnpm check:all` |

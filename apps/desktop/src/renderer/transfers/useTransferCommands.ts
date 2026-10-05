@@ -4,7 +4,7 @@
  * `status`/`bidAlert` strings live here because they are this hook's output —
  * nothing else in the screen writes them.
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import type { BidId, PlayerId, RpcPayload, SaveId, TransfersScreenView } from "@cm-clone/contracts";
 import { Option } from "effect";
@@ -218,7 +218,6 @@ export const useTransferCommands = ({
 };
 
 export interface TransferCommandHandlersParams {
-  readonly saveId: SaveId;
   readonly draftRef: React.MutableRefObject<BidDraftState>;
   readonly offerTermsRef: React.MutableRefObject<ContractTerms | null>;
   readonly amountInputRef: React.MutableRefObject<HTMLInputElement | null>;
@@ -252,7 +251,6 @@ const dispatchedSigningTerms = (
 
 /** Binds the transfer commands to the Action registry for the life of a save. */
 export const useTransferCommandHandlers = ({
-  saveId,
   draftRef,
   offerTermsRef,
   amountInputRef,
@@ -264,6 +262,13 @@ export const useTransferCommandHandlers = ({
   onRespondToBid,
   onRespondAsBidder,
 }: TransferCommandHandlersParams): void => {
+  // The callbacks are recreated whenever the view or the shell re-renders, so the once-registered
+  // handlers read the latest of each through this ref rather than closing over the first render's.
+  const handlersRef = useRef({ showMarket, refresh, onBid, onSignFreeAgent, onRespondToBid, onRespondAsBidder });
+  useEffect(() => {
+    handlersRef.current = { showMarket, refresh, onBid, onSignFreeAgent, onRespondToBid, onRespondAsBidder };
+  }, [showMarket, refresh, onBid, onSignFreeAgent, onRespondToBid, onRespondAsBidder]);
+
   useEffect(() => {
     const unregisters: Array<() => void> = [];
 
@@ -275,7 +280,7 @@ export const useTransferCommandHandlers = ({
       const firstId = marketIdsRef.current[0];
       if (firstId !== undefined) {
         // The Market rows only exist while its tab is showing, so switch to it before looking.
-        flushSync(showMarket);
+        flushSync(handlersRef.current.showMarket);
         (
           document.querySelector(
             `[data-focus-id="${focusIdOf("transfers", "marketTable", firstId)}"]`,
@@ -287,7 +292,7 @@ export const useTransferCommandHandlers = ({
     unregisters.push(
       registerActionHandler("place-bid", (params) => {
         const p = params as { playerId: PlayerId; amount: number };
-        void onBid(p.playerId, p.amount);
+        void handlersRef.current.onBid(p.playerId, p.amount);
       }),
       // Three shapes, three answers, and the middle one is the reason this handler is not a cast.
       //
@@ -307,36 +312,37 @@ export const useTransferCommandHandlers = ({
         if (params !== undefined && params !== null) {
           const dispatched = dispatchedSigningTerms(params);
           if (dispatched === null) return;
-          void onSignFreeAgent(dispatched.playerId, dispatched.terms);
+          void handlersRef.current.onSignFreeAgent(dispatched.playerId, dispatched.terms);
           return;
         }
         const terms = offerTermsRef.current;
         const playerId = draftRef.current.draft?.playerId as PlayerId | undefined;
         if (terms === null || playerId === undefined) return;
-        void onSignFreeAgent(playerId, terms);
+        void handlersRef.current.onSignFreeAgent(playerId, terms);
       }),
       registerActionHandler("respond-accept", (params) =>
-        onRespondToBid((params as { bidId: BidId }).bidId, "accept"),
+        handlersRef.current.onRespondToBid((params as { bidId: BidId }).bidId, "accept"),
       ),
       registerActionHandler("respond-reject", (params) =>
-        onRespondToBid((params as { bidId: BidId }).bidId, "reject"),
+        handlersRef.current.onRespondToBid((params as { bidId: BidId }).bidId, "reject"),
       ),
       registerActionHandler("respond-counter", (params) =>
-        onRespondToBid((params as { bidId: BidId }).bidId, "counter"),
+        handlersRef.current.onRespondToBid((params as { bidId: BidId }).bidId, "counter"),
       ),
       registerActionHandler("accept-counter", (params) =>
-        onRespondAsBidder((params as { bidId: BidId }).bidId, "accept"),
+        handlersRef.current.onRespondAsBidder((params as { bidId: BidId }).bidId, "accept"),
       ),
       registerActionHandler("withdraw-bid", (params) =>
-        onRespondAsBidder((params as { bidId: BidId }).bidId, "withdraw"),
+        handlersRef.current.onRespondAsBidder((params as { bidId: BidId }).bidId, "withdraw"),
       ),
       registerActionHandler("focus-bid", focusBidWorkflow),
-      registerActionHandler("retry-market-table", () => refresh()),
-      registerActionHandler("retry-free-agents-table", () => refresh()),
+      registerActionHandler("retry-market-table", () => handlersRef.current.refresh()),
+      registerActionHandler("retry-free-agents-table", () => handlersRef.current.refresh()),
     );
     return () => {
       for (const unregister of unregisters) unregister();
     };
-    // Handlers read through refs.
-  }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // Refs and the latest-callback ref are stable, so the handlers register once per mount; the
+    // volatile callbacks are read at call time through `handlersRef`.
+  }, [draftRef, offerTermsRef, amountInputRef, marketIdsRef, handlersRef]);
 };

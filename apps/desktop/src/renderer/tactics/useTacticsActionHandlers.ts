@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { Tactic, type PlayerId, type SaveId, type SquadPlayerView } from "@cm-clone/contracts";
+import { Tactic, type PlayerId, type SquadPlayerView } from "@cm-clone/contracts";
 import type { Slot, TeamInstructions } from "@cm-clone/shared";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { assistantLineupOf, swapLineupSlots } from "../squad/lineupEdits.js";
@@ -12,25 +12,21 @@ import {
 } from "./tacticEdits.js";
 import type { InMatchTactics } from "./tacticsTypes.js";
 
-/** Registers the screen's action handlers for the lifetime of the mount. The dependency array is
- *  deliberately the one the screen had: `isInMatch` and `inMatch` are fixed per mount, so they are
- *  not listed and the handlers close over the current values as before. */
+/** Registers the screen's action handlers for the lifetime of the mount. `isInMatch` is listed so
+ *  the branch that decides which handlers to register reads the value current at that commit; the
+ *  remaining values are the ones the handlers close over. */
 export const useTacticsActionHandlers = ({
   isInMatch,
   inMatch,
-  saveId,
   tactic,
   squad,
-  revision,
   setTactic,
   save,
 }: {
   readonly isInMatch: boolean;
   readonly inMatch: InMatchTactics | undefined;
-  readonly saveId: SaveId;
   readonly tactic: Tactic;
   readonly squad: ReadonlyArray<SquadPlayerView>;
-  readonly revision: number;
   readonly setTactic: (tactic: Tactic) => void;
   readonly save: () => Promise<boolean>;
 }): void => {
@@ -90,5 +86,5 @@ export const useTacticsActionHandlers = ({
     return () => {
       for (const unregister of unregisters) unregister();
     };
-  }, [saveId, tactic, squad, revision, setTactic, save]);
+  }, [isInMatch, inMatch, tactic, squad, setTactic, save]);
 };

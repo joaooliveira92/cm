@@ -157,7 +157,7 @@ export function useMatchLifecycle(saveId: SaveId): {
     const unregQuick = registerActionHandler("quick-result", () => void startMatch("quick"));
     const unregCommit = registerActionHandler("commit-matchday", () => void commitResult());
     return () => { unreg(); unregQuick(); unregCommit(); };
-  }, [saveId, startMatch, commitResult]);
+  }, [startMatch, commitResult]);
 
   const state: MatchLifecycleState = {
     pending, match, error, phase, hydrated, saveId, restoredAfterRestart, quick,

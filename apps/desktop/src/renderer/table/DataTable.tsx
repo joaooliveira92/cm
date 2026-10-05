@@ -65,10 +65,11 @@ export const DataTableRoot = <Row extends TableRowShape>(props: DataTableRootPro
     }
   }, [initialScrollLeft]);
 
-  const { edges, syncEdges } = useScrollEdges(scrollRef, [
+  const { edges, syncEdges } = useScrollEdges(
+    scrollRef,
     orderedIds.length,
     table.getVisibleFlatColumns().length,
-  ]);
+  );
 
   const { onBodyKeyDown, effectiveActive } = useTableKeyboard({
     orderedIds, activeId, onActiveChange, onBookmarkChange, onToggleSelection,

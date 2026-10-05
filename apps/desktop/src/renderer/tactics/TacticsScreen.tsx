@@ -31,26 +31,24 @@ export const TacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; re
   inMatch === undefined ? (
     <StandaloneTacticsScreen saveId={saveId} />
   ) : (
-    <InMatchTacticsScreen saveId={saveId} inMatch={inMatch} />
+    <InMatchTacticsScreen inMatch={inMatch} />
   );
 
 const StandaloneTacticsScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const draft = useTacticDraft(saveId, {
     saveFailureMessage: "Failed to save tactic — check every slot has a unique player assigned.",
   });
-  return <TacticsWorkspace saveId={saveId} draft={draft} />;
+  return <TacticsWorkspace draft={draft} />;
 };
 
-const InMatchTacticsScreen = ({ saveId, inMatch }: { readonly saveId: SaveId; readonly inMatch: InMatchTactics }) => (
-  <TacticsWorkspace saveId={saveId} inMatch={inMatch} draft={null} />
+const InMatchTacticsScreen = ({ inMatch }: { readonly inMatch: InMatchTactics }) => (
+  <TacticsWorkspace inMatch={inMatch} draft={null} />
 );
 
 const TacticsWorkspace = ({
-  saveId,
   inMatch,
   draft,
 }: {
-  readonly saveId: SaveId;
   readonly inMatch?: InMatchTactics;
   readonly draft: TacticDraft | null;
 }) => {
@@ -66,7 +64,6 @@ const TacticsWorkspace = ({
     : draft!.viewResult;
   const viewError = isInMatch ? null : draft!.viewError;
   const tactic = isInMatch ? inMatch!.tactic : draft!.tactic;
-  const revision = isInMatch ? 0 : draft!.revision;
   const conflict = isInMatch ? null : draft!.conflict;
   const status = isInMatch ? null : draft!.status;
   const setTactic = isInMatch ? inMatch!.setTactic : draft!.setTactic;
@@ -96,7 +93,7 @@ const TacticsWorkspace = ({
 
   // ── Wiring ────────────────────────────────────────────────────
 
-  useTacticsActionHandlers({ isInMatch, inMatch, saveId, tactic, squad, revision, setTactic, save });
+  useTacticsActionHandlers({ isInMatch, inMatch, tactic, squad, setTactic, save });
   const editing = useTacticEditing({ tactic, setTactic, setSelectedSlot });
   useTacticsShortcuts({ isInMatch, setSelectedSlot });
 

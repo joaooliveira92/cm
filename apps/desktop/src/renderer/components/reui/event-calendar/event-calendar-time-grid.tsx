@@ -145,8 +145,13 @@ function EventCalendarTimeGrid({
     if (!contained) return
     const el = scrollRef.current
     if (!el) return
+    // The scrollbar mode swaps the scroller DOM (custom ScrollArea vs the native scroller), so the
+    // viewport is selected for the mode the effect was bound under.
+    const native = viewConfig.scrollbars === "native"
     const viewport = el.querySelector<HTMLElement>(
-      "[data-slot=scroll-area-viewport]"
+      native
+        ? "[data-slot=scroll-area-viewport][data-ec-native-scroll]"
+        : "[data-slot=scroll-area-viewport]"
     )
     // Measure a rendered slot row - the CSS var is in rem, rects are in px.
     const slotRow = el.querySelector<HTMLElement>(

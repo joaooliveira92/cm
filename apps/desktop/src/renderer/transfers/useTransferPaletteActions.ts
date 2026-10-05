@@ -5,7 +5,6 @@
  * which is the order the single registration effect used before the split.
  */
 import { useEffect } from "react";
-import type { SaveId } from "@cm-clone/contracts";
 import { registerActionHandler } from "../actions/dispatch.js";
 import { classifyTableParamAction } from "../table/paramActions.js";
 import { sortDirectionOf } from "../table/features/sorting.js";
@@ -25,7 +24,6 @@ import { FREE, MARKET } from "./tableIds.js";
 type TransferTableState = ReturnType<typeof useTransferTableState>;
 
 export interface TablePaletteHandlersParams {
-  readonly saveId: SaveId;
   readonly marketIdsRef: React.MutableRefObject<readonly string[]>;
   readonly freeIdsRef: React.MutableRefObject<readonly string[]>;
   readonly marketActiveRef: React.MutableRefObject<string | null>;
@@ -42,7 +40,6 @@ export interface TablePaletteHandlersParams {
 
 /** The command-palette sort/filter actions for both transfer tables. */
 export const useTablePaletteHandlers = ({
-  saveId,
   marketIdsRef,
   freeIdsRef,
   marketActiveRef,
@@ -107,6 +104,7 @@ export const useTablePaletteHandlers = ({
     return () => {
       for (const unregister of unregisters) unregister();
     };
-    // Handlers read through refs.
-  }, [saveId]); // eslint-disable-line react-hooks/exhaustive-deps
+    // The refs are stable, and the callbacks are the stable per-save setters; `filtersFor` changes
+    // when a filter does, which is exactly when the handlers need the fresh closure.
+  }, [marketIdsRef, freeIdsRef, marketActiveRef, freeActiveRef, marketRowsRef, freeAgentRowsRef, recordBookmark, setSortFor, setFiltersFor, filtersFor, notify]);
 };

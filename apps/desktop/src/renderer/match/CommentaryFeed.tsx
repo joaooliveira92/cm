@@ -52,7 +52,10 @@ export const CommentaryFeed = ({
 
   useLayoutEffect(() => {
     const list = listRef.current;
-    if (list !== null && followingRef.current) list.scrollTop = list.scrollHeight;
+    // Nothing to follow when the feed is empty; reading `lines.length` here is also what makes
+    // the effect honest — it re-runs exactly when a line is added or removed.
+    if (list === null || !followingRef.current || lines.length === 0) return;
+    list.scrollTop = list.scrollHeight;
   }, [lines.length]);
 
   const onScroll = () => {

@@ -182,7 +182,7 @@ const ActiveLeaguesInner = ({
     let cancelled = false;
 
     const currentReady = slotRef.current._tag === "ready" ? slotRef.current.resolved : null;
-    setSlot({ _tag: "loading", previous: currentReady });
+    setSlotRef.current({ _tag: "loading", previous: currentReady });
 
     const timer = setTimeout(() => {
       void (async () => {
@@ -207,7 +207,8 @@ const ActiveLeaguesInner = ({
       cancelled = true;
       clearTimeout(timer);
     };
-    // `setSlot` is deliberately not in the deps: it is a stable ref-read setter, and including it  // would re-arms the debounce on every slot write.
+    // The latest setter is read through `setSlotRef`; listing it directly would re-arm the debounce
+    // on every slot write.
   }, [state.revision, state.intents]);
 
   const value = useMemo<ActiveLeaguesContextValue>(
