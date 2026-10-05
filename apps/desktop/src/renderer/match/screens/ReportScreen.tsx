@@ -16,6 +16,9 @@ type ReportState =
   | { readonly _tag: "failed"; readonly message: string }
   | { readonly _tag: "ready"; readonly report: MatchReportView };
 
+/** A report state that carries a settled answer — everything but `loading`. */
+type SettledReport = Exclude<ReportState, { readonly _tag: "loading" }>;
+
 /** Words, never colour alone, for each event kind (Screen 103 §12). */
 const EVENT_LABEL: Readonly<Record<MatchReportEventView["kind"], string>> = {
   Goal: "Goal",
@@ -62,10 +65,16 @@ export const MatchReportScreen = ({
   readonly saveId: SaveId;
   readonly matchId?: MatchId | null;
 }) => {
-  const [state, setState] = useState<ReportState>({ _tag: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  // The report read is keyed by save, match (or "latest") and an attempt counter. A result tagged
+  // with the current key is shown; any other render is `loading`, derived rather than set. The
+  // counter keeps a Retry showing `loading` until its fresh answer lands.
+  const key = `${saveId}:${matchId ?? "latest"}:${attempt}`;
+  const [stored, setStored] = useState<{ readonly key: string; readonly state: SettledReport } | null>(
+    null,
+  );
 
-  const load = useCallback(async () => {
-    setState({ _tag: "loading" });
+  const readReport = useCallback(async (): Promise<SettledReport> => {
     const named = matchId !== undefined && matchId !== null;
     const read: Effect.Effect<
       MatchReportView | null,
@@ -73,22 +82,37 @@ export const MatchReportScreen = ({
     > = named ? getMatchReport({ saveId, matchId }) : getLatestMatchReport({ saveId });
     const outcome = await Effect.runPromise(read.pipe(Effect.result));
     if (Result.isSuccess(outcome)) {
-      setState(
-        outcome.success === null ? { _tag: "empty" } : { _tag: "ready", report: outcome.success },
-      );
-      return;
+      return outcome.success === null
+        ? { _tag: "empty" }
+        : { _tag: "ready", report: outcome.success };
     }
     const failure = outcome.failure;
-    setState(
-      failure._tag === "RemoteFailure" && failure.error._tag === "MatchNotCompleteError"
-        ? { _tag: "notComplete" }
-        : { _tag: "failed", message: describeRpcError(failure) },
-    );
+    return failure._tag === "RemoteFailure" && failure.error._tag === "MatchNotCompleteError"
+      ? { _tag: "notComplete" }
+      : { _tag: "failed", message: describeRpcError(failure) };
   }, [saveId, matchId]);
 
+  const applyReport = useCallback(
+    (next: SettledReport): void => {
+      setStored({ key, state: next });
+    },
+    [key],
+  );
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    const run = async (): Promise<void> => {
+      const next = await readReport();
+      if (!cancelled) applyReport(next);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [readReport, applyReport]);
+
+  const state: ReportState = stored !== null && stored.key === key ? stored.state : { _tag: "loading" };
+  const retry = (): void => setAttempt((n) => n + 1);
 
   return (
     <main
@@ -108,7 +132,7 @@ export const MatchReportScreen = ({
       {state._tag === "failed" && (
         <Alert variant="destructive">
           <p>{state.message}</p>
-          <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={() => void load()}>
+          <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={retry}>
             Retry
           </Button>
         </Alert>

@@ -86,16 +86,21 @@ export const FavoriteTeamField = ({
   // pick is made, before `value` has come back round through the parent.
   const committedName = useRef(value?.clubName ?? "");
 
+  // Adjust the free-text input when the committed pick changes from outside. Done during render
+  // against the previous name, so the chosen club's name is already in the input on the next commit.
+  const valueName = value?.clubName ?? "";
+  const [previousValueName, setPreviousValueName] = useState(valueName);
+  if (previousValueName !== valueName) {
+    setPreviousValueName(valueName);
+    setQuery(valueName);
+  }
+
   useEffect(() => {
     committedName.current = value?.clubName ?? "";
-    setQuery(value?.clubName ?? "");
   }, [value?.clubName]);
 
   useEffect(() => {
-    if (saveId === null) {
-      setGroups([]);
-      return;
-    }
+    if (saveId === null) return;
 
     let live = true;
     const load = async (): Promise<void> => {
@@ -116,11 +121,15 @@ export const FavoriteTeamField = ({
 
   const { contains } = AutocompletePrimitive.useFilter({ sensitivity: "base" });
 
+  // A pick is only meaningful against the world it was chosen from: with no save the control is
+  // disabled and shows no clubs, whether or not a previous world's list is still held.
+  const availableGroups = saveId === null ? [] : groups;
+
   // The committed name in the input is a display, not a search: opening the list over it shows
   // every club rather than just the one already picked.
   const filtered = useMemo(() => {
-    if (query === "" || query === value?.clubName) return groups;
-    return groups
+    if (query === "" || query === value?.clubName) return availableGroups;
+    return availableGroups
       .map((group) => ({
         nation: group.nation,
         items: group.items.filter(
@@ -128,7 +137,7 @@ export const FavoriteTeamField = ({
         ),
       }))
       .filter((group) => group.items.length > 0);
-  }, [groups, query, value?.clubName, contains]);
+  }, [availableGroups, query, value?.clubName, contains]);
 
   const disabled = saveId === null;
 

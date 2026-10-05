@@ -240,11 +240,12 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**react-compiler-adoption 01 resolved 2026-10-05**: the `react/refs` bucket is cleared. The measured
-baseline was 104 findings across 17 renderer files (the spec's 125 and the ticket's 73 were both
-stale). Ref reads/writes moved out of render into commit-phase effects; lazy-init refs became
-`useState`; the rule graduated `warn`→`error` in `.oxlintrc.json`. `pnpm check:all` green (2823
-passed), `pnpm lint` zero `react/refs`. See [report](reports/react-compiler-adoption.md).
+**react-compiler-adoption 01 and 02 resolved 2026-10-05.** 01 cleared 104 `react/refs` findings
+across 17 files; 02 cleared 27 `react/set-state-in-effect` findings across 25 files. Both rules are
+`error` with zero findings and `pnpm check:all` is green. See
+[report](reports/react-compiler-adoption.md). 02's first pass hid eight sites behind a microtask and
+was rejected by review as a lint dodge; the repaired version derives the loading state during render
+from a keyed read store, and `squadBottomBar` gained a regression test for the effect it replaced.
 
 **Group-j 10 and training-schedule-and-delegation 04 resolved 2026-10-05.**
 **player-positional-model 19 moved to `needs-triage`** — its premise that "no code reads the legacy
@@ -253,11 +254,17 @@ is buildable; it is no longer a build ticket.
 
 The next open, unblocked, unclaimed build tickets across all live efforts are now:
 
-1. [react-compiler-adoption 02](../.scratch/react-compiler-adoption/issues/02-set-state-in-effect.md) —
-   **`react/set-state-in-effect`**, ready-for-agent.
-2. [react-compiler-adoption 03](../.scratch/react-compiler-adoption/issues/03-exhaustive-effect-dependencies.md) —
+1. [react-compiler-adoption 03](../.scratch/react-compiler-adoption/issues/03-exhaustive-effect-dependencies.md) —
    **`react/exhaustive-effect-dependencies`**, ready-for-agent.
-3. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
+2. [react-compiler-adoption 04](../.scratch/react-compiler-adoption/issues/04-todo-diagnostics.md) —
+   **`react/todo`**, ready-for-agent.
+3. [react-compiler-adoption 05](../.scratch/react-compiler-adoption/issues/05-memo-dependencies.md) —
+   **`react/memo-dependencies`**, ready-for-agent.
+4. [react-compiler-adoption 07](../.scratch/react-compiler-adoption/issues/07-small-buckets.md) —
+   **small buckets**, ready-for-agent.
+5. [react-compiler-adoption 08](../.scratch/react-compiler-adoption/issues/08-oxc-transform-react.md) —
+   **`oxc-transform-react`**, ready-for-agent.
+6. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
    **Extract `@cm-clone/rpc-client`**, ready-for-agent, but carries a deliberate
    decide-before-starting caveat.
 

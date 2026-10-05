@@ -45,9 +45,16 @@ export const NationalityField = ({
   // Read when the list closes — an item press closes it before `value` comes back round.
   const committedName = useRef(nameOf(value));
 
+  // Adjust the free-text input when the committed pick changes from outside. Done during render
+  // against the previous id, so the chosen nation's name is already in the input on the next commit.
+  const [previousValue, setPreviousValue] = useState(value);
+  if (previousValue !== value) {
+    setPreviousValue(value);
+    setQuery(nameOf(value));
+  }
+
   useEffect(() => {
     committedName.current = nameOf(value);
-    setQuery(nameOf(value));
   }, [value]);
 
   const { contains } = AutocompletePrimitive.useFilter({ sensitivity: "base" });

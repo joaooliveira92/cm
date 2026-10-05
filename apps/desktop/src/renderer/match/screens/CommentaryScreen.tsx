@@ -84,6 +84,11 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
 
   useEffect(() => {
     if (matchId === null) return;
+    // `load` synchronously records the reveal cut and clears `loading` when there is nothing behind
+    // the cut yet — without the second, a match with no revealed lines would show "Loading
+    // commentary" forever. Its cursor lives in refs the poll owns, so the set cannot be lifted to a
+    // derived value without changing when the cut and the label move; suppressed as intrinsic.
+    // eslint-disable-next-line react/set-state-in-effect -- poll records the reveal cut synchronously
     void load();
     const interval = setInterval(() => { void load(); }, POLL_INTERVAL_MS);
     return () => clearInterval(interval);

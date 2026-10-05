@@ -1,5 +1,5 @@
 import { type SaveId, type TacticsOverviewView } from "@cm-clone/contracts";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Alert } from "../components/ui/alert.js";
 import { Badge } from "../components/ui/badge.js";
 import { Button } from "../components/ui/button.js";
@@ -72,18 +72,18 @@ export const TacticsOverviewScreen = ({ saveId }: { readonly saveId: SaveId }) =
   const state: TacticsOverviewState = overviewViewState({ rendered, latest, failed, archived });
 
   // The one polite announcer: meaningful state transitions and the totals, announced without
-  // reading every change. Slots stay silently readable — the lists carry them.
-  const [announcement, setAnnouncement] = useState<string | null>(null);
-  useEffect(() => {
-    if (state === "ready" && rendered !== null) {
-      setAnnouncement(headline(rendered));
-    } else if (state === "conflicted") {
-      setAnnouncement("A newer tactic exists. Showing the previous one until you refresh.");
-    } else if (state === "failed") {
-      setAnnouncement("Failed to load the tactics overview.");
-    } else if (state === "permission-limited") {
-      setAnnouncement("This career has ended. The tactics overview is read-only.");
+  // reading every change. Slots stay silently readable — the lists carry them. Derived during render
+  // so the live region carries the new sentence in the same commit as the state it describes.
+  const announcement = useMemo<string | null>(() => {
+    if (state === "ready" && rendered !== null) return headline(rendered);
+    if (state === "conflicted") {
+      return "A newer tactic exists. Showing the previous one until you refresh.";
     }
+    if (state === "failed") return "Failed to load the tactics overview.";
+    if (state === "permission-limited") {
+      return "This career has ended. The tactics overview is read-only.";
+    }
+    return null;
   }, [state, rendered]);
 
   const adoptCurrent = () => {

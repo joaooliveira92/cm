@@ -14,6 +14,9 @@ type SummaryState =
   | { readonly _tag: "failed"; readonly message: string }
   | { readonly _tag: "ready"; readonly summary: PostMatchSummaryView };
 
+/** A summary state that carries a settled answer — everything but `loading`. */
+type SettledSummary = Exclude<SummaryState, { readonly _tag: "loading" }>;
+
 /** Words, never colour alone, for each key event (Screen 99 §12). */
 const EVENT_LABEL: Readonly<Record<PostMatchEventView["kind"], string>> = {
   Goal: "Goal",
@@ -37,21 +40,45 @@ const reviewLinks = (saveId: SaveId, matchId: MatchId): ReadonlyArray<{ readonly
  * `getPostMatchSummary`, never from the revealed feed.
  */
 export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId; readonly matchId: MatchId }) => {
-  const [state, setState] = useState<SummaryState>({ _tag: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  // Keyed by save, match and an attempt counter: a result tagged with the current key is shown, and
+  // any other render is `loading`, derived rather than set. The counter keeps Retry loading until
+  // its fresh answer lands.
+  const key = `${saveId}:${matchId}:${attempt}`;
+  const [stored, setStored] = useState<{ readonly key: string; readonly state: SettledSummary } | null>(
+    null,
+  );
 
-  const load = useCallback(async () => {
-    setState({ _tag: "loading" });
-    const outcome = await Effect.runPromise(getPostMatchSummary({ saveId, matchId }).pipe(Effect.result));
-    setState(
-      Result.isFailure(outcome)
-        ? { _tag: "failed", message: describeRpcError(outcome.failure as RpcClientError<"getPostMatchSummary">) }
-        : { _tag: "ready", summary: outcome.success },
+  const readSummary = useCallback(async (): Promise<SettledSummary> => {
+    const outcome = await Effect.runPromise(
+      getPostMatchSummary({ saveId, matchId }).pipe(Effect.result),
     );
+    return Result.isFailure(outcome)
+      ? { _tag: "failed", message: describeRpcError(outcome.failure as RpcClientError<"getPostMatchSummary">) }
+      : { _tag: "ready", summary: outcome.success };
   }, [saveId, matchId]);
 
+  const applySummary = useCallback(
+    (next: SettledSummary): void => {
+      setStored({ key, state: next });
+    },
+    [key],
+  );
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    const run = async (): Promise<void> => {
+      const next = await readSummary();
+      if (!cancelled) applySummary(next);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [readSummary, applySummary]);
+
+  const state: SummaryState = stored !== null && stored.key === key ? stored.state : { _tag: "loading" };
+  const retry = (): void => setAttempt((n) => n + 1);
 
   if (state._tag === "loading") {
     return <p className="mt-4 text-body text-text-secondary italic">Loading the match summary...</p>;
@@ -60,7 +87,7 @@ export const PostMatchSummary = ({ saveId, matchId }: { readonly saveId: SaveId;
     return (
       <Alert variant="destructive" className="mt-4">
         <p>{state.message}</p>
-        <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={() => void load()}>
+        <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={retry}>
           Retry
         </Button>
       </Alert>

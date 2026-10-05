@@ -1139,6 +1139,10 @@ function EventCalendarMoreIndicator({
     (state) => state.drag !== null
   )
   useEffect(() => {
+    // Vendored behaviour: a drag that starts from this overflow list must leave the popover closed,
+    // and it must stay closed once the drag ends. That is a transition the local `open` flag has to
+    // record, so the update belongs in this effect rather than in a derived read.
+    // eslint-disable-next-line react/set-state-in-effect -- close the popover when a chip drag starts
     if (isDragging) setOpen(false)
   }, [isDragging])
 

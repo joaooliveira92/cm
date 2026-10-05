@@ -41,12 +41,19 @@ export const useSquadBottomBar = (
 ): void => {
   const saveLine = lineupSaveLine(lineup);
   const [latest, setLatest] = useState<"lineup" | "notice">("lineup");
-  useEffect(() => {
-    if (barNotice !== null) setLatest("notice");
-  }, [barNotice]);
-  useEffect(() => {
-    if (saveLine !== null) setLatest("lineup");
-  }, [saveLine]);
+  // "Whichever changed last" is stored information about previous renders, adjusted during render
+  // against the previous pair rather than in an effect, so the acknowledgement lands in the same
+  // commit that produced the change. The two blocks mirror the two former effects exactly: each
+  // re-ran on every change of its value (including to and from null) and set the flag only when the
+  // new value was non-null, with the save line running second and so winning a tie.
+  const [previous, setPrevious] = useState({ barNotice, saveLine });
+  const noticeChanged = previous.barNotice !== barNotice;
+  const saveLineChanged = previous.saveLine !== saveLine;
+  if (noticeChanged || saveLineChanged) {
+    setPrevious({ barNotice, saveLine });
+    if (noticeChanged && barNotice !== null) setLatest("notice");
+    if (saveLineChanged && saveLine !== null) setLatest("lineup");
+  }
 
   // Read through a ref: a caller's `refresh` need not be stable, and a new
   // function each render would re-publish the bar each render. Written after commit, so no ref is

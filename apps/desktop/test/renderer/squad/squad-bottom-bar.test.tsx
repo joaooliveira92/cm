@@ -59,6 +59,22 @@ describe("useSquadBottomBar", () => {
     await waitFor(() => expect(result.current?.reason).toBe("Saving…"));
   });
 
+  it("re-asserts a notice that clears and then returns unchanged", async () => {
+    // The two replaced effects re-ran on every change of their value, so a notice that went null and
+    // came back to the same string was acknowledged again. The save line is also live, so the
+    // `latest` flag — not the null-coalescing fallback — decides which line shows; a render-adjust
+    // that only records the new pair when a non-null value arrives would leave the save line up.
+    const notice = "Showing the Contract columns.";
+    const { result, rerender } = mount({ notice, status: "Saved.", conflicted: false });
+    await waitFor(() => expect(result.current?.reason).toBe("Saved."));
+
+    rerender({ notice: null, status: "Saved.", conflicted: false });
+    await waitFor(() => expect(result.current?.reason).toBe("Saved."));
+
+    rerender({ notice, status: "Saved.", conflicted: false });
+    await waitFor(() => expect(result.current?.reason).toBe(notice));
+  });
+
   it("lets a conflict outrank a newer notice, and offers Refresh", async () => {
     const { result } = mount({ notice: "Showing the Contract columns.", status: null, conflicted: true });
     await waitFor(() => expect(result.current?.reason).toBe(LINEUP_CONFLICT_MESSAGE));

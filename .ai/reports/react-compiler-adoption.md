@@ -3,73 +3,93 @@
 Written by the orchestrator to `.ai/reports/<effort>.md` after the gate, before the commit. Records
 what was **observed**, not what was expected.
 
-## Sprint
+## Sprints
 
 - Effort: `.scratch/react-compiler-adoption/`
-- Tickets closed: `01-refs-latest-value-refs`
+- Tickets closed: `01-refs-latest-value-refs`, `02-set-state-in-effect`
 - Branch: `dev` (off `dev`)
-- Commits: _pending — recorded in the commit below_
+- Commits: `f4f1e232 chore(lint): clear react/refs and enforce the rule as an error`; ticket 02 in
+  the commit this report ships with.
 
 ## Acceptance criteria → evidence
 
+### Ticket 01 — `react/refs`
+
 | # | Criterion | Proving test | Result |
 |---|---|---|---|
-| 1 | `react/refs` graduates `warn` → `error` | `.oxlintrc.json:58` | pass (`"react/refs": "error"`) |
-| 2 | `pnpm lint` reports zero `react/refs` | `pnpm lint` | pass — `Found 146 warnings and 0 errors`; `grep -cE '^  ! react\(refs\)'` = 0 (baseline 104) |
+| 1 | Rule graduates `warn` → `error` | `.oxlintrc.json:58` | pass |
+| 2 | `pnpm lint` zero `react/refs` | `pnpm lint` | pass — 0 (baseline 104) |
 | 3 | Renderer behaviour unchanged | feature suites + e2e | pass — see Gate |
+
+### Ticket 02 — `react/set-state-in-effect`
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Rule graduates `warn` → `error` | `.oxlintrc.json:59` | pass |
+| 2 | `pnpm lint` zero `react/set-state-in-effect` | `pnpm lint` | pass — 0 (baseline 27) |
+| 3 | Behaviour change justified per site | per-site in ticket 02 `## Answer` + report | pass after repair |
 
 ## Gate
 
 | Gate | Command | Result |
 |---|---|---|
-| check:all | `pnpm check:all` | **green** — `✓ typecheck ✓ lint ✓ effect-lint ✓ verify-md-links ✓ verify-db-schema ✓ test`; desktop 335 files / 2823 passed / 5 skipped |
-| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 22 failed / 76 passed, **pre-existing** — the same failures reproduce with all changes stashed and `dist` rebuilt; they belong to `.scratch/desktop-suite-red/` (21 `club-staff-nav` focus split; 17/18 random full-run shapes). No DOM/aria/copy changed by this sprint. |
+| check:all | `pnpm check:all` | **green** on the final tree — `✓ typecheck ✓ lint ✓ effect-lint ✓ verify-md-links ✓ verify-db-schema ✓ test`; desktop 335 files / 2824 passed / 5 skipped |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 22 failed / 76 passed, **pre-existing** (ticket 01 verified by stash-and-rebuild; ticket 02 is renderer-only with no e2e-reachable path changed) |
 | determinism | — | not applicable — no simulation, seeding or Player Development touched |
 | save compatibility | — | not applicable — no persistence or schema touched |
 
+The gate flaked intermittently under `pnpm -r test` load on `leagueSelection/screen.test.tsx` and
+`grid-navigation.test.tsx`; both pass in isolation and on repeated full desktop runs, and
+`leagueSelection` also failed on a clean pre-change tree, so both are pre-existing load-sensitive
+timing flakes, not regressions. A single clean `check:all` is recorded above.
+
 ## Behavior changes
 
-None expected: every change is a ref read/write moved from render to a commit-phase effect, a
-lazy-init ref replaced by `useState`, or a ref passed through an indirection. Two refs are written in
-`useLayoutEffect` because their readers run outside passive-effect order (event-calendar's
-`selectorRef`, read by `useSyncExternalStore`'s `getSnapshot`; `ActiveLeaguesProvider`'s
-`stateRef`/`slotRef`/`setSlotRef`, read by a debounce microtask). No player-visible or seeded outcome
-changes; no saves are affected.
+Ticket 01: none expected; every change moved a ref read/write from render to a commit-phase effect,
+replaced a lazy-init ref with `useState`, or passed a ref through an indirection. Two refs use
+`useLayoutEffect` because their readers run outside passive-effect order.
+
+Ticket 02: the render-phase derives and keyed read stores shift some updates one commit earlier or
+show `loading` for a refetch window rather than via a synchronous setter — each justified per site in
+the ticket. `squadBottomBar` was repaired to mirror the two effects it replaced exactly and gained a
+regression test; `CareerStateProvider` keeps the previous report during a re-advance. Four sites
+suppress with an explicit reason (three vendored `components/ui`/`components/reui`, plus
+`CommentaryScreen` and `match/useMatchControl`, both intrinsic external-store/ref-owned syncs).
+
+No player-visible or seeded outcome changes; no saves affected.
 
 ## Decision records
 
 - ADRs added: none
-- Agent Notes written (`proposed/`): none. The pseudo-`use*` indirection that clears the compiler's
-  "passing a ref to a function" inference on the two bottom-bar builders is the first occurrence, not
-  a third; its rationale lives in the commit body. Route it per AGENTS.md if it recurs.
+- Agent Notes written (`proposed/`): none. The `eslint-disable-next-line react/set-state-in-effect`
+  escape and the keyed-read-store idiom are recorded in the tickets and commit bodies. Route them per
+  AGENTS.md if a third occurrence appears.
 - Agent Notes promoted (`implemented/`): none
 
 ## Pre-existing failures
 
-- **e2e, 22 specs** — stated above; verified pre-existing by stash-and-rebuild.
-- **`test/renderer/leagueSelection/screen.test.tsx`** — "issues one request for a burst of rapid
-  changes" is a load-sensitive timing flake: it failed once under `pnpm check:all` on the changed
-  tree **and** once on the clean pre-change tree, passed 5/5 in isolation and on repeated full
-  desktop runs. Not a regression; it is a new piece of information about the suite and is recorded in
-  the SPRINT-PLAN so a red run is not misread. It is not filed as a ticket here because it is outside
-  this effort; it warrants one.
+- **e2e, 22 specs** — the `.scratch/desktop-suite-red/` set.
+- **`leagueSelection/screen.test.tsx`** and **`grid-navigation.test.tsx`** — load-sensitive timing
+  flakes (`findByText` timeouts under worker contention); reproduce on a clean tree / pass in
+  isolation. Recorded in the SPRINT-PLAN so a red run is not misread. They warrant a robustness
+  ticket of their own; not filed here because they are outside this effort.
 
 ## Deferred and known limitations
 
-- The remaining React Compiler buckets (`set-state-in-effect`, `exhaustive-effect-dependencies`,
-  `todo`, `memo-dependencies`, the small buckets) and `oxc-transform-react` stay at `warn`; they are
-  tickets 02–08 of this effort.
-- `event-calendar.tsx` is vendored; its selector write now uses `useLayoutEffect` and no test
-  exercises the drag/draft selectors that read it.
+- Remaining React Compiler buckets (`exhaustive-effect-dependencies`, `todo`, `memo-dependencies`, the
+  small buckets) and `oxc-transform-react` stay at `warn`; tickets 03–08 of this effort.
+- Reviewer low-severity note on ticket 02: `useBoundMatchRead.bindingKey` and
+  `useLiveMatchCommands.attemptKey` now include `saveId` (hardened during this session); the `live`
+  flag remains covered by key change.
 
 ## Review
 
-Reviewer verdict **APPROVE**, no blocker or high findings. Findings raised and handled before commit:
+**Ticket 01** — reviewer verdict **APPROVE**, no blocker/high. Medium/low findings repaired before
+commit: event-calendar selector and the ActiveLeagues guard refs moved to `useLayoutEffect`; a
+misnamed comment corrected.
 
-- **F1 (medium)** — event-calendar `selectorRef` passive-effect write could show a stale selector
-  frame; **repaired** with `useLayoutEffect`.
-- **F2 (low)** — `ActiveLeaguesProvider`'s revision guard lost its synchronous defence to a debounce
-  microtask; **repaired** with `useLayoutEffect` on the three refs.
-- **F3 (low)** — `useSquadSession.ts` comment named `readTableSession` where it meant
-  `seedFromRestored`; **repaired**.
-- **F4 (low)** — the pseudo-hook workaround should be routed if it recurs; noted, no note written.
+**Ticket 02** — first review verdict **NEEDS_REWORK**: blocker (eight sites hid setState-in-effect
+behind `void Promise.resolve().then(load)`) and high (`useLiveMatchCommands` `run()` wrapper), plus
+two medium (`squadBottomBar` no longer mirrored its two effects; `CareerStateProvider` changed
+`advance.waiting` semantics) and one low. All repaired; re-review verdict **APPROVE** with one
+low key-completeness follow-up, applied here.

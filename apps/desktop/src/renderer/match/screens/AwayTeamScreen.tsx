@@ -67,7 +67,12 @@ export const MatchAwayTeamScreen = ({ saveId }: { readonly saveId: SaveId }) => 
     setTeamSheet(outcome.success);
   }, [saveId, matchId]);
 
-  useEffect(() => { void load(); }, [load]);
+  useEffect(() => {
+    // False positive: `load` sets state only after its `await`, so this effect starts no synchronous
+    // render cascade. The rule cannot see through the async function, so the call is suppressed.
+    // eslint-disable-next-line react/set-state-in-effect -- load sets state only after its await
+    void load();
+  }, [load]);
 
   return (
     <main

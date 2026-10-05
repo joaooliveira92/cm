@@ -229,6 +229,11 @@ function DataGridScrollArea({
     if (!container || !viewport) return
 
     if (!usesCustomVerticalScrollbar) {
+      // Vendored measurement reset: the custom vertical scrollbar's metrics are cleared whenever it
+      // is not in use, and `resetMetrics` both rewrites the overlay's CSS variables and flips its
+      // overflow flag. That is a synchronisation with a measured external system, kept inline to
+      // leave the vendored behaviour untouched.
+      // eslint-disable-next-line react/set-state-in-effect -- vendored measurement reset
       resetMetrics()
       return
     }

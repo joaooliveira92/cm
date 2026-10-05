@@ -103,7 +103,12 @@ export function useMatchLifecycle(saveId: SaveId): {
   );
   const reportError = useCallback((message: string) => setError(message), []);
 
-  useEffect(() => {
+  // Restore a match the session store already holds, for a Match day that mounts (or is given a new
+  // save) after an app restart. Adjusted during render against the previous save id rather than in an
+  // effect: the restored match is then in place on the commit that first renders the screen.
+  const [hydratedFor, setHydratedFor] = useState<SaveId | null>(null);
+  if (hydratedFor !== saveId) {
+    setHydratedFor(saveId);
     const resumed = getActiveMatch(saveId);
     if (resumed !== null) {
       setMatch(resumed.match);
@@ -112,7 +117,7 @@ export function useMatchLifecycle(saveId: SaveId): {
       setQuick(resumed.quick === true);
     }
     setHydrated(true);
-  }, [saveId]);
+  }
 
   const awaitingMatchId = pending?.matchId ?? null;
   useEffect(() => {

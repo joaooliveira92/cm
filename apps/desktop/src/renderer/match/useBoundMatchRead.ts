@@ -16,6 +16,9 @@ export type BoundMatchState<A> =
   | { readonly _tag: "failed"; readonly message: string }
   | { readonly _tag: "ready"; readonly view: A | null };
 
+/** A bound-match state that carries a settled answer — everything but `loading`. */
+type SettledBoundMatch<A> = Exclude<BoundMatchState<A>, { readonly _tag: "loading" }>;
+
 /**
  * A per-match read (Match Statistics, Match Ratings, Match Player Stats, Match Overview) bound to
  * one match in this order:
@@ -35,7 +38,6 @@ export const useBoundMatchRead = <A, E>(
   read: (binding: MatchBinding) => Effect.Effect<A | null, E>,
   describe: (error: E) => string,
 ): { readonly state: BoundMatchState<A>; readonly reload: () => void } => {
-  const [state, setState] = useState<BoundMatchState<A>>({ _tag: "loading" });
   const tableResult = useAtomValue(leagueTableAtom(saveId));
   const awaitingMatchId = tableResult._tag === "Success" ? (tableResult.value.season.awaitingFixture?.matchId ?? null) : null;
   // Wait for the season read before binding: loading on a still-pending read would ask for the last
@@ -46,14 +48,23 @@ export const useBoundMatchRead = <A, E>(
   // kickoff. Subscribed the way the Attacks bar is; the active-match store notifies on every reveal.
   const revealedEvents = useSyncExternalStore(subscribeActiveMatch, () => getRevealedEvents(saveId));
 
-  const load = useCallback(async () => {
-    const session = getActiveMatch(saveId);
-    const live = session !== null && (session.phase === "live" || session.phase === "paused");
-    setState({ _tag: "loading" });
+  // The binding this hook currently reads, derived during render from the same stores the read
+  // consults. The answer is stored against a key built from that binding, so a render whose key
+  // differs from the stored one is the `loading` state — derived, never set synchronously.
+  const session = getActiveMatch(saveId);
+  const live = session !== null && (session.phase === "live" || session.phase === "paused");
+  const boundMatchId = live ? session.match.matchId : awaitingMatchId;
+  const [attempt, setAttempt] = useState(0);
+  const bindingKey = `${saveId}:${boundMatchId ?? "none"}:${live ? "live" : "static"}:${String(revealedEvents)}:${attempt}`;
+  const [stored, setStored] = useState<{ readonly key: string; readonly state: SettledBoundMatch<A> } | null>(
+    null,
+  );
+
+  const readBound = useCallback(async (): Promise<SettledBoundMatch<A>> => {
     const outcome = await Effect.runPromise(
       read({
         saveId,
-        matchId: live ? session.match.matchId : awaitingMatchId,
+        matchId: boundMatchId,
         revealedEvents: live
           ? revealedEvents
           : awaitingMatchId !== null && !revealedToFullTime(saveId, awaitingMatchId)
@@ -61,16 +72,32 @@ export const useBoundMatchRead = <A, E>(
             : null,
       }).pipe(Effect.result),
     );
-    setState(
-      Result.isFailure(outcome)
-        ? { _tag: "failed", message: describe(outcome.failure) }
-        : { _tag: "ready", view: outcome.success },
-    );
-  }, [saveId, awaitingMatchId, read, describe, revealedEvents]);
+    return Result.isFailure(outcome)
+      ? { _tag: "failed", message: describe(outcome.failure) }
+      : { _tag: "ready", view: outcome.success };
+  }, [saveId, boundMatchId, live, awaitingMatchId, revealedEvents, read, describe]);
+
+  const applyBound = useCallback(
+    (next: SettledBoundMatch<A>): void => {
+      setStored({ key: bindingKey, state: next });
+    },
+    [bindingKey],
+  );
 
   useEffect(() => {
-    if (seasonKnown) void load();
-  }, [load, seasonKnown]);
+    if (!seasonKnown) return;
+    let cancelled = false;
+    const run = async (): Promise<void> => {
+      const next = await readBound();
+      if (!cancelled) applyBound(next);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [readBound, applyBound, seasonKnown]);
 
-  return { state, reload: () => void load() };
+  const state: BoundMatchState<A> =
+    stored !== null && stored.key === bindingKey ? stored.state : { _tag: "loading" };
+  return { state, reload: () => setAttempt((n) => n + 1) };
 };

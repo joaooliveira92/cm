@@ -89,7 +89,12 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
   const match = session !== null && (session.phase === "live" || session.phase === "paused") ? session.match : null;
 
   const [snapshot, setSnapshot] = useState<ClubCommandSnapshot | null>(null);
-  const [loadError, setLoadError] = useState<string | null>(null);
+  // The load failure, tagged with the attempt it belongs to: it is shown only while that attempt is
+  // current, so starting a fresh read (a new match or Retry) clears it by derivation rather than by
+  // a synchronous set. `snapshot` keeps its previous value across attempts, as it always did.
+  const [loadErrorFor, setLoadErrorFor] = useState<{ readonly key: string; readonly message: string } | null>(
+    null,
+  );
   const [attempt, setAttempt] = useState(0);
   const [liveTactic, setLiveTactic] = useState<Tactic | null>(() => getLiveTactic(saveId));
   const [status, setStatus] = useState<CommandStatus | null>(null);
@@ -100,31 +105,37 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
   const runCommand = useAtomSet(submitMatchCommandMutation, { mode: "promise" });
 
   const matchId = match?.matchId ?? null;
+  const attemptKey = `${saveId}:${matchId ?? "none"}:${attempt}`;
+  const loadError = loadErrorFor !== null && loadErrorFor.key === attemptKey ? loadErrorFor.message : null;
   const { atHalftime, isHalftime, setIsHalftime } = useHalftimeInstruction(saveId);
 
   useEffect(() => {
     if (match === null) return;
     let cancelled = false;
-    setLoadError(null);
     const read = resumeSimulation({ saveId, matchId: match.matchId, cursor: 0, revealedEvents: getRevealedEvents(saveId) });
     Effect.runPromise(read.pipe(Effect.result)).then(
       (outcome) => {
         if (cancelled) return;
         if (Result.isFailure(outcome)) {
-          setLoadError(describeRpcError(outcome.failure as RpcClientError<"resumeSimulation">));
+          setLoadErrorFor({
+            key: attemptKey,
+            message: describeRpcError(outcome.failure as RpcClientError<"resumeSimulation">),
+          });
           return;
         }
         setSnapshot(snapshotFor(match, outcome.success));
       },
       () => {
-        if (!cancelled) setLoadError("Unable to reach the game. Please try again.");
+        if (!cancelled) {
+          setLoadErrorFor({ key: attemptKey, message: "Unable to reach the game. Please try again." });
+        }
       },
     );
     return () => {
       cancelled = true;
     };
     // `match` is re-read from the session store every render; its id is the stable identity.
-  }, [saveId, matchId, attempt]);
+  }, [saveId, matchId, attemptKey]);
 
   const view: LiveMatchView = ((): LiveMatchView => {
     if (match === null) return { _tag: "no-live-match" };

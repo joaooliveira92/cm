@@ -68,10 +68,10 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
   // The server's current revision when a save lost the race; while set, an editor shows a distinct
   // conflicted state and offers Refresh instead of a bare failure line.
   const [conflict, setConflict] = useState<number | null>(null);
-  // The revision a refresh is waiting to move past. The refetch passes a still-stale view through
-  // before the fresh one lands, so a refresh only discards the draft once the view's revision has
-  // actually advanced — the stale view can never re-seed it.
-  const refreshFrom = useRef<number | null>(null);
+  // The revision a refresh is waiting to move past. Held as state, not a ref, because it is read
+  // during render below; the refetch passes a still-stale view through before the fresh one lands,
+  // so a refresh only discards the draft once the view's revision has actually advanced.
+  const [refreshFrom, setRefreshFrom] = useState<number | null>(null);
   const tacticRef = useRef(defaultTacticFor("4-4-2"));
   const revisionRef = useRef(revision);
 
@@ -90,26 +90,34 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
     return defaultTacticFor("4-4-2");
   }, [profileResult]);
 
-  useEffect(() => {
-    if (draft !== null || viewResult._tag !== "Success") return;
+  // Both adjustments below are made during render against the current atom value rather than in an
+  // effect: the seeded draft is then already in place on the commit that first sees the tactic, so
+  // an editor cannot paint one frame with the fallback and the context — never a prop — is what
+  // re-seeds it.
+  if (
+    draft === null &&
+    viewResult._tag === "Success" &&
     // Wait for the manager's preferences before seeding a career that has no Tactic; otherwise the
     // first paint would seed 4-4-2 and never re-seed once the profile arrived.
-    if (viewResult.value.tactic === null && profileResult._tag === "Initial") return;
+    !(viewResult.value.tactic === null && profileResult._tag === "Initial")
+  ) {
     setDraft(viewResult.value.tactic ?? managerSeededTactic());
     setRevision(viewResult.value.revision);
-  }, [draft, viewResult, profileResult, managerSeededTactic]);
+  }
 
   // A refresh discards the draft and the conflict once the refetched view moves past the stale
   // revision — not before, when the view still carries the old value.
-  useEffect(() => {
-    if (viewResult._tag !== "Success" || refreshFrom.current === null) return;
-    if (viewResult.value.revision === refreshFrom.current) return;
+  if (
+    viewResult._tag === "Success" &&
+    refreshFrom !== null &&
+    viewResult.value.revision !== refreshFrom
+  ) {
     setDraft(viewResult.value.tactic ?? managerSeededTactic());
     setRevision(viewResult.value.revision);
-    refreshFrom.current = null;
+    setRefreshFrom(null);
     setConflict(null);
     setStatus(null);
-  }, [viewResult, managerSeededTactic]);
+  }
 
   const viewError = typedError(viewResult);
 
@@ -190,7 +198,7 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
   }, [save]);
 
   const refresh = useCallback(() => {
-    refreshFrom.current = revisionRef.current;
+    setRefreshFrom(revisionRef.current);
     setStatus("Loading the current tactic...");
     refreshTactics();
   }, [refreshTactics]);

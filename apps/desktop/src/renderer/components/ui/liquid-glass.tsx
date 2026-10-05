@@ -216,6 +216,11 @@ export function LiquidGlass({
   const [supported, setSupported] = useState(false);
 
   useEffect(() => {
+    // Vendored capability gate: the server and the first hydration render must take the fallback
+    // branch, so the capability is read in a client-only effect rather than during render. Kept
+    // inline rather than replaced with `useSyncExternalStore` to leave the vendored component's
+    // hydration behaviour untouched.
+    // eslint-disable-next-line react/set-state-in-effect -- client-only capability gate
     setSupported(supportsSvgBackdropFilter());
   }, []);
 

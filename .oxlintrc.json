@@ -56,7 +56,7 @@
     "react/void-use-memo": "error",
     "react/capitalized-calls": "error",
     "react/refs": "error",
-    "react/set-state-in-effect": "warn",
+    "react/set-state-in-effect": "error",
     "react/exhaustive-effect-dependencies": "warn",
     "react/todo": "warn",
     "react/memo-dependencies": "warn",

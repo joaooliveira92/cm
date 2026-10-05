@@ -39,7 +39,11 @@ export const useSaveList = (): SaveListState & { readonly refresh: () => Promise
     );
   }, []);
 
+  // False positive: `refresh` sets state only after its `await`, so the probe cannot start a
+  // synchronous render cascade. The rule cannot see through the async function, so the call is
+  // suppressed.
   useEffect(() => {
+    // eslint-disable-next-line react/set-state-in-effect -- refresh sets state only after its await
     void refresh();
   }, [refresh]);
 

@@ -47,11 +47,10 @@ export function NumberTicker({
 }: NumberTickerProps) {
   const containerRef = useRef<HTMLSpanElement>(null);
   const inView = useInView(containerRef, { once: true, amount: 0.6 });
-  const [armed, setArmed] = useState(!startOnView);
-
-  useEffect(() => {
-    if (startOnView && inView) setArmed(true);
-  }, [startOnView, inView]);
+  // `useInView` latches (`once: true`), so arming is a pure read of it: until the element enters the
+  // viewport the digits hold at zero, and from then on they roll to their value. Derived rather than
+  // mirrored into state, so the roll starts on the commit that first sees the element.
+  const armed = !startOnView || inView;
 
   const text = useMemo(() => {
     const rounded = Math.round(value);

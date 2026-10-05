@@ -298,8 +298,9 @@ export const useLeagueSelection = ({
     [blocking.length, handleBack, handleContinue, clearSelection, index, manage, noPlayableNations, onBack, stale, state],
   );
 
-  // `registerBottomBar` is a stable `useCallback` in the shell, so this effect
-  // fires exactly when the memoized node actually changes — never per render.
+  // `registerBottomBar` changes identity only when the creation step changes — it tags the bar with
+  // the step that registered it, so a bar from a step the player has left is ignored — and not per
+  // render, so this effect still fires on a real change rather than on every render.
   const registerBottomBar = createApi?.registerBottomBar;
   useEffect(() => {
     if (registerBottomBar === undefined) return undefined;

@@ -181,26 +181,32 @@ export const CareerStateProvider = ({
     });
   }, [awaitingMatch, continueDisabled, runAdvance, saveId]);
 
-  const [report, setReport] = useState<ContinueReport | null>(null);
+  // The report is the last settled advance, adjusted during render rather than in an effect. While
+  // an advance is in flight the previous report stays in place — the replaced effect returned early
+  // on `waiting` and did not clear it — and the fresh advance replaces it once it settles.
   const advanceError = typedError(advance);
-  useEffect(() => {
-    if (advance.waiting) return;
-    if (advance._tag === "Success") {
-      setReport({
-        kind: "outcome",
-        outcome: describeContinueOutcome({
-          resolvedDate: advance.value.resolvedDate,
-          transferWindowClosed: advance.value.transferWindowClosed,
-          transferWindowOpened: advance.value.transferWindowOpened,
-          seasonConcluded: advance.value.seasonConcluded,
-          boardObjectiveVerdict: advance.value.boardObjectiveVerdict,
-          managerOutcome: advance.value.managerOutcome,
-        }),
-      });
-    } else if (advanceError !== null) {
-      setReport({ kind: "failure", message: describeRpcError(advanceError) });
+  const [report, setReport] = useState<ContinueReport | null>(null);
+  const [reportedAdvance, setReportedAdvance] = useState<unknown>(undefined);
+  if (reportedAdvance !== advance) {
+    setReportedAdvance(advance);
+    if (!advance.waiting) {
+      if (advance._tag === "Success") {
+        setReport({
+          kind: "outcome",
+          outcome: describeContinueOutcome({
+            resolvedDate: advance.value.resolvedDate,
+            transferWindowClosed: advance.value.transferWindowClosed,
+            transferWindowOpened: advance.value.transferWindowOpened,
+            seasonConcluded: advance.value.seasonConcluded,
+            boardObjectiveVerdict: advance.value.boardObjectiveVerdict,
+            managerOutcome: advance.value.managerOutcome,
+          }),
+        });
+      } else if (advanceError !== null) {
+        setReport({ kind: "failure", message: describeRpcError(advanceError) });
+      }
     }
-  }, [advance, advanceError]);
+  }
 
   // Tracks advisories the player has acknowledged (clicked through to the fix).
   // Once acknowledged, the item stays hidden until its condition resolves naturally

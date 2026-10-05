@@ -12,6 +12,9 @@ type LatestScoresState =
   | { readonly _tag: "failed"; readonly message: string }
   | { readonly _tag: "ready"; readonly view: LatestScoresView };
 
+/** A latest-scores state that carries a settled answer — everything but `loading`. */
+type SettledLatestScores = Exclude<LatestScoresState, { readonly _tag: "loading" }>;
+
 /** One row's score, or "v" while unresolved, plus the shootout where a drawn cup tie had one. */
 const scoreText = (fixture: LatestScoreFixtureView): string => {
   if (fixture.homeGoals === null || fixture.awayGoals === null) return "v";
@@ -27,24 +30,46 @@ const scoreText = (fixture: LatestScoreFixtureView): string => {
  * and, for a drawn cup tie, its penalty shootout.
  */
 export const MatchLatestScoresScreen = ({ saveId }: { readonly saveId: SaveId }) => {
-  const [state, setState] = useState<LatestScoresState>({ _tag: "loading" });
+  const [attempt, setAttempt] = useState(0);
+  // Keyed by save and an attempt counter: a result tagged with the current key is shown, and any
+  // other render is `loading`, derived rather than set. The counter keeps Retry loading until its
+  // fresh answer lands.
+  const key = `${saveId}:${attempt}`;
+  const [stored, setStored] = useState<{
+    readonly key: string;
+    readonly state: SettledLatestScores;
+  } | null>(null);
 
-  const load = useCallback(async () => {
-    setState({ _tag: "loading" });
+  const readScores = useCallback(async (): Promise<SettledLatestScores> => {
     const outcome = await Effect.runPromise(getLatestScores({ saveId }).pipe(Effect.result));
-    if (Result.isSuccess(outcome)) {
-      setState({ _tag: "ready", view: outcome.success });
-      return;
-    }
-    setState({
+    if (Result.isSuccess(outcome)) return { _tag: "ready", view: outcome.success };
+    return {
       _tag: "failed",
       message: describeRpcError(outcome.failure as RpcClientError<"getLatestScores">),
-    });
+    };
   }, [saveId]);
 
+  const applyScores = useCallback(
+    (next: SettledLatestScores): void => {
+      setStored({ key, state: next });
+    },
+    [key],
+  );
+
   useEffect(() => {
-    void load();
-  }, [load]);
+    let cancelled = false;
+    const run = async (): Promise<void> => {
+      const next = await readScores();
+      if (!cancelled) applyScores(next);
+    };
+    void run();
+    return () => {
+      cancelled = true;
+    };
+  }, [readScores, applyScores]);
+
+  const state: LatestScoresState = stored !== null && stored.key === key ? stored.state : { _tag: "loading" };
+  const retry = (): void => setAttempt((n) => n + 1);
 
   return (
     <main
@@ -58,7 +83,7 @@ export const MatchLatestScoresScreen = ({ saveId }: { readonly saveId: SaveId })
       {state._tag === "failed" && (
         <Alert variant="destructive">
           <p>{state.message}</p>
-          <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={() => void load()}>
+          <Button type="button" variant="secondary" size="sm" className="mt-2" onClick={retry}>
             Retry
           </Button>
         </Alert>

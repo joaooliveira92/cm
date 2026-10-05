@@ -116,7 +116,12 @@ export interface CreateFlowSession {
 
 export const useCreateSession = (): CreateFlowSession => {
   const [session, setSession] = useState<CreationSession>(createEmptySession);
-  const [registeredBar, setRegisteredBar] = useState<BottomBarPlan | null>(null);
+  // The bar a step registered, tagged with the step that registered it: a bar left over from a step
+  // the player has left is ignored rather than shown, without an effect to clear it.
+  const [registeredBar, setRegisteredBar] = useState<{
+    readonly step: CreationStep;
+    readonly plan: BottomBarPlan;
+  } | null>(null);
   const [leaveConfirmOpen, setLeaveConfirmOpen] = useState(false);
   const sessionRef = useRef(session);
   const generationRunRef = useRef<Promise<void> | null>(null);
@@ -255,9 +260,9 @@ export const useCreateSession = (): CreateFlowSession => {
 
   const registerBottomBar = useCallback(
     (plan: BottomBarPlan | null): void => {
-      setRegisteredBar(plan);
+      setRegisteredBar(plan === null ? null : { step, plan });
     },
-    [],
+    [step],
   );
 
   /**
@@ -459,10 +464,6 @@ export const useCreateSession = (): CreateFlowSession => {
     }
   }, [pathname, step]);
 
-  useEffect(() => {
-    setRegisteredBar(null);
-  }, [step]);
-
   /**
    * Tell the quit guard what leaving would cost, since it sits outside the router and cannot read
    * this session. The two facts it needs are the two `requestLeave` uses: whether anything
@@ -513,7 +514,7 @@ export const useCreateSession = (): CreateFlowSession => {
   const bottomBarPlan = useCreationBottomBarPlan({
     step,
     session,
-    registeredBar,
+    registeredBar: registeredBar !== null && registeredBar.step === step ? registeredBar.plan : null,
     onCancel: requestLeave,
     onBackToLeagues: handleBackToLeagues,
     onNextManagerSubStep: handleNextManagerSubStep,

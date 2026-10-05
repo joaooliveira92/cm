@@ -35,12 +35,12 @@ export const ReviewPane = ({
 }) => {
   const provisionalId = provisionalIdOf(session.generation);
   const [summary, setSummary] = useState<SummaryState>({ _tag: "Loading" });
+  // With no provisional world there is nothing to summarise; the state is derived rather than set
+  // from an effect so it lands in the same commit that drops the world.
+  const summaryState: SummaryState = provisionalId === null ? { _tag: "Unavailable" } : summary;
 
   useEffect(() => {
-    if (provisionalId === null) {
-      setSummary({ _tag: "Unavailable" });
-      return;
-    }
+    if (provisionalId === null) return;
 
     let live = true;
     const load = async (): Promise<void> => {
@@ -99,7 +99,7 @@ export const ReviewPane = ({
           </TabsTrigger>
           <TabsTrigger value="world" className="gap-2">
             Generated world
-            {summary._tag === "Ready" ? (
+            {summaryState._tag === "Ready" ? (
               <Badge variant="primary-light">{WORLD_FIGURE_COUNT}</Badge>
             ) : null}
           </TabsTrigger>
@@ -119,11 +119,11 @@ export const ReviewPane = ({
           <div className="rounded-panel border border-panel-border bg-card p-6 shadow-panel">
             {/* The status line is polite: nothing here interrupts, and nothing here blocks Create
                 Career. */}
-            {summary._tag === "Loading" ? (
+            {summaryState._tag === "Loading" ? (
               <p role="status" className="py-2 text-body text-text-muted">
                 Reading the generated world…
               </p>
-            ) : summary._tag === "Unavailable" ? (
+            ) : summaryState._tag === "Unavailable" ? (
               <p role="status" className="py-2 text-body text-text-muted">
                 World summary unavailable. Your career is ready to create.
               </p>
@@ -131,16 +131,16 @@ export const ReviewPane = ({
               <KeyValueList className="divide-y divide-panel-border/30">
                 <Row
                   label="Starting season"
-                  value={`${summary.view.seasonLabel} · starts ${formatCalendarDate(summary.view.seasonStartDate)}`}
+                  value={`${summaryState.view.seasonLabel} · starts ${formatCalendarDate(summaryState.view.seasonStartDate)}`}
                 />
-                <Row label="Nations" value={summary.view.nationCount.toLocaleString()} />
+                <Row label="Nations" value={summaryState.view.nationCount.toLocaleString()} />
                 <Row
                   label="Competitions"
-                  value={describeCompetitions(summary.view.competitions)}
+                  value={describeCompetitions(summaryState.view.competitions)}
                 />
-                <Row label="Clubs" value={summary.view.clubCount.toLocaleString()} />
-                <Row label="Players generated" value={summary.view.playerCount.toLocaleString()} />
-                <Row label="Staff" value={describeStaff(summary.view.staffCount)} />
+                <Row label="Clubs" value={summaryState.view.clubCount.toLocaleString()} />
+                <Row label="Players generated" value={summaryState.view.playerCount.toLocaleString()} />
+                <Row label="Staff" value={describeStaff(summaryState.view.staffCount)} />
               </KeyValueList>
             )}
           </div>

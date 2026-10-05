@@ -122,6 +122,12 @@ export const useMatchControl = ({
   useEffect(() => {
     if (tacticsResult._tag === "Success") {
       const view = tacticsResult.value;
+      // This effect mirrors the tactics atom into editable local state and seeds the applied-tactic
+      // ref. It must stay in an effect: the panel mutates its own copy (instruction edits and
+      // substitutions) and retains the last-known tactic across a refresh that fails, neither of
+      // which a derived read can express. Synchronising with the atom is exactly the external-system
+      // case the rule permits.
+      // eslint-disable-next-line react/set-state-in-effect -- external atom mirrored into editable state
       setSquad(view.squad);
       // The tactic last sent to the match wins over the pre-match one, so this panel drafts from the
       // Team Instructions in play. Its slots are not the line-up: the panel lists `pitch` for that.

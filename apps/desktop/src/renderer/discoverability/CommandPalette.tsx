@@ -64,10 +64,15 @@ export const CommandPalette = ({
     inputRef.current?.focus();
   }, []);
 
-  // Keep the selection on the list as the query narrows it.
-  useEffect(() => {
-    setSelectedIndex((prev) => Math.max(0, Math.min(prev, Math.max(0, ranked.length - 1))));
-  }, [ranked.length, query]);
+  // Keep the selection on the list as the query narrows it. Adjusted during render against the
+  // previous list length rather than in an effect: the render that first sees a shorter list is
+  // discarded and the next one already holds the clamped index, with no extra commit.
+  const maxIndex = Math.max(0, ranked.length - 1);
+  const [previousMaxIndex, setPreviousMaxIndex] = useState(maxIndex);
+  if (previousMaxIndex !== maxIndex) {
+    setPreviousMaxIndex(maxIndex);
+    setSelectedIndex((prev) => Math.max(0, Math.min(prev, maxIndex)));
+  }
 
   const moveSelection = useCallback(
     (delta: number) => {

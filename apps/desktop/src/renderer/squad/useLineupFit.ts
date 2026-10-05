@@ -48,10 +48,9 @@ export const useLineupFit = (tactic: Tactic): LineupFitControl => {
       : { order, position: slot.label };
 
   // The stored order is forgotten the moment its slot stops being an empty starter, so a context
-  // retired by a fill does not come back when that slot is emptied again.
-  useEffect(() => {
-    if (order !== null && !selectable) setOrder(null);
-  }, [order, selectable]);
+  // retired by a fill does not come back when that slot is emptied again. Adjusted during render
+  // rather than in an effect: the cleared render is discarded, and the next one sees no context.
+  if (order !== null && !selectable) setOrder(null);
 
   const toggle = useCallback((next: number) => {
     if (!isEmptyStarter(lineupSlotsOf(tacticRef.current)[next])) return;
