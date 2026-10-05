@@ -21,9 +21,11 @@ import {
   type ClubId,
   type MatchId,
   type PlayerId,
+  type RevealedEvents,
   type SaveId,
 } from "@cm-clone/contracts";
-import { matchStartedOf, revealedCut, type MatchEvent } from "@cm-clone/game-engine";
+import { matchStartedOf, type MatchEvent } from "@cm-clone/game-engine";
+import { revealedAt } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
@@ -102,10 +104,10 @@ export const matchOverviewView = (
   displayName: (id: string) => string,
   nameOf: (playerId: PlayerId) => string,
   fixture: MatchFixturePanel,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): MatchOverviewView => {
   const started = matchStartedOf(stream);
-  const included = events.slice(0, revealedCut(events, revealedEvents));
+  const included = revealedAt(events, revealedEvents);
   const halfTime = included.find((event) => event._tag === "HalfTimeReached");
   return new MatchOverviewView({
     matchId,
@@ -123,7 +125,7 @@ export const getMatchOverview = (
   savesDir: string,
   saveId: SaveId,
   requestedMatchId: MatchId | null,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {

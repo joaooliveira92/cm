@@ -5,6 +5,7 @@ import type {
   SubstitutionStatusView,
   Tactic,
 } from "@cm-clone/contracts";
+import { RevealedEvents } from "@cm-clone/contracts";
 import { getActiveMatch, notify } from "./activeMatch.js";
 import type {
   LastRevealedInjury,
@@ -78,7 +79,8 @@ export const getAtHalfTime = (saveId: SaveId): boolean => {
 export const recordRevealedLines = (saveId: SaveId, matchId: MatchId, lines: ReadonlyArray<CommentaryLineView>): void =>
   record(saveId, matchId, { revealedLines: lines });
 
-export const getRevealedEvents = (saveId: SaveId): number => liveOfActive(saveId).revealedLines.length;
+export const getRevealedEvents = (saveId: SaveId): RevealedEvents =>
+  RevealedEvents.make(liveOfActive(saveId).revealedLines.length);
 
 export const recordRevealedScore = (saveId: SaveId, matchId: MatchId, score: RevealedScore): void =>
   record(saveId, matchId, { revealedScore: score });

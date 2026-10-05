@@ -11,6 +11,7 @@ import { afterEach, beforeEach } from "vitest";
 import { submitMatchCommand } from "../../../src/main/match/index.js";
 import { MATCH_STREAM_TYPE, deriveMatchEvents, type PersistedForcedOff } from "@cm-clone/game-engine";
 import { loadStreamEvents } from "../../../src/main/season/decider.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, humanClubOf, startSeededMatch } from "./seededMatch.js";
 
 /**
@@ -48,7 +49,7 @@ it.effect("a command stamped at the revealed minute is journaled at the next one
     ok("playerId" in shown);
     const revealedEvents = index + 1;
 
-    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, revealedEvents, shown.minute, false, {
+    yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, revealed(revealedEvents), shown.minute, false, {
       _tag: "ForceOff",
       clubId,
       playerId: shown.playerId,

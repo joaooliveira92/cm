@@ -15,14 +15,16 @@ import {
   MatchPlayerTeamStats,
   type MatchId,
   type PlayerId,
+  type RevealedEvents,
   type SaveId,
 } from "@cm-clone/contracts";
 import {
   EMPTY_MATCH_PLAYER_LINE_COUNTS,
   foldMatchPlayerLineCounts,
+  revealedAt,
   type MatchPlayerLineCounts,
 } from "@cm-clone/shared";
-import { matchStartedOf, revealedCut, type DerivedTimeline, type MatchTeamSetup } from "@cm-clone/game-engine";
+import { matchStartedOf, type DerivedTimeline, type MatchTeamSetup } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
@@ -109,7 +111,7 @@ export const matchPlayerStatsView = (
   derived: DerivedTimeline,
   clubName: (clubId: string) => string,
   nameOf: (playerId: PlayerId) => string,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
   conditions: ReadonlyMap<PlayerId, number> | null,
 ): MatchPlayerStatsView => {
   const { events } = derived;
@@ -122,7 +124,7 @@ export const matchPlayerStatsView = (
   const recordedDefending = events.some((event) => event._tag === "PossessionTally");
   const ratings = matchRatingsView(matchId, stream, derived, clubName, nameOf, revealedEvents);
   const ratingById = new Map<PlayerId, number>([...ratings.home, ...ratings.away].map((row) => [row.playerId, row.rating]));
-  const last = events[revealedCut(events, revealedEvents) - 1];
+  const last = revealedAt(events, revealedEvents).at(-1);
   return new MatchPlayerStatsView({
     matchId,
     homeClubName: clubName(started.homeClubId),
@@ -137,7 +139,7 @@ export const getMatchPlayerStats = (
   savesDir: string,
   saveId: SaveId,
   requestedMatchId: MatchId | null,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {

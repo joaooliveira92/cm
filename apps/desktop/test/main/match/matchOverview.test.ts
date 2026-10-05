@@ -10,6 +10,7 @@ import { Effect } from "effect";
 import { getMatchOverview, matchOverviewView } from "../../../src/main/match/matchOverview.js";
 import { resumeSimulation } from "../../../src/main/match/index.js";
 import type { StreamEvent } from "../../../src/main/season/decider.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 const HOME = ClubId.make("home");
@@ -36,7 +37,7 @@ const at = (minute: number, tag: string, teamClubId: ClubId, playerId: string, e
 const matchStarted: MatchEvent = { _tag: "MatchStarted", seed: 1, homeClubId: HOME, awayClubId: AWAY };
 
 const view = (events: ReadonlyArray<MatchEvent>, revealedEvents: number | null = null) =>
-  matchOverviewView(MatchId.make("1"), stream, events, clubName, nameOf, fixture, revealedEvents);
+  matchOverviewView(MatchId.make("1"), stream, events, clubName, nameOf, fixture, revealed(revealedEvents));
 
 describe("matchOverviewView — Match Incidents folded from the timeline", () => {
   const penaltyGoal = at(12, "Penalty", HOME, "p1");
@@ -112,7 +113,7 @@ describe("getMatchOverview over a seeded match", () => {
       expect(full.fixture.round).toBeGreaterThanOrEqual(1);
       expect(full.fixture.venue).toContain(",");
 
-      const atKickoff = (yield* getMatchOverview(savesDir, save.id, match.matchId, 1))!;
+      const atKickoff = (yield* getMatchOverview(savesDir, save.id, match.matchId, revealed(1)))!;
       expect(atKickoff.home.scorers).toHaveLength(0);
       expect(atKickoff.away.scorers).toHaveLength(0);
       expect(atKickoff.halfTimeHomeScore).toBeNull();

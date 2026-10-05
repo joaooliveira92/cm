@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { ClubId, PlayerId } from "@cm-clone/contracts";
 import { countedSubstitutions, type MatchEvent } from "@cm-clone/game-engine";
 import { aggregateMatchStatistics as aggregateWith, attackShare, matchPossession, matchRecordsInvolvement } from "../../../src/main/match/statistics.js";
+import { revealed } from "./revealedEvents.js";
 
 /** The fold with the substitution count every read uses; this timeline has no goalkeeper stand-in. */
 const aggregateMatchStatistics = (events: ReadonlyArray<MatchEvent>, homeClubId: ClubId, revealedEvents: number | null) =>
-  aggregateWith(events, homeClubId, revealedEvents, countedSubstitutions(events, new Set(), revealedEvents));
+  aggregateWith(events, homeClubId, revealed(revealedEvents), countedSubstitutions(events, new Set(), revealedEvents));
 
 const home = ClubId.make("home");
 const away = ClubId.make("away");
@@ -130,11 +131,11 @@ describe("attackShare — each side's share of the chance-type events, never cal
   });
 
   it("cuts a live match at the revealed position", () => {
-    expect(attackShare(attacks, home, 3)).toEqual({ home: 100, away: 0 });
+    expect(attackShare(attacks, home, revealed(3))).toEqual({ home: 100, away: 0 });
   });
 
   it("is null on both sides before the first attack, never 50-50", () => {
-    expect(attackShare(attacks, home, 1)).toEqual({ home: null, away: null });
+    expect(attackShare(attacks, home, revealed(1))).toEqual({ home: null, away: null });
   });
 });
 
@@ -167,7 +168,7 @@ describe("matchPossession — share of minute-slices, read from the last tally",
     ];
     expect(matchPossession(events, null)).toMatchObject({ key: "possession", home: 67, away: 33 });
     // Cut before the second tally: the first is the last one revealed.
-    expect(matchPossession(events, 2)).toMatchObject({ key: "possession", home: 60, away: 40 });
+    expect(matchPossession(events, revealed(2))).toMatchObject({ key: "possession", home: 60, away: 40 });
   });
 
   it("is unavailable on a timeline with no tally, never 0 or 50", () => {
@@ -182,7 +183,7 @@ describe("matchRecordsInvolvement — the marker for a timeline written before t
       at(10, "PossessionTally", home, { homeSlices: 6, awaySlices: 4 }),
     ];
     expect(matchRecordsInvolvement(withTally, null)).toBe(true);
-    expect(matchRecordsInvolvement(withTally, 1)).toBe(false);
+    expect(matchRecordsInvolvement(withTally, revealed(1))).toBe(false);
     expect(matchRecordsInvolvement(TIMELINE, null)).toBe(false);
   });
 });

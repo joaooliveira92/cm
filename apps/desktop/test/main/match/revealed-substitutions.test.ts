@@ -8,8 +8,24 @@ import type { CommentaryLineView, MatchId, ResumeSimulationView, SaveId } from "
 import { Effect } from "effect";
 import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
-import { resumeSimulation, submitMatchCommand } from "../../../src/main/match/index.js";
+import { resumeSimulation as resumeSimulationRaw, submitMatchCommand as submitMatchCommandRaw } from "../../../src/main/match/index.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
+
+/** The read entry points with the raw count branded, so a test call site stays a plain number. */
+const resumeSimulation = (savesDir: string, saveId: SaveId, matchId: MatchId, cursor: number, revealedEvents: number | null) =>
+  resumeSimulationRaw(savesDir, saveId, matchId, cursor, revealed(revealedEvents));
+
+const submitMatchCommand = (
+  savesDir: string,
+  saveId: SaveId,
+  matchId: MatchId,
+  cursor: number,
+  revealedEvents: number | null,
+  requestedMinute: number,
+  isHalftime: boolean,
+  command: Parameters<typeof submitMatchCommandRaw>[7],
+) => submitMatchCommandRaw(savesDir, saveId, matchId, cursor, revealed(revealedEvents), requestedMinute, isHalftime, command);
 
 let savesDir: string;
 

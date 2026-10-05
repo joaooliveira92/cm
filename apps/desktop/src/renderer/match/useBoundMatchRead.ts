@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 import { Effect, Result } from "effect";
-import type { MatchId, SaveId } from "@cm-clone/contracts";
+import { RevealedEvents, type MatchId, type SaveId } from "@cm-clone/contracts";
 import { leagueTableAtom, useAtomValue } from "../rpc.js";
 import { getActiveMatch, getRevealedEvents, revealedToFullTime, subscribeActiveMatch } from "./session.js";
 
@@ -8,7 +8,7 @@ import { getActiveMatch, getRevealedEvents, revealedToFullTime, subscribeActiveM
 export interface MatchBinding {
   readonly saveId: SaveId;
   readonly matchId: MatchId | null;
-  readonly revealedEvents: number | null;
+  readonly revealedEvents: RevealedEvents | null;
 }
 
 export type BoundMatchState<A> =
@@ -57,7 +57,7 @@ export const useBoundMatchRead = <A, E>(
         revealedEvents: live
           ? revealedEvents
           : awaitingMatchId !== null && !revealedToFullTime(saveId, awaitingMatchId)
-            ? 0
+            ? RevealedEvents.make(0)
             : null,
       }).pipe(Effect.result),
     );

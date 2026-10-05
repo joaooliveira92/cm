@@ -26,6 +26,7 @@ import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
 import { getMatchReport, getMatchStatistics, resumeSimulation, submitMatchCommand } from "../../../src/main/match/index.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
 
 let savesDir: string;
@@ -64,7 +65,7 @@ const seeded = (seed: number) =>
     const bench = tactic.bench.filter((id): id is PlayerId => id !== null);
     const goalkeeper = tactic.assignments[0]!;
     const command = (minute: number, isHalftime: boolean, body: SubmitBody, revealedEvents: number | null = 0) =>
-      submitMatchCommand(savesDir, save.id, match.matchId, 0, revealedEvents, minute, isHalftime, { clubId, ...body } as never);
+      submitMatchCommand(savesDir, save.id, match.matchId, 0, revealed(revealedEvents), minute, isHalftime, { clubId, ...body } as never);
     const sub = (outPlayerId: PlayerId, inPlayerId: PlayerId): SubmitBody => ({ _tag: "MakeSubstitution", outPlayerId, inPlayerId });
     return { save, fixtureId, match, squad, tactic, clubId, bench, goalkeeper, command, sub };
   });
@@ -75,7 +76,7 @@ type SubmitBody =
 
 const humanStatistic = (saveId: SaveId, matchId: MatchId, summary: MatchSummary, revealedEvents: number | null) =>
   Effect.gen(function* () {
-    const view = (yield* getMatchStatistics(savesDir, saveId, matchId, revealedEvents))!;
+    const view = (yield* getMatchStatistics(savesDir, saveId, matchId, revealed(revealedEvents)))!;
     const row = view.rows.find((r) => r.key === "substitutions")!;
     return summary.isHome ? row.home : row.away;
   });
@@ -286,7 +287,7 @@ it.effect("a forced substitution in regular minute 45 spends a window", () =>
     strictEqual(lines[minute45ForcedSubLine - 1]?.tag, "Injury", repin);
     ok(lines.findIndex((line) => line.tag === "HalfTimeReached") > minute45ForcedSubLine, `before half time — ${repin}`);
 
-    const after = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, minute45ForcedSubLine + 1);
+    const after = yield* resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, revealed(minute45ForcedSubLine + 1));
     strictEqual(humanSubs(after, s.match).used, 1, repin);
     strictEqual(humanSubs(after, s.match).windowsUsed, 1);
   }),

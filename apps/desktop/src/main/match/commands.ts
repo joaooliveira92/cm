@@ -9,6 +9,7 @@ import {
   type ForceOffCommandPayload,
   type MakeSubstitutionCommandPayload,
   type MatchId,
+  type RevealedEvents,
   type SaveId,
   SubmitMatchCommandView,
 } from "@cm-clone/contracts";
@@ -23,6 +24,7 @@ import {
   type PersistedSubstitutionMade,
   type PersistedTacticsChanged,
 } from "@cm-clone/game-engine";
+import { revealedAt } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { assertSaveNotArchived } from "../career/managerStatus.js";
 import { appendStreamEvents, nextStreamSeq, withExistingSave } from "../season/decider.js";
@@ -40,11 +42,11 @@ type MatchCommandPayloadInput = ChangeTacticsCommandPayload | MakeSubstitutionCo
  */
 const effectiveMinute = (
   timeline: ReadonlyArray<MatchEvent>,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
   requested: number,
 ): number => {
   if (revealedEvents === null) return requested;
-  const shown = timeline.slice(0, Math.max(0, revealedEvents));
+  const shown = revealedAt(timeline, revealedEvents);
   const last = shown.at(-1);
   const revealedMinute = last === undefined || last._tag === "MatchStarted" ? 0 : last.minute;
   const halfTimeRevealed = shown.some((event) => event._tag === "HalfTimeReached");
@@ -67,7 +69,7 @@ export const submitMatchCommand = (
   saveId: SaveId,
   matchId: MatchId,
   cursor: number,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
   requestedMinute: number,
   isHalftime: boolean,
   command: MatchCommandPayloadInput,

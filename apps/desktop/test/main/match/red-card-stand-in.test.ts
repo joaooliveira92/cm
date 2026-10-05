@@ -17,6 +17,7 @@ import { afterEach, beforeEach } from "vitest";
 import { getTactics } from "../../../src/main/club/index.js";
 import { getMatchReport, resumeSimulation } from "../../../src/main/match/index.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
 
 let savesDir: string;
@@ -74,7 +75,7 @@ it.effect("the pitch has an outfield stand-in in goal and ten men, and no substi
   Effect.gen(function* () {
     const s = yield* seeded;
     const pitchAt = (revealedEvents: number) =>
-      Effect.map(resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, revealedEvents), (view) => ({
+      Effect.map(resumeSimulation(savesDir, s.save.id, s.match.matchId, 0, revealed(revealedEvents)), (view) => ({
         view,
         pitch: s.match.isHome ? view.homePitch : view.awayPitch,
       }));

@@ -10,6 +10,7 @@ import {
   MatchNotReadyError,
   MatchNotStartedError,
   PendingFixtureIntegrityError,
+  RevealedEvents,
   TacticMissingError,
   AdvancedOptionsPayload,
   BidderBidActionSchema,
@@ -456,13 +457,14 @@ commitCareer: {
     ]),
   },
   resumeSimulation: {
-    /** `revealedEvents` cuts the substitution counts after that many Match Events — one per
-     *  Commentary Line revealed, as `getMatchStatistics` cuts — and null counts the whole match. */
+    /** `revealedEvents` is the manager's revealed position (`RevealedEvents`): the substitution counts
+     *  are cut after that many Match Events — one per Commentary Line revealed, as `getMatchStatistics`
+     *  cuts — and null counts the whole match. */
     payload: Schema.Struct({
       saveId: SaveId,
       matchId: MatchId,
       cursor: Schema.Finite,
-      revealedEvents: Schema.NullOr(Schema.Finite),
+      revealedEvents: Schema.NullOr(RevealedEvents),
     }),
     success: ResumeSimulationView,
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
@@ -496,7 +498,7 @@ commitCareer: {
     payload: Schema.Struct({
       saveId: SaveId,
       matchId: Schema.NullOr(MatchId),
-      revealedEvents: Schema.NullOr(Schema.Finite),
+      revealedEvents: Schema.NullOr(RevealedEvents),
     }),
     success: Schema.NullOr(MatchStatisticsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
@@ -507,7 +509,7 @@ commitCareer: {
     payload: Schema.Struct({
       saveId: SaveId,
       matchId: Schema.NullOr(MatchId),
-      revealedEvents: Schema.NullOr(Schema.Finite),
+      revealedEvents: Schema.NullOr(RevealedEvents),
     }),
     success: Schema.NullOr(MatchRatingsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
@@ -518,7 +520,7 @@ commitCareer: {
     payload: Schema.Struct({
       saveId: SaveId,
       matchId: Schema.NullOr(MatchId),
-      revealedEvents: Schema.NullOr(Schema.Finite),
+      revealedEvents: Schema.NullOr(RevealedEvents),
     }),
     success: Schema.NullOr(MatchPlayerStatsView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
@@ -530,7 +532,7 @@ commitCareer: {
     payload: Schema.Struct({
       saveId: SaveId,
       matchId: Schema.NullOr(MatchId),
-      revealedEvents: Schema.NullOr(Schema.Finite),
+      revealedEvents: Schema.NullOr(RevealedEvents),
     }),
     success: Schema.NullOr(MatchOverviewView),
     error: Schema.Union([SaveNotFoundError, MatchNotFoundError]),
@@ -562,7 +564,7 @@ commitCareer: {
       saveId: SaveId,
       matchId: MatchId,
       cursor: Schema.Finite,
-      revealedEvents: Schema.NullOr(Schema.Finite),
+      revealedEvents: Schema.NullOr(RevealedEvents),
       minute: Schema.Finite,
       isHalftime: Schema.Boolean,
       command: MatchCommandPayload,

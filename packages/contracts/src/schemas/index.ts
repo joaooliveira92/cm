@@ -1,4 +1,5 @@
 export * from "./ids.js";
+export * from "./reveal.js";
 export * from "./saves.js";
 export * from "./clubs.js";
 export * from "./squad.js";

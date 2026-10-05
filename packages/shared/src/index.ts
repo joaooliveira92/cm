@@ -31,4 +31,5 @@ export * from "./rules/scouting.js";
 export * from "./rules/teamScoutReport.js";
 export * from "./rules/matchRating.js";
 export * from "./rules/playerOfTheMatch.js";
+export * from "./rules/reveal.js";
 export * from "./rules/matchPlayerLine.js";

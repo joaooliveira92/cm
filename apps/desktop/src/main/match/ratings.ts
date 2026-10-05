@@ -14,6 +14,7 @@ import {
   type MatchId,
   type PitchSlotView,
   type PlayerId,
+  type RevealedEvents,
   type SaveId,
 } from "@cm-clone/contracts";
 import {
@@ -21,6 +22,7 @@ import {
   foldMatchPlayerLineCounts,
   matchRating,
   playerOfTheMatch,
+  revealedAt,
   type MatchInvolvement,
   type MatchRatingResult,
 } from "@cm-clone/shared";
@@ -29,7 +31,6 @@ import {
   journaledLineupCommands,
   matchStartedOf,
   pitchBeforeEachEvent,
-  revealedCut,
   type DerivedTimeline,
   type MatchEvent,
   type MatchTeamSetup,
@@ -194,11 +195,12 @@ export const matchRatingsView = (
   derived: DerivedTimeline,
   clubName: (clubId: string) => string,
   playerName: (playerId: PlayerId) => string,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): MatchRatingsView => {
   const { events, frames } = derived;
   const started = matchStartedOf(stream);
-  const cut = revealedCut(events, revealedEvents);
+  const included = revealedAt(events, revealedEvents);
+  const cut = included.length;
   const commands = journaledLineupCommands(stream);
   const rate = (setup: MatchTeamSetup, isHome: boolean) =>
     rateSide(
@@ -216,7 +218,6 @@ export const matchRatingsView = (
   // Player of the Match: the highest rating across both sides, tie-broken by goals, assists, the
   // winning side and player id (map ticket 20). The goals and assists come from the same Match
   // Player Line fold the rows were rated from, so the tie-break cannot disagree with the row.
-  const included = events.slice(0, cut);
   const starters = new Set<string>([
     ...started.homeSetup.tactic.slots.map((slot) => String(slot.playerId)),
     ...started.awaySetup.tactic.slots.map((slot) => String(slot.playerId)),
@@ -252,7 +253,7 @@ export const getMatchRatings = (
   savesDir: string,
   saveId: SaveId,
   requestedMatchId: MatchId | null,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {

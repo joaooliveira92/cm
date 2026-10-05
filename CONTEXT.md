@@ -341,6 +341,17 @@ The file's `version` line says which release of the game's lines it started from
 older file the sections it lacks.
 _Avoid_: Commentary config, language file
 
+**Revealed position** (`RevealedEvents`):
+How far the manager's reveal has reached in a live match: a count of the Commentary Lines shown, or
+`null` for the whole match. One Commentary Line is generated from one Match Event, so the count is
+also a position in the Match Event timeline — a position, never a minute, since minutes are not
+monotonic (first-half stoppage runs past 45, half time is stamped 45 and the second half restarts at
+46). The renderer owns the pace, counting the lines it has shown, and hands the position back on every
+read; main owns the cut, through the single `revealedAt` law in `@cm-clone/shared`, so a read can
+never show a Match Event the manager has not seen.
+_Avoid_: Revealed-event count (it is a position, not a total); cursor (the `ResumeSimulationView.cursor`
+is the chunk cursor, a different position)
+
 ### Tactics
 
 **Formation**:

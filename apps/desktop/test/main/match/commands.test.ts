@@ -16,6 +16,7 @@ import {
   submitMatchCommand,
 } from "../../../src/main/match/index.js";
 import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, humanClubOf, humanSubs, startSeededMatch } from "./seededMatch.js";
 
 let savesDir: string;
@@ -429,7 +430,7 @@ it.effect("getMatchStatistics reconciles with the timeline, cuts at a minute, an
 
     // Cut at the first chunk's end — a position in the timeline — never exceeds full time.
     const firstChunkEnd = chunks[0]!.cursor;
-    const firstHalf = (yield* getMatchStatistics(savesDir, save.id, match.matchId, firstChunkEnd))!;
+    const firstHalf = (yield* getMatchStatistics(savesDir, save.id, match.matchId, revealed(firstChunkEnd)))!;
     strictEqual(firstHalf.throughMinute, chunks[0]!.lines[chunks[0]!.lines.length - 1]!.minute);
     deepStrictEqual(
       [firstHalf.rows.find((r) => r.key === "goals")!.home, firstHalf.rows.find((r) => r.key === "goals")!.away],

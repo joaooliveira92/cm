@@ -15,6 +15,7 @@
  * substitution bringing on someone already on the pitch — is not mistaken for a substitution) and
  * joins the returned counts onto the matchday squad in slot then bench order.
  */
+import { revealedAt } from "./reveal.js";
 
 /** The fields the fold reads off a Match Event. A structural supertype of the engine's union. */
 export interface MatchPlayerLineEvent {
@@ -114,7 +115,7 @@ export const foldMatchPlayerLineCounts = (
   events: ReadonlyArray<MatchPlayerLineEvent>,
   revealedEvents: number | null,
 ): ReadonlyMap<string, MatchPlayerLineCounts> => {
-  const included = revealedEvents === null ? events : events.slice(0, Math.max(0, revealedEvents));
+  const included = revealedAt(events, revealedEvents);
   const lines = new Map<string, MutableLine>();
   const lineOf = (playerId: string): MutableLine => {
     const existing = lines.get(playerId);

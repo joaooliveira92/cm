@@ -7,7 +7,7 @@
  * accepts a result through `commitMatchday`, so no durable state depends on polling cadence.
  */
 import { SqliteClient } from "@effect/sql-sqlite-node";
-import { FixtureId, FixtureNotPendingError, MatchNotFoundError, type MatchId, type SaveId } from "@cm-clone/contracts";
+import { FixtureId, FixtureNotPendingError, MatchNotFoundError, type MatchId, type RevealedEvents, type SaveId } from "@cm-clone/contracts";
 import { Effect } from "effect";
 import { loadSeasonRow } from "../season/currentSeason.js";
 import { withExistingSave } from "../season/decider.js";
@@ -28,7 +28,7 @@ export const resumeSimulation = (
   saveId: SaveId,
   matchId: MatchId,
   cursor: number,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {

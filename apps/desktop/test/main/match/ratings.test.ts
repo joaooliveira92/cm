@@ -10,6 +10,7 @@ import { MATCH_RATING_BASE } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { getMatchRatings, resumeSimulation } from "../../../src/main/match/index.js";
 import { rateSide } from "../../../src/main/match/ratings.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 /**
@@ -206,7 +207,7 @@ describe("getMatchRatings over a seeded match", () => {
       }
 
       // At kickoff nothing has happened yet: the eleven are rated, nobody else, and everyone at the base.
-      const atKickoff = (yield* getMatchRatings(savesDir, save.id, match.matchId, 1))!;
+      const atKickoff = (yield* getMatchRatings(savesDir, save.id, match.matchId, revealed(1)))!;
       expect(atKickoff.home.map((row) => row.playerId)).toEqual(full.home.filter((row) => row.started).map((row) => row.playerId));
       expect(new Set(atKickoff.home.map((row) => row.rating))).toEqual(new Set([MATCH_RATING_BASE]));
 

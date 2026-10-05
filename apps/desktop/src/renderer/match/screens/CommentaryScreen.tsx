@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { Effect, Result } from "effect";
-import type { CommentaryLineView, MatchId, SaveId } from "@cm-clone/contracts";
+import { RevealedEvents, type CommentaryLineView, type MatchId, type SaveId } from "@cm-clone/contracts";
 import { leagueTableAtom, resumeSimulation, useAtomValue, POLL_INTERVAL_MS } from "../../rpc.js";
 import { describeRpcError, type RpcClientError } from "../../rpc/errors.js";
 import { FOCUS_RING } from "../../focus.js";
@@ -15,7 +15,7 @@ import { CommentaryFeed } from "../CommentaryFeed.js";
  * of its own, so it cannot show a line, a goal or the result before Match day has. An accepted match
  * is no longer awaited, so the season read never names it here and the committed store stands in.
  */
-const revealedLimit = (saveId: SaveId, matchId: string): number | null => {
+const revealedLimit = (saveId: SaveId, matchId: string): RevealedEvents | null => {
   const session = getActiveMatch(saveId);
   if (session !== null && session.match.matchId === matchId && (session.phase === "live" || session.phase === "paused")) {
     return getRevealedEvents(saveId);
@@ -23,12 +23,12 @@ const revealedLimit = (saveId: SaveId, matchId: string): number | null => {
   if (revealedToFullTime(saveId, matchId as MatchId)) return null;
   const committed = getCommittedMatch(saveId);
   if (committed !== null && committed.match.matchId === matchId) return null;
-  return 0;
+  return RevealedEvents.make(0);
 };
 
 export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) => {
   const [lines, setLines] = useState<ReadonlyArray<CommentaryLineView>>([]);
-  const [limit, setLimit] = useState<number | null>(0);
+  const [limit, setLimit] = useState<RevealedEvents | null>(RevealedEvents.make(0));
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const cursorRef = useRef(0);

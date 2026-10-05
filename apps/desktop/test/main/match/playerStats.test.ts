@@ -6,6 +6,7 @@ import { it as effectIt } from "@effect/vitest";
 import { afterEach, beforeEach, describe, expect } from "vitest";
 import { Effect } from "effect";
 import { getMatchPlayerStats, getMatchRatings, resumeSimulation } from "../../../src/main/match/index.js";
+import { revealed } from "./revealedEvents.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 describe("getMatchPlayerStats over a seeded match", () => {
@@ -61,7 +62,7 @@ describe("getMatchPlayerStats over a seeded match", () => {
       const { save, fixtureId } = yield* atFirstFixture(savesDir);
       const match = yield* startSeededMatch(savesDir, save.id, fixtureId, 7);
 
-      const atKickoff = (yield* getMatchPlayerStats(savesDir, save.id, match.matchId, 1))!;
+      const atKickoff = (yield* getMatchPlayerStats(savesDir, save.id, match.matchId, revealed(1)))!;
       for (const side of [atKickoff.home, atKickoff.away]) {
         expect(side.rows.filter((row) => row.started)).toHaveLength(11);
         for (const row of side.rows) {

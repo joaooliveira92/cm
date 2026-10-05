@@ -10,18 +10,19 @@ import {
   type ClubId,
   type MatchId,
   type MatchStatisticKey,
+  type RevealedEvents,
   type SaveId,
   type UnavailableMatchStatistic,
 } from "@cm-clone/contracts";
 import {
   countedSubstitutions,
-  revealedCut,
   substitutionLedger,
   type ChanceType,
   type DerivedTimeline,
   type MatchEvent,
   type SubstitutionEvent,
 } from "@cm-clone/game-engine";
+import { revealedAt } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
 import { loadMatchRead } from "./matchRead.js";
@@ -51,7 +52,7 @@ export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
  *  possession stays unavailable rather than showing a fabricated 0 or 50. */
 export const matchPossession = (
   events: ReadonlyArray<MatchEvent>,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): MatchStatisticRow | null => {
   const included = includedEvents(events, revealedEvents);
   for (let i = included.length - 1; i >= 0; i--) {
@@ -84,7 +85,7 @@ const RECORDED_INVOLVEMENT_KEYS: ReadonlySet<MatchStatisticKey> = new Set([
  *  written by an engine that also records tackles, interceptions and headers. */
 export const matchRecordsInvolvement = (
   events: ReadonlyArray<MatchEvent>,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): boolean => includedEvents(events, revealedEvents).some((event) => event._tag === "PossessionTally");
 
 /** Which totals one event adds to, and the side it credits — typed from the event itself, so a new
@@ -141,10 +142,11 @@ const countedFor = (
   }
 };
 
-/** The events a cut includes: the first `revealedEvents` of the timeline, or all of it. Position, not
- *  minute — first-half stoppage runs past 45, half time is stamped 45 and the second half restarts at 46. */
-const includedEvents = (events: ReadonlyArray<MatchEvent>, revealedEvents: number | null) =>
-  events.slice(0, revealedCut(events, revealedEvents));
+/** The events a revealed position includes: the one cut law, so no reader slices its own. Position,
+ *  not minute — first-half stoppage runs past 45, half time is stamped 45 and the second half
+ *  restarts at 46. */
+const includedEvents = (events: ReadonlyArray<MatchEvent>, revealedEvents: RevealedEvents | null) =>
+  revealedAt(events, revealedEvents);
 
 /**
  * Pure: fold the timeline into per-side totals, counting only the included events. Substitutions are
@@ -154,7 +156,7 @@ const includedEvents = (events: ReadonlyArray<MatchEvent>, revealedEvents: numbe
 export const aggregateMatchStatistics = (
   events: ReadonlyArray<MatchEvent>,
   homeClubId: ClubId,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
   substitutions: ReadonlyArray<SubstitutionEvent>,
 ): ReadonlyArray<MatchStatisticRow> => {
   const totals = new Map(MATCH_STATISTIC_KEYS.map((key) => [key, { home: 0, away: 0 }]));
@@ -192,7 +194,7 @@ const isChanceEvent = (event: MatchEvent): event is ChanceEvent => Object.hasOwn
 export const attackShare = (
   events: ReadonlyArray<MatchEvent>,
   homeClubId: ClubId,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): { readonly home: number | null; readonly away: number | null } => {
   const attacks = includedEvents(events, revealedEvents).filter(isChanceEvent);
   if (attacks.length === 0) return { home: null, away: null };
@@ -206,7 +208,7 @@ type ChancesByType = Record<ChanceType, { home: number; away: number }>;
 const computeChancesByType = (
   events: ReadonlyArray<MatchEvent>,
   homeClubId: ClubId,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): ChancesByType | null => {
   const attacks = includedEvents(events, revealedEvents).filter(isChanceEvent);
   if (attacks.length === 0) return null;
@@ -223,7 +225,7 @@ export const matchStatisticsView = (
   stream: ReadonlyArray<StreamEvent>,
   derived: DerivedTimeline,
   nameOf: (id: string) => string,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): MatchStatisticsView => {
   const { events, journal } = derived;
   const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
@@ -262,7 +264,7 @@ export const getMatchStatistics = (
   savesDir: string,
   saveId: SaveId,
   requestedMatchId: MatchId | null,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ) =>
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {

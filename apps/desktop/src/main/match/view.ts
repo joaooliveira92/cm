@@ -12,6 +12,7 @@ import {
   ResumeSimulationView,
   type MatchId,
   type PlayerId,
+  type RevealedEvents,
 } from "@cm-clone/contracts";
 import {
   hashString,
@@ -23,6 +24,7 @@ import {
   type DerivedTimeline,
   type MatchEvent,
 } from "@cm-clone/game-engine";
+import { revealedAt } from "@cm-clone/shared";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import type { StreamEvent } from "../season/decider.js";
@@ -88,11 +90,11 @@ const collectPlayerIds = (event: MatchEvent): ReadonlyArray<string> => {
  * `homeScore`/`awayScore` is the running score, so the last goal or boundary before the cut is it. */
 const scoreAsOf = (
   events: ReadonlyArray<MatchEvent>,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ): { readonly homeScore: number; readonly awayScore: number } => {
   let homeScore = 0;
   let awayScore = 0;
-  for (const event of revealedEvents === null ? events : events.slice(0, revealedEvents)) {
+  for (const event of revealedAt(events, revealedEvents)) {
     if (event._tag === "Goal" || event._tag === "HalfTimeReached" || event._tag === "FullTimeWhistle") {
       homeScore = event.homeScore;
       awayScore = event.awayScore;
@@ -122,7 +124,7 @@ export const buildResumeSimulationView = (
   stream: ReadonlyArray<StreamEvent>,
   derived: DerivedTimeline,
   cursor: number,
-  revealedEvents: number | null,
+  revealedEvents: RevealedEvents | null,
 ) =>
   Effect.gen(function* () {
     const { events, frames, journal } = derived;
