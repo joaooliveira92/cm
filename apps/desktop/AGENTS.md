@@ -94,6 +94,17 @@ A spec's timeout is vitest's 5s default unless the call names one. The whole-sea
 full worker pool, not a capped one: at `--maxWorkers=4`, `retention-participation.test.ts` starved
 past 900s and timed out, though it passes in ~290s run alone.
 
+## Repinning a pinned seed
+
+A few main-process specs pin a match seed so a specific event happens — an Injury, a red card to the
+keeper, a forced substitution at minute 45. The seed is a function of the engine's draw order and the
+`WORLD_SEED` world's squads, so an engine change can invalidate it; the spec then fails with
+`repin <CONSTANT>`. Repin it with `findMatchSeeds` in `test/main/match/seedSearch.ts`: it starts one
+match, captures the kickoff setups and the AI clubs' preferences, then re-derives the timeline per
+candidate seed — no per-seed database work. Pass the property as a predicate, read the seeds it
+prints, and update the constant. Do not hand-roll the enumeration: a reader that omits the AI
+preferences replays a different match.
+
 ## Specs that read source files by path
 
 A few specs assert on file *contents* rather than behaviour, so typecheck cannot see the path and a
