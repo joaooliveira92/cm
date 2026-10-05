@@ -479,7 +479,7 @@ const SquadTableLoaded = () => {
       />
     ),
     [
-      view.layout,
+      view,
       sort,
       activePosition,
       activeStatus,

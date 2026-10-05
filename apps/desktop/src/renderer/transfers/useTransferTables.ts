@@ -159,7 +159,7 @@ export const useTransferTables = ({
         speak(key, "selection", `Selected ${name}.`);
       }
     },
-    [marketRows, freeAgentRows, selectionChange, speak],
+    [marketRows, freeAgentRows, selectionChange, speak, selectedRef, setSelected],
   );
 
   const onActiveChangeFor = useCallback(
@@ -194,7 +194,7 @@ export const useTransferTables = ({
         speak(key, "selection", `Selected ${player.firstName} ${player.lastName}.`);
       }
     },
-    [marketRows, freeAgentRows, selectionChange, speak],
+    [marketRows, freeAgentRows, selectionChange, speak, selectedRef, setSelected],
   );
 
   return {

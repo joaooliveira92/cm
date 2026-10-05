@@ -7,11 +7,10 @@ what was **observed**, not what was expected.
 
 - Effort: `.scratch/react-compiler-adoption/`
 - Tickets closed: `01-refs-latest-value-refs`, `02-set-state-in-effect`,
-  `03-exhaustive-effect-dependencies`, `04-todo-diagnostics`
+  `03-exhaustive-effect-dependencies`, `04-todo-diagnostics`, `05-memo-dependencies`
 - Branch: `dev` (off `dev`)
 - Commits: `f4f1e232 chore(lint): clear react/refs…`; `99aac826 chore(lint): clear
-  set-state-in-effect…`; ticket 03 in the commit this report ships with; ticket 04 in the commit
-  this report ships with.
+  set-state-in-effect…`; tickets 03, 04 and 05 in the commits this report ships with.
 
 ## Acceptance criteria → evidence
 
@@ -46,6 +45,14 @@ what was **observed**, not what was expected.
 | 1 | Rule graduates `warn` → `error` (or documented `warn`) | `.oxlintrc.json:61` | pass — `error` |
 | 2 | `pnpm lint` zero `react/todo` | `pnpm exec oxlint … \| grep -c "react(todo)"` | pass — 0 (baseline 14) |
 | 3 | Behaviour unchanged by the restructures | focused suites + new `streaming-failure.test.tsx` | pass |
+
+### Ticket 05 — `react/memo-dependencies`
+
+| # | Criterion | Proving test | Result |
+|---|---|---|---|
+| 1 | Rule graduates `warn` → `error` | `.oxlintrc.json:62` | pass — `error` |
+| 2 | `pnpm lint` zero `react/memo-dependencies` | `pnpm exec oxlint … \| grep -c "react(memo-dependencies)"` | pass — 0 (baseline 20) |
+| 3 | Each memo's re-run set reasoned and behaviour preserved | per-site in ticket 05 `## Answer`; new `player-search-toolbar.test.tsx` | pass |
 
 ## Gate
 

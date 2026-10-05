@@ -240,18 +240,22 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**react-compiler-adoption 01, 02, 03 and 04 resolved 2026-10-05.** 01 cleared 104 `react/refs` findings
+**react-compiler-adoption 01–05 resolved 2026-10-05.** 01 cleared 104 `react/refs` findings
 across 17 files; 02 cleared 27 `react/set-state-in-effect` findings across 25 files; 03 cleared 25
 `react/exhaustive-effect-dependencies` findings across 21 files and removed the renderer's 9
 `eslint-disable-line react-hooks/exhaustive-deps` comments; 04 cleared 14 `react/todo` findings
 (the spec's 19 was stale) by rewriting eight `try/catch/finally` and three `try/finally` handlers to
 put cleanup after the `try/catch` with every control-flow edge preserved, turning a `??=` into an
 `if`, and deferring one default-parameter member read into the body — with the single vendored
-`components/reui/` site exempted by a reasoned override. All four rules are `error` with zero
-findings and `pnpm check:all` is green. See [report](reports/react-compiler-adoption.md). 02's first
-pass hid eight sites behind a microtask and was rejected by review as a lint dodge; the repaired
-version derives the loading state during render from a keyed read store. The 12 vendored
-`components/reui/` `-next-line` suppressions stay in bucket 07.
+`components/reui/` site exempted by a reasoned override. 05 cleared 20 `react/memo-dependencies`
+findings (the spec's 16 was stale) by adding stable deps, dropping module-level ones, or stabilising
+the value at source; it fixed one reachable stale-memo bug (the Player Search toolbar's "Search
+players" button submitted the first-render query) with a failing-first test, and exempted the one
+vendored site. All five rules are `error` with zero findings and `pnpm check:all` is green. See
+[report](reports/react-compiler-adoption.md). 02's first pass hid eight sites behind a microtask and
+was rejected by review as a lint dodge; the repaired version derives the loading state during render
+from a keyed read store. The 12 vendored `components/reui/` `-next-line` suppressions stay in
+bucket 07.
 
 **Group-j 10 and training-schedule-and-delegation 04 resolved 2026-10-05.**
 **player-positional-model 19 moved to `needs-triage`** — its premise that "no code reads the legacy
@@ -260,13 +264,11 @@ is buildable; it is no longer a build ticket.
 
 The next open, unblocked, unclaimed build tickets across all live efforts are now:
 
-1. [react-compiler-adoption 05](../.scratch/react-compiler-adoption/issues/05-memo-dependencies.md) —
-   **`react/memo-dependencies`**, ready-for-agent.
-2. [react-compiler-adoption 07](../.scratch/react-compiler-adoption/issues/07-small-buckets.md) —
+1. [react-compiler-adoption 07](../.scratch/react-compiler-adoption/issues/07-small-buckets.md) —
    **small buckets** (incl. the 12 vendored `rule-suppression` sites), ready-for-agent.
-3. [react-compiler-adoption 08](../.scratch/react-compiler-adoption/issues/08-oxc-transform-react.md) —
+2. [react-compiler-adoption 08](../.scratch/react-compiler-adoption/issues/08-oxc-transform-react.md) —
    **`oxc-transform-react`**, ready-for-agent.
-4. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
+3. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
    **Extract `@cm-clone/rpc-client`**, ready-for-agent, but carries a deliberate
    decide-before-starting caveat.
 

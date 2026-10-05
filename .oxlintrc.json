@@ -59,7 +59,7 @@
     "react/set-state-in-effect": "error",
     "react/exhaustive-effect-dependencies": "error",
     "react/todo": "error",
-    "react/memo-dependencies": "warn",
+    "react/memo-dependencies": "error",
     "react/hooks": "error",
     "react/immutability": "warn",
     "react/static-components": "warn",
@@ -121,13 +121,16 @@
     {
       // Vendored reui components are kept whole so every upstream re-sync is not a hand merge
       // (scripts/effect-lint.ts FILE_LENGTH_EXEMPTIONS). The compiler-unsupported constructs they
-      // carry (a `??=` logical assignment, and the `-next-line` suppressions ticket 07 owns) are
+      // carry (a `??=` logical assignment, the `-next-line` suppressions ticket 07 owns, and the
+      // `react(memo-dependencies)` site in `event-calendar-event.tsx` — a memo whose deps name
+      // `viewConfig.renderAgendaEvent`/`renderEvent` where the compiler wants `viewConfig`) are
       // accepted rather than edited back in; ticket 07 extends this block for its own vendored rule.
       "files": [
         "apps/desktop/src/renderer/components/reui/**"
       ],
       "rules": {
-        "react/todo": "off"
+        "react/todo": "off",
+        "react/memo-dependencies": "off"
       }
     }
   ],

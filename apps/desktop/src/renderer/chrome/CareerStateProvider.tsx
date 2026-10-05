@@ -223,18 +223,18 @@ export const CareerStateProvider = ({
     });
   }, []);
 
-  const openDestination = (destination: ContinueDestination): void => {
+  const openDestination = useCallback((destination: ContinueDestination): void => {
     navigate({ type: destination, saveId });
     setReport(null);
-  };
+  }, [saveId, setReport]);
 
-  const onBackToSaves = (intent: NavigationIntent): void => {
+  const onBackToSaves = useCallback((intent: NavigationIntent): void => {
     if (intent === "keyboard") {
       navigateWithFocus({ type: "mainMenu" }, { screen: "mainMenu" });
     } else {
       navigate({ type: "mainMenu" });
     }
-  };
+  }, []);
 
   const standing: HeaderStanding | null =
     tableResult._tag === "Success" && clubName !== null
@@ -309,6 +309,7 @@ export const CareerStateProvider = ({
       saveId, badgeKey, clubName, clubColours, manager, season, saveName, advancing,
       continueDisabled, continueLabel, liveMatch, newsCounts, screenId,
       standing, outstanding, career, report, acknowledgeReadinessItem,
+      openDestination, onBackToSaves, runAdvance, setReport,
     ],
   );
 

@@ -217,7 +217,7 @@ const SpineOrchestrator = ({
           return;
       }
     },
-    [prefix, activeActions, scopeState, topLayer, level0Completions, level1Completions, effectiveGByKey, saveId],
+    [prefix, activeActions, scopeState, topLayer, level0Completions, level1Completions, effectiveGByKey, saveId, setPrefix],
   );
 
   useSeamEveryKeyPress(onKeyDown, [onKeyDown]);

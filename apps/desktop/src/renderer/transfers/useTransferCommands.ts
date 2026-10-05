@@ -109,7 +109,7 @@ export const useTransferCommands = ({
     (tableId: TableId, playerId: string | null): void => {
       setDraft(reduceBidDraft(draftRef.current, { _tag: "selectionChangedTo", playerId }));
     },
-    [setDraft],
+    [setDraft, draftRef],
   );
 
   const submitBid = useCallback(
@@ -135,7 +135,7 @@ export const useTransferCommands = ({
         setBidAlert(message);
       }
     },
-    [findPlayer, run, runBid, saveId, setDraft, selectionChange, speak],
+    [findPlayer, run, runBid, saveId, setDraft, selectionChange, speak, selectedRef, draftRef],
   );
 
   const submitSign = useCallback(
@@ -157,7 +157,7 @@ export const useTransferCommands = ({
         setBidAlert(message);
       }
     },
-    [findPlayer, run, runSign, saveId, setDraft, selectionChange, speak],
+    [findPlayer, run, runSign, saveId, setDraft, selectionChange, speak, selectedRef, draftRef],
   );
 
   const onBid = useCallback(
@@ -191,7 +191,7 @@ export const useTransferCommands = ({
         runRespond({ saveId, bidId, action }),
       );
     },
-    [run, runRespond, saveId],
+    [run, runRespond, saveId, viewResultRef, setCounter, setCounterAmount, setCounterError],
   );
 
   const onRespondAsBidder = useCallback(

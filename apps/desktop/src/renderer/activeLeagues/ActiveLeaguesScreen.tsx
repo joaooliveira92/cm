@@ -68,19 +68,26 @@ const runAtEdge = <A, E>(effect: Effect.Effect<A, E>): Promise<Result.Result<A, 
  * correct at click time, but passing a known ref-reading callback to a plain function during render
  * is what the React Compiler's `react/refs` rule rejects.
  */
-const useActiveLeaguesBottomBarPlan = (input: ActiveLeaguesBottomBarInput): BottomBarPlan =>
-  useMemo(
-    () => describeActiveLeaguesBottomBar(input),
-    [
-      input.canContinue,
-      input.stale,
-      input.submitting,
-      input.hasActiveLeagues,
-      input.blockingMessages,
-      input.onCancel,
-      input.onContinue,
-    ],
+const useActiveLeaguesBottomBarPlan = (input: ActiveLeaguesBottomBarInput): BottomBarPlan => {
+  // Read the fields out of `input` first: the plan builder takes the whole object, so the memo
+  // must either depend on `input` (a fresh object every render) or be handed a value rebuilt from
+  // the fields it actually reads. The latter keeps the memo's re-run set identical to the field
+  // list, which is what the compiler requires.
+  const { canContinue, stale, submitting, hasActiveLeagues, blockingMessages, onCancel, onContinue } = input;
+  return useMemo(
+    () =>
+      describeActiveLeaguesBottomBar({
+        canContinue,
+        stale,
+        submitting,
+        hasActiveLeagues,
+        blockingMessages,
+        onCancel,
+        onContinue,
+      }),
+    [canContinue, stale, submitting, hasActiveLeagues, blockingMessages, onCancel, onContinue],
   );
+};
 
 /** What the screen needs before it can render anything: the catalogue and a starting setup. */
 type Boot =

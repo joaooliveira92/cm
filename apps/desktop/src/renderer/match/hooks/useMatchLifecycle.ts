@@ -35,6 +35,10 @@ export interface MatchLifecycleActions {
 
 const NO_MATCH: MatchSummary | null = null;
 
+/** A phase the match is still being played in — the two the live screen accepts. Module-level so
+ *  the two phase-setters below can name it without it changing identity each render. */
+const inPlay = (current: MatchPhase): boolean => current === "live" || current === "paused";
+
 export function useMatchLifecycle(saveId: SaveId): {
   state: MatchLifecycleState;
   actions: MatchLifecycleActions;
@@ -95,7 +99,6 @@ export function useMatchLifecycle(saveId: SaveId): {
     setPhase("committed");
   }, [saveId, match, runCommitMatchday]);
 
-  const inPlay = (current: MatchPhase): boolean => current === "live" || current === "paused";
   const setPhaseComplete = useCallback(() => setPhase((c) => (inPlay(c) ? "complete" : c)), []);
   const setPhasePaused = useCallback(
     (paused: boolean) => setPhase((c) => (inPlay(c) ? (paused ? "paused" : "live") : c)),

@@ -247,7 +247,7 @@ export const useLeagueSelection = ({
       return;
     }
     submit();
-  }, [canContinueNow, needsWarningAcknowledgement, state, submit]);
+  }, [state, submit]);
 
   const clearSelection = useCallback((): void => {
     dispatch({ type: "CLEAR_SELECTION" });

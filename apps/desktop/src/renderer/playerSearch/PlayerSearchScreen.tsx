@@ -12,7 +12,7 @@
  * is typed on, and an empty query asks the read for the whole save (capped at
  * `PLAYER_SEARCH_MAX_RESULTS` rows, its `total` still the true count).
  */
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { NATION_CODES, POSITION_FILTERS, canonicalNationId, nationName, positionFilterName } from "@cm-clone/shared";
 import type { PositionFilter } from "@cm-clone/shared";
 import type { PlayerId, PlayerSearchQuery, PlayerSearchResultsView, SaveId } from "@cm-clone/contracts";
@@ -113,22 +113,22 @@ const usePlayerSearchFilters = () => {
   const maxAge = parseAge(maxAgeText);
   const invalidRange = minAge !== undefined && maxAge !== undefined && minAge > maxAge;
 
-  const buildQuery = (): PlayerSearchQuery =>
-    buildPlayerSearchQuery(nameText, minAge, maxAge, position, nationality, clubText);
-
-  const submit = (): void => {
+  // The query is built from the parsed values, not the raw text, so a keystroke that does not
+  // change a parsed number does not change the query. Both handlers are memoized because the
+  // toolbar memos that pass them to their controls must name them as dependencies.
+  const submit = useCallback((): void => {
     if (invalidRange) return;
-    setSubmitted(buildQuery());
-  };
+    setSubmitted(buildPlayerSearchQuery(nameText, minAge, maxAge, position, nationality, clubText));
+  }, [invalidRange, nameText, minAge, maxAge, position, nationality, clubText]);
 
   /** Choosing a position from the actions-row filter sets the draft and, once a search is already
    *  on screen, re-runs it so the results follow the filter. */
-  const choosePosition = (value: string): void => {
+  const choosePosition = useCallback((value: string): void => {
     setPosition(value);
     if (submitted !== null && !invalidRange) {
-      setSubmitted(buildQuery());
+      setSubmitted(buildPlayerSearchQuery(nameText, minAge, maxAge, position, nationality, clubText));
     }
-  };
+  }, [submitted, invalidRange, nameText, minAge, maxAge, position, nationality, clubText]);
 
   return {
     nameText,
@@ -513,7 +513,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         />
       </>
     ),
-    [invalidRange],
+    [invalidRange, submit],
   );
 
   const toolbarTrailing = useMemo(
@@ -527,7 +527,7 @@ export const PlayerSearchScreen = ({ saveId }: { readonly saveId: SaveId }) => {
         onChoose={choosePosition}
       />
     ),
-    [position],
+    [position, choosePosition],
   );
 
   useEffect(() => {

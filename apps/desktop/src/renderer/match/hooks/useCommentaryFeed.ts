@@ -108,7 +108,7 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
       },
       commanded: club.read.commanded,
     }),
-    [ledger.note, club.read],
+    [ledger, club.read],
   );
 
   const reveal = useCallback(
@@ -116,7 +116,7 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
       feed.reveal(line);
       ledger.attach(line);
     },
-    [feed.reveal, ledger.attach],
+    [feed, ledger],
   );
 
   const { stream, playing } = useMatchStream({
@@ -150,7 +150,7 @@ export function useCommentaryFeed(saveId: SaveId): CommentaryContextValue {
     read: club.read,
   });
 
-  const resume = useCallback((): void => ledger.clear(), [ledger.clear]);
+  const resume = useCallback((): void => ledger.clear(), [ledger]);
 
   const state = useMemo(
     (): CommentaryState => ({

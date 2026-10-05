@@ -64,7 +64,7 @@ export const PlayerProfileActions = ({
       ],
       reason: scoutHeldBecause ?? offerHeldBecause,
     }),
-    [scoutReady, scoutHeldBecause, offerReady, offerHeldBecause, playerId],
+    [scoutReady, scoutHeldBecause, offerReady, offerHeldBecause, playerId, saveId],
   );
   useScreenBottomBarActions(actions);
 
