@@ -178,9 +178,13 @@ export const matchTimelineOf = (stream: ReadonlyArray<StreamEvent>) =>
 
 /**
  * A match's events: the stored timeline once committed, re-derived from the seed and command journal
- * while it is still being played. Event-only readers use this; a reader that needs the Lineup Frames
- * or Lineup Journal uses {@link matchTimelineOf}. A stored timeline is not re-simulated here, so an
- * event-only read over history stays off the engine.
+ * while it is still being played. A reader that needs the Lineup Frames or Lineup Journal uses
+ * {@link matchTimelineOf}; this is the event-only decode, and a stored timeline is not re-simulated
+ * here, so an event-only read over history stays off the engine.
+ *
+ * A save-scoped reader calls neither directly: it takes the whole read from `loadMatchRead`, which
+ * owns the loader choice so no reader can pick the wrong one. This remains for a caller that holds a
+ * stored timeline without the kickoff row (the stored-schema tests).
  */
 export const matchEventsOf = (stream: ReadonlyArray<StreamEvent>) =>
   Effect.gen(function* () {

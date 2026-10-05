@@ -37,9 +37,7 @@ import {
 } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
-import { playerNames } from "./playerNames.js";
-import { loadMatchRead, squadPlayerIds } from "./matchRead.js";
-import { matchTimelineOf } from "./timeline.js";
+import { loadMatchRead } from "./matchRead.js";
 
 /** The score after `included`: the last event that carries one. */
 const scoreOf = (included: ReadonlyArray<MatchEvent>): { readonly home: number; readonly away: number } => {
@@ -261,8 +259,6 @@ export const getMatchRatings = (
       const read = yield* loadMatchRead(requestedMatchId);
       if (read === null) return null;
 
-      const derived = yield* matchTimelineOf(read.stream);
-      const nameOf = yield* playerNames(squadPlayerIds(read.started));
-      return matchRatingsView(read.matchId, read.stream, derived, read.clubName, nameOf, revealedEvents);
+      return matchRatingsView(read.matchId, read.stream, read.derived, read.clubName, read.nameOf, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

@@ -15,9 +15,9 @@ import { commitMatchday } from "../../../src/main/season/commitMatchday.js";
 import { atFirstFixture, startSeededMatch } from "./seededMatch.js";
 
 /**
- * The shared match-read seam: which match a read loads, its kickoff snapshot, and the failure when a
- * named match keeps no stream. Every save-scoped reader delegates here, so these invariants are
- * pinned once rather than per reader.
+ * The shared match-read seam: which match a read loads, its kickoff snapshot, its derived timeline,
+ * its club and player name resolvers, and the failure when a named match keeps no stream. Every
+ * save-scoped reader delegates here, so these invariants are pinned once rather than per reader.
  */
 const ANY_MATCH_SEED = 7;
 
@@ -84,5 +84,9 @@ it.effect("the just-played read is null before a match is played, then names the
     strictEqual(read.matchId, match.matchId);
     ok(read.stream.length > 0, "the read carries the match stream");
     ok(read.started.homeSetup.squad.length > 0, "the read carries the kickoff snapshot");
+    ok(read.derived.events.length > 0, "the read carries the derived timeline");
+    ok(read.derived.frames.size > 0, "the derived timeline carries the pitch frames");
+    const firstPlayerId = read.started.homeSetup.squad[0]!.id;
+    ok(read.nameOf(firstPlayerId) !== "Unknown player", "the read resolves the squad's player names");
   }),
 );

@@ -27,9 +27,7 @@ import { matchStartedOf, revealedCut, type MatchEvent } from "@cm-clone/game-eng
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
-import { playerNames } from "./playerNames.js";
-import { loadMatchRead, squadPlayerIds } from "./matchRead.js";
-import { matchEventsOf } from "./timeline.js";
+import { loadMatchRead } from "./matchRead.js";
 
 /** Whether the Goal at `index` is a penalty: the event directly before it is the same player's
  *  Penalty, the engine's emission order in `resolvePenalty`. Mirrors the penalty arm of
@@ -132,8 +130,6 @@ export const getMatchOverview = (
       const read = yield* loadMatchRead(requestedMatchId);
       if (read === null) return null;
 
-      const events = yield* matchEventsOf(read.stream);
-      const nameOf = yield* playerNames(squadPlayerIds(read.started));
       const fixtureRow = yield* loadFixturePanelRow(read.matchId);
       if (fixtureRow === undefined) return yield* new MatchNotFoundError({ matchId: read.matchId });
       const fixture = new MatchFixturePanel({
@@ -142,6 +138,6 @@ export const getMatchOverview = (
         gameDate: fixtureRow.gameDate,
         venue: `${fixtureRow.stadiumName}, ${fixtureRow.cityName}`,
       });
-      return matchOverviewView(read.matchId, read.stream, events, read.clubName, nameOf, fixture, revealedEvents);
+      return matchOverviewView(read.matchId, read.stream, read.derived.events, read.clubName, read.nameOf, fixture, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

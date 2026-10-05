@@ -10,9 +10,7 @@ import { type MatchEvent } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { withExistingSave } from "../season/decider.js";
-import { playerNames } from "./playerNames.js";
 import { loadMatchReadOf } from "./matchRead.js";
-import { matchEventsOf } from "./timeline.js";
 
 type KeyEvent = Extract<MatchEvent, { readonly _tag: "Goal" | "YellowCard" | "RedCard" | "Injury" }>;
 
@@ -41,11 +39,9 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
   withExistingSave(savesDir, saveId, (filename) =>
     Effect.gen(function* () {
       const read = yield* loadMatchReadOf(matchId);
-      const events = yield* matchEventsOf(read.stream);
+      const events = read.derived.events;
       const started = events[0] as Extract<MatchEvent, { readonly _tag: "MatchStarted" }>;
       const keyEvents = events.filter(isKeyEvent);
-
-      const playerName = yield* playerNames(keyEvents.map((event) => event.playerId));
 
       let homeScore = 0;
       let awayScore = 0;
@@ -83,7 +79,7 @@ export const getPostMatchSummary = (savesDir: string, saveId: SaveId, matchId: M
               kind: event._tag,
               clubId: event.teamClubId,
               playerId: event.playerId,
-              playerName: playerName(event.playerId),
+              playerName: read.nameOf(event.playerId),
             }),
         ),
       });

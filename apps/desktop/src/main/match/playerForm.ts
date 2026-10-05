@@ -34,10 +34,8 @@ import { SqlClient } from "effect/unstable/sql/SqlClient";
 import { CURRENT_SEASON_NUMBER_SQL } from "../season/currentSeason.js";
 import { withExistingSave } from "../season/decider.js";
 import { displayNames } from "../world/displayNames.js";
-import { playerNames } from "./playerNames.js";
-import { loadMatchReadIfPresent, squadPlayerIds } from "./matchRead.js";
+import { loadMatchReadIfPresent } from "./matchRead.js";
 import { matchRatingsView } from "./ratings.js";
-import { matchTimelineOf } from "./timeline.js";
 
 /** One stored line, as read from `player_match_lines` (the columns the Form row and rating need). */
 interface FormLineRow {
@@ -260,9 +258,7 @@ const loadFixtureRatings = (
           const read = yield* loadMatchReadIfPresent(String(fixtureId) as MatchId, named);
           // An AI fixture keeps no stream: it rates from the stored counts, not from here.
           if (read === null) return;
-          const derived = yield* matchTimelineOf(read.stream);
-          const nameOf = yield* playerNames(squadPlayerIds(read.started));
-          const view = matchRatingsView(read.matchId, read.stream, derived, read.clubName, nameOf, null);
+          const view = matchRatingsView(read.matchId, read.stream, read.derived, read.clubName, read.nameOf, null);
           ratings.set(fixtureId, {
             ratings: new Map([...view.home, ...view.away].map((row) => [row.playerId, row.rating])),
             mom: view.playerOfTheMatch,

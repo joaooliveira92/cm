@@ -25,7 +25,6 @@ import {
 import { Effect } from "effect";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
 import { loadMatchRead } from "./matchRead.js";
-import { matchTimelineOf } from "./timeline.js";
 
 export const MATCH_STATISTIC_KEYS: ReadonlyArray<MatchStatisticKey> = [
   "goals",
@@ -270,7 +269,6 @@ export const getMatchStatistics = (
       const read = yield* loadMatchRead(requestedMatchId);
       if (read === null) return null;
 
-      const derived = yield* matchTimelineOf(read.stream);
-      return matchStatisticsView(read.matchId, read.stream, derived, read.clubName, revealedEvents);
+      return matchStatisticsView(read.matchId, read.stream, read.derived, read.clubName, revealedEvents);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );

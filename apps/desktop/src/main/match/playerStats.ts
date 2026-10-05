@@ -25,11 +25,9 @@ import {
 import { matchStartedOf, revealedCut, type DerivedTimeline, type MatchTeamSetup } from "@cm-clone/game-engine";
 import { Effect } from "effect";
 import { withExistingSave, type StreamEvent } from "../season/decider.js";
-import { playerNames } from "./playerNames.js";
 import { deriveStreamEvents } from "./aiPreferences.js";
-import { loadMatchRead, squadPlayerIds } from "./matchRead.js";
+import { loadMatchRead } from "./matchRead.js";
 import { matchRatingsView } from "./ratings.js";
-import { matchTimelineOf } from "./timeline.js";
 
 /** A matchday-squad member in draw order: the kickoff slots in slot order, then the named bench. */
 interface SquadMember {
@@ -146,12 +144,10 @@ export const getMatchPlayerStats = (
       const read = yield* loadMatchRead(requestedMatchId);
       if (read === null) return null;
 
-      const derived = yield* matchTimelineOf(read.stream);
-      const nameOf = yield* playerNames(squadPlayerIds(read.started));
       // Condition has no per-cut surface, so a live table shows none; the whole match's full-time
       // Conditions come from the deterministic engine (the stored timeline carries no conditions).
       const conditions =
         revealedEvents === null ? (yield* deriveStreamEvents(read.stream)).conditions : null;
-      return matchPlayerStatsView(read.matchId, read.stream, derived, read.clubName, nameOf, revealedEvents, conditions);
+      return matchPlayerStatsView(read.matchId, read.stream, read.derived, read.clubName, read.nameOf, revealedEvents, conditions);
     }).pipe(Effect.provide(SqliteClient.layer({ filename, readonly: true })), Effect.scoped),
   );
