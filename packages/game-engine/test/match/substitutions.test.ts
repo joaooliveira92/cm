@@ -9,13 +9,14 @@
 import { describe, expect, it } from "vitest";
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 import type { MatchCommand } from "../../src/match/commands.js";
+import type { MatchEvent } from "../../src/match/events.js";
 import type {
   LineupJournalEntry,
   LineupSubstitutionRole,
   RuntimeFrame,
 } from "../../src/match/simulate/lineupRecording.js";
 import { simulateMatchWithCounts } from "../../src/match/simulate/index.js";
-import { substitutionStatus } from "../../src/match/substitutions.js";
+import { substitutionStatus, countedSubstitutions, substitutionLedger } from "../../src/match/substitutions.js";
 import { buildTeam, clubId as makeClubId, withNamedBench } from "./fixtures.js";
 
 const club = makeClubId("me");
@@ -204,5 +205,67 @@ describe("the engine records the substitution facts the projection reads", () =>
     });
     expect(substitutionStatus(HOME, frames.get(HOME)!, journal, null)).toMatchObject({ used: 0, windowsUsed: 0 });
     for (const entry of frames.get(HOME)!) expect(entry.slots.map((slot) => slot.playerId)).toEqual(kickoffSlots);
+  });
+});
+
+/**
+ * The statistics count (`countedSubstitutions`, event-indexed) and the substitution panel's `used`
+ * (`substitutionStatus`, frame-indexed) encode the same forced-reveal law twice. This cross-check
+ * pins them equal across seeds, commands and cuts, so a drift between the two encodings fails a gate
+ * even though the statistics read keeps its event-based filter.
+ */
+describe("countedSubstitutions agrees with substitutionStatus", () => {
+  const cutsFor = (eventCount: number): ReadonlyArray<number | null> => [
+    null,
+    0,
+    1,
+    Math.floor(eventCount / 2),
+    Math.max(0, eventCount - 1),
+    eventCount,
+  ];
+
+  const expectAgreement = (
+    seed: number,
+    events: ReadonlyArray<MatchEvent>,
+    frames: ReadonlyMap<ClubId, ReadonlyArray<RuntimeFrame>>,
+    journal: ReadonlyArray<LineupJournalEntry>,
+  ): void => {
+    const { standIns } = substitutionLedger([], events, journal);
+    for (const clubId of [HOME, AWAY]) {
+      for (const cut of cutsFor(events.length)) {
+        const counted = countedSubstitutions(events, standIns, cut).filter(
+          (event) => event.teamClubId === clubId,
+        ).length;
+        const status = substitutionStatus(clubId, frames.get(clubId)!, journal, cut).used;
+        expect(counted, `seed ${seed}, ${clubId}, cut ${cut}`).toBe(status);
+      }
+    }
+  };
+
+  it("for uncommanded seeds, covering forced injuries and stand-ins", () => {
+    for (let seed = 1; seed <= 40; seed++) {
+      const { home, away } = kickoff(seed);
+      const { events, frames, journal } = play(seed, home, away, []);
+      expectAgreement(seed, events, frames, journal);
+    }
+  });
+
+  it("with a manager substitution and a bring-off", () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const { home, away, bench } = kickoff(seed);
+      const { events, frames, journal } = play(seed, home, away, [
+        {
+          minute: 2,
+          isHalftime: false,
+          command: { _tag: "MakeSubstitution", clubId: HOME, outPlayerId: home.tactic.slots[3]!.playerId, inPlayerId: bench[0]! },
+        },
+        {
+          minute: 60,
+          isHalftime: false,
+          command: { _tag: "ForceOff", clubId: HOME, playerId: home.tactic.slots[5]!.playerId },
+        },
+      ]);
+      expectAgreement(seed, events, frames, journal);
+    }
   });
 });
