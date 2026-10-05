@@ -358,8 +358,8 @@ describe("specific marking (integration)", () => {
     freeRole: 10,
   };
   const slots = [
-    { playerId: MARKER, cell: { row: "D" as const, column: "C" as const }, run: null },
-    { playerId: OTHER, cell: { row: "M" as const, column: "C" as const }, run: null },
+    { playerId: MARKER, cell: { row: "D" as const, column: "C" as const }, run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } },
+    { playerId: OTHER, cell: { row: "M" as const, column: "C" as const }, run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } },
   ];
   const bench = [] as ReadonlyArray<PlayerId | null>;
   const squad = [
@@ -371,7 +371,6 @@ describe("specific marking (integration)", () => {
     slots,
     bench,
     team: { ...DEFAULT_TEAM_INSTRUCTIONS },
-    slotInstructions: [],
     teamSetPieces: DEFAULT_TEAM_SET_PIECES,
     takers: EMPTY_TAKERS,
     specificMarkings: undefined,

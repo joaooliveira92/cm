@@ -35,9 +35,9 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * later a severe Injury to another starter forces a substitution from outside the starting XI. Found
  * by enumerating seeds over `deriveMatchEvents` with the kickoff setups. The test locates each line at
  * runtime and re-checks each part of the property from the Commentary Lines, naming this constant when
- * one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
+ * one no longer holds. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. Re-pinned for formations-and-instructions ticket 35, when per-slot player instructions reached real matches.
  */
-const RED_CARD_THEN_FORCED_SUB_SEED = 334;
+const RED_CARD_THEN_FORCED_SUB_SEED = 944;
 
 const repin = `repin RED_CARD_THEN_FORCED_SUB_SEED (${RED_CARD_THEN_FORCED_SUB_SEED})`;
 

@@ -17,7 +17,6 @@ import type { PerSlotBehaviour, TeamBehaviourModifiers } from "../resolveBehavio
 import { resolveTeamModifiers, resolveTeamInstructions, type ResolvedInstructions } from "./behaviourModifiers.js";
 import { resolveSlotVectors } from "./slotVectors.js";
 import { resolveSetPieceModifiers } from "./setPieceModifiers.js";
-import { resolvePlayerInstructionSlots } from "./playerInstructionSlots.js";
 import { aggregatePhaseSlots, coverageFactor } from "./phaseStrengthResolver.js";
 
 export { resolveTeamModifiers, resolveTeamInstructions } from "./behaviourModifiers.js";
@@ -27,7 +26,6 @@ export type { Phase } from "@cm-clone/shared";
 
 export { resolveSlotVectors } from "./slotVectors.js";
 export { resolveSetPieceModifiers } from "./setPieceModifiers.js";
-export { resolvePlayerInstructionSlots } from "./playerInstructionSlots.js";
 
 export interface SlotFit {
   readonly baseRating: number;
@@ -67,9 +65,8 @@ export const resolveTeamTactics = (
 ): ResolvedTeamTactics => {
   const slots = tactic.slots.map((slot, index) => {
     const player = playersById.get(slot.playerId);
-    const playerInstructions = resolvePlayerInstructionSlots(tactic, index);
     const { behaviour, runPhase } = resolveSlotVectors(
-      slot.cell, playerInstructions, tactic.team,
+      slot.cell, slot.instructions, tactic.team,
       player?.positionalRatings ?? null,
       player?.attributes ?? null,
       slot.run,

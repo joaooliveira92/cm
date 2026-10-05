@@ -115,16 +115,17 @@ const severeInjuryLine = (
   });
 
 /**
- * Seed 942: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
+ * Seed 43: after the manager's substitutions at minutes 1-3 (every window used, bringing on the
  * bench in `STAND_IN_BENCH_ORDER`) and a minute-3 bring-off of the only goalkeeper, which drags an
  * outfield player into goal, that stand-in suffers a severe Injury. No
  * substitution is left, so a second outfield player is dragged into goal. Found by enumerating seeds
  * and bench orders over `deriveMatchEvents`; under the orders 0-1-2, 0-2-1, 1-0-2 and 1-2-0 no seed
  * up to 6000 injures the stand-in the drag picks. Re-pinned for group-g-match-day ticket 35, when the
- * substitutions began coming off the named bench, and again 2026-10-01 when Regimen started scaling
- * Condition decay and Injury severity (it had been seed 978 under the order 1-0-2).
+ * substitutions began coming off the named bench, again 2026-10-01 when Regimen started scaling
+ * Condition decay and Injury severity, and again for formations-and-instructions ticket 35, when
+ * per-slot player instructions reached real matches.
  */
-const GOALKEEPER_STAND_IN_SEED = 942;
+const GOALKEEPER_STAND_IN_SEED = 43;
 /** Which bench entries come on at minutes 1, 2 and 3. */
 const STAND_IN_BENCH_ORDER = [2, 0, 1] as const;
 
@@ -266,10 +267,12 @@ it.effect("a knock replaces no one, even when the manager substitutes the player
   }),
 );
 
-/** Seed 8: the human club's first substitution is forced by an Injury in regular minute 45, before
+/** Seed 3840: the human club's first substitution is forced by an Injury in regular minute 45, before
  *  half time. Re-pinned for group-g-match-day ticket 26, when a
- *  forced substitution started drawing on the named bench. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. */
-const MINUTE_45_FORCED_SUB_SEED = 8;
+ *  forced substitution started drawing on the named bench, again 2026-10-01 when Regimen started
+ *  scaling Condition decay and Injury severity, and again for formations-and-instructions ticket 35,
+ *  when per-slot player instructions reached real matches. */
+const MINUTE_45_FORCED_SUB_SEED = 3840;
 
 it.effect("a forced substitution in regular minute 45 spends a window", () =>
   Effect.gen(function* () {
@@ -333,12 +336,14 @@ it.effect("a minute-45 command the window cap refuses leaves a halftime instruct
 );
 
 /**
- * Seed 4381: the human club's only substitution is forced by an Injury at minute 49 of first-half
+ * Seed 5225: the human club's only substitution is forced by an Injury at minute 49 of first-half
  * stoppage. The engine opens a window whenever a substitution's
  * minute differs from the last window's, so manager substitutions at second-half minutes 48 and 49
- * open two more. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. No seed up to 6000 forces one at minute 48 any more.
+ * open two more. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury
+ * severity, and again for formations-and-instructions ticket 35, when per-slot player instructions
+ * reached real matches. No seed up to 6000 forces one at minute 48 any more.
  */
-const STOPPAGE_FORCED_SUB_SEED = 4381;
+const STOPPAGE_FORCED_SUB_SEED = 5225;
 
 it.effect("windows follow the engine's last-window minute, not the set of distinct minutes", () =>
   Effect.gen(function* () {

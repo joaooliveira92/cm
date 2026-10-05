@@ -52,6 +52,7 @@ const build442Slots = (squad: ReadonlyArray<MatchPlayerInput>) => {
     playerId: player.id,
     cell: { row: rows[i]!, column: cols[i]! } as Slot,
     run: null,
+    instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
   }));
 };
 
@@ -65,10 +66,6 @@ const buildMatchSetup = (clubId: string, seed: number): MatchTeamSetup => {
       slots,
       bench: squad.slice(11, 18).map((p) => p.id),
       team: { ...DEFAULT_TEAM_INSTRUCTIONS },
-      slotInstructions: slots.map((s) => ({
-        cell: s.cell,
-        instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
-      })),
       teamSetPieces: DEFAULT_TEAM_SET_PIECES,
       takers: EMPTY_TAKERS,
     },

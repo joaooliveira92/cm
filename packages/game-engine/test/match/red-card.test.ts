@@ -30,7 +30,7 @@ const withSecondKeeper = (setup: MatchTeamSetup): MatchTeamSetup => {
   const starters = new Set(setup.tactic.slots.map((slot) => slot.playerId));
   const reserveKeeper = setup.squad.find((player) => !starters.has(player.id) && player.attributes.gkHandling != null)!;
   const slots = setup.tactic.slots.map((slot, index) =>
-    index === 5 ? { cell: GOALKEEPER_SLOT, playerId: reserveKeeper.id, run: null } : slot,
+    index === 5 ? { ...slot, cell: GOALKEEPER_SLOT, playerId: reserveKeeper.id, run: null } : slot,
   );
   return { ...setup, tactic: { ...setup.tactic, slots } };
 };

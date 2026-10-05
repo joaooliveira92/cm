@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { builtInTemplate, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, tacticFromTemplate } from "@cm-clone/shared";
+import { builtInTemplate, DEFAULT_PLAYER_INSTRUCTIONS, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, tacticFromTemplate } from "@cm-clone/shared";
 import { computePhaseStrengths, resolveTacticalModifiers } from "../../src/match/tactical-modifiers.js";
 import { toMatchTactic } from "../../src/match/types.js";
 import { buildTeam, clubId as makeClubId, playerId } from "./fixtures.js";
@@ -76,7 +76,7 @@ describe("resolveTacticalModifiers", () => {
     const player = team.setup.tactic.slots[5]!.playerId;
     const at = (row: "D" | "F") =>
       computePhaseStrengths(
-        { ...team.setup.tactic, slots: [{ playerId: player, cell: { row, column: "C" }, run: null }] },
+        { ...team.setup.tactic, slots: [{ playerId: player, cell: { row, column: "C" }, run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } }] },
         playersById,
       );
     expect(at("D").defense).toBeGreaterThan(0);
@@ -86,8 +86,8 @@ describe("resolveTacticalModifiers", () => {
   });
 });
 
-describe("toMatchTactic (the transitional adapter)", () => {
-  it("keeps who starts where, the bench and the team instructions, and nothing else of a complete Tactic", () => {
+describe("toMatchTactic", () => {
+  it("keeps who starts where, the bench, the team instructions and each slot's instructions", () => {
     const players = Array.from({ length: 18 }, (_, i) => playerId(`p${i}`));
     const tactic = tacticFromTemplate(builtInTemplate("4-3-3")!, players.slice(0, 11), players.slice(11));
     const complete = { ...tactic, team: { ...tactic.team, mentality: "gungHo", passing: "long", offsideTrap: true } } as const;
@@ -95,10 +95,11 @@ describe("toMatchTactic (the transitional adapter)", () => {
     expect(adapted.team.mentality).toBe("gungHo");
     expect(adapted.slots.map((slot) => slot.playerId)).toEqual(players.slice(0, 11));
     expect(adapted.slots.map((slot) => slot.cell)).toEqual(tactic.slots.map((slot) => slot.cell));
+    expect(adapted.slots.map((slot) => slot.instructions)).toEqual(tactic.slots.map((slot) => slot.instructions));
     expect(adapted.bench).toEqual(players.slice(11));
     // The new fields get their defaults since the adapter input omits them
     expect(adapted.teamSetPieces).toEqual(DEFAULT_TEAM_SET_PIECES);
     expect(adapted.takers).toEqual(EMPTY_TAKERS);
-    expect(Object.keys(adapted).sort()).toEqual(["bench", "slotInstructions", "slots", "takers", "team", "teamSetPieces"]);
+    expect(Object.keys(adapted).sort()).toEqual(["bench", "slots", "takers", "team", "teamSetPieces"]);
   });
 });

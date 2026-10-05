@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_SET_PIECE_ROLES, type SetPieceRoles } from "@cm-clone/shared";
+import { DEFAULT_PLAYER_INSTRUCTIONS, DEFAULT_SET_PIECE_ROLES, type SetPieceRoles } from "@cm-clone/shared";
 import { simulateMatch } from "../../src/match/simulate/index.js";
 import { defendCornerFactor, planCorner } from "../../src/match/simulate/cornerPlan.js";
 import { defendFreeKickFactor, planFreeKick } from "../../src/match/simulate/freeKickPlan.js";
@@ -40,7 +40,10 @@ const withRoles = (setup: MatchTeamSetup, index: number, roles: SetPieceRoles): 
 describe("set-piece roles reach the engine", () => {
   it("are carried by toMatchTactic from a stored tactic's slots", () => {
     const tactic = toMatchTactic({
-      slots: [{ cell: { row: "F", column: "C" }, setPieceRoles: GO_FORWARD }, { cell: { row: "GK", column: "C" } }],
+      slots: [
+        { cell: { row: "F", column: "C" }, instructions: DEFAULT_PLAYER_INSTRUCTIONS, setPieceRoles: GO_FORWARD },
+        { cell: { row: "GK", column: "C" }, instructions: DEFAULT_PLAYER_INSTRUCTIONS },
+      ],
       assignments: ["p1" as never, "p2" as never],
       bench: [],
       team: buildTeam(clubId("home"), 1).setup.tactic.team,

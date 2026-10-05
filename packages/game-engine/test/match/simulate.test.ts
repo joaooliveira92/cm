@@ -44,13 +44,9 @@ const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, template = "4-4
     },
   }));
   const tactic = {
-    slots: cells.map((cell, index) => ({ cell, playerId: makePlayerId(`${clubId}-${index}`), run: null })),
+    slots: cells.map((cell, index) => ({ cell, playerId: makePlayerId(`${clubId}-${index}`), run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } })),
     bench: [null, null, null, null, null, null, null],
     team: { ...DEFAULT_TEAM_INSTRUCTIONS },
-    slotInstructions: cells.map((cell) => ({
-      cell,
-      instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
-    })),
     teamSetPieces: DEFAULT_TEAM_SET_PIECES,
     takers: EMPTY_TAKERS,
   };

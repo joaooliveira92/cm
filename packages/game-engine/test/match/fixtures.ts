@@ -58,17 +58,13 @@ export const buildTeam = (clubId: ClubId, seed: number, template = "4-4-2"): Gen
     const position = legacyPositionOf(cell);
     const player = squad.find((p) => p.primaryPosition === position && !usedIds.has(p.id)) ?? squad.find((p) => !usedIds.has(p.id))!;
     usedIds.add(player.id);
-    return { cell, playerId: player.id, run: null };
+    return { cell, playerId: player.id, run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } };
   });
 
   const tactic: MatchTactic = {
     slots,
     bench: [null, null, null, null, null, null, null],
     team: { ...DEFAULT_TEAM_INSTRUCTIONS },
-    slotInstructions: slots.map((slot) => ({
-      cell: slot.cell,
-      instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS },
-    })),
     teamSetPieces: DEFAULT_TEAM_SET_PIECES,
     takers: EMPTY_TAKERS,
   };

@@ -26,9 +26,9 @@ afterEach(() => rm(savesDir, { recursive: true, force: true }));
  * the match's only Goal, and the human club's red card opens a chunk with both of the match's
  * Injuries falling after it. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. A score or head-count read from the end
  * of the chunk would show each before its line. The tests locate each line at runtime and re-check
- * the property from the Commentary Lines, naming this constant when one no longer holds. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity.
+ * the property from the Commentary Lines, naming this constant when one no longer holds. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. Re-pinned for formations-and-instructions ticket 35, when per-slot player instructions reached real matches.
  */
-const SEED = 1301;
+const SEED = 5933;
 
 const repin = `repin SEED (${SEED})`;
 
