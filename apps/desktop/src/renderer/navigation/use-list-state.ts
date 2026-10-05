@@ -66,8 +66,11 @@ export const useListState = (): ListStateControl => {
       const encoded: EncodedListState = toEncodedListState(state);
       const hasState = Object.keys(encoded).length > 0;
       if (hasState) {
+        // Stay on the current route (`to: "."`) and rewrite only the list-owned search keys. Naming
+        // the route relatively keeps this off the opaque `location.pathname` string the router's
+        // route-literal typing rejects once a router is registered.
         navigate({
-          to: location.pathname,
+          to: ".",
           search: (prev: Record<string, string>) => ({
             ...Object.fromEntries(new URLSearchParams(
               Object.fromEntries(
@@ -89,7 +92,7 @@ export const useListState = (): ListStateControl => {
         "",
       );
     },
-    [location.pathname, navigate],
+    [navigate],
   );
 
   const restoreScroll = useCallback(
