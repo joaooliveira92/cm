@@ -21,23 +21,20 @@ export interface ParsedNavState {
   readonly matchContext: MatchContext | null;
 }
 
-const routeSegmentToSectionId: Record<string, SpecSectionId> = {
-  manager: "manager",
-  squad: "squad",
-  tactics: "tactics",
-  training: "training",
-  transfers: "transfers",
-  club: "club",
-  competitions: "competitions",
-  world: "world",
-  search: "search",
-};
-
 const routeSegmentToEntityType: Record<string, EntityType> = {
   players: "player",
   staff: "staff",
   nations: "nation",
 };
+
+/**
+ * The career route segment that names a spec section is the section id itself (`squad`, `tactics`,
+ * `club`, ...), so this reads the section straight from `SPEC_SECTIONS` rather than keeping a
+ * second table of the same names. An unrecognised segment returns `null`, which is the parser's
+ * fall-back for a route outside the section tree.
+ */
+const sectionForSegment = (segment: string): SpecSection | null =>
+  sectionById(segment as SpecSectionId) ?? null;
 
 export const parseNavState = (
   pathname: string,
@@ -130,8 +127,7 @@ export const parseNavState = (
     };
   }
 
-  const sectionId = routeSegmentToSectionId[firstChild] ?? null;
-  const section = sectionId !== null ? sectionById(sectionId) ?? null : null;
+  const section = sectionForSegment(firstChild);
 
   return {
     primarySection: section,

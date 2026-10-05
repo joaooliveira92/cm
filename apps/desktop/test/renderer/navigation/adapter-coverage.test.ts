@@ -14,6 +14,7 @@ import {
   type CareerDestination,
   type NavigationDestination,
 } from "../../../src/renderer/navigation/destinations.js";
+import { router as appRouter } from "../../../src/renderer/router/index.js";
 
 const save = (id: string): SaveId => SaveIdSchema.make(id);
 const club = (id: string): ClubId => ClubIdSchema.make(id);
@@ -213,8 +214,10 @@ describe("the navigation adapter reaches the router for every destination", () =
   /**
    * The bug's class, not just its instance. A silent fall-through is invisible per-route: the arm
    * for news went missing exactly the way the next one will, and only a sweep over the whole
-   * destination set catches that. Asserting against `resolveDestination` keeps the two switches
-   * honest to each other rather than to a third list that can drift from both.
+   * destination set catches that. `navigate` now resolves through the one registry in
+   * `destinations.ts`, so this no longer proves two switches agree; it proves the adapter reaches
+   * the router once per destination, and that each resolution lands on a route the app router
+   * actually registers.
    */
   it.each(ALL_DESTINATIONS.map((d) => [d.type, d] as const))(
     "reaches the router for %s",
@@ -224,6 +227,14 @@ describe("the navigation adapter reaches the router for every destination", () =
       const resolved = resolveDestination(destination);
       expect(navigateSpy).toHaveBeenCalledTimes(1);
       expect(navigateSpy.mock.calls[0]?.[0]).toMatchObject({ to: resolved.to });
+    },
+  );
+
+  it.each(ALL_DESTINATIONS.map((d) => [d.type, d] as const))(
+    "resolves %s to a route the app router registers",
+    (_type, destination) => {
+      const registered = new Set(Object.keys(appRouter.routesByPath));
+      expect(registered.has(resolveDestination(destination).to as string)).toBe(true);
     },
   );
 });

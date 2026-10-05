@@ -49,6 +49,16 @@ const destinationToRouteChild: Readonly<Record<SaveScopedCareerDestinationType, 
   squadInformation: "squad-information",
   squadFinances: "squad-finances",
   squadHistory: "squad-history",
+  matchStats: "match-stats",
+  matchRatings: "match-ratings",
+  matchHomeStats: "match-home-stats",
+  matchAwayStats: "match-away-stats",
+  matchCommentary: "match-commentary",
+  matchLatestScores: "match-latest-scores",
+  matchLiveTable: "match-live-table",
+  matchLatestReport: "match-report-latest",
+  matchMatchTactics: "match-match-tactics",
+  matchSubstitutions: "match-substitutions",
 };
 
 const routeChildToDestination: Readonly<Record<string, SaveScopedCareerDestinationType>> = {

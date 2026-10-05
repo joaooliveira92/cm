@@ -694,3 +694,15 @@ export const router = createRouter({
 });
 
 bindRouter(router);
+
+/**
+ * Register the app's router with TanStack, so `LinkOptions`/`NavigateOptions` default to the real
+ * route tree. That is what lets the typed-destination registry in `navigation/destinations.ts`
+ * check each destination's `to` and `params` against the routes this module declares, instead of
+ * restating the paths a second time.
+ */
+declare module "@tanstack/react-router" {
+  interface Register {
+    readonly router: typeof router;
+  }
+}

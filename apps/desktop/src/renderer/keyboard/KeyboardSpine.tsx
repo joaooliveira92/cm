@@ -134,6 +134,19 @@ const SpineOrchestrator = ({
         managerJobs: () => navigateCareer({ type: "managerJobs", saveId }, "keyboard"),
         managerNotes: () => navigateCareer({ type: "managerNotes", saveId }, "keyboard"),
         managerResponsibilities: () => navigateCareer({ type: "managerResponsibilities", saveId }, "keyboard"),
+        // Save-scoped but not navbar targets: no `g` action names them, so these handlers are only
+        // reachable if one ever does. Present because `SaveScopedCareerDestinationType` is every
+        // destination a bare save can build, not just the navbar's.
+        matchStats: () => navigateCareer({ type: "matchStats", saveId }, "keyboard"),
+        matchRatings: () => navigateCareer({ type: "matchRatings", saveId }, "keyboard"),
+        matchHomeStats: () => navigateCareer({ type: "matchHomeStats", saveId }, "keyboard"),
+        matchAwayStats: () => navigateCareer({ type: "matchAwayStats", saveId }, "keyboard"),
+        matchCommentary: () => navigateCareer({ type: "matchCommentary", saveId }, "keyboard"),
+        matchLatestScores: () => navigateCareer({ type: "matchLatestScores", saveId }, "keyboard"),
+        matchLiveTable: () => navigateCareer({ type: "matchLiveTable", saveId }, "keyboard"),
+        matchLatestReport: () => navigateCareer({ type: "matchLatestReport", saveId }, "keyboard"),
+        matchMatchTactics: () => navigateCareer({ type: "matchMatchTactics", saveId }, "keyboard"),
+        matchSubstitutions: () => navigateCareer({ type: "matchSubstitutions", saveId }, "keyboard"),
       };
       // Every section nav action carries its destination in metadata, so the handler set is read
       // off the registry rather than restated here (a restated copy once sent `g 3` to Squad).

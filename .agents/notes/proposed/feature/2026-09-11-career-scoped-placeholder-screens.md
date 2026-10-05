@@ -15,10 +15,9 @@ Create a set of 15 new career-scoped routes, each with a skeleton placeholder sc
 - **One `defineCareerChild` route** registered in `router/index.tsx`, with a unique `screenId` and path segment.
 - **A skeleton component** in `src/renderer/<feature-name>/<FeatureName>Screen.tsx` — a `<main>` element with `tabIndex={-1}`, `data-focus-id`, and `aria-label`, a title heading, and an italic "WIP — Placeholder screen" subtitle.
 - **No RPC calls, no provider pattern, no action handlers.** The skeleton renders unconditionally with no data dependencies.
-- **A destination type** in the `CareerDestination` discriminated union in `destinations.ts`, with entries in `resolveDestination`, `careerRoute`, `CAREER_SCREEN_TYPES`, and `SaveScopedCareerDestinationType`. (A new section gets its `g <n>` key automatically: the section nav actions in `ALL_ACTIONS` derive from `NAV_SECTIONS`.)
+- **A destination type** in the `CareerDestination` discriminated union in `destinations.ts`, with a `ROUTE_BUILDERS` entry and a place in `CAREER_SCREEN_TYPES`. (A new section gets its `g <n>` key automatically: the section nav actions in `ALL_ACTIONS` derive from `NAV_SECTIONS`.)
 - **A nav-config entry** — either as a new section (World) or as a sub-item under an existing section (Club, Recruitment).
-- **An adapter switch arm** in `adapter.ts` for the new route path.
-- **A `destinationToRouteChild` entry** in `NavProvider.tsx`.
+- **A `destinationToRouteChild` entry** in `NavProvider.tsx`. (The adapter and the route resolver need no per-route edit: the one registry in `destinations.ts` is checked against the TanStack route tree, so a missing route or mistyped parameter is a compile error rather than a silent fall-through.)
 - **A `target` record entry** in `KeyboardSpine.tsx`.
 
 The nav section layout becomes 8 sections in display order: Squad (g1), Tactics (g2), Training (g3), Recruitment (g4), Analysis (g5), News (g6), Club (g7), World (g8). A new "World" section houses Competitions, Nations, and Clubs. Game Status and Manager Chat live under the Club section as utility items.
@@ -45,9 +44,8 @@ The nav section layout becomes 8 sections in display order: Squad (g1), Tactics 
 
 ### Files changed
 
-- `apps/desktop/src/renderer/navigation/destinations.ts` — types, bindings, resolver
+- `apps/desktop/src/renderer/navigation/destinations.ts` — destination types, the `ROUTE_BUILDERS` registry, `CAREER_SCREEN_TYPES`
 - `apps/desktop/src/renderer/navigation/nav-config.ts` — new World section, expanded sub-items
-- `apps/desktop/src/renderer/navigation/adapter.ts` — route switch arms
 - `apps/desktop/src/renderer/navigation/NavProvider.tsx` — route child mappings
 - `apps/desktop/src/renderer/keyboard/KeyboardSpine.tsx` — action target record
 - `apps/desktop/src/renderer/router/index.tsx` — route definitions and tree

@@ -1,3 +1,4 @@
+import type { LinkOptions } from "@tanstack/react-router";
 import type { ClubId, CompetitionId, MatchId, PlayerId, SaveId } from "@cm-clone/contracts";
 import { playerComparisonKey } from "./params.js";
 
@@ -235,23 +236,33 @@ export const CAREER_SCREEN_TYPES = [
 ] as const;
 
 /**
- * The career destinations a save alone is enough to reach. Everything except the destinations that
- * need a second identifier in hand — a club, a competition, a player, a training plan or a match —
- * none of which the navbar, the keyboard spine or the Tactics issue links ever carry.
+ * A career destination a save alone is enough to reach: every destination whose payload is just
+ * `saveId`, with no club, competition, player, match or staff key beside it.
  *
- * The navbar, the keyboard spine, and the Tactics overview's issue links all build a
- * destination from a bare type plus the current save, and this is the type that keeps them
- * honest: without it each would happily construct a club destination with no club and fail at
- * the router instead.
+ * Derived from the union's shape rather than restated as an exclude-list, so a new
+ * identifier-carrying destination is left out automatically. The navbar, the keyboard spine and
+ * the Tactics issue links all build a destination from a bare type plus the current save, and this
+ * is the type that keeps them honest: without it each would happily construct a club destination
+ * with no club and fail at the router instead.
  */
-export type SaveScopedCareerDestinationType = Exclude<
-  CareerDestination["type"],
-  "teamScoutReport" | "clubStaff" | "staffProfile" | "clubSquad" | "clubInformation" | "clubFixturesDetail" | "clubTransfersDetail" | "clubFinancesDetail" | "competitionOverview" | "competitionTable" | "competitionFixturesDetail" | "competitionResults" |   "playerDetail" | "playerDevelopment" | "playerContract" | "playerForm" | "playerComparison" | "trainingPlan" | "matchMatchTactics" | "matchSubstitutions" |   "matchStats" | "matchRatings" | "matchHomeStats" | "matchAwayStats" | "matchReport" | "matchLatestReport" | "matchCommentary" | "matchLatestScores" | "matchLiveTable"
->;
+type SaveScopedCareerDestination = {
+  readonly [K in CareerDestination["type"]]: Extract<
+    CareerDestination,
+    { readonly type: K }
+  > extends infer D
+    ? D extends CareerDestination
+      ? Exclude<keyof D, "type" | "saveId"> extends never
+        ? D
+        : never
+      : never
+    : never;
+}[CareerDestination["type"]];
+
+export type SaveScopedCareerDestinationType = SaveScopedCareerDestination["type"];
 
 /**
- * Build a save-scoped career destination. `teamScoutReport` is excluded by type: it needs a
- * `clubId`, and the cast below would otherwise happily mint one without it.
+ * Build a save-scoped career destination. The type excludes every destination that needs a second
+ * identifier, so the cast below can only mint a bare save-scoped one.
  */
 export const careerDestination = (
   type: SaveScopedCareerDestinationType,
@@ -259,470 +270,234 @@ export const careerDestination = (
 ): CareerDestination => ({ type, saveId }) as CareerDestination;
 
 /**
- * A resolved destination: the router `to`/`params` the adapter passes to
- * `router.navigate`. Discriminated on the literal `to` so the adapter switch
- * keeps full parameter typing per route.
+ * One route per destination, and the only place a destination's path is written down.
+ *
+ * Each entry is a builder from its own destination member to the TanStack link it resolves to.
+ * The value is a mapped type over `NavigationDestination["type"]`, so a destination with no entry
+ * is a compile error, and the return type is `LinkOptions` checked against the real route tree
+ * (registered in `router/index.tsx`), so a wrong path or a missing/mistyped parameter fails to
+ * typecheck here rather than silently at the router. This replaces the four declarations that
+ * used to restate the same mapping: the `ResolvedDestination` union, the `resolveDestination`
+ * switch, the `careerRoute` switch, and the adapter's own navigate switch.
  */
-export type ResolvedDestination =
-  | { readonly to: "/" }
-  | { readonly to: "/load" }
-  | { readonly to: "/create/leagues" }
-  | { readonly to: "/create/step-1" }
-  | { readonly to: "/create/step-2" }
-  | { readonly to: "/create/step-3" }
-  | { readonly to: "/career/$saveId/squad"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/squad-staff"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/squad-information"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/squad-finances"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/squad-history"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/tactics"; readonly params: { readonly saveId: SaveId } }
-  | {
-      readonly to: "/career/$saveId/tactics/editor";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | { readonly to: "/career/$saveId/transfers"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/contract-expiry"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/budget-review"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/transfer-history"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/league"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/fixtures"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match"; readonly params: { readonly saveId: SaveId } }
-  | {
-      readonly to: "/career/$saveId/season-summary";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | { readonly to: "/career/$saveId/manager"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager/inbox"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager/confidence"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager/notes"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager/jobs"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager/responsibilities"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/manager/career"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/news"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/training"; readonly params: { readonly saveId: SaveId } }
-  | {
-      readonly to: "/career/$saveId/training/workload";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | {
-      readonly to: "/career/$saveId/training/schedule";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | {
-      readonly to: "/career/$saveId/training/coaching";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | {
-      readonly to: "/career/$saveId/training/plan/$playerId";
-      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
-    }
-  | {
-      readonly to: "/career/$saveId/training/development-centre";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | { readonly to: "/career/$saveId/club-info"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/board-confidence"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/finances"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/staff-overview"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/shortlist"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/scouting"; readonly params: { readonly saveId: SaveId } }
-  | {
-      readonly to: "/career/$saveId/scouting-assignment";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | {
-      readonly to: "/career/$saveId/scouting-knowledge";
-      readonly params: { readonly saveId: SaveId };
-    }
-  | { readonly to: "/career/$saveId/player-search"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/staff-search"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/competitions"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-match-tactics"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-substitutions"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-stats"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-ratings"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-home-stats"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-away-stats"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-commentary"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-latest-scores"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-live-table"; readonly params: { readonly saveId: SaveId } }
-  | { readonly to: "/career/$saveId/match-report/$matchId"; readonly params: { readonly saveId: SaveId; readonly matchId: MatchId } }
-  | { readonly to: "/career/$saveId/match-report-latest"; readonly params: { readonly saveId: SaveId } }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/scout-report";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/staff";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/staff/$staffKey";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId; readonly staffKey: string };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/squad";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to: "/career/$saveId/player/$playerId/profile";
-      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
-    }
-  | {
-      readonly to: "/career/$saveId/player/$playerId/development";
-      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
-    }
-  | {
-      readonly to: "/career/$saveId/player/$playerId/contract";
-      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
-    }
-  | {
-      readonly to: "/career/$saveId/player/$playerId/form";
-      readonly params: { readonly saveId: SaveId; readonly playerId: PlayerId };
-    }
-  | {
-      readonly to: "/career/$saveId/player-comparison/$playerIds";
-      readonly params: { readonly saveId: SaveId; readonly playerIds: string };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/information";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/fixtures";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/transfers";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to: "/career/$saveId/club/$clubId/finances";
-      readonly params: { readonly saveId: SaveId; readonly clubId: ClubId };
-    }
-  | {
-      readonly to:
-        | "/career/$saveId/competition/$competitionId/overview"
-        | "/career/$saveId/competition/$competitionId/table"
-        | "/career/$saveId/competition/$competitionId/fixtures"
-        | "/career/$saveId/competition/$competitionId/results";
-      readonly params: { readonly saveId: SaveId; readonly competitionId: CompetitionId };
-    };
-
-/** Pure mapping from a typed destination to its route; unit-tested (AC-14). */
-export const resolveDestination = (destination: NavigationDestination): ResolvedDestination => {
-  switch (destination.type) {
-    case "mainMenu":
-      return { to: "/" };
-    case "loadCareer":
-      return { to: "/load" };
-    case "createLeagues":
-      return { to: "/create/leagues" };
-    case "createStep1":
-      return { to: "/create/step-1" };
-    case "createStep2":
-      return { to: "/create/step-2" };
-    case "createStep3":
-      return { to: "/create/step-3" };
-    case "squad":
-    case "squadStaff":
-    case "squadInformation":
-    case "squadFinances":
-    case "squadHistory":
-    case "tactics":
-    case "tacticsEditor":
-    case "transfers":
-    case "contractExpiry":
-    case "budgetReview":
-    case "transferHistory":
-    case "league":
-    case "fixtures":
-    case "match":
-    case "seasonSummary":
-    case "manager":
-    case "managerInbox":
-    case "managerConfidence":
-    case "managerNotes":
-    case "managerJobs":
-    case "managerResponsibilities":
-    case "managerCareer":
-    case "news":
-    case "training":
-    case "trainingWorkload":
-    case "trainingSchedule":
-    case "trainingCoaching":
-    case "trainingPlan":
-    case "trainingDevelopment":
-    case "clubInfo":
-    case "boardConfidence":
-    case "finances":
-    case "staffOverview":
-    case "shortlist":
-    case "scouting":
-    case "scoutingAssignment":
-    case "scoutingKnowledge":
-    case "playerSearch":
-    case "staffSearch":
-    case "competitions":
-    case "teamScoutReport":
-    case "clubStaff":
-    case "staffProfile":
-    case "clubSquad":
-    case "clubInformation":
-    case "clubFixturesDetail":
-    case "clubTransfersDetail":
-    case "clubFinancesDetail":
-    case "competitionOverview":
-    case "competitionTable":
-    case "competitionFixturesDetail":
-    case "competitionResults":
-    case "playerDetail":
-    case "playerDevelopment":
-    case "playerContract":
-    case "playerForm":
-    case "playerComparison":
-    case "matchMatchTactics":
-    case "matchSubstitutions":
-    case "matchStats":
-    case "matchRatings":
-    case "matchHomeStats":
-    case "matchAwayStats":
-    case "matchReport":
-    case "matchLatestReport":
-    case "matchCommentary":
-    case "matchLatestScores":
-    case "matchLiveTable":
-      return careerRoute(destination);
-  }
+type DestinationRouteBuilder = {
+  readonly [K in NavigationDestination["type"]]: (
+    destination: Extract<NavigationDestination, { readonly type: K }>,
+  ) => LinkOptions;
 };
 
-const careerRoute = (
-  destination: CareerDestination,
-): Extract<ResolvedDestination, { readonly params: { readonly saveId: SaveId } }> => {
-  switch (destination.type) {
-    case "squad":
-      return { to: "/career/$saveId/squad", params: { saveId: destination.saveId } };
-    case "squadStaff":
-      return { to: "/career/$saveId/squad-staff", params: { saveId: destination.saveId } };
-    case "squadInformation":
-      return { to: "/career/$saveId/squad-information", params: { saveId: destination.saveId } };
-    case "squadFinances":
-      return { to: "/career/$saveId/squad-finances", params: { saveId: destination.saveId } };
-    case "squadHistory":
-      return { to: "/career/$saveId/squad-history", params: { saveId: destination.saveId } };
-    case "tactics":
-      return { to: "/career/$saveId/tactics", params: { saveId: destination.saveId } };
-    case "tacticsEditor":
-      return {
-        to: "/career/$saveId/tactics/editor",
-        params: { saveId: destination.saveId },
-      };
-    case "transfers":
-      return { to: "/career/$saveId/transfers", params: { saveId: destination.saveId } };
-    case "contractExpiry":
-      return { to: "/career/$saveId/contract-expiry", params: { saveId: destination.saveId } };
-    case "budgetReview":
-      return { to: "/career/$saveId/budget-review", params: { saveId: destination.saveId } };
-    case "transferHistory":
-      return { to: "/career/$saveId/transfer-history", params: { saveId: destination.saveId } };
-    case "league":
-      return { to: "/career/$saveId/league", params: { saveId: destination.saveId } };
-    case "fixtures":
-      return { to: "/career/$saveId/fixtures", params: { saveId: destination.saveId } };
-    case "match":
-      return { to: "/career/$saveId/match", params: { saveId: destination.saveId } };
-    case "seasonSummary":
-      return {
-        to: "/career/$saveId/season-summary",
-        params: { saveId: destination.saveId },
-      };
-    case "manager":
-      return { to: "/career/$saveId/manager", params: { saveId: destination.saveId } };
-    case "managerInbox":
-      return { to: "/career/$saveId/manager/inbox", params: { saveId: destination.saveId } };
-    case "managerConfidence":
-      return { to: "/career/$saveId/manager/confidence", params: { saveId: destination.saveId } };
-    case "managerNotes":
-      return { to: "/career/$saveId/manager/notes", params: { saveId: destination.saveId } };
-    case "managerJobs":
-      return { to: "/career/$saveId/manager/jobs", params: { saveId: destination.saveId } };
-    case "managerResponsibilities":
-      return { to: "/career/$saveId/manager/responsibilities", params: { saveId: destination.saveId } };
-    case "managerCareer":
-      return { to: "/career/$saveId/manager/career", params: { saveId: destination.saveId } };
-    case "news":
-      return { to: "/career/$saveId/news", params: { saveId: destination.saveId } };
-    case "training":
-      return { to: "/career/$saveId/training", params: { saveId: destination.saveId } };
-    case "trainingWorkload":
-      return {
-        to: "/career/$saveId/training/workload",
-        params: { saveId: destination.saveId },
-      };
-    case "trainingSchedule":
-      return {
-        to: "/career/$saveId/training/schedule",
-        params: { saveId: destination.saveId },
-      };
-    case "trainingCoaching":
-      return {
-        to: "/career/$saveId/training/coaching",
-        params: { saveId: destination.saveId },
-      };
-    case "trainingPlan":
-      return {
-        to: "/career/$saveId/training/plan/$playerId",
-        params: { saveId: destination.saveId, playerId: destination.playerId },
-      };
-    case "trainingDevelopment":
-      return {
-        to: "/career/$saveId/training/development-centre",
-        params: { saveId: destination.saveId },
-      };
-    case "clubInfo":
-      return { to: "/career/$saveId/club-info", params: { saveId: destination.saveId } };
-    case "boardConfidence":
-      return { to: "/career/$saveId/board-confidence", params: { saveId: destination.saveId } };
-    case "finances":
-      return { to: "/career/$saveId/finances", params: { saveId: destination.saveId } };
-    case "staffOverview":
-      return { to: "/career/$saveId/staff-overview", params: { saveId: destination.saveId } };
-    case "shortlist":
-      return { to: "/career/$saveId/shortlist", params: { saveId: destination.saveId } };
-    case "scouting":
-      return { to: "/career/$saveId/scouting", params: { saveId: destination.saveId } };
-    case "scoutingAssignment":
-      return {
-        to: "/career/$saveId/scouting-assignment",
-        params: { saveId: destination.saveId },
-      };
-    case "scoutingKnowledge":
-      return {
-        to: "/career/$saveId/scouting-knowledge",
-        params: { saveId: destination.saveId },
-      };
-    case "playerSearch":
-      return { to: "/career/$saveId/player-search", params: { saveId: destination.saveId } };
-    case "staffSearch":
-      return { to: "/career/$saveId/staff-search", params: { saveId: destination.saveId } };
-    case "competitions":
-      return { to: "/career/$saveId/competitions", params: { saveId: destination.saveId } };
-    case "teamScoutReport":
-      return {
-        to: "/career/$saveId/club/$clubId/scout-report",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "clubStaff":
-      return {
-        to: "/career/$saveId/club/$clubId/staff",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "staffProfile":
-      return {
-        to: "/career/$saveId/club/$clubId/staff/$staffKey",
-        params: {
-          saveId: destination.saveId,
-          clubId: destination.clubId,
-          staffKey: destination.staffKey,
-        },
-      };
-    case "clubSquad":
-      return {
-        to: "/career/$saveId/club/$clubId/squad",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "clubInformation":
-      return {
-        to: "/career/$saveId/club/$clubId/information",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "clubFixturesDetail":
-      return {
-        to: "/career/$saveId/club/$clubId/fixtures",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "clubTransfersDetail":
-      return {
-        to: "/career/$saveId/club/$clubId/transfers",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "clubFinancesDetail":
-      return {
-        to: "/career/$saveId/club/$clubId/finances",
-        params: { saveId: destination.saveId, clubId: destination.clubId },
-      };
-    case "competitionOverview":
-      return {
-        to: "/career/$saveId/competition/$competitionId/overview",
-        params: { saveId: destination.saveId, competitionId: destination.competitionId },
-      };
-    case "competitionTable":
-      return {
-        to: "/career/$saveId/competition/$competitionId/table",
-        params: { saveId: destination.saveId, competitionId: destination.competitionId },
-      };
-    case "competitionFixturesDetail":
-      return {
-        to: "/career/$saveId/competition/$competitionId/fixtures",
-        params: { saveId: destination.saveId, competitionId: destination.competitionId },
-      };
-    case "competitionResults":
-      return {
-        to: "/career/$saveId/competition/$competitionId/results",
-        params: { saveId: destination.saveId, competitionId: destination.competitionId },
-      };
-    case "playerDetail":
-      return {
-        to: "/career/$saveId/player/$playerId/profile",
-        params: { saveId: destination.saveId, playerId: destination.playerId },
-      };
-    case "playerDevelopment":
-      return {
-        to: "/career/$saveId/player/$playerId/development",
-        params: { saveId: destination.saveId, playerId: destination.playerId },
-      };
-    case "playerContract":
-      return {
-        to: "/career/$saveId/player/$playerId/contract",
-        params: { saveId: destination.saveId, playerId: destination.playerId },
-      };
-    case "playerForm":
-      return {
-        to: "/career/$saveId/player/$playerId/form",
-        params: { saveId: destination.saveId, playerId: destination.playerId },
-      };
-    case "playerComparison":
-      return {
-        to: "/career/$saveId/player-comparison/$playerIds",
-        params: {
-          saveId: destination.saveId,
-          playerIds: playerComparisonKey(destination.playerIds),
-        },
-      };
-    case "matchMatchTactics":
-      return { to: "/career/$saveId/match-match-tactics", params: { saveId: destination.saveId } };
-    case "matchSubstitutions":
-      return { to: "/career/$saveId/match-substitutions", params: { saveId: destination.saveId } };
-    case "matchStats":
-      return { to: "/career/$saveId/match-stats", params: { saveId: destination.saveId } };
-    case "matchRatings":
-      return { to: "/career/$saveId/match-ratings", params: { saveId: destination.saveId } };
-    case "matchHomeStats":
-      return { to: "/career/$saveId/match-home-stats", params: { saveId: destination.saveId } };
-    case "matchAwayStats":
-      return { to: "/career/$saveId/match-away-stats", params: { saveId: destination.saveId } };
-    case "matchReport":
-      return {
-        to: "/career/$saveId/match-report/$matchId",
-        params: { saveId: destination.saveId, matchId: destination.matchId },
-      };
-    case "matchLatestReport":
-      return { to: "/career/$saveId/match-report-latest", params: { saveId: destination.saveId } };
-    case "matchCommentary":
-      return { to: "/career/$saveId/match-commentary", params: { saveId: destination.saveId } };
-    case "matchLatestScores":
-      return { to: "/career/$saveId/match-latest-scores", params: { saveId: destination.saveId } };
-    case "matchLiveTable":
-      return { to: "/career/$saveId/match-live-table", params: { saveId: destination.saveId } };
-  }
+const ROUTE_BUILDERS = {
+  mainMenu: () => ({ to: "/" }),
+  loadCareer: () => ({ to: "/load" }),
+  createLeagues: () => ({ to: "/create/leagues" }),
+  createStep1: () => ({ to: "/create/step-1" }),
+  createStep2: () => ({ to: "/create/step-2" }),
+  createStep3: () => ({ to: "/create/step-3" }),
+  squad: (d) => ({ to: "/career/$saveId/squad", params: { saveId: d.saveId } }),
+  squadStaff: (d) => ({ to: "/career/$saveId/squad-staff", params: { saveId: d.saveId } }),
+  squadInformation: (d) => ({
+    to: "/career/$saveId/squad-information",
+    params: { saveId: d.saveId },
+  }),
+  squadFinances: (d) => ({
+    to: "/career/$saveId/squad-finances",
+    params: { saveId: d.saveId },
+  }),
+  squadHistory: (d) => ({ to: "/career/$saveId/squad-history", params: { saveId: d.saveId } }),
+  tactics: (d) => ({ to: "/career/$saveId/tactics", params: { saveId: d.saveId } }),
+  tacticsEditor: (d) => ({ to: "/career/$saveId/tactics/editor", params: { saveId: d.saveId } }),
+  transfers: (d) => ({ to: "/career/$saveId/transfers", params: { saveId: d.saveId } }),
+  contractExpiry: (d) => ({
+    to: "/career/$saveId/contract-expiry",
+    params: { saveId: d.saveId },
+  }),
+  budgetReview: (d) => ({ to: "/career/$saveId/budget-review", params: { saveId: d.saveId } }),
+  transferHistory: (d) => ({
+    to: "/career/$saveId/transfer-history",
+    params: { saveId: d.saveId },
+  }),
+  league: (d) => ({ to: "/career/$saveId/league", params: { saveId: d.saveId } }),
+  fixtures: (d) => ({ to: "/career/$saveId/fixtures", params: { saveId: d.saveId } }),
+  match: (d) => ({ to: "/career/$saveId/match", params: { saveId: d.saveId } }),
+  seasonSummary: (d) => ({
+    to: "/career/$saveId/season-summary",
+    params: { saveId: d.saveId },
+  }),
+  manager: (d) => ({ to: "/career/$saveId/manager", params: { saveId: d.saveId } }),
+  managerInbox: (d) => ({ to: "/career/$saveId/manager/inbox", params: { saveId: d.saveId } }),
+  managerConfidence: (d) => ({
+    to: "/career/$saveId/manager/confidence",
+    params: { saveId: d.saveId },
+  }),
+  managerNotes: (d) => ({ to: "/career/$saveId/manager/notes", params: { saveId: d.saveId } }),
+  managerJobs: (d) => ({ to: "/career/$saveId/manager/jobs", params: { saveId: d.saveId } }),
+  managerResponsibilities: (d) => ({
+    to: "/career/$saveId/manager/responsibilities",
+    params: { saveId: d.saveId },
+  }),
+  managerCareer: (d) => ({ to: "/career/$saveId/manager/career", params: { saveId: d.saveId } }),
+  news: (d) => ({ to: "/career/$saveId/news", params: { saveId: d.saveId } }),
+  training: (d) => ({ to: "/career/$saveId/training", params: { saveId: d.saveId } }),
+  trainingWorkload: (d) => ({
+    to: "/career/$saveId/training/workload",
+    params: { saveId: d.saveId },
+  }),
+  trainingSchedule: (d) => ({
+    to: "/career/$saveId/training/schedule",
+    params: { saveId: d.saveId },
+  }),
+  trainingCoaching: (d) => ({
+    to: "/career/$saveId/training/coaching",
+    params: { saveId: d.saveId },
+  }),
+  trainingPlan: (d) => ({
+    to: "/career/$saveId/training/plan/$playerId",
+    params: { saveId: d.saveId, playerId: d.playerId },
+  }),
+  trainingDevelopment: (d) => ({
+    to: "/career/$saveId/training/development-centre",
+    params: { saveId: d.saveId },
+  }),
+  clubInfo: (d) => ({ to: "/career/$saveId/club-info", params: { saveId: d.saveId } }),
+  boardConfidence: (d) => ({
+    to: "/career/$saveId/board-confidence",
+    params: { saveId: d.saveId },
+  }),
+  finances: (d) => ({ to: "/career/$saveId/finances", params: { saveId: d.saveId } }),
+  staffOverview: (d) => ({ to: "/career/$saveId/staff-overview", params: { saveId: d.saveId } }),
+  shortlist: (d) => ({ to: "/career/$saveId/shortlist", params: { saveId: d.saveId } }),
+  scouting: (d) => ({ to: "/career/$saveId/scouting", params: { saveId: d.saveId } }),
+  scoutingAssignment: (d) => ({
+    to: "/career/$saveId/scouting-assignment",
+    params: { saveId: d.saveId },
+  }),
+  scoutingKnowledge: (d) => ({
+    to: "/career/$saveId/scouting-knowledge",
+    params: { saveId: d.saveId },
+  }),
+  playerSearch: (d) => ({ to: "/career/$saveId/player-search", params: { saveId: d.saveId } }),
+  staffSearch: (d) => ({ to: "/career/$saveId/staff-search", params: { saveId: d.saveId } }),
+  competitions: (d) => ({ to: "/career/$saveId/competitions", params: { saveId: d.saveId } }),
+  teamScoutReport: (d) => ({
+    to: "/career/$saveId/club/$clubId/scout-report",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  clubStaff: (d) => ({
+    to: "/career/$saveId/club/$clubId/staff",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  staffProfile: (d) => ({
+    to: "/career/$saveId/club/$clubId/staff/$staffKey",
+    params: { saveId: d.saveId, clubId: d.clubId, staffKey: d.staffKey },
+  }),
+  clubSquad: (d) => ({
+    to: "/career/$saveId/club/$clubId/squad",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  clubInformation: (d) => ({
+    to: "/career/$saveId/club/$clubId/information",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  clubFixturesDetail: (d) => ({
+    to: "/career/$saveId/club/$clubId/fixtures",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  clubTransfersDetail: (d) => ({
+    to: "/career/$saveId/club/$clubId/transfers",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  clubFinancesDetail: (d) => ({
+    to: "/career/$saveId/club/$clubId/finances",
+    params: { saveId: d.saveId, clubId: d.clubId },
+  }),
+  competitionOverview: (d) => ({
+    to: "/career/$saveId/competition/$competitionId/overview",
+    params: { saveId: d.saveId, competitionId: d.competitionId },
+  }),
+  competitionTable: (d) => ({
+    to: "/career/$saveId/competition/$competitionId/table",
+    params: { saveId: d.saveId, competitionId: d.competitionId },
+  }),
+  competitionFixturesDetail: (d) => ({
+    to: "/career/$saveId/competition/$competitionId/fixtures",
+    params: { saveId: d.saveId, competitionId: d.competitionId },
+  }),
+  competitionResults: (d) => ({
+    to: "/career/$saveId/competition/$competitionId/results",
+    params: { saveId: d.saveId, competitionId: d.competitionId },
+  }),
+  playerDetail: (d) => ({
+    to: "/career/$saveId/player/$playerId/profile",
+    params: { saveId: d.saveId, playerId: d.playerId },
+  }),
+  playerDevelopment: (d) => ({
+    to: "/career/$saveId/player/$playerId/development",
+    params: { saveId: d.saveId, playerId: d.playerId },
+  }),
+  playerContract: (d) => ({
+    to: "/career/$saveId/player/$playerId/contract",
+    params: { saveId: d.saveId, playerId: d.playerId },
+  }),
+  playerForm: (d) => ({
+    to: "/career/$saveId/player/$playerId/form",
+    params: { saveId: d.saveId, playerId: d.playerId },
+  }),
+  playerComparison: (d) => ({
+    to: "/career/$saveId/player-comparison/$playerIds",
+    params: { saveId: d.saveId, playerIds: playerComparisonKey(d.playerIds) },
+  }),
+  matchMatchTactics: (d) => ({
+    to: "/career/$saveId/match-match-tactics",
+    params: { saveId: d.saveId },
+  }),
+  matchSubstitutions: (d) => ({
+    to: "/career/$saveId/match-substitutions",
+    params: { saveId: d.saveId },
+  }),
+  matchStats: (d) => ({ to: "/career/$saveId/match-stats", params: { saveId: d.saveId } }),
+  matchRatings: (d) => ({ to: "/career/$saveId/match-ratings", params: { saveId: d.saveId } }),
+  matchHomeStats: (d) => ({
+    to: "/career/$saveId/match-home-stats",
+    params: { saveId: d.saveId },
+  }),
+  matchAwayStats: (d) => ({
+    to: "/career/$saveId/match-away-stats",
+    params: { saveId: d.saveId },
+  }),
+  matchReport: (d) => ({
+    to: "/career/$saveId/match-report/$matchId",
+    params: { saveId: d.saveId, matchId: d.matchId },
+  }),
+  matchLatestReport: (d) => ({
+    to: "/career/$saveId/match-report-latest",
+    params: { saveId: d.saveId },
+  }),
+  matchCommentary: (d) => ({
+    to: "/career/$saveId/match-commentary",
+    params: { saveId: d.saveId },
+  }),
+  matchLatestScores: (d) => ({
+    to: "/career/$saveId/match-latest-scores",
+    params: { saveId: d.saveId },
+  }),
+  matchLiveTable: (d) => ({
+    to: "/career/$saveId/match-live-table",
+    params: { saveId: d.saveId },
+  }),
+} satisfies DestinationRouteBuilder;
+
+/**
+ * The link a destination resolves to. Derived from the registry, so it is exactly the set of
+ * route-and-parameter shapes the builders produce — never a second, hand-kept list.
+ */
+export type ResolvedDestination = ReturnType<
+  (typeof ROUTE_BUILDERS)[NavigationDestination["type"]]
+>;
+
+/** Resolve a typed destination through the one registry. */
+export const resolveDestination = (destination: NavigationDestination): ResolvedDestination => {
+  const build = ROUTE_BUILDERS[destination.type] as unknown as (
+    destination: NavigationDestination,
+  ) => ResolvedDestination;
+  return build(destination);
 };
