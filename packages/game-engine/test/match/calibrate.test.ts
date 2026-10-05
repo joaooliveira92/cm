@@ -87,7 +87,12 @@ const countEvents = (events: ReadonlyArray<MatchEvent>): MatchCounts => {
 };
 
 describe("calibrate match engine", () => {
-  it("produces average match stats within calibration targets", () => {
+  /**
+   * Reports the averages; it does not assert them. The header's targets are not enforced — the engine
+   * is far off them, and the decision to retune or re-derive the targets is
+   * [match-engine-detail 20](../../../../.scratch/match-engine-detail/issues/20-calibration-harness-asserts-nothing.md).
+   */
+  it("reports average match stats (targets not enforced)", () => {
     const allCounts: Array<MatchCounts> = [];
     for (let i = 0; i < MATCHES_TO_SIMULATE; i++) {
       const seed = SEASON_START_SEED + i;
@@ -97,5 +102,10 @@ describe("calibrate match engine", () => {
       allCounts.push(countEvents(events));
     }
 
-    }, 60000);
+    const avg = (key: keyof MatchCounts) => allCounts.reduce((sum, c) => sum + c[key], 0) / allCounts.length;
+    console.log(
+      `Calibration (${MATCHES_TO_SIMULATE} matches): goals ${avg("goals").toFixed(2)} (target 2.5-2.8), ` +
+        `yellows ${avg("yellowCards").toFixed(2)} (target 3-4), fouls ${avg("fouls").toFixed(1)} (target 20-26)`,
+    );
+  }, 60000);
 });
