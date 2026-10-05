@@ -60,7 +60,7 @@ export const DiscardCareerDialog = ({
   // an effect would record the Keep button and restore focus to a node that no
   // longer exists.
   const openerRef = useRef<Element | null>(null);
-  openerRef.current ??= document.activeElement;
+  if (openerRef.current === null) openerRef.current = document.activeElement;
 
   useEffect(
     () => () => {

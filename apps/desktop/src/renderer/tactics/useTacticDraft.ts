@@ -138,14 +138,17 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
   const autosaving = useRef(false);
 
   /** Resolves `true` when the tactic persisted. */
-  const save = useCallback(async (tactic: Tactic = tacticRef.current): Promise<boolean> => {
+  const save = useCallback(async (tactic?: Tactic): Promise<boolean> => {
+    // The ref read is deferred into the body: a default parameter's `tacticRef.current` is a
+    // member expression the compiler cannot safely reorder.
+    const target = tactic ?? tacticRef.current;
     setStatus("Saving...");
     setConflict(null);
     try {
       // A fresh request id per submit: replaying this exact submit later is a server-side no-op.
       const saved = await saveTactic({
         saveId,
-        tactic,
+        tactic: target,
         expectedRevision: revisionRef.current,
         requestId: WriteRequestId.make(crypto.randomUUID()),
       });
@@ -153,7 +156,7 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
       revisionRef.current = saved.revision;
       setRevision(saved.revision);
       // A newer edit already queued is the draft; the saved one would briefly undo it on screen.
-      if (queuedAutosave.current === null) setDraft(saved.tactic ?? tactic);
+      if (queuedAutosave.current === null) setDraft(saved.tactic ?? target);
       setStatus("Saved.");
       return true;
     } catch (error) {
@@ -192,9 +195,11 @@ export const useTacticDraft = (saveId: SaveId, options: UseTacticDraftOptions) =
         }
       }
       /* oxlint-enable no-await-in-loop */
-    } finally {
+    } catch (error) {
       autosaving.current = false;
+      throw error;
     }
+    autosaving.current = false;
   }, [save]);
 
   const refresh = useCallback(() => {

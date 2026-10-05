@@ -240,10 +240,14 @@ single unblock and touches no schema.
 
 ## Immediate next action
 
-**react-compiler-adoption 01, 02 and 03 resolved 2026-10-05.** 01 cleared 104 `react/refs` findings
+**react-compiler-adoption 01, 02, 03 and 04 resolved 2026-10-05.** 01 cleared 104 `react/refs` findings
 across 17 files; 02 cleared 27 `react/set-state-in-effect` findings across 25 files; 03 cleared 25
 `react/exhaustive-effect-dependencies` findings across 21 files and removed the renderer's 9
-`eslint-disable-line react-hooks/exhaustive-deps` comments. All three rules are `error` with zero
+`eslint-disable-line react-hooks/exhaustive-deps` comments; 04 cleared 14 `react/todo` findings
+(the spec's 19 was stale) by rewriting eight `try/catch/finally` and three `try/finally` handlers to
+put cleanup after the `try/catch` with every control-flow edge preserved, turning a `??=` into an
+`if`, and deferring one default-parameter member read into the body — with the single vendored
+`components/reui/` site exempted by a reasoned override. All four rules are `error` with zero
 findings and `pnpm check:all` is green. See [report](reports/react-compiler-adoption.md). 02's first
 pass hid eight sites behind a microtask and was rejected by review as a lint dodge; the repaired
 version derives the loading state during render from a keyed read store. The 12 vendored
@@ -256,15 +260,13 @@ is buildable; it is no longer a build ticket.
 
 The next open, unblocked, unclaimed build tickets across all live efforts are now:
 
-1. [react-compiler-adoption 04](../.scratch/react-compiler-adoption/issues/04-todo-diagnostics.md) —
-   **`react/todo`**, ready-for-agent.
-2. [react-compiler-adoption 05](../.scratch/react-compiler-adoption/issues/05-memo-dependencies.md) —
+1. [react-compiler-adoption 05](../.scratch/react-compiler-adoption/issues/05-memo-dependencies.md) —
    **`react/memo-dependencies`**, ready-for-agent.
-3. [react-compiler-adoption 07](../.scratch/react-compiler-adoption/issues/07-small-buckets.md) —
+2. [react-compiler-adoption 07](../.scratch/react-compiler-adoption/issues/07-small-buckets.md) —
    **small buckets** (incl. the 12 vendored `rule-suppression` sites), ready-for-agent.
-4. [react-compiler-adoption 08](../.scratch/react-compiler-adoption/issues/08-oxc-transform-react.md) —
+3. [react-compiler-adoption 08](../.scratch/react-compiler-adoption/issues/08-oxc-transform-react.md) —
    **`oxc-transform-react`**, ready-for-agent.
-5. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
+4. [package-extraction 03](../.scratch/package-extraction/issues/03-extract-rpc-client-package.md) —
    **Extract `@cm-clone/rpc-client`**, ready-for-agent, but carries a deliberate
    decide-before-starting caveat.
 

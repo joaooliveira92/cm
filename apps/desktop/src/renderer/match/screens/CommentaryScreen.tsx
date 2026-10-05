@@ -70,16 +70,19 @@ export const MatchCommentaryScreen = ({ saveId }: { readonly saveId: SaveId }) =
       );
       if (Result.isFailure(outcome)) {
         setError(describeRpcError(outcome.failure as RpcClientError<"resumeSimulation">));
-        return;
+      } else {
+        const view = outcome.success;
+        completeRef.current = view.isComplete;
+        cursorRef.current = view.cursor;
+        if (view.lines.length > 0) setLines((prev) => [...prev, ...view.lines]);
       }
-      const view = outcome.success;
-      completeRef.current = view.isComplete;
-      cursorRef.current = view.cursor;
-      if (view.lines.length > 0) setLines((prev) => [...prev, ...view.lines]);
-    } finally {
+    } catch (error) {
       fetchingRef.current = false;
       setLoading(false);
+      throw error;
     }
+    fetchingRef.current = false;
+    setLoading(false);
   }, [saveId, matchId]);
 
   useEffect(() => {

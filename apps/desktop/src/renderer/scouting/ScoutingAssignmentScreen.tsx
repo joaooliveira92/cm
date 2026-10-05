@@ -224,9 +224,8 @@ const Roster = ({
     } catch (error) {
       const typed = error as RpcClientError<"assignScoutToClub" | "unassignScout"> | undefined;
       setFailure(typed?._tag === undefined ? fallback : describeRpcError(typed));
-    } finally {
-      setPending(null);
     }
+    setPending(null);
   };
 
   return (

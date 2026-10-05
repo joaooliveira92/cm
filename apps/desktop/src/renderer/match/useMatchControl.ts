@@ -149,14 +149,19 @@ export const useMatchControl = ({
     if (inFlightRef.current) return null;
     inFlightRef.current = true;
     setStatus(commandStatusLabel({ _tag: "pending" }));
+    const finish = (): void => {
+      inFlightRef.current = false;
+    };
     try {
       const outcome: CommandStatus = await commentaryActions
         .submitCommand(command, isHalftime)
         .catch(() => ({ _tag: "rejected", reason: "Unable to reach the game. Please try again." }) as const);
       setStatus(commandStatusLabel(outcome));
+      finish();
       return outcome;
-    } finally {
-      inFlightRef.current = false;
+    } catch (error) {
+      finish();
+      throw error;
     }
   };
 

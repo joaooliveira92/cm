@@ -198,9 +198,8 @@ export const useLiveMatchCommands = (saveId: SaveId): LiveMatchCommands => {
           _tag: "rejected",
           reason: describeRpcError(error as RpcClientError<"submitMatchCommand">),
         });
-      } finally {
-        inFlight.current = false;
       }
+      inFlight.current = false;
     },
     [view, runCommand, saveId, isHalftime],
   );

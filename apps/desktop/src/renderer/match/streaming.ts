@@ -64,16 +64,16 @@ export const useMatchStreaming = (): void => {
         if (Result.isFailure(outcome)) {
           reportError("Failed to resume match simulation");
           stream.endStream();
-          return;
+        } else {
+          stream.receive(outcome.success, stamp);
+          if (quick) revealBuffered();
         }
-        stream.receive(outcome.success, stamp);
-        if (quick) revealBuffered();
       } catch {
         reportError("Failed to resume match simulation");
         stream.endStream();
-      } finally {
-        stream.endFetch();
       }
+      stream.endFetch();
+      // A failed read calls `endStream`, so `streamEnded()` gates this tail: nothing more is polled.
       // A quick result has no pacing worth honouring: read to the end of the match, revealing as it goes.
       if (quick && active && !stream.streamEnded()) await poll();
     };

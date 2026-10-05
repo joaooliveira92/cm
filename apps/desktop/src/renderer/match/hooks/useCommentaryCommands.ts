@@ -48,6 +48,7 @@ export const useCommentaryCommands = ({
       const actedOn = pending();
       const stamp = stream.stamp();
       stream.beginCommand(stamp);
+      let status: CommandStatus;
       try {
         const result = await runCommand({
           saveId,
@@ -62,20 +63,22 @@ export const useCommentaryCommands = ({
         });
         resolve(actedOn);
         read.commanded(result, stamp);
-        return resolveCommandStatus(command, result);
+        status = resolveCommandStatus(command, result);
       } catch (error) {
         const typed = error as RpcClientError<"submitMatchCommand"> | undefined;
-        if (typed?._tag === "RemoteFailure") return { _tag: "rejected" as const, reason: describeRpcError(typed) };
         // A transport or decode failure, or anything else the call threw: the command did not reach the
         // match. Report it as rejected rather than rejecting the promise into an unhandled path.
-        return { _tag: "rejected" as const, reason: "Unable to reach the game. Please try again." };
-      } finally {
-        // The half-played line is after the revealed position, so the read from it sends that event
-        // again, resimulated. Playing on would reveal it twice.
-        stream.setPlaying(null);
-        stream.endCommand();
-        stream.rewindTo(revealedEvents);
+        status =
+          typed?._tag === "RemoteFailure"
+            ? { _tag: "rejected" as const, reason: describeRpcError(typed) }
+            : { _tag: "rejected" as const, reason: "Unable to reach the game. Please try again." };
       }
+      // The half-played line is after the revealed position, so the read from it sends that event
+      // again, resimulated. Playing on would reveal it twice.
+      stream.setPlaying(null);
+      stream.endCommand();
+      stream.rewindTo(revealedEvents);
+      return status;
     },
     [saveId, match, runCommand, minute, pending, resolve, stream, read],
   );

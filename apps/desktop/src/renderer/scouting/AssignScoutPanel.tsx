@@ -92,9 +92,8 @@ export const AssignScoutPanel = ({
     } catch (error) {
       const typed = error as RpcClientError<"assignScoutToClub"> | undefined;
       setFailure(typed?._tag === undefined ? "The scout could not be assigned." : describeRpcError(typed));
-    } finally {
-      setPending(null);
     }
+    setPending(null);
   };
 
   return (

@@ -58,7 +58,7 @@
     "react/refs": "error",
     "react/set-state-in-effect": "error",
     "react/exhaustive-effect-dependencies": "error",
-    "react/todo": "warn",
+    "react/todo": "error",
     "react/memo-dependencies": "warn",
     "react/hooks": "error",
     "react/immutability": "warn",
@@ -116,6 +116,18 @@
       ],
       "rules": {
         "no-console": "error"
+      }
+    },
+    {
+      // Vendored reui components are kept whole so every upstream re-sync is not a hand merge
+      // (scripts/effect-lint.ts FILE_LENGTH_EXEMPTIONS). The compiler-unsupported constructs they
+      // carry (a `??=` logical assignment, and the `-next-line` suppressions ticket 07 owns) are
+      // accepted rather than edited back in; ticket 07 extends this block for its own vendored rule.
+      "files": [
+        "apps/desktop/src/renderer/components/reui/**"
+      ],
+      "rules": {
+        "react/todo": "off"
       }
     }
   ],

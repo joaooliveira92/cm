@@ -51,9 +51,8 @@ export const SaveGameAction = ({ saveId }: { readonly saveId: SaveId }) => {
           ? "The game could not be saved. Please try again."
           : describeRpcError(error as RpcClientError<"saveCareer">),
       );
-    } finally {
-      setPending(false);
     }
+    setPending(false);
   };
 
   return (

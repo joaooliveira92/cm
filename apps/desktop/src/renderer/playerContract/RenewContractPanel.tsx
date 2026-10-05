@@ -59,9 +59,8 @@ export const RenewContractPanel = ({
       await renew({ saveId, playerId, years });
     } catch (error) {
       setFailure(refusalOf(error as RpcClientError<"renewContract"> | undefined));
-    } finally {
-      setPending(false);
     }
+    setPending(false);
   };
 
   return (
