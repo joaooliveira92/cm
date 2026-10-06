@@ -79,6 +79,14 @@ effort because 13 spec files happened to be next in the queue.
 
 ## Answer
 
+> **Superseded in part, 2026-10-06.** The human reversed this answer for one case: the post-match
+> press conference (part of Screen 182) enters v1 as flavour, with no consequence model. The other
+> twelve screens and the rest of 182 stay out. That reversal is a fresh effort, as this answer
+> requires: [post-match press conference](../../post-match-press-conference/map.md), and its
+> [Agent Note](../../../.agents/notes/proposed/feature/2026-10-06-post-match-press-conference-enters-v1.md).
+> The CONTEXT.md amendments below still land with the first code.
+
+
 **Option A: the exclusion stands. Group M is out of v1.** Decided by the human on 2026-09-18, in
 line with this ticket's recommendation.
 

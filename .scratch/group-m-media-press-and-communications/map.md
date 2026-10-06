@@ -57,7 +57,8 @@ overturns the exclusion.
   the exclusion stands, all 13 screens stay out of v1, CONTEXT.md is unchanged because it was
   already right. Reopening would be a programme (reputation, morale, consequence decider,
   persistence, balance, a finer Calendar), not a group, and would require amending CONTEXT.md in the
-  same commit as the first code.
+  same commit as the first code. *Superseded in part on 2026-10-06*: the post-match press conference
+  enters v1 as flavour, charted separately as [post-match press conference](../post-match-press-conference/map.md).
 
 ## Not yet specified
 
