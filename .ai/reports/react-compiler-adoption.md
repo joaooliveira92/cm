@@ -58,8 +58,8 @@ what was **observed**, not what was expected.
 
 | Gate | Command | Result |
 |---|---|---|
-| check:all | `pnpm check:all` | **green** on the final tree — `✓ typecheck ✓ lint ✓ effect-lint ✓ verify-md-links ✓ verify-db-schema ✓ test`; desktop 336 files / 2825 passed / 5 skipped |
-| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 22 failed / 76 passed, **pre-existing** (ticket 01 verified by stash-and-rebuild; tickets 02 and 04 are renderer-only with no e2e-reachable path changed — ticket 04's count was re-observed unchanged) |
+| check:all | `pnpm check:all` | **green** on the final tree — `✓ typecheck ✓ lint ✓ effect-lint ✓ verify-md-links ✓ verify-db-schema ✓ test`; desktop 337 files / 2826 passed / 5 skipped |
+| e2e | `pnpm --filter @cm-clone/desktop test:e2e` | 22 failed / 76 passed, **pre-existing** (ticket 01 verified by stash-and-rebuild; tickets 02, 04 and 05 are renderer-only with no e2e-reachable path changed — ticket 04's count was re-observed unchanged) |
 | determinism | — | not applicable — no simulation, seeding or Player Development touched |
 | save compatibility | — | not applicable — no persistence or schema touched |
 
@@ -89,6 +89,15 @@ failure branch became an `else` and its recursive quick-poll tail moved after `e
 gated by `!stream.streamEnded()` (`stream.ts:137-140`), which a failed read sets. No player-visible or
 seeded outcome changes; no saves affected.
 
+Ticket 05: mostly none. Two memos gained a dependency: `PlayerSearchScreen`'s toolbar memos now depend
+on `submit`/`choosePosition` — **a stale-memo fix**, since the toolbar's "Search players" button
+previously submitted the query captured at first render (proved failing-first by the new
+`player-search-toolbar.test.tsx`); and `SquadTable`'s toolbar memo now depends on `view` instead of
+`view.layout`, which is lint-required but behaviour-neutral today because the memo already re-runs on
+its per-render `onSortCycle`. `useCommentaryFeed`'s `read`/`reveal`/`resume` widened to whole
+`ledger`/`feed`, whose only consumer holds them in refs, so the stream port is still minted once.
+Every other dep added is a ref, a `useState` setter, a stable prop, or a module-level value.
+
 ## Decision records
 
 - ADRs added: none
@@ -107,10 +116,16 @@ seeded outcome changes; no saves affected.
 
 ## Deferred and known limitations
 
-- Remaining React Compiler buckets (`memo-dependencies`, the small buckets) and
-  `oxc-transform-react` stay at `warn`; tickets 05, 07 and 08 of this effort.
+- Remaining React Compiler buckets (the small buckets, `oxc-transform-react`); tickets 07 and 08 of
+  this effort.
 - Ticket 04 records one vendored `components/reui/**` `react/todo` exemption in `.oxlintrc.json`;
-  ticket 07 extends that block for the 12 vendored `rule-suppression` sites.
+  ticket 05 adds a second for `react/memo-dependencies` on the same block. Ticket 07 extends that
+  block for the 12 vendored `rule-suppression` sites.
+- Ticket 05 surfaced a **pre-existing** defect it did not fix (out of scope, recorded per
+  AUTONOMOUS-AGENT § Failure policy): `PlayerSearchScreen`'s `choosePosition` re-search builds its
+  query from the render's `position` closure rather than the `value` it just set
+  (`PlayerSearchScreen.tsx:126-131`), so the actions-row Position filter re-searches with the
+  previous filter. Needs a follow-up bug ticket in whatever effort owns Player Search.
 - Reviewer low-severity note on ticket 02: `useBoundMatchRead.bindingKey` and
   `useLiveMatchCommands.attemptKey` now include `saveId` (hardened during this session); the `live`
   flag remains covered by key change.
@@ -143,3 +158,12 @@ before commit**; a one-assignment `finish` helper in `useMatchControl` (left, ju
 `endFetch()` invariant in `streaming.ts` is now call-signature-dependent rather than `finally`-guaranteed
 (latent, unreachable today); and the new test covers the non-`quick` path, not the `quick` tail or the
 `catch` branch (coverage gap, no wrong behaviour untested). None is a gate.
+
+**Ticket 05** — verdict **APPROVE**, no blocker/high. The reviewer traced every changed dep against
+its consumer and reproduced the baseline (20 findings / 12 files). One medium: the Answer called two
+memos behaviour-neutral when `PlayerSearchScreen`'s was a reachable stale-memo bug. Repaired before
+commit — the player-search test was added (fails on the unfixed memo), the Answer corrected, and the
+baseline count fixed 13 → 12. The reviewer's stated `SquadTable` symptom did **not** reproduce: the
+memo already re-runs on its per-render `onSortCycle`, so the `view` dep is lint-required but
+behaviour-neutral and no test was added (a vacuous one is worse than none). One low pre-existing bug
+routed separately: `choosePosition` re-searches with the pre-change `position`.
