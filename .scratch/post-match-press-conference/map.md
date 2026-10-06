@@ -35,6 +35,9 @@ ticket here treats "Continue visible and enabled after Accept" as an invariant.
   conference, each with three answers in different tones. An answered conference is one match-stream
   event, read back as a `result` News Message. A skip records nothing; a pending conference does not
   survive a restart; there is no Pillar binding.
+- [02: What do real post-match press conferences ask?](issues/02-what-post-match-press-conferences-ask.md):
+  eight trigger groups a recorded match can detect, twelve answer registers, and a list of topics
+  real conferences raise that no match record can trigger. Frequencies are not sourced.
 
 ## Not yet specified
 

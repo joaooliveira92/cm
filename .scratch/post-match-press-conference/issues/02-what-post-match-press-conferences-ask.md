@@ -2,6 +2,7 @@
 
 Type: research
 Blocked by: None
+Status: resolved
 
 ## Question
 
@@ -14,3 +15,12 @@ sources: published transcripts and club or league press-conference write-ups. Au
 and no counts; this grounds ticket 03.
 
 Output: one research note under `docs/research/`.
+
+## Answer
+
+**Eight detectable trigger groups (result and margin, late or decisive goal, scorer milestones,
+dismissals, injury, refereeing decisions, League position and form, opponent standing) and twelve
+answer registers, with the topics no match record can trigger listed separately.** Findings, not a
+decision, so no Agent Note: see [the research note](../../../docs/research/post-match-press-conference-questions.md),
+including its Gaps section (question wording is rarely published verbatim; no source gives trigger
+frequencies; coverage leans on the English top flight).
