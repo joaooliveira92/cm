@@ -53,7 +53,7 @@ export const STATE_COPY: Readonly<Record<(typeof TABLE_STATE_COPY_TABLES)[number
   },
 };
 
-/** The number of active (non-trivial) filter clauses — position always counts,
+/** The number of active (non-trivial) filter clauses — position and status always count,
  *  an empty name search does not (it would otherwise report a filter that is
  *  inert). Serves `NoFilterResults.activeFilterCount` and the "Clear filters"
  *  affordance. */

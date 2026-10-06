@@ -10,6 +10,9 @@ These package rules supplement the repo-wide [conventions](../AGENTS.md). They a
   `Schema.Class` payload/view/error shared between renderer and main process. The wire shape's
   single source of truth: when a wire field changes, this package changes in the same commit as the
   callers.
+- [content/](content/) — the static content catalogue: league packs, clubs, cities, nations, name
+  pools, the league-setup data and its read helpers, plus `compareCodeUnits`. No Effect/Node/React
+  and no dependency on `shared`; `shared` depends on it.
 - [game-engine/](game-engine/) — pure, DB-agnostic decider/projector/match-sim logic. No Electron,
   no SQLite. Unit-testable in isolation.
 - [shared/](shared/) — game-design constants and pure functions with **no Effect/Node dependency**:

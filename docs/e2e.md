@@ -1,7 +1,7 @@
 # E2E suite
 
-Playwright + Electron tests for the desktop app. Two suites, canonical spec at
-`.scratch/e2e-coverage/spec.md`.
+Playwright + Electron tests for the desktop app. Two suites. The canonical spec came from the
+`e2e-coverage` effort, since archived out of the working tree; it is recoverable from git history.
 
 ## Smoke — `e2e/app.spec.ts`
 
@@ -15,8 +15,8 @@ Season Summary asserts its verdict, but only against a seeded save.
 | Tactics | `getTactics` | "Tactics" heading + 11 slot rows |
 | League Table | `getLeagueTable` | "League Table" heading + 20-row table |
 | Fixtures | `getFixtures` | "Fixtures" heading + fixture list |
-| Match Day | `listOpponentClubs` + `startMatch` + `resumeSimulation` | match header + feed; toggle control panel, submit a command, assert status text (never commentary/scores) |
-| Transfers | `getTransfersScreen` | budget line + Market & Free Agents sections |
+| Match Day | `startMatch` + `resumeSimulation` + `commitMatchday` | match header + feed; toggle control panel, submit a command, assert status text (never commentary/scores) |
+| Transfers | `getTransfersScreen` | budget line + one tab per table, opening on Market |
 | Season Summary | `getSeasonSummary` | verdict against a seeded save |
 
 ## Journey suite — `e2e/journeys.spec.ts`
@@ -37,7 +37,14 @@ a `.sqlite` into the test's temp saves dir — no checked-in fixture binaries. F
 
 ## Reliability contract
 
-`retries: 2` (CI), `timeout: 30_000`, `workers: 1`, `fullyParallel: false`.
+`retries: 2` (CI), `timeout: 45_000`, `workers: 1`, `fullyParallel: false`.
+
+**The machine stays awake for the run.** On macOS, `e2e/globalSetup.ts` holds `caffeinate -d -i`
+for as long as the runner lives. An idle Mac otherwise turns its display off and then sleeps, which
+freezes the app under test. The spec in flight then fails on waking, as a closed page, a `g`-prefix
+indicator that never clears, or a fixture teardown past the test timeout. A long sleep can also
+leave the rest of the run to the global timeout. Before blaming a red run on the code, check
+`pmset -g log` for a sleep inside its time window (desktop-suite-red 17).
 
 **Why structural-only:** the app has no deterministic sim seed, so Match Day outcomes and any evolved
 table/budget value are non-deterministic. Smoke asserts the deterministic surface; seeded journeys

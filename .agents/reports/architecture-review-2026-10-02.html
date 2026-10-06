@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Architecture Review — 2026-10-02</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11.6.0/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad:true,theme:"neutral",themeVariables:{fontSize:"14px"}})</script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:opsz,wght@400,500,600,700&display=swap');
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    .badge {
+      @apply inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold;
+    }
+    .card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(420px, 1fr));
+      gap: 1.5rem;
+    }
+    .code-fade {
+      background: linear-gradient(to bottom, #1e293b 0%, #1e293b 60%, transparent 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+  </style>
+</head>
+<body class="bg-slate-900 text-slate-100 antialiased">
+
+  <div class="max-w-7xl mx-auto px-6 py-10">
+
+    <!-- Header -->
+    <header class="mb-10">
+      <div class="flex items-baseline gap-3 mb-2">
+        <h1 class="text-3xl font-bold tracking-tight text-white">Architecture Review</h1>
+        <span class="text-sm text-slate-400">2026-10-02</span>
+      </div>
+      <p class="text-lg text-slate-300 max-w-2xl">
+        Auditing <strong class="text-sky-300">cm-clone</strong> for deepening opportunities — modules whose interface
+        is nearly as complex as their implementation, mixed concerns, and files approaching the
+        <code class="text-amber-300">600-line ceiling</code>.
+      </p>
+      <div class="flex flex-wrap gap-3 mt-4 text-sm">
+        <span class="bg-slate-700 px-3 py-1 rounded-full">301K total lines</span>
+        <span class="bg-slate-700 px-3 py-1 rounded-full">~228K source lines</span>
+        <span class="bg-slate-700 px-3 py-1 rounded-full">570+ source files</span>
+        <span class="bg-slate-700 px-3 py-1 rounded-full">30% churn in match/ engine</span>
+      </div>
+    </header>
+
+    <!-- Top Recommendation -->
+    <section class="mb-14">
+      <h2 class="text-2xl font-semibold text-white mb-1">Top Recommendation</h2>
+      <p class="text-slate-400 text-sm mb-6">Which candidate to tackle first, and why.</p>
+
+      <div class="bg-gradient-to-r from-amber-900/20 to-amber-700/10 border border-amber-500/30 rounded-2xl p-6">
+        <div class="flex items-start gap-4">
+          <div class="text-4xl shrink-0">⚡</div>
+          <div>
+            <h3 class="text-xl font-bold text-amber-200">tacticLibrary.ts — 19 lines from the ceiling</h3>
+            <p class="mt-2 text-slate-200">
+              <code class="text-amber-300">apps/desktop/src/main/club/tacticLibrary.ts</code> (581 lines)
+              mixes DB queries, tactic serialization, thumbnail management, and AI tactic decision-making.
+              It is 19 lines from the 600-line <code class="text-amber-300">effect-lint</code> ceiling.
+              The next feature that touches it will either blow past the gate or require a rushed split.
+            </p>
+            <p class="mt-2 text-slate-200">
+              Extraction path: the AI tactic selection functions belong in
+              <code class="text-sky-300">packages/shared/src/rules/</code> or
+              <code class="text-sky-300">packages/game-engine/src/</code>;
+              the DB orchestration stays in the main process. Tests for the extracted functions become
+              pure logic tests that need no DB harness.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Candidates -->
+    <section>
+      <h2 class="text-2xl font-semibold text-white mb-1">Candidates</h2>
+      <p class="text-slate-400 text-sm mb-6">10 deepening opportunities, ordered by priority.</p>
+
+      <div class="card-grid">
+
+        <!-- ============================================================ -->
+        <!-- CARD 1: tacticLibrary.ts -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-amber-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Strong</span>
+              <span class="text-slate-400 text-xs">581 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">tacticLibrary.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/main/club/tacticLibrary.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              DB queries, tactic serialisation, thumbnail management, AI tactic decisions — all in one module.
+              19 lines from the 600-line gate. Ad-hoc mix of concerns rather than a factored seam.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Shallow: the public surface exposes DB + logic + AI as one unit</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> No locality: changing AI selection means touching a file in the Electron main process</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Tests require a DB harness even for pure logic</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Extract AI tactic selection functions into <code class="text-amber-300">packages/shared/src/rules/aiTactics.ts</code>
+              (which already exists at 394 lines — merge or reference). Keep DB orchestration + serialisation + thumbnails in main.
+            </p>
+
+            <div class="bg-slate-700/50 rounded-lg p-3 mt-2">
+              <div class="mermaid shrink-0">
+                flowchart LR
+                  subgraph0["Before"]
+                    TL["tacticLibrary.ts<br/><i>DB + serialization + AI + thumbnails</i>"]
+                  end
+                  subgraph1["After"]
+                    TL_DB["tacticLibrary.ts<br/><i>DB + serialization + thumbnails</i>"]
+                    AI["packages/shared/rules/aiTactics.ts<br/><i>AI selection (pure)</i>"]
+                  end
+                  TL_DB -.->|"imports"| AI
+              </div>
+            </div>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Leverage</strong> — AI tactics become testable without DB setup</li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — changing the AI heuristic touches only the rule module</li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Interface</strong> — the main-process seam narrows to "call aiTactics.perform"</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 2: rpc/queries.ts -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-amber-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Strong</span>
+              <span class="text-slate-400 text-xs">591 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">rpc/queries.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/renderer/rpc/queries.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              9 lines from the ceiling. Highly repetitive <code class="text-amber-300">Atom.family</code> pattern,
+              one per query. When a new screen needs a new query, this file grows.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Repetitive boilerplate — each query is structurally identical</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Single file is a merge magnet for parallel work on different screens</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Generate from a declarative query table, or split into domain files
+              (<code class="text-amber-300">queries/squad.ts</code>, <code class="text-amber-300">queries/season.ts</code>…).
+            </p>
+
+            <div class="bg-slate-700/50 rounded-lg p-3 mt-2">
+              <div class="mermaid shrink-0">
+                flowchart LR
+                  subgraph0["Before"]
+                    Q["queries.ts (591L)<br/>all query atoms"]
+                  end
+                  subgraph1["After"]
+                    SQ["queries/squad.ts"]
+                    SEQ["queries/season.ts"]
+                    TQ["queries/transfers.ts"]
+                    MQ["queries/match.ts"]
+                  end
+              </div>
+            </div>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — squad changes touch squads queries only</li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Leverage</strong> — parallel work on different screens no longer conflicts</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 3: commentary.ts (shallow module) -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-emerald-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Worth exploring</span>
+              <span class="text-slate-400 text-xs">411 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">commentary.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">packages/game-engine/src/match/commentary.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              A <strong>shallow module</strong>: mostly re-exports from <code class="text-amber-300">commentarySections.ts</code>
+              with some rendering logic mixed in. Callers import from here, but the real types live in the sibling file.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Barrel pattern with implementation — re-exports <code class="text-amber-300">~10</code> symbols that come from <code class="text-amber-300">commentarySections.ts</code></li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> A new contributor must check both files to understand the dependency graph</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Remove the re-exports. Have callers import directly from the module that owns the type.
+              Or consolidate: merge <code class="text-amber-300">commentarySections.ts</code> into
+              <code class="text-amber-300">commentary.ts</code> if the split doesn't earn its weight.
+            </p>
+
+            <div class="bg-slate-700/50 rounded-lg p-3 mt-2">
+              <div class="mermaid shrink-0">
+                flowchart LR
+                  subgraph0["Before"]
+                    C["commentary.ts<br/><i>rendering + re-exports</i>"] --> CS["commentarySections.ts<br/><i>types &amp; constants</i>"]
+                    CAL["caller"] --> C
+                  end
+                  subgraph1["After"]
+                    C2["commentary.ts<br/><i>rendering only</i>"]
+                    CS2["commentarySections.ts<br/><i>types &amp; constants</i>"]
+                    CAL2["caller"] --> CS2
+                    CAL2 --> C2
+                  end
+              </div>
+            </div>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — the dependency graph tells the truth</li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Interface</strong> — each module says what it owns</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 4: FormationPitch.tsx -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-emerald-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Worth exploring</span>
+              <span class="text-slate-400 text-xs">527 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">FormationPitch.tsx</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/renderer/tactics/FormationPitch.tsx</p>
+            <p class="text-slate-400 text-sm mb-3">
+              Embeds inline SVG pitch markings, drag-drop interaction handlers, marker positioning math,
+              and caption rendering — all in one component.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Raw SVG markup mixed with React interaction handlers</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Marker positioning + caption layout is a separate concern from the pitch visual</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Hard to test the pitch rendering independent of interaction logic</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Extract <code class="text-amber-300">PitchMarkings</code> SVG to its own file
+              (<code class="text-amber-300">PitchBackground.tsx</code>).
+              Separate marker layout math from the render component.
+            </p>
+
+            <div class="bg-slate-700/50 rounded-lg p-3 mt-2">
+              <div class="mermaid shrink-0">
+                flowchart LR
+                  subgraph0["Before"]
+                    FP["FormationPitch.tsx<br/><i>SVG + drag-drop + markers + captions</i>"]
+                  end
+                  subgraph1["After"]
+                    FP2["FormationPitch.tsx<br/><i>orchestration</i>"]
+                    PB["PitchBackground.tsx<br/><i>SVG markings</i>"]
+                    ML["markerLayout.ts<br/><i>positioning math</i>"]
+                    Cap["CaptionRenderer.tsx<br/><i>captions</i>"]
+                    FP2 --> PB
+                    FP2 --> ML
+                    FP2 --> Cap
+                  end
+              </div>
+            </div>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — the SVG specialist owns the pitch visual</li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Testability</strong> — marker math testable without a React render pass</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 5: useCreateSession.ts -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-emerald-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Worth exploring</span>
+              <span class="text-slate-400 text-xs">573 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">useCreateSession.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/renderer/create/useCreateSession.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              Creation-flow orchestrator. Already has 5 sub-hooks but the "stitching layer" is 573 lines.
+              Mixes bottom-bar state, navigation guards, RPC, generation state.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Orchestrator re-accumulated responsibilities after decomposition</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Bottom-bar plan and step guards are inline rather than in sub-hooks</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Extract bottom-bar plan construction and step guard logic into their own modules.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — guards and bottom-bar plan live where they are set</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 6: useSquadScreen.ts -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-emerald-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Worth exploring</span>
+              <span class="text-slate-400 text-xs">565 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">useSquadScreen.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/renderer/squad/useSquadScreen.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              Header says "decomposed into 6 sub-hooks" but still 565 lines.
+              The stitch layer may have organicially grown back.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> <strong>Deletion test</strong>: removing the stitch layer would concentrate its decisions into 6 places — a sign it is not truly shallow yet</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Audit each stitch. If a stitch is a one-line delegate, inline it and remove the indirection.
+              If a stitch has its own domain logic, keep it and remove the stitch.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — decisions live where they are made, not forwarded</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 7: season/advance.ts -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-emerald-600 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Worth exploring</span>
+              <span class="text-slate-400 text-xs">418 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">season/advance.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/main/season/advance.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              Calendar advancement orchestrator mixing DB access, AI transfer windows, scouting progress,
+              fitness recovery, cup round management, and the advance lock.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> <strong>Shallow</strong>: one function per subsystem, but all live in the same file</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> No <strong>locality</strong>: touching scouting means opening the season advance file</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> The corresponding test file (<code class="text-amber-300">advance.test.ts</code>, 587 lines) is a known CI bottleneck</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Decompose into a pipeline: each step (<code class="text-amber-300">resolveFixtures</code>,
+              <code class="text-amber-300">applyFitnessRecovery</code>, <code class="text-amber-300">advanceScouting</code>,
+              <code class="text-amber-300">processAIWindows</code>) gets its own file.
+              The pipeline orchestrator coordinates them.
+            </p>
+
+            <div class="bg-slate-700/50 rounded-lg p-3 mt-2">
+              <div class="mermaid shrink-0">
+                flowchart LR
+                  subgraph0["Before"]
+                    A["advance.ts<br/><i>all steps inline</i>"]
+                  end
+                  subgraph1["After"]
+                    A2["advance.ts<br/><i>pipeline</i>"]
+                    FR["fitnessRecovery.ts"]
+                    SC["scoutingAdvance.ts"]
+                    AI["aiTransferWindows.ts"]
+                    A2 --> FR
+                    A2 --> SC
+                    A2 --> AI
+              </div>
+            </div>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — each subsystem step lives with its own domain</li>
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Leverage</strong> — the test file can be split along the same seams</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 8: setPieceResolvers.ts -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-slate-500 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Speculative</span>
+              <span class="text-slate-400 text-xs">432 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">simulate/setPieceResolvers.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">packages/game-engine/src/match/simulate/setPieceResolvers.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              Orchestrates corner kicks, free kicks, and penalty resolution. The core math lives in sibling
+              files (<code class="text-amber-300">cornerPlan.ts</code>, <code class="text-amber-300">freeKickPlan.ts</code>)
+              but the resolution selection and outcome dispatch are here.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Multiple resolution strategies (corners, free kicks, penalties) share one file</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> The split between "plan" and "resolver" is not consistently applied — some logic could move</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Evaluate whether each resolution strategy earns its own file. If the resolvers are thin wrappers
+              around the plan files, this may be fine; if they accumulate conditionals, split.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — all corner logic lives in one place</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 9: SquadTable.tsx -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-slate-500 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Speculative</span>
+              <span class="text-slate-400 text-xs">508 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">SquadTable.tsx</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">apps/desktop/src/renderer/squad/SquadTable.tsx</p>
+            <p class="text-slate-400 text-sm mb-3">
+              High-churn UI file (10th most-changed) at 508 lines. Renders the squad table with
+              sorting, filtering, column management.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> High churn rate means this file is a frequent merge conflict site</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> The data-grid library is vendored — any squad-specific customisations here are hard to maintain</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Monitor growth. If it crosses 600 lines, split column definitions into
+              <code class="text-amber-300">squadColumns.tsx</code> (which already exists at 393 lines)
+              and move the table body rendering there.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — column definitions live with the column module</li>
+            </ul>
+          </div>
+        </div>
+
+        <!-- ============================================================ -->
+        <!-- CARD 10: resolvers.ts (exempted, monitor) -->
+        <!-- ============================================================ -->
+        <div class="bg-slate-800 rounded-xl border border-slate-600 overflow-hidden">
+          <div class="p-5">
+            <div class="flex items-center gap-3 mb-3">
+              <span class="badge bg-slate-500 text-white px-3 py-0.5 rounded-full text-xs font-semibold">Speculative</span>
+              <span class="text-slate-400 text-xs">681 lines</span>
+            </div>
+            <h3 class="text-lg font-semibold text-white">simulate/resolvers.ts</h3>
+            <p class="text-slate-300 text-xs font-mono mb-3">packages/game-engine/src/match/simulate/resolvers.ts</p>
+            <p class="text-slate-400 text-sm mb-3">
+              Exempted from the 600-line ceiling — "tactics-to-engine resolution boundary."
+              Contains 6+ resolution functions in one file (phase strengths, team tactics,
+              team instructions, slot behaviours, team modifiers).
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">problem</h4>
+            <ul class="text-slate-400 text-xs space-y-1 mb-3">
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> Currently exempted, but 6 resolution functions in one file is a shallow interface</li>
+              <li class="flex items-start gap-1.5"><span class="text-rose-400">•</span> If any function grows independently, the exemption should be revisited</li>
+            </ul>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">solution</h4>
+            <p class="text-slate-400 text-xs mb-3">
+              Monitor. Tag each function with a comment documenting its seam. If a function crosses
+              100 lines or gains a second caller, split into its own file.
+            </p>
+
+            <h4 class="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">benefits</h4>
+            <ul class="text-slate-400 text-xs space-y-1">
+              <li class="flex items-start gap-1.5"><span class="text-emerald-400">✓</span> <strong>Locality</strong> — keeping the seam documented makes future splits predictable</li>
+            </ul>
+          </div>
+        </div>
+
+      </div><!-- /.card-grid -->
+    </section>
+
+    <!-- Large test files note -->
+    <section class="mt-14">
+      <h2 class="text-2xl font-semibold text-white mb-1">Also: Large Test Files</h2>
+      <p class="text-slate-400 text-sm mb-6">Test files over 500 lines that serialise the test runner (per AGENTS.md).</p>
+
+      <div class="overflow-auto rounded-xl border border-slate-600">
+        <table class="min-w-full text-sm bg-slate-800">
+          <thead class="bg-slate-700 text-slate-300 text-xs uppercase tracking-wider">
+            <tr><th class="px-4 py-2 text-left">File</th><th class="px-4 py-2 text-left">Lines</th><th class="px-4 py-2 text-left">Risk</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-600">
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">packages/shared/test/news/newsProjection.test.ts</td><td class="px-4 py-2">595</td><td class="px-4 py-2 text-amber-400">Single worker — serialises suite</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">apps/desktop/test/renderer/table/grid-navigation.test.tsx</td><td class="px-4 py-2">588</td><td class="px-4 py-2 text-amber-400">Single worker — serialises suite</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">apps/desktop/test/main/season/advance.test.ts</td><td class="px-4 py-2">587</td><td class="px-4 py-2 text-amber-400">Single worker — serialises suite</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">apps/desktop/test/renderer/match/streaming-integration.test.tsx</td><td class="px-4 py-2">570</td><td class="px-4 py-2 text-amber-400">Single worker — serialises suite</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">apps/desktop/test/renderer/tactics/tactics-overview.test.tsx</td><td class="px-4 py-2">507</td><td class="px-4 py-2 text-amber-300">Approaching threshold</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">apps/desktop/test/main/match/commands.test.ts</td><td class="px-4 py-2">503</td><td class="px-4 py-2 text-amber-300">Approaching threshold</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2 font-mono">apps/desktop/test/renderer/squad/match-day-bar.test.tsx</td><td class="px-4 py-2">502</td><td class="px-4 py-2 text-amber-300">Approaching threshold</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p class="text-slate-400 text-xs mt-4">
+        The <code class="text-amber-300">season.test.ts → 8 files</code> precedent cut suite time from 992s to 508s.
+        Same logic applies to these files.
+      </p>
+    </section>
+
+    <!-- Churn heatmap -->
+    <section class="mt-14">
+      <h2 class="text-2xl font-semibold text-white mb-1">Churn Heatmap</h2>
+      <p class="text-slate-400 text-sm mb-6">Most-changed source files over the last 3 months.</p>
+
+      <div class="overflow-auto rounded-xl border border-slate-600">
+        <table class="min-w-full text-sm bg-slate-800">
+          <thead class="bg-slate-700 text-slate-300 text-xs uppercase tracking-wider">
+            <tr><th class="px-4 py-2 text-left">Rank</th><th class="px-4 py-2 text-left">File</th><th class="px-4 py-2 text-left">Note</th></tr>
+          </thead>
+          <tbody class="divide-y divide-slate-600">
+            <tr class="text-slate-300"><td class="px-4 py-2">1</td><td class="px-4 py-2 font-mono">packages/contracts/src/rpc.ts</td><td class="px-4 py-2 text-sky-300">Registry — exempted, expected churn</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">2</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/rpc.ts</td><td class="px-4 py-2">RPC seam</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">3</td><td class="px-4 py-2 font-mono">apps/desktop/src/main/rpc/rpcServer.ts</td><td class="px-4 py-2">Handler dispatch — 658 lines, exempted</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">4</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/router/index.tsx</td><td class="px-4 py-2 text-sky-300">Registry — exempted, expected churn</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">5</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/navigation/adapter.ts</td><td class="px-4 py-2">Navigation adapter</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">6</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/navigation/destinations.ts</td><td class="px-4 py-2 text-sky-300">Registry — exempted, expected churn</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">7</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/chrome/CareerChrome.tsx</td><td class="px-4 py-2">Shell chrome — high churn for a chrome file</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">8</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/actions/allActions.ts</td><td class="px-4 py-2">Action registry</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">9</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/rpc/queries.ts</td><td class="px-4 py-2 text-rose-400">9 lines from ceiling + high churn</td></tr>
+            <tr class="text-slate-300"><td class="px-4 py-2">10</td><td class="px-4 py-2 font-mono">apps/desktop/src/renderer/squad/SquadTable.tsx</td><td class="px-4 py-2 text-amber-400">508 lines, high churn</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Methodology -->
+    <footer class="mt-14 pt-8 border-t border-slate-600">
+      <div class="grid grid-cols-3 gap-6 text-xs text-slate-500">
+        <div>
+          <h5 class="font-semibold text-slate-400 mb-1">Heuristics</h5>
+          <ul class="space-y-1">
+            <li>File length (>500 lines flagged)</li>
+            <li>Effect-lint 600-line ceiling</li>
+            <li>Mixed concerns per module</li>
+            <li>Git churn frequency</li>
+            <li>Shallow interface (deletion test)</li>
+          </ul>
+        </div>
+        <div>
+          <h5 class="font-semibold text-slate-400 mb-1">Checked</h5>
+          <ul class="space-y-1">
+            <li>570+ source files scanned</li>
+            <li>All 40+ files >400 lines</li>
+            <li>effect-lint.ts exemption list</li>
+            <li>3 months of git history</li>
+          </ul>
+        </div>
+        <div>
+          <h5 class="font-semibold text-slate-400 mb-1">Seen but filtered</h5>
+          <ul class="space-y-1">
+            <li>Vendored reui (data-grid, event-calendar)</li>
+            <li>Registries (router, destinations, rpc)</li>
+            <li>Generated / pinned (schema, migrations)</li>
+            <li>external-reference/</li>
+          </ul>
+        </div>
+      </div>
+    </footer>
+
+  </div><!-- /.max-w-7xl -->
+</body>
+</html>

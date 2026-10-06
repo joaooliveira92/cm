@@ -1,0 +1,452 @@
+import { useId, useRef, useState, type DragEvent, type KeyboardEvent, type MouseEvent } from "react";
+import type { PlayerId, SquadPlayerView, TacticSlot } from "@cm-clone/contracts";
+import { DEFAULT_SUB, slotLabel, type Slot } from "@cm-clone/shared";
+import { useOptionalClubColours } from "../chrome/CareerStateProvider.js";
+import { FOCUS_RING } from "../focus.js";
+import { captionShift, markerBox, markerName, pitchInfoLine } from "./markerLayout.js";
+import { markerKitStyle } from "./markerKit.js";
+import { PitchBackground } from "./PitchBackground.js";
+import {
+  NO_GRAB,
+  arrowStepOf,
+  cellStepMove,
+  eligibleCells,
+  intentAt,
+  intentKey,
+  moveFor,
+  nudgeMove,
+  occupiedLabels,
+  runTargetCells,
+  type DropIntent,
+  type GrabOffset,
+  type PitchPoint,
+  type PitchState,
+  type SlotMove,
+} from "./pitchMoves.js";
+import { cellAt, pitchLayout, type PitchSpot } from "./pitchLayout.js";
+
+/** The drag channel a marker's slot index rides in; nothing else is exchanged. */
+const SLOT_DRAG = "application/x-cm-tactic-slot";
+
+const draggedSlotOf = (event: DragEvent): number | null => {
+  const raw = event.dataTransfer.getData(SLOT_DRAG);
+  return raw === "" ? null : Number(raw);
+};
+
+/** Where on the pitch a drag's pointer is, in the percent box `pitchLayout` draws in, or `null` on a
+ *  pitch that has not been laid out yet. */
+const pointOnPitch = (event: MouseEvent<HTMLElement>, grab: GrabOffset): PitchPoint | null => {
+  const box = event.currentTarget.getBoundingClientRect();
+  if (box.width === 0 || box.height === 0) return null;
+  return {
+    x: ((event.clientX - grab.x - box.left) / box.width) * 100,
+    y: ((event.clientY - grab.y - box.top) / box.height) * 100,
+    width: box.width,
+    height: box.height,
+  };
+};
+
+/** The run arrows' drawing box: the pitch's own 68:100 shape, so an arrowhead is not skewed the way
+ *  a box stretched from 100x100 would skew it. `x` is percent of the width, scaled into it. */
+const ARROW_BOX_WIDTH = 68;
+
+/** How far short of the target cell's centre an arrow stops, in the box's units: about a disc's
+ *  radius, so the head is not hidden under a marker standing in that cell. */
+const ARROW_GAP = 2.4;
+
+const RunArrow = ({
+  from,
+  to,
+  head,
+  preview = false,
+}: {
+  readonly from: PitchSpot;
+  readonly to: Slot;
+  /** The id of the `<marker>` that draws the arrowhead. */
+  readonly head: string;
+  readonly preview?: boolean;
+}) => {
+  const target = pitchLayout([{ cell: to, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0]!;
+  const x1 = (from.x / 100) * ARROW_BOX_WIDTH;
+  const dx = (target.x / 100) * ARROW_BOX_WIDTH - x1;
+  const dy = target.y - from.y;
+  const length = Math.hypot(dx, dy);
+  if (length <= ARROW_GAP) return null;
+  const reach = (length - ARROW_GAP) / length;
+  return (
+    <line
+      data-run-arrow={preview ? "preview" : "set"}
+      x1={x1}
+      y1={from.y}
+      x2={x1 + dx * reach}
+      y2={from.y + dy * reach}
+      stroke="var(--color-pitch-line)"
+      strokeOpacity={preview ? 0.6 : 1}
+      strokeWidth="1.25"
+      strokeDasharray="4 3"
+      markerEnd={`url(#${head})`}
+      // Dashes are kept in screen pixels, so they read the same on any size of pitch.
+      vectorEffect="non-scaling-stroke"
+    />
+  );
+};
+
+/**
+ * The Tactic's starting eleven drawn on a pitch, attacking up the screen. The markers are an
+ * ordered list in slot order, so a screen reader hears the same eleven the pickers name.
+ *
+ * Extends the existing drag-and-drop with CM 03/04-style interaction:
+ * - Clicking a marker selects that slot (highlighted with a ring)
+ * - Clicking an empty cell moves the selected slot's player there
+ * - Runs are shown as dashed arrows; with a slot selected, pressing the right mouse button aims one
+ *   at the cell under the pointer and releasing sets it (releasing on the slot's own cell clears it)
+ * - Keyboard: arrows pick a marker, Shift+arrows move it a cell (swapping with a slot already
+ *   there, as a drop does), Alt+arrows nudge it within its cell, R sets a run, Escape deselects
+ */
+export const FormationPitch = ({
+  formation,
+  slots,
+  assignments,
+  squadById,
+  selectedSlot,
+  onSelectSlot,
+  onSwap,
+  onMove,
+  onToggleRun,
+  pitchView,
+}: {
+  readonly formation: string;
+  readonly slots: ReadonlyArray<TacticSlot>;
+  readonly assignments: ReadonlyArray<PlayerId>;
+  readonly squadById: ReadonlyMap<string, SquadPlayerView>;
+  readonly selectedSlot: number | null;
+  readonly onSelectSlot: (slotIndex: number | null) => void;
+  readonly onSwap: (from: number, to: number) => void;
+  readonly onMove: (slotIndex: number, cell: Slot, subRow?: number, subCol?: number) => void;
+  readonly onToggleRun: (slotIndex: number, target: Slot | null) => void;
+  readonly pitchView?: { readonly position: boolean; readonly fit: boolean; readonly condition: boolean };
+}) => {
+  const spots = pitchLayout(slots);
+  const clubColours = useOptionalClubColours();
+  const [dragging, setDragging] = useState<number | null>(null);
+  const [intent, setIntent] = useState<DropIntent>(null);
+  const [runMode, setRunMode] = useState(false);
+  /** The cell a right-button press is aiming the selected slot's run at, while the button is held. */
+  const [aim, setAim] = useState<Slot | null>(null);
+  const grab = useRef<GrabOffset>(NO_GRAB);
+
+  const hasPlayer = (slotIndex: number) => squadById.has(assignments[slotIndex]!);
+  const state: PitchState = { slots, spots, hasPlayer };
+
+  /** Hands a rule's verdict to the screen's callbacks, so a drag and a key change the eleven the
+   *  same way. */
+  const apply = (move: SlotMove | null): void => {
+    if (move === null) return;
+    if (move.kind === "swap") onSwap(move.from, move.to);
+    else onMove(move.slotIndex, move.cell, move.subRow, move.subCol);
+  };
+
+  /** The cells already occupied by a slot — used to draw empty-cell indicators. */
+  const occupied = occupiedLabels(slots);
+  const selectedCell = selectedSlot === null ? null : slots[selectedSlot]!.cell;
+
+  const endDrag = () => {
+    grab.current = NO_GRAB;
+    setDragging(null);
+    setIntent(null);
+  };
+
+  // While a move is previewed the dragged marker is drawn where it would land.
+  const shown =
+    dragging !== null && intent?.kind === "place"
+      ? pitchLayout(
+          slots.map((slot, index) =>
+            index === dragging
+              ? { cell: intent.zone.cell, subRow: intent.zone.subRow, subCol: intent.zone.subCol }
+              : slot,
+          ),
+        )
+      : spots;
+
+  const keyHintId = useId();
+  const arrowHeadId = useId();
+
+  const aimAt = (event: MouseEvent<HTMLElement>): Slot | null => {
+    const point = pointOnPitch(event, NO_GRAB);
+    return point === null ? null : cellAt(point.x, point.y);
+  };
+
+  const releaseAim = (event: MouseEvent<HTMLElement>) => {
+    if (selectedSlot === null || aim === null) return;
+    const target = aimAt(event) ?? aim;
+    setAim(null);
+    setRunMode(false);
+    const own = slots[selectedSlot]!.cell;
+    onToggleRun(selectedSlot, target.row === own.row && target.column === own.column ? null : target);
+  };
+
+  const handleKeyDown = (event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      onSelectSlot(null);
+      setRunMode(false);
+      return;
+    }
+    const step = arrowStepOf(event.key);
+    if (selectedSlot === null) {
+      if (step !== undefined) {
+        event.preventDefault();
+        onSelectSlot(0);
+      }
+      return;
+    }
+    if (event.key === "r" || event.key === "R") {
+      event.preventDefault();
+      if (slots[selectedSlot]!.run !== null) {
+        onToggleRun(selectedSlot, null);
+        setRunMode(false);
+      } else {
+        setRunMode(!runMode);
+      }
+      return;
+    }
+    if (event.key === "Enter") {
+      event.preventDefault();
+      onSelectSlot(null);
+      return;
+    }
+    if (step === undefined) return;
+    event.preventDefault();
+    if (event.shiftKey) apply(cellStepMove(selectedSlot, step, state));
+    else if (event.altKey) apply(nudgeMove(selectedSlot, step, state));
+    else onSelectSlot((selectedSlot + (step.row < 0 || step.column > 0 ? 1 : -1) + slots.length) % slots.length);
+  };
+
+  return (
+    <div
+      data-testid="formation-pitch"
+      className="pitch-grass @container relative mx-auto aspect-[68/100] w-[min(100cqw,68cqh)] shrink-0 overflow-hidden rounded-panel border border-panel-border-dark shadow-panel"
+      tabIndex={0}
+      aria-describedby={keyHintId}
+      onKeyDown={handleKeyDown}
+      onContextMenu={(event) => event.preventDefault()}
+      onMouseDown={(event) => {
+        if (event.button !== 2 || selectedSlot === null) return;
+        event.preventDefault();
+        setAim(aimAt(event));
+      }}
+      onMouseMove={(event) => {
+        if (aim === null) return;
+        const next = aimAt(event);
+        if (next !== null && slotLabel(next) !== slotLabel(aim)) setAim(next);
+      }}
+      onMouseUp={(event) => {
+        if (event.button === 2) releaseAim(event);
+      }}
+      onMouseLeave={() => setAim(null)}
+      onDragOver={(event) => {
+        const next = intentAt(pointOnPitch(event, grab.current), dragging, state);
+        if (next !== null) {
+          event.preventDefault();
+          event.dataTransfer.dropEffect = "move";
+        }
+        setIntent((current) => (intentKey(current) === intentKey(next) ? current : next));
+      }}
+      onDragLeave={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setIntent(null);
+      }}
+      onDrop={(event) => {
+        event.preventDefault();
+        const from = draggedSlotOf(event) ?? dragging;
+        const drop = intentAt(pointOnPitch(event, grab.current), from, state);
+        endDrag();
+        apply(from === null ? null : moveFor(drop, from, state));
+      }}
+    >
+      <PitchBackground />
+
+      {/* Runs: dashed arrows from each slot to its run target, and the one being aimed */}
+      <svg aria-hidden="true" className="pointer-events-none absolute inset-0 size-full" viewBox={`0 0 ${ARROW_BOX_WIDTH} 100`}>
+        <defs>
+          <marker
+            id={arrowHeadId}
+            viewBox="0 0 4 4"
+            refX="3.5"
+            refY="2"
+            markerWidth="2.2"
+            markerHeight="2.2"
+            markerUnits="userSpaceOnUse"
+            orient="auto"
+          >
+            <path d="M0.5,0.5 L3.5,2 L0.5,3.5" fill="none" stroke="var(--color-pitch-line)" strokeWidth="0.6" strokeLinecap="round" />
+          </marker>
+        </defs>
+        {slots.map((slot, index) =>
+          slot.run === null || (aim !== null && index === selectedSlot) ? null : (
+            <RunArrow key={index} from={spots[index]!} to={slot.run} head={arrowHeadId} />
+          ),
+        )}
+        {aim !== null && selectedSlot !== null && <RunArrow from={spots[selectedSlot]!} to={aim} head={arrowHeadId} preview />}
+      </svg>
+
+      {/* Empty cells as clickable targets when a slot is selected: unmarked until hovered, so a selection doesn't ring the whole pitch */}
+      {selectedSlot !== null && !runMode && (
+        <>
+          {eligibleCells(selectedCell, occupied).map((cell) => {
+            const spot = pitchLayout([{ cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
+            if (spot === undefined) return null;
+            return (
+              <button
+                key={slotLabel(cell)}
+                type="button"
+                aria-label={`Move to ${slotLabel(cell)}`}
+                tabIndex={-1}
+                onClick={() => onMove(selectedSlot, cell, DEFAULT_SUB, DEFAULT_SUB)}
+                className={`absolute flex size-7 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 border-dashed border-transparent bg-transparent text-caption font-bold text-text-muted transition-colors hover:border-text-bright hover:text-text-bright ${FOCUS_RING.join(" ")}`}
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+              >
+                <span className="sr-only">{slotLabel(cell)}</span>
+              </button>
+            );
+          })}
+        </>
+      )}
+
+      {/* Run mode: clicking an eligible cell sets the run target */}
+      {runMode && selectedSlot !== null && (
+        <>
+          {runTargetCells(slots[selectedSlot]!.cell).map((cell) => {
+            const spot = pitchLayout([{ cell, subRow: DEFAULT_SUB, subCol: DEFAULT_SUB }])[0];
+            if (spot === undefined) return null;
+            const alreadyOccupied = occupied.has(slotLabel(cell));
+            return (
+              <button
+                key={slotLabel(cell)}
+                type="button"
+                aria-label={alreadyOccupied ? `Run to ${slotLabel(cell)}` : `Run to empty ${slotLabel(cell)}`}
+                tabIndex={-1}
+                onClick={() => {
+                  onToggleRun(selectedSlot, cell);
+                  setRunMode(false);
+                }}
+                className={`absolute flex size-8 -translate-x-1/2 -translate-y-1/2 cursor-pointer items-center justify-center rounded-full border-2 ${
+                  alreadyOccupied
+                    ? "border-text-highlight bg-text-highlight/10 text-text-highlight"
+                    : "border-dashed border-text-warning/70 bg-text-warning/10 text-text-warning"
+                } text-caption font-bold transition-colors hover:border-text-warning hover:bg-text-warning/20 ${FOCUS_RING.join(" ")}`}
+                style={{ left: `${spot.x}%`, top: `${spot.y}%` }}
+              >
+                {slotLabel(cell)}
+              </button>
+            );
+          })}
+        </>
+      )}
+
+      <ol aria-label={`${formation} on the pitch`} className="absolute inset-0">
+        {shown.map(({ slotIndex, x, y }) => {
+          const slot = slots[slotIndex]!;
+          const player = squadById.get(assignments[slotIndex]!);
+          const isKeeper = slot.cell.row === "GK";
+          const isDragged = dragging === slotIndex;
+          const landing = isDragged && shown !== spots;
+          const swapTarget = intent?.kind === "swap" && intent.slotIndex === slotIndex;
+          const isSelected = selectedSlot === slotIndex;
+          const hasRun = slot.run !== null;
+
+          // While dragged, the marker names the cell it would land in and the fit there, so a drop
+          // across a row's boundary shows before the release.
+          const cell = landing && intent?.kind === "place" ? intent.zone.cell : slot.cell;
+          const pitchInfo = player ? pitchInfoLine(player, cell, pitchView) : null;
+          const caption = landing ? [slotLabel(cell), pitchInfo].filter((part) => part !== null).join(" · ") : pitchInfo;
+
+          return (
+            <li
+              key={slotIndex}
+              data-landing={landing || undefined}
+              data-selected={isSelected || undefined}
+              className={`absolute -translate-x-1/2 ${
+                // The landing preview tracks the pointer, so it must not ease behind it.
+                isDragged ? "" : "transition-[left,top] duration-200 ease-out motion-reduce:transition-none"
+              }`}
+              style={markerBox(x, y)}
+            >
+              <button
+                type="button"
+                tabIndex={-1}
+                draggable={player !== undefined || !isKeeper}
+                data-action-id="swap-slot-players"
+                data-slot-index={slotIndex}
+                aria-label={`Slot ${slotIndex + 1}, ${slotLabel(slot.cell)}: ${
+                  player === undefined ? "unassigned" : `${player.firstName} ${player.lastName}`
+                }${hasRun ? `, runs to ${slotLabel(slot.run)}` : ""}. Click to select.`}
+                className={`flex w-full cursor-pointer flex-col items-center rounded-control transition-opacity ${
+                  isDragged && !landing ? "opacity-40" : ""
+                } ${FOCUS_RING.join(" ")}`}
+                onClick={() => {
+                  onSelectSlot(slotIndex);
+                }}
+                onDragStart={(event) => {
+                  const disc = event.currentTarget.querySelector("[data-disc]")?.getBoundingClientRect();
+                  grab.current =
+                    disc === undefined || disc.width === 0
+                      ? NO_GRAB
+                      : {
+                          x: event.clientX - (disc.left + disc.width / 2),
+                          y: event.clientY - (disc.top + disc.height / 2),
+                        };
+                  event.dataTransfer.effectAllowed = "move";
+                  event.dataTransfer.setData(SLOT_DRAG, String(slotIndex));
+                  setDragging(slotIndex);
+                }}
+                onDragEnd={endDrag}
+              >
+                {/* Numbered disc */}
+                <span
+                  aria-hidden="true"
+                  data-disc
+                  style={landing || player === undefined ? undefined : markerKitStyle(clubColours, isKeeper)}
+                  className={`relative flex size-7 items-center justify-center rounded-full border-2 text-caption font-bold tabular-nums text-text-bright shadow-panel transition-transform ${
+                    landing
+                      ? "border-dashed border-text-bright bg-pitch-marker/60"
+                      : player === undefined
+                      ? "border-dashed border-text-bright/70 bg-transparent"
+                      : `${clubColours === null ? "border-cm-title" : ""} ${isKeeper ? "bg-pitch-marker-gk" : "bg-pitch-marker"}`
+                  } ${swapTarget ? "scale-125 ring-2 ring-text-bright" : ""} ${
+                    isSelected ? "ring-2 ring-focus-ring ring-offset-2 ring-offset-bg-base scale-110" : ""
+                  }`}
+                >
+                  {slotIndex + 1}
+                </span>
+                {/* Caption, pulled inward by however much of it would hang past a touchline */}
+                <span aria-hidden="true" className="flex w-full flex-col items-center" style={{ transform: captionShift(x) }}
+>
+                  {/* Surname, First initial */}
+                  <span className="mt-0.5 max-w-full truncate text-caption font-semibold text-text-bright [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
+                    {player === undefined ? slotLabel(slot.cell) : markerName(player)}
+                  </span>
+                  {/* Fit word as non-colour indicator */}
+                  {caption !== null && (
+                    <span className="max-w-full truncate text-caption text-text-secondary [text-shadow:0_1px_2px_rgb(0_0_0/0.8)]">
+                      {caption}
+                    </span>
+                  )}
+                </span>
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+
+      {/* The pitch's keyboard description, for a screen reader only: CM draws no help over the grass */}
+      <p id={keyHintId} className="sr-only">
+        {runMode ? (
+          "Run mode: click a cell to set the run, Esc to cancel"
+        ) : selectedSlot !== null ? (
+          "Shift+arrows move a cell, Alt+arrows nudge, R sets a run, right-click a cell to aim a run there, click a free cell to move there"
+        ) : (
+          "Arrow keys pick a player on the pitch"
+        )}
+      </p>
+    </div>
+  );
+};

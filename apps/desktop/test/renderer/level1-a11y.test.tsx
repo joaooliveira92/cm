@@ -1,0 +1,495 @@
+import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { ClubId, FixtureId, MatchId, SaveId } from "@cm-clone/contracts";
+import {
+  BUILT_IN_TEMPLATES,
+  FAMILIARITY_TIERS,
+  GOALKEEPING_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
+  OUTFIELD_ATTRIBUTES,
+  POSITIONS,
+  STATURE_TIERS,
+  tacticFromTemplate,
+} from "@cm-clone/shared";
+import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
+import { FixturesScreen } from "../../src/renderer/fixtures/FixturesScreen.js";
+import { SeasonSummaryScreen } from "../../src/renderer/seasonSummary/SeasonSummaryScreen.js";
+import { ManagerIdentityStep } from "../../src/renderer/create/ManagerIdentityStep.js";
+import { CreateSessionContext } from "../../src/renderer/router/createSessionContext.js";
+import type { CreateSessionApi, ManagerSubStep } from "../../src/renderer/router/createSessionContext.js";
+import { TacticsScreen } from "../../src/renderer/tactics/TacticsScreen.js";
+import { RegisteredScreenBar } from "./registered-screen-bar.js";
+import { TransfersScreen } from "../../src/renderer/transfers/TransfersScreen.js";
+import { MatchDayScreen } from "../../src/renderer/match/MatchDayScreen.js";
+import { setActiveMatch, clearActiveMatch } from "../../src/renderer/match/session.js";
+import { saveSquadViewId } from "../../src/renderer/squad/squadViews.js";
+import { RegistryProvider } from "../../src/renderer/rpc.js";
+import { renderInRouter } from "../setup/renderInRouter.js";
+import { MATCH_COLOURS } from "./match/matchColours.js";
+import { positionSummaryFor } from "../setup/positionFixtures.js";
+
+const rid = (s: string) => SaveId.make(s);
+
+const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
+  (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
+};
+
+const NOT_FOUND = { _tag: "SaveNotFoundError", id: rid("s1") };
+
+const attributes = (value: number): Record<string, number> => ({
+  ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, value])),
+  ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((a) => [a, value])),
+  ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((a) => [a, value])),
+});
+
+const playerRow = (id: string, name: string) => ({
+  id: rid(id),
+  firstName: name,
+  lastName: "Player",
+  dateOfBirth: "1990-01-01",
+  age: 25,
+  attributes: attributes(12),
+  positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
+  ...positionSummaryFor(POSITIONS[2]),
+  overallRating: 80,
+  positionRatings: { ST: 12 },
+  cellRatings: {},
+  suitability: {},
+  retrainingTarget: null,
+  condition: 100,
+  trainingFocus: null,
+  nationality: "England",
+  birthplace: "London",
+  foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
+});
+
+const squadView = (players: ReturnType<typeof playerRow>[]) => ({
+  club: { id: rid("me"), name: "Test FC", statureTier: STATURE_TIERS[0] },
+  players,
+});
+
+const fixturesView = () => ({
+  season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-01", phase: "in_season" as const },
+  fixtures: [
+    {
+      // A fixture's key is an integer now, and it carries the date it is played on and its
+      // competition-local round.
+      id: 1,
+      round: 1,
+      date: "2026-08-01",
+      homeClubId: rid("home"),
+      homeClubName: "Home FC",
+      awayClubId: rid("away"),
+      awayClubName: "Away FC",
+      homeGoals: null,
+      awayGoals: null,
+      played: false,
+    },
+  ],
+});
+
+const seasonSummaryView = () => ({
+  season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2027-05-26", phase: "season_complete" as const },
+  standings: [],
+  clubId: rid("me"),
+  clubName: "My Club",
+  finalPosition: 4,
+  boardObjective: null,
+  managerOutcome: "none" as const,
+  consecutiveMisses: 0,
+  archivedCause: null,
+});
+
+const transfersView = () => ({
+  club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
+  season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-01", phase: "in_season" as const },
+  windowOpen: true,
+  transferBudgetRemaining: 500000,
+  wageBudget: 1000000,
+  wageBudgetUsed: 300000,
+  incomingBids: [
+    {
+      id: rid("in-1"),
+      playerId: rid("p-in"),
+      playerName: "Incoming",
+      sellingClubId: rid("me"),
+      sellingClubName: "My Club",
+      biddingClubId: rid("other"),
+      biddingClubName: "Other FC",
+      amount: 100,
+      counterAmount: null,
+      status: "pending" as const,
+    },
+  ],
+  outgoingBids: [],
+  freeAgents: [
+    {
+      id: rid("fa"),
+      firstName: "Free",
+      lastName: "Agent",
+      age: 24,
+      clubId: null,
+      clubName: null,
+      overallRating: { _tag: "exact", value: 78 },
+      transferValue: { _tag: "exact", value: 1200000 },
+      positions: [],
+      positionLabel: "",
+      canPlay: [],
+      positionOrder: 0,
+    },
+  ],
+  marketPlayers: [
+    {
+      id: rid("mp"),
+      firstName: "Market",
+      lastName: "Player",
+      age: 24,
+      clubId: rid("club-mp"),
+      clubName: "Club MP",
+      overallRating: { _tag: "exact", value: 78 },
+      transferValue: { _tag: "exact", value: 1200000 },
+      positions: [],
+      positionLabel: "",
+      canPlay: [],
+      positionOrder: 0,
+    },
+  ],
+});
+
+const tacticsView = () => ({
+  club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
+  squad: [],
+  tactic: null,
+  revision: 0,
+});
+
+const noSubs = () => ({
+  used: 0,
+  remaining: 5,
+  windowsUsed: 0,
+  windowsRemaining: 3,
+  capReached: false,
+});
+
+const resumedMatch = () => ({
+  saveId: rid("s1"),
+  match: {
+    matchId: MatchId.make("m1"),
+    fixtureId: FixtureId.make(1),
+    homeClubId: ClubId.make("home"),
+    homeClubName: "Home FC",
+    awayClubId: ClubId.make("away"),
+    awayClubName: "Away FC",
+    ...MATCH_COLOURS,
+    isHome: true,
+  },
+  // The session is mid-stream: `resumedMatch` stands in for a live resume, which is the
+  // phase the control panel stays mounted in.
+  phase: "live" as const,
+});
+
+// The Squad screen opens on the position list; these are the table layout's
+// focus tests, so they pin the view that draws a table.
+beforeEach(() => {
+  saveSquadViewId("general");
+});
+
+afterEach(() => {
+  cleanup();
+  clearActiveMatch(rid("s1"));
+  window.localStorage.clear();
+});
+
+describe("AC-22 — level 1: correct tab order, visible focus ring, Enter/Space on every control", () => {
+  it("Squad roving grid exposes exactly one tab stop into the row sequence", async () => {
+    mockPreload(async (method) =>
+      method === "getSquad"
+        ? ({ _tag: "Success", value: squadView([playerRow("p1", "Alan"), playerRow("p2", "Bob"), playerRow("p3", "Cal")]) } as never)
+        : ({ _tag: "Failure", error: NOT_FOUND } as never),
+    );
+    renderInRouter(
+      <RegistryProvider>
+        <SquadScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByText(/Alan Player/);
+    // Stage 5 (AC-28) moved the roving tab stop from the `<tr>` onto the
+    // per-row player-name button — one focusable control per row, never a bare
+    // `<tr tabindex=0>`. `data-focus-id` now lives on that button.
+    const nameButtons = [...document.querySelectorAll("button[data-focus-id]")];
+    expect(nameButtons.length).toBe(3);
+    const tabStops = nameButtons.filter((b) => b.getAttribute("tabindex") === "0");
+    expect(tabStops.length).toBe(1);
+  });
+
+  it("ArrowDown roves focus to the next row and swaps the active tab stop (AC-21 roving)", async () => {
+    mockPreload(async (method) =>
+      method === "getSquad"
+        ? ({ _tag: "Success", value: squadView([playerRow("p1", "Alan"), playerRow("p2", "Bob"), playerRow("p3", "Cal")]) } as never)
+        : ({ _tag: "Failure", error: NOT_FOUND } as never),
+    );
+    renderInRouter(
+      <RegistryProvider>
+        <SquadScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByText(/Alan Player/);
+    const tbody = document.querySelector("tbody")!;
+    tbody.focus();
+
+    // Focus the first row's name button, then press ArrowDown.
+    const firstRow = document.querySelector('[data-focus-id="squad.squadTable.p1"]') as HTMLElement;
+    firstRow.focus();
+    fireEvent.keyDown(tbody, { key: "ArrowDown" });
+    expect(document.activeElement?.getAttribute("data-focus-id")).toBe("squad.squadTable.p2");
+    const tabStops = [...document.querySelectorAll("button[data-focus-id]")].filter(
+      (b) => b.getAttribute("tabindex") === "0",
+    );
+    expect(tabStops.length).toBe(1);
+    expect(tabStops[0]!.getAttribute("data-focus-id")).toBe("squad.squadTable.p2");
+  });
+
+  it("Squad rows carry the :focus-visible ring treatment", async () => {
+    mockPreload(async (method) =>
+      method === "getSquad"
+        ? ({ _tag: "Success", value: squadView([playerRow("p1", "Alan")]) } as never)
+        : ({ _tag: "Failure", error: NOT_FOUND } as never),
+    );
+    renderInRouter(
+      <RegistryProvider>
+        <SquadScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByText(/Alan Player/);
+    const row = document.querySelector('[data-focus-id="squad.squadTable.p1"]')!;
+    expect(row.className).toContain("focus-visible:ring-2");
+  });
+
+  it("the read-only Fixtures screen exposes a focusable main region with the ring", async () => {
+    mockPreload(async (method) => {
+      if (method === "getFixtures") return { _tag: "Success", value: fixturesView() } as never;
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <FixturesScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByText(/Home FC vs Away FC/);
+    const main = document.querySelector("main") as HTMLElement;
+    expect(main.tabIndex).toBe(-1);
+    expect(main.className).toContain("focus-visible:ring-2");
+    // Ticket 06: the read-only main is the screen's arrival target — it carries
+    // the screen identity AND the name an assistive user actually hears.
+    expect(main.dataset.focusId).toBe("fixtures");
+    expect(main.getAttribute("aria-label")).toBe("Fixtures");
+    main.focus();
+    expect(main).toBe(document.activeElement);
+  });
+
+  it("the read-only Season Summary screen exposes a focusable main region with the ring", async () => {
+    mockPreload(async (method) => {
+      if (method === "getSeasonSummary") return { _tag: "Success", value: seasonSummaryView() } as never;
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <SeasonSummaryScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    await screen.findByText(/Final League position/);
+    const main = document.querySelector("main") as HTMLElement;
+    expect(main.tabIndex).toBe(-1);
+    expect(main.className).toContain("focus-visible:ring-2");
+    expect(main.dataset.focusId).toBe("seasonSummary");
+    expect(main.getAttribute("aria-label")).toBe("Season Summary");
+    main.focus();
+    expect(main).toBe(document.activeElement);
+  });
+
+  it("ManagerIdentityStep: every control is natively focusable with the ring, inputs first in tab order", () => {
+    const api: CreateSessionApi = {
+      session: {
+        leagueSelection: null,
+        firstName: "",
+        lastName: "",
+        nationalityId: null,
+        dateOfBirth: "",
+        favoriteTeam: null,
+        preferredFormation: "4-4-2",
+        avatarPortraitKey: null,
+        avatarPrimaryColor: "#1f2937",
+        avatarSecondaryColor: "#f8fafc",
+        archetype: "professor",
+        pillars: { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 },
+        managerStep: 1 as ManagerSubStep,
+        generation: { _tag: "Pending" },
+        clubSelection: null,
+        commit: "idle",
+        error: null,
+      },
+      update: () => undefined,
+      setManagerStep: () => undefined,
+      retryGeneration: () => undefined,
+      selectClub: () => undefined,
+      selectFavoriteTeam: () => undefined,
+      registerBottomBar: () => undefined,
+      requestLeave: () => undefined,
+    };
+    render(
+      <CreateSessionContext value={api}>
+        <ManagerIdentityStep />
+      </CreateSessionContext>,
+    );
+    // Base UI Select renders a classless, aria-hidden hidden input beside its trigger; it is not a
+    // control a player reaches, so it is not part of the tab-order contract.
+    const controls = [...document.querySelectorAll('input:not([aria-hidden="true"]), button')];
+    expect(controls.length).toBeGreaterThan(0);
+    expect(controls[0]!.getAttribute("placeholder")).toBe("Your first name");
+    for (const control of controls) {
+      expect(control.className).toContain("focus-visible:ring-2");
+      // Base UI puts an explicit `tabindex="0"` on its own triggers (the vendored Select's
+      // `select-trigger` button and any Popover trigger, which carries `aria-haspopup`); that is a
+      // legitimate tab stop rather than an override this contract forbids.
+      // A native input that opens a popup (the Autocomplete pickers) is natively focusable and
+      // takes the general rule below.
+      if (control.getAttribute("data-slot") === "autocomplete-trigger") {
+        // An Autocomplete's chevron: Base UI keeps it out of the tab order because the input
+        // beside it is the picker's one tab stop, and the keyboard opens the list from there.
+        expect(control.getAttribute("tabindex")).toBe("-1");
+      } else if (
+        control.tagName === "BUTTON" &&
+        (control.getAttribute("data-slot") === "select-trigger" || control.hasAttribute("aria-haspopup"))
+      ) {
+        expect(["0"]).toContain(control.getAttribute("tabindex"));
+      } else {
+        // Draft, empty props: no native tabindex override — all controls in tab order.
+        expect(control.getAttribute("tabindex")).toBeNull();
+      }
+    }
+  });
+
+  it("Transfers buttons and inputs carry the level-1 ring; roving name buttons keep their roving tabindex", async () => {
+    mockPreload(async (method) => {
+      if (method === "getTransfersScreen") return { _tag: "Success", value: transfersView() } as never;
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <TransfersScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    // Stage 5 (AC-29) moved bid entry out of the rows into an Actions region
+    // shown when a player is selected — so the Sign/Bid controls only render
+    // once the market player is selected.
+    const marketName = await screen.findByRole("button", { name: /Market Player/ });
+    fireEvent.click(marketName);
+    const buttons = [...document.querySelectorAll("button")] as HTMLElement[];
+    expect(buttons.length).toBeGreaterThan(0);
+    for (const button of buttons) {
+      expect(button.className).toContain("focus-visible:ring-2");
+      if (button.hasAttribute("data-focus-id")) {
+        // Row-roving controls (AC-28): the one focusable control per row keeps
+        // its roving tabindex — the composite-widget carve-out in the focus model.
+        expect(["0", "-1"]).toContain(button.getAttribute("tabindex"));
+      } else if (button.getAttribute("data-slot") === "select-trigger") {
+        // The vendored Base UI select trigger is a native button Base UI explicitly
+        // puts in the tab order (tabindex="0"), so it is a legitimate tab stop.
+        expect(["0"]).toContain(button.getAttribute("tabindex"));
+      } else if (button.getAttribute("role") === "tab") {
+        // The table tabs are a roving composite: the active tab is the one stop, arrows move
+        // between the rest — the same carve-out as the row-roving controls above.
+        expect(button.getAttribute("tabindex")).toBe(button.getAttribute("aria-selected") === "true" ? "0" : "-1");
+      } else {
+        expect(button.getAttribute("tabindex")).toBeNull();
+      }
+    }
+    const inputs = [...document.querySelectorAll("input")] as HTMLElement[];
+    expect(inputs.length).toBeGreaterThan(0);
+    for (const input of inputs) {
+      if (input.id !== "" && input.id.endsWith("-hidden-input")) {
+        // The vendored Base UI Select emits an invisible hidden input to power form
+        // association; it is not a user-facing control, so it carries no ring.
+        continue;
+      }
+      expect(input.className).toContain("focus-visible:ring-2");
+    }
+  });
+
+  it("Tactics controls carry the level-1 ring (formation, sliders, save)", async () => {    mockPreload(async (method) => {
+      if (method === "getTactics") return { _tag: "Success", value: tacticsView() } as never;
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+render(
+      <RegistryProvider>
+        <TacticsScreen saveId={rid("s1")} />
+        <RegisteredScreenBar />
+      </RegistryProvider>,
+    );
+    await screen.findByRole("button", { name: /Save Tactic/ });
+    const buttony = [...document.querySelectorAll("button")] as HTMLElement[];
+    expect(buttony.length).toBeGreaterThan(0);
+    for (const button of buttony) {
+      expect(button.className).toContain("focus-visible:ring-2");
+    }
+    const selects = [...document.querySelectorAll("select")] as HTMLElement[];
+    for (const select of selects) {
+      expect(select.className).toContain("focus-visible:ring-2");
+    }
+  });
+
+  it("MatchDay live-control buttons carry the level-1 ring", async () => {
+    setActiveMatch(resumedMatch());
+    const template0 = BUILT_IN_TEMPLATES[0]!;
+    mockPreload(async (method) => {
+      if (method === "getTactics") {
+        return {
+          _tag: "Success",
+          value: {
+            club: { id: rid("me"), name: "My Club", statureTier: STATURE_TIERS[0] },
+            squad: [],
+            tactic: tacticFromTemplate(template0, Array.from({ length: 11 }, (_, i) => rid(`p-${i}`))),
+            revision: 0,
+          },
+        } as never;
+      }
+      if (method === "resumeSimulation") {
+        return {
+          _tag: "Success",
+          value: {
+            matchId: rid("m1"),
+            cursor: 0,
+            isComplete: false,
+            homeScore: 0,
+            awayScore: 0,
+            lines: [],
+            homeSubs: noSubs(),
+            awaySubs: noSubs(),
+            homePitch: { onPitch: [], substitutes: [] },
+            awayPitch: { onPitch: [], substitutes: [] },
+            injuredClubIds: [],
+            injuries: [],
+            homeOnPitchCount: 11,
+            awayOnPitchCount: 11,
+          },
+        } as never;
+      }
+      return { _tag: "Failure", error: NOT_FOUND } as never;
+    });
+    render(
+      <RegistryProvider>
+        <MatchDayScreen saveId={rid("s1")} />
+      </RegistryProvider>,
+    );
+    const toggle = (await screen.findByRole("button", { name: /Tactics & substitutions/ })) as HTMLElement;
+    expect(toggle.className).toContain("focus-visible:ring-2");
+    toggle.focus();
+    expect(toggle).toBe(document.activeElement);
+    fireEvent.click(toggle);
+    const apply = (await screen.findByRole("button", { name: /Apply tactics change/ })) as HTMLElement;
+    expect(apply.className).toContain("focus-visible:ring-2");
+  });
+});

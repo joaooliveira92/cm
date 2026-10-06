@@ -32,6 +32,8 @@ The renderer implements the following key map. All bindings are explicit Action 
 
 ### Binding table
 
+> **Superseded in part.** The `g <letter>` rows below (`g s`, `g a`, `g t`, `g l`, `g f`, `g m`, `g y`) no longer exist. Commit `860d429` replaced them with a position-based scheme. `g 1` upward, one key per section, picks a primary section by its place in the navbar, and a position key (`q w e r t y u i o p`) then picks an item inside that section. Since navbar-keyboard-intent ticket 02, the section keys are generated from `NAV_SECTIONS`, one `go-to-<section id>` action per section. The live scheme is defined in `apps/desktop/src/renderer/navigation/nav-config.ts` (`NAV_SECTIONS`, `POSITION_KEYS`) and `apps/desktop/src/renderer/actions/allActions.ts`. Read those files for the current keys. `g b` and the non-`g` rows still hold. The table is kept as the original decision record.
+
 | Binding | Action | Scope | Notes |
 |---|---|---|---|
 | `Cmd+K` / `Ctrl+K` | Open command palette | `app_global` | Always active |

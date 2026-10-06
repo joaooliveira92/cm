@@ -6,22 +6,101 @@ import {
   Outlet,
 } from "@tanstack/react-router";
 import { bindRouter } from "../navigation/adapter.js";
-import { KeyboardSpine } from "../KeyboardSpine.js";
-import { FixturesScreen } from "../FixturesScreen.js";
-import { LeagueTableScreen } from "../LeagueTableScreen.js";
-import { MatchDayScreen } from "../MatchDayScreen.js";
-import { SeasonSummaryScreen } from "../SeasonSummaryScreen.js";
-import { SquadScreen } from "../SquadScreen.js";
-import { TacticsScreen } from "../TacticsScreen.js";
-import { TransfersScreen } from "../TransfersScreen.js";
-import { SaveListScreen } from "./saveList.js";
+import { KeyboardSpine } from "../keyboard/KeyboardSpine.js";
+import { FixturesScreen } from "../fixtures/FixturesScreen.js";
+import { LeagueTableScreen } from "../leagueTable/LeagueTableScreen.js";
+import { MatchDayScreen } from "../match/MatchDayScreen.js";
+import { NewsInboxScreen } from "../news/NewsInboxScreen.js";
+import { SeasonSummaryScreen } from "../seasonSummary/SeasonSummaryScreen.js";
+import { SquadScreen } from "../squad/SquadScreen.js";
+import { SquadStaffScreen } from "../squadStaff/SquadStaffScreen.js";
+import { SquadInformationScreen } from "../squadInformation/SquadInformationScreen.js";
+import { SquadFinancesScreen } from "../squadFinances/SquadFinancesScreen.js";
+import { SquadHistoryScreen } from "../squadHistory/SquadHistoryScreen.js";
+import { TacticsOverviewScreen } from "../tactics/TacticsOverviewScreen.js";
+import { TacticsScreen } from "../tactics/TacticsScreen.js";
+import { TransfersScreen } from "../transfers/TransfersScreen.js";
+import { ContractExpiryScreen } from "../contractExpiry/ContractExpiryScreen.js";
+import { BudgetReviewScreen } from "../budgetReview/BudgetReviewScreen.js";
+import { TransferHistoryScreen } from "../transferHistory/TransferHistoryScreen.js";
+import { MainMenuScreen } from "./mainMenu.js";
+import { LoadCareerScreen } from "./loadCareer.js";
+import { TeamScoutReportScreen } from "../scouting/TeamScoutReportScreen.js";
+import { ClubStaffScreen } from "../clubStaff/ClubStaffScreen.js";
+import { StaffProfileScreen } from "../staffProfile/StaffProfileScreen.js";
+import { PlayerProfileScreen } from "../playerProfile/PlayerProfileScreen.js";
+import { PlayerContractScreen } from "../playerContract/PlayerContractScreen.js";
+import { PlayerFormScreen } from "../playerForm/PlayerFormScreen.js";
+import { PlayerDevelopmentScreen } from "../playerDevelopment/PlayerDevelopmentScreen.js";
+import { PlayerCoachReportScreen } from "../playerCoachReport/PlayerCoachReportScreen.js";
+import { TrainingScreen } from "../training/TrainingScreen.js";
+import { CoachingAssignmentsScreen } from "../training/CoachingAssignmentsScreen.js";
+import { WorkloadScreen } from "../training/WorkloadScreen.js";
+import { TrainingScheduleScreen } from "../training/TrainingScheduleScreen.js";
+import { TrainingPlanScreen } from "../training/TrainingPlanScreen.js";
+import { DevelopmentCentreScreen } from "../training/DevelopmentCentreScreen.js";
+import { ClubInfoScreen } from "../clubInfo/ClubInfoScreen.js";
+import { BoardConfidenceScreen } from "../boardConfidence/BoardConfidenceScreen.js";
+import { FinancesScreen } from "../finances/FinancesScreen.js";
+import { StaffOverviewScreen } from "../staffOverview/StaffOverviewScreen.js";
+import { ShortlistScreen } from "../shortlist/ShortlistScreen.js";
+import { ScoutingScreen } from "../scouting/ScoutingScreen.js";
+import { ScoutingAssignmentScreen } from "../scouting/ScoutingAssignmentScreen.js";
+import { ScoutingKnowledgeScreen } from "../scouting/ScoutingKnowledgeScreen.js";
+import { PlayerSearchScreen } from "../playerSearch/PlayerSearchScreen.js";
+import { PlayerComparisonScreen } from "../playerComparison/PlayerComparisonScreen.js";
+import { StaffSearchScreen } from "../staffSearch/StaffSearchScreen.js";
+import { CompetitionsScreen } from "../competitions/CompetitionsScreen.js";
+import {
+  ManagerOverviewScreen,
+  ManagerInboxScreen,
+  ManagerConfidenceScreen,
+  ManagerNotesScreen,
+  ManagerJobsScreen,
+  ManagerResponsibilitiesScreen,
+  ManagerCareerScreen,
+} from "../managerProfile/index.js";
+// Ticket 03 — Staff drill-downs
+// Ticket 04 — Club drill-downs (other club views)
+import { ClubSquadScreen } from "../clubSquad/ClubSquadScreen.js";
+import { ClubFixturesDetailScreen } from "../clubFixturesDetail/ClubFixturesDetailScreen.js";
+import { ClubTransfersDetailScreen } from "../clubTransfersDetail/ClubTransfersDetailScreen.js";
+import { ClubFinancesDetailScreen } from "../clubFinancesDetail/ClubFinancesDetailScreen.js";
+import { ClubInformationScreen } from "../clubInformation/ClubInformationScreen.js";
+// Ticket 06 — Competition drill-downs
+import { CompetitionOverviewScreen } from "../competitionOverview/CompetitionOverviewScreen.js";
+import { CompetitionTableScreen } from "../competitionTable/CompetitionTableScreen.js";
+import { CompetitionFixturesDetailScreen } from "../competitionFixturesDetail/CompetitionFixturesDetailScreen.js";
+import { CompetitionResultsScreen } from "../competitionResults/CompetitionResultsScreen.js";
+// Ticket 07 — Match sub-screen placeholders
+import { MatchStatsScreen } from "../match/screens/StatsScreen.js";
+import { MatchHomeStatsScreen, MatchAwayStatsScreen } from "../match/screens/PlayerStatsScreen.js";
+import { MatchHomeTeamScreen } from "../match/screens/HomeTeamScreen.js";
+import { MatchAwayTeamScreen } from "../match/screens/AwayTeamScreen.js";
+import { MatchPreviewScreen } from "../match/screens/PreviewScreen.js";
+import { MatchRatingsScreen } from "../match/screens/RatingsScreen.js";
+import { MatchLatestScoresScreen } from "../match/screens/LatestScoresScreen.js";
+import { MatchLiveTableScreen } from "../match/screens/LiveTableScreen.js";
+import { MatchMatchTacticsScreen } from "../match/screens/MatchTacticsScreen.js";
+import { MatchSubstitutionsScreen } from "../match/screens/SubstitutionsScreen.js";
+import { MatchOppositionInstructionsScreen } from "../match/screens/OppositionInstructionsScreen.js";
+import { MatchCommentaryScreen } from "../match/screens/CommentaryScreen.js";
+import { MatchReplaysScreen } from "../match/screens/ReplaysScreen.js";
+import { MatchReportScreen } from "../match/screens/ReportScreen.js";
 import {
   CareerChildView,
+  CareerClubChildView,
+  CareerStaffChildView,
   CareerIndexRedirect,
+  CareerMatchChildView,
+  CareerPlayerChildView,
+  CareerPlayerComparisonChildView,
+  CareerCompetitionChildView,
   CareerShell,
 } from "./career.js";
+import { CreateFlowLayout } from "../create/CreateFlowLayout.js";
 import {
-  CreateFlowLayout,
+  LeagueSelectionRouteContent,
   StepOneRouteContent,
   StepThreeRouteContent,
   StepTwoRouteContent,
@@ -47,10 +126,16 @@ const rootRoute = createRootRoute({
   ),
 });
 
-const saveListRoute = createRoute({
+const mainMenuRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "/",
-  component: SaveListScreen,
+  component: MainMenuScreen,
+});
+
+const loadCareerRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: "load",
+  component: LoadCareerScreen,
 });
 
 // ---------------------------------------------------------------------------
@@ -79,16 +164,24 @@ const defineCareerChild = <const P extends string>(
   path: P,
   screenId: string,
   Screen: typeof SquadScreen,
+  options: { readonly fullHeight?: boolean; readonly fitHeight?: boolean } = {},
 ) =>
   createRoute({
     getParentRoute: () => saveRoute,
     path,
-    component: () => <CareerChildView screenId={screenId} Screen={Screen} />,
+    component: () => <CareerChildView screenId={screenId} Screen={Screen} fullHeight={options.fullHeight} fitHeight={options.fitHeight} />,
   });
 
-const squadRoute = defineCareerChild("squad", "squad", SquadScreen);
-const tacticsRoute = defineCareerChild("tactics", "tactics", TacticsScreen);
+// Full height so the lineup bar sits on the bottom edge of the window, not under a short list.
+const squadRoute = defineCareerChild("squad", "squad", SquadScreen, { fullHeight: true });
+const squadStaffRoute = defineCareerChild("squad-staff", "squadStaff", SquadStaffScreen);
+const squadInformationRoute = defineCareerChild("squad-information", "squadInformation", SquadInformationScreen);
+const squadFinancesRoute = defineCareerChild("squad-finances", "squadFinances", SquadFinancesScreen);
+const squadHistoryRoute = defineCareerChild("squad-history", "squadHistory", SquadHistoryScreen);
 const transfersRoute = defineCareerChild("transfers", "transfers", TransfersScreen);
+const contractExpiryRoute = defineCareerChild("contract-expiry", "contractExpiry", ContractExpiryScreen);
+const budgetReviewRoute = defineCareerChild("budget-review", "budgetReview", BudgetReviewScreen);
+const transferHistoryRoute = defineCareerChild("transfer-history", "transferHistory", TransferHistoryScreen);
 const leagueRoute = defineCareerChild("league", "league", LeagueTableScreen);
 const fixturesRoute = defineCareerChild("fixtures", "fixtures", FixturesScreen);
 const matchRoute = defineCareerChild("match", "match", MatchDayScreen);
@@ -97,6 +190,368 @@ const seasonSummaryRoute = defineCareerChild(
   "seasonSummary",
   SeasonSummaryScreen,
 );
+/**
+ * The Manager area follows the Training shape: `/manager` lands on the Overview tab, and sub-tabs
+ * (Inbox, Confidence, Notes, etc.) sit beneath it at `/manager/<tab>`. All share the `manager`
+ * screen scope so the navbar keeps the Club/Manager section highlighted.
+ */
+const managerRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "manager",
+  component: () => <Outlet />,
+});
+
+const managerIndexRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "/",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerOverviewScreen} />,
+});
+
+const managerInboxRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "inbox",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerInboxScreen} />,
+});
+
+const managerConfidenceRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "confidence",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerConfidenceScreen} />,
+});
+
+const managerNotesRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "notes",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerNotesScreen} />,
+});
+
+const managerJobsRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "jobs",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerJobsScreen} />,
+});
+
+const managerResponsibilitiesRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "responsibilities",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerResponsibilitiesScreen} />,
+});
+
+const managerCareerRoute = createRoute({
+  getParentRoute: () => managerRoute,
+  path: "career",
+  component: () => <CareerChildView screenId="manager" Screen={ManagerCareerScreen} />,
+});
+
+const newsRoute = defineCareerChild("news", "news", NewsInboxScreen);
+
+const clubInfoRoute = defineCareerChild("club-info", "clubInfo", ClubInfoScreen);
+const boardConfidenceRoute = defineCareerChild("board-confidence", "boardConfidence", BoardConfidenceScreen);
+const financesRoute = defineCareerChild("finances", "finances", FinancesScreen);
+const staffOverviewRoute = defineCareerChild("staff-overview", "staffOverview", StaffOverviewScreen);
+const shortlistRoute = defineCareerChild("shortlist", "shortlist", ShortlistScreen);
+const scoutingRoute = defineCareerChild("scouting", "scouting", ScoutingScreen);
+/** Scouting Assignment (Screen 121): a sub-surface of Scouting in its `scouting` screen scope, kept
+ *  beside the Scouting Centre rather than beneath it so that route stays a single leaf. */
+const scoutingAssignmentRoute = defineCareerChild(
+  "scouting-assignment",
+  "scouting",
+  ScoutingAssignmentScreen,
+);
+/** Scouting Knowledge (Screen 126): a sibling sub-surface of Scouting, in the same `scouting` scope. */
+const scoutingKnowledgeRoute = defineCareerChild(
+  "scouting-knowledge",
+  "scouting",
+  ScoutingKnowledgeScreen,
+);
+const playerSearchRoute = defineCareerChild("player-search", "playerSearch", PlayerSearchScreen);
+const staffSearchRoute = defineCareerChild("staff-search", "staffSearch", StaffSearchScreen);
+const competitionsRoute = defineCareerChild("competitions", "competitions", CompetitionsScreen);
+
+/**
+ * Transfer Target Comparison (Screen 129, ticket 12): the `:playerIds` segment is the
+ * comparison's canonical slug, decoded at the child boundary into the branded list the screen
+ * compares. Same shape as the `player/$playerId` surfaces' route — a second-parameter child that
+ * the comparison screen renders.
+ */
+const playerComparisonRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "player-comparison/$playerIds",
+  component: () => (
+    <CareerPlayerComparisonChildView screenId="playerComparison" Screen={PlayerComparisonScreen} />
+  ),
+});
+
+/**
+ * The Tactics area is the one career surface with its own read-only home: `/tactics` lands on the
+ * overview, and the editor sits one step beneath it at `/tactics/editor` (ticket 03). Both share
+ * the `tactics` screen scope, so focus restoration, action availability, and the navbar's
+ * "Formation" highlight treat the editor as a sub-surface rather than a tenth career screen.
+ */
+const tacticsRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "tactics",
+  component: () => <Outlet />,
+});
+
+const tacticsIndexRoute = createRoute({
+  getParentRoute: () => tacticsRoute,
+  path: "/",
+  component: () => <CareerChildView screenId="tactics" Screen={TacticsOverviewScreen} />,
+});
+
+const tacticsEditorRoute = createRoute({
+  getParentRoute: () => tacticsRoute,
+  path: "editor",
+  // Window height: Team Selection and the mode panels scroll inside it, as CM's screen did.
+  component: () => <CareerChildView screenId="tactics" Screen={TacticsScreen} fitHeight />,
+});
+
+/**
+ * The Training area follows the Tactics shape: `/training` lands on the Training Overview (Screen
+ * 105), and the sub-screens (Coaching Assignments, Workload and Recovery, etc.) sit beneath it.
+ * All share the `training` screen scope.
+ */
+const trainingRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "training",
+  component: () => <Outlet />,
+});
+
+const trainingIndexRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "/",
+  component: () => <CareerChildView screenId="training" Screen={TrainingScreen} />,
+});
+
+/** Coaching Assignments (Screen 111) — the full coaching staff list, reached from the Training
+ *  Overview. Shares the `training` screen scope. */
+const trainingCoachingRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "coaching",
+  component: () => <CareerChildView screenId="training" Screen={CoachingAssignmentsScreen} />,
+});
+
+/** Training Schedule (training-schedule-and-delegation 03): the microcycle's sessions, reached from
+ *  the Training Overview's Schedule card. Shares the `training` screen scope. */
+const trainingScheduleRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "schedule",
+  component: () => <CareerChildView screenId="training" Screen={TrainingScheduleScreen} />,
+});
+
+const trainingWorkloadRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "workload",
+  component: () => <CareerChildView screenId="training" Screen={WorkloadScreen} />,
+});
+
+/** Individual Training Plan (Screen 108): one own-club player's Training Focus, beneath the Training
+ *  area and in its `training` screen scope. The player segment decodes through the same boundary as
+ *  the `player/$playerId` surfaces. */
+const trainingPlanRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "plan/$playerId",
+  component: () => <CareerPlayerChildView screenId="training" Screen={TrainingPlanScreen} />,
+});
+
+/** Player Development Centre (Screen 114): the squad-wide development view, beneath the Training
+ *  area and in its `training` screen scope like Workload and Recovery. */
+const trainingDevelopmentRoute = createRoute({
+  getParentRoute: () => trainingRoute,
+  path: "development-centre",
+  component: () => <CareerChildView screenId="training" Screen={DevelopmentCentreScreen} />,
+});
+
+/**
+ * The club segment: `/career/$saveId/club/$clubId/...`, a surface scoped to some *other* club.
+ *
+ * Deliberately a reusable segment rather than a report-specific path. Every club-scoped screen
+ * that follows (squad, tactical view, previous reports) hangs off the same `$clubId`, so the club
+ * is decoded once at a shared boundary instead of each screen inventing its own parameter.
+ *
+ * It has no index route: `club/$clubId` alone names a club without saying what about it, so there
+ * is nothing honest to land on. Each club surface is reached at its own child path.
+ */
+const clubRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "club/$clubId",
+  component: () => <Outlet />,
+});
+
+const clubScoutReportRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "scout-report",
+  component: () => (
+    <CareerClubChildView screenId="teamScoutReport" Screen={TeamScoutReportScreen} />
+  ),
+});
+
+const clubStaffRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "staff",
+  component: () => <CareerClubChildView screenId="clubStaff" Screen={ClubStaffScreen} />,
+});
+
+const clubStaffProfileRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "staff/$staffKey",
+  component: () => <CareerStaffChildView screenId="staffProfile" Screen={StaffProfileScreen} />,
+});
+
+// ---------------------------------------------------------------------------
+// Player branch
+// ---------------------------------------------------------------------------
+
+/**
+ * The player segment: `/career/$saveId/player/$playerId/...`, a surface scoped to a
+ * specific player in the save. Mirrors the club segment structure.
+ */
+const playerRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "player/$playerId",
+  component: () => <Outlet />,
+});
+
+const playerProfileRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "profile",
+  component: () => (
+    <CareerPlayerChildView screenId="playerProfile" Screen={PlayerProfileScreen} />
+  ),
+});
+
+const playerContractRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "contract",
+  component: () => (
+    <CareerPlayerChildView screenId="playerContract" Screen={PlayerContractScreen} />
+  ),
+});
+
+const playerDevelopmentRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "development",
+  component: () => (
+    <CareerPlayerChildView screenId="playerDevelopment" Screen={PlayerDevelopmentScreen} />
+  ),
+});
+
+const playerFormRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "form",
+  component: () => <CareerPlayerChildView screenId="playerForm" Screen={PlayerFormScreen} />,
+});
+
+const playerCoachReportRoute = createRoute({
+  getParentRoute: () => playerRoute,
+  path: "coach-report",
+  component: () => (
+    <CareerPlayerChildView screenId="playerCoachReport" Screen={PlayerCoachReportScreen} />
+  ),
+});
+
+// ---------------------------------------------------------------------------
+// Club sub-surface routes — additional views at `/career/$saveId/club/$clubId/...`
+// ---------------------------------------------------------------------------
+
+const clubSquadRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "squad",
+  component: () => <CareerClubChildView screenId="clubSquad" Screen={ClubSquadScreen} />,
+});
+
+const clubFixturesDetailRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "fixtures",
+  component: () => <CareerClubChildView screenId="clubFixturesDetail" Screen={ClubFixturesDetailScreen} />,
+});
+
+const clubTransfersDetailRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "transfers",
+  component: () => <CareerClubChildView screenId="clubTransfersDetail" Screen={ClubTransfersDetailScreen} />,
+});
+
+const clubFinancesDetailRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "finances",
+  component: () => <CareerClubChildView screenId="clubFinancesDetail" Screen={ClubFinancesDetailScreen} />,
+});
+
+const clubInformationRoute = createRoute({
+  getParentRoute: () => clubRoute,
+  path: "information",
+  component: () => <CareerClubChildView screenId="clubInformation" Screen={ClubInformationScreen} />,
+});
+
+// ---------------------------------------------------------------------------
+// Nation branch — `/career/$saveId/nation/$nationId/...`
+// ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// Competition branch — `/career/$saveId/competition/$competitionId/...`
+// ---------------------------------------------------------------------------
+
+const competitionRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "competition/$competitionId",
+  component: () => <Outlet />,
+});
+
+const competitionOverviewRoute = createRoute({
+  getParentRoute: () => competitionRoute,
+  path: "overview",
+  component: () => <CareerCompetitionChildView screenId="competitionOverview" Screen={CompetitionOverviewScreen} />,
+});
+
+const competitionTableRoute = createRoute({
+  getParentRoute: () => competitionRoute,
+  path: "table",
+  component: () => <CareerCompetitionChildView screenId="competitionTable" Screen={CompetitionTableScreen} />,
+});
+
+const competitionFixturesDetailRoute = createRoute({
+  getParentRoute: () => competitionRoute,
+  path: "fixtures",
+  component: () => <CareerCompetitionChildView screenId="competitionFixturesDetail" Screen={CompetitionFixturesDetailScreen} />,
+});
+
+const competitionResultsRoute = createRoute({
+  getParentRoute: () => competitionRoute,
+  path: "results",
+  component: () => <CareerCompetitionChildView screenId="competitionResults" Screen={CompetitionResultsScreen} />,
+});
+
+// ---------------------------------------------------------------------------
+// Match sub-screen placeholders — flat routes at `/career/$saveId/match-*`
+// ---------------------------------------------------------------------------
+
+const matchStatsRoute = defineCareerChild("match-stats", "matchStats", MatchStatsScreen);
+const matchHomeStatsRoute = defineCareerChild("match-home-stats", "matchHomeStats", MatchHomeStatsScreen);
+const matchAwayStatsRoute = defineCareerChild("match-away-stats", "matchAwayStats", MatchAwayStatsScreen);
+const matchHomeTeamRoute = defineCareerChild("match-home-team", "matchHomeTeam", MatchHomeTeamScreen);
+const matchAwayTeamRoute = defineCareerChild("match-away-team", "matchAwayTeam", MatchAwayTeamScreen);
+const matchRatingsRoute = defineCareerChild("match-ratings", "matchRatings", MatchRatingsScreen);
+const matchLatestScoresRoute = defineCareerChild("match-latest-scores", "matchLatestScores", MatchLatestScoresScreen);
+const matchLiveTableRoute = defineCareerChild("match-live-table", "matchLiveTable", MatchLiveTableScreen);
+// Window height, like the Tactics editor: the pitch sizes itself to what is left under the match state.
+const matchMatchTacticsRoute = defineCareerChild("match-match-tactics", "matchMatchTactics", MatchMatchTacticsScreen, {
+  fitHeight: true,
+});
+const matchSubstitutionsRoute = defineCareerChild("match-substitutions", "matchSubstitutions", MatchSubstitutionsScreen);
+const matchOppositionInstructionsRoute = defineCareerChild("match-opposition-instructions", "matchOppositionInstructions", MatchOppositionInstructionsScreen);
+const matchCommentaryRoute = defineCareerChild("match-commentary", "matchCommentary", MatchCommentaryScreen);
+const matchReplaysRoute = defineCareerChild("match-replays", "matchReplays", MatchReplaysScreen);
+const matchReportRoute = createRoute({
+  getParentRoute: () => saveRoute,
+  path: "match-report/$matchId",
+  component: () => <CareerMatchChildView screenId="matchReport" Screen={MatchReportScreen} />,
+});
+/** The post-match Report tab's save-scoped entry: no match id in the path, the read resolves the
+ *  match just played. */
+const matchLatestReportRoute = defineCareerChild("match-report-latest", "matchReport", MatchReportScreen);
+const matchPreviewRoute = defineCareerChild("match-preview", "matchPreview", MatchPreviewScreen);
 
 // ---------------------------------------------------------------------------
 // Creation branch
@@ -106,6 +561,13 @@ export const createFlowRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: "create",
   component: CreateFlowLayout,
+});
+
+/** League and Nation Selection (Screen 3) — the first creation stage. */
+const createLeaguesRoute = createRoute({
+  getParentRoute: () => createFlowRoute,
+  path: "leagues",
+  component: LeagueSelectionRouteContent,
 });
 
 const createStep1Route = createRoute({
@@ -127,8 +589,10 @@ const createStep3Route = createRoute({
 });
 
 const routeTree = rootRoute.addChildren([
-  saveListRoute,
+  mainMenuRoute,
+  loadCareerRoute,
   createFlowRoute.addChildren([
+    createLeaguesRoute,
     createStep1Route,
     createStep2Route,
     createStep3Route,
@@ -137,12 +601,88 @@ const routeTree = rootRoute.addChildren([
     saveRoute.addChildren([
       careerIndexRoute,
       squadRoute,
-      tacticsRoute,
+      squadStaffRoute,
+      squadInformationRoute,
+      squadFinancesRoute,
+      squadHistoryRoute,
+      tacticsRoute.addChildren([tacticsIndexRoute, tacticsEditorRoute]),
       transfersRoute,
+      contractExpiryRoute,
+      budgetReviewRoute,
+      transferHistoryRoute,
       leagueRoute,
       fixturesRoute,
       matchRoute,
       seasonSummaryRoute,
+managerRoute.addChildren([
+        managerIndexRoute,
+        managerInboxRoute,
+        managerConfidenceRoute,
+        managerNotesRoute,
+        managerJobsRoute,
+        managerResponsibilitiesRoute,
+        managerCareerRoute,
+      ]),
+      newsRoute,
+      trainingRoute.addChildren([
+        trainingIndexRoute,
+        trainingCoachingRoute,
+        trainingWorkloadRoute,
+        trainingScheduleRoute,
+        trainingPlanRoute,
+        trainingDevelopmentRoute,
+      ]),
+      clubInfoRoute,
+      boardConfidenceRoute,
+      financesRoute,
+      staffOverviewRoute,
+      shortlistRoute,
+      scoutingRoute,
+      scoutingAssignmentRoute,
+      scoutingKnowledgeRoute,
+      playerSearchRoute,
+      staffSearchRoute,
+      competitionsRoute,
+      playerComparisonRoute,
+      clubRoute.addChildren([
+        clubScoutReportRoute,
+        clubStaffRoute,
+        clubStaffProfileRoute,
+        clubSquadRoute,
+        clubFixturesDetailRoute,
+        clubTransfersDetailRoute,
+        clubFinancesDetailRoute,
+        clubInformationRoute,
+      ]),
+      playerRoute.addChildren([
+        playerProfileRoute,
+        playerContractRoute,
+        playerFormRoute,
+        playerDevelopmentRoute,
+        playerCoachReportRoute,
+      ]),
+      competitionRoute.addChildren([
+        competitionOverviewRoute,
+        competitionTableRoute,
+        competitionFixturesDetailRoute,
+        competitionResultsRoute,
+      ]),
+      matchStatsRoute,
+      matchHomeStatsRoute,
+      matchAwayStatsRoute,
+      matchHomeTeamRoute,
+      matchAwayTeamRoute,
+      matchRatingsRoute,
+      matchLatestScoresRoute,
+      matchLiveTableRoute,
+      matchMatchTacticsRoute,
+      matchSubstitutionsRoute,
+      matchOppositionInstructionsRoute,
+      matchCommentaryRoute,
+      matchReplaysRoute,
+      matchReportRoute,
+      matchLatestReportRoute,
+      matchPreviewRoute,
     ]),
   ]),
 ]);
@@ -154,3 +694,15 @@ export const router = createRouter({
 });
 
 bindRouter(router);
+
+/**
+ * Register the app's router with TanStack, so `LinkOptions`/`NavigateOptions` default to the real
+ * route tree. That is what lets the typed-destination registry in `navigation/destinations.ts`
+ * check each destination's `to` and `params` against the routes this module declares, instead of
+ * restating the paths a second time.
+ */
+declare module "@tanstack/react-router" {
+  interface Register {
+    readonly router: typeof router;
+  }
+}

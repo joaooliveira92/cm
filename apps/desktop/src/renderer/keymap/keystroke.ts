@@ -67,3 +67,30 @@ export const shouldSuppressForTextEntry = (
   }
   return isBareLetterOrDigit(keystroke) || key === " ";
 };
+
+/**
+ * True when the focused control already treats `Space` as its own activation.
+ *
+ * A native `<button>` (and anything carrying an activatable ARIA role) fires its click handler on
+ * Space. A career-global binding on the *same* key therefore ran alongside it — one keystroke,
+ * two actions, which is precisely what AC-17 forbids. The symptom that exposed it: pressing Space
+ * to toggle a row's selection in a grid also fired `Continue` and advanced the Calendar out of
+ * pre-season, silently closing the transfer window.
+ *
+ * `closest` rather than a tag check, because the focusable control is often a wrapper (a row
+ * button containing spans) and the event target may be a descendant.
+ *
+ * Enter is deliberately not covered: no career-global or app-global action binds it today, so
+ * adding it would change dispatch for flows nothing currently collides with.
+ */
+export const controlOwnsSpace = (target: EventTarget | null, keystroke: Keystroke): boolean => {
+  if (keystroke.key !== " ") return false;
+  if (keystroke.primary || keystroke.ctrl || keystroke.meta) return false;
+  const node = allowTarget(target);
+  if (node === null) return false;
+  return Boolean(
+    node.closest?.(
+      'button, summary, [role="button"], [role="checkbox"], [role="radio"], [role="switch"], [role="option"], [role="tab"]',
+    ),
+  );
+};

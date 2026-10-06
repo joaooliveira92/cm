@@ -34,9 +34,15 @@ export const useDialogKeyboard = ({
 } => {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef(initialFocus);
-  initialFocusRef.current = initialFocus;
   const onEscapeRef = useRef(onEscape);
-  onEscapeRef.current = onEscape;
+  // Latest-callback refs, written in effects so no ref is touched during render. The open effect
+  // below reads `initialFocusRef`; this writer is declared first, so it runs first on open.
+  useEffect(() => {
+    initialFocusRef.current = initialFocus;
+  }, [initialFocus]);
+  useEffect(() => {
+    onEscapeRef.current = onEscape;
+  }, [onEscape]);
 
   // Give the dialog the keyboard on open and hand it back on close, through the
   // focus coordinator's overlay helpers — the same contract the palette/help/
@@ -52,7 +58,18 @@ export const useDialogKeyboard = ({
   const onKeyDown = useCallback((event: React.KeyboardEvent) => {
     if (event.key === "Escape") {
       event.preventDefault();
+      // The dialog is the topmost layer, so Escape belongs to it alone. Without this the keystroke
+      // keeps bubbling to the document, where a layer *beneath* (a transient overlay's global Escape
+      // binding) would also close on the same press.
+      event.stopPropagation();
       onEscapeRef.current(event);
+      return;
+    }
+    if (event.key === "Enter") {
+      // Same ownership for Enter: keep it from reaching a global Enter binding on a layer beneath
+      // (the palette dispatches on a bare Enter). Deliberately no `preventDefault` — the focused
+      // control still activates from the key's own default action.
+      event.stopPropagation();
       return;
     }
     if (event.key !== "Tab") return;

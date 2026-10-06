@@ -10,7 +10,7 @@
     "test": "vitest run"
   },
   "dependencies": {
-    "@cm-clone/game-engine": "workspace:*"
+    "@cm-clone/content": "workspace:*"
   },
   "devDependencies": {
     "@types/node": "catalog:",

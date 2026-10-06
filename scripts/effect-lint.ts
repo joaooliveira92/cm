@@ -9,21 +9,28 @@
  * coverage cannot drift apart.
  */
 import { fileURLToPath } from "node:url";
-import { mkdtempSync, readdirSync, rmSync, writeFileSync } from "node:fs"
+import { mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync, type Dirent } from "node:fs"
 import { tmpdir } from "node:os"
-import { join, extname } from "node:path"
+import { dirname, join, extname, relative } from "node:path"
 import type { CallExpression, ImportDeclaration, Node, SourceFile } from "typescript/unstable/ast"
 import {
   isCallExpression,
   isExpressionStatement,
   isIdentifier,
   isImportDeclaration,
+  isJsxAttribute,
+  isJsxOpeningElement,
+  isJsxSelfClosingElement,
+  isNamedImports,
+  isNewExpression,
   isObjectLiteralExpression,
   isPropertyAccessExpression,
   isPropertyAssignment,
   isSpreadAssignment,
   isStringLiteral,
+  isTemplateLiteralLikeNode,
   isTrueLiteral,
+  isVariableDeclaration,
   isVoidExpression,
 } from "typescript/unstable/ast/is"
 import { API } from "typescript/unstable/sync"
@@ -238,6 +245,345 @@ export function lintBoundary(sourceFile: SourceFile, filePath: string): LintViol
   return out
 }
 
+// ---------------------------------------------------------------------------
+// The flat-slate guard (visual design language, ticket 08).
+//
+// The adopted chrome-blue frame failed once already: it was decided, left
+// unbuilt, and flat `slate-*` styling kept spreading underneath it. This rule
+// is the schedule that stops that recurring. It is mechanical and
+// grep-detectable, so per the repo's routing discipline it lives in the linter
+// rather than in skill prose.
+//
+// The existing call sites are recorded per file in `scripts/slate-baseline.json`
+// — that registry IS the migration backlog. The comparison is exact in both
+// directions: a file over its baseline has grown fresh slate and fails; a file
+// under its baseline has been migrated and must tighten the number, so the
+// registry can only ratchet toward zero. Migration is done when the file is
+// `{}` and the `--color-slate-*` alias layer in `index.css` is gone.
+// ---------------------------------------------------------------------------
+
+const SLATE_BASELINE_FILE = join("scripts", "slate-baseline.json")
+
+/** Per-file counts of remaining `slate-*` sites, keyed by repo-relative POSIX path. */
+export type SlateBaseline = Readonly<Record<string, number>>
+
+export function readSlateBaseline(cwd: string): SlateBaseline {
+  const raw = readFileSync(join(cwd, SLATE_BASELINE_FILE), "utf8")
+  return JSON.parse(raw) as SlateBaseline
+}
+
+/** The guard covers renderer source and the fixtures that prove it still fires. */
+export function isSlateGuarded(filePath: string): boolean {
+  return filePath.includes(FIXTURE_ROOT) || filePath.includes(RENDERER_DIR)
+}
+
+/**
+ * Every `slate-` occurrence in a string-shaped literal in the file.
+ *
+ * Deliberately wider than "the initializer of a `className` attribute": a class
+ * list is just as often hoisted into a `const btn = "bg-slate-700 …"` and then
+ * interpolated, and a guard that only reads the JSX attribute lets that through.
+ * Template literals are covered by their head/middle/tail segments, which is
+ * what makes `className={`… ${FOCUS_RING.join(" ")} …`}` visible to the rule.
+ * In this renderer `slate-` appears only in class strings, so scanning literals
+ * closes the hoisting hole cheaply.
+ *
+ * The match is left-anchored on a non-letter. A bare substring search also hits
+ * `translate-x-1/2`, which is how the guard first read the vendored
+ * `components/ui/*` set: six phantom violations in files holding no slate at
+ * all. A dash may precede (`bg-slate-700`); a letter may not.
+ */
+const SLATE_CLASS_PATTERN = /(?<![a-zA-Z])slate-/g
+
+export function lintSlateClassNames(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
+      const text = (node as Node & { text?: string }).text
+      if (typeof text === "string") {
+        // One violation per occurrence, not per literal: adding a second slate
+        // class to a line that already had one must still move the count.
+        const hits = text.match(SLATE_CLASS_PATTERN)?.length ?? 0
+        if (hits > 0) {
+          const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+          for (let i = 0; i < hits; i += 1) {
+            out.push({
+              file: filePath,
+              line: line + 1,
+              rule: "no-slate-class-name",
+              message:
+                "Flat `slate-*` class. Use the adopted design tokens (see index.css @theme and renderer/theme.ts).",
+            })
+          }
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  out.sort((a, b) => a.line - b.line)
+  return out
+}
+
+/**
+ * Compare the tree's actual slate counts against the recorded backlog. Returns
+ * one violation per file that disagrees — over baseline (regression) or under
+ * it (a migrated file whose registry entry was not tightened).
+ */
+export function reconcileSlateBaseline(
+  cwd: string,
+  baseline: SlateBaseline,
+  actual: ReadonlyMap<string, number>,
+): LintViolation[] {
+  const out: LintViolation[] = []
+  const paths = new Set([...Object.keys(baseline), ...actual.keys()])
+  for (const path of [...paths].sort()) {
+    const recorded = baseline[path] ?? 0
+    const found = actual.get(path) ?? 0
+    if (found === recorded) continue
+    out.push({
+      file: join(cwd, path),
+      line: 1,
+      rule: "no-slate-class-name",
+      message:
+        found > recorded
+          ? `${found - recorded} fresh \`slate-*\` site(s) in this file (backlog records ${recorded}). The adopted palette ships as design tokens; do not add flat slate.`
+          : `This file is down to ${found} \`slate-*\` site(s) from ${recorded}. Tighten ${SLATE_BASELINE_FILE} (drop the key at zero) so the backlog keeps ratcheting.`,
+    })
+  }
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// The type-scale guard.
+//
+// The renderer's text sizes are role tokens (`text-title`, `text-heading`,
+// `text-body`, `text-data`, ... declared as `--text-*` in `index.css`). Before
+// they existed every screen picked its own Tailwind size, and the same kind of
+// text drifted to four sizes across screens. A numeric size is how that drift
+// starts again, so it is banned outright in renderer source: there is no
+// backlog, the migration landed in one change. Same literal scan and scope as
+// the slate guard, for the same hoisting reasons.
+// ---------------------------------------------------------------------------
+
+/**
+ * Tailwind's numeric font sizes and arbitrary length sizes, under any variant
+ * (`sm:text-lg`, `[&>span]:text-xs`). Colour utilities such as
+ * `text-text-secondary` are not sizes and do not match.
+ */
+const RAW_TEXT_SIZE_PATTERN =
+  /(?<![a-zA-Z0-9-])text-(?:xs|sm|base|lg|xl|[2-9]xl|2xs|\[[0-9.]+(?:px|rem|em)\])(?![a-zA-Z0-9-])/g
+
+export function lintRawTextSize(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
+      const text = (node as Node & { text?: string }).text
+      if (typeof text === "string") {
+        const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+        for (const hit of text.match(RAW_TEXT_SIZE_PATTERN) ?? []) {
+          out.push({
+            file: filePath,
+            line: line + 1,
+            rule: "no-raw-text-size",
+            message: `Raw font size \`${hit}\`. Use a type-scale role (text-title, text-heading, text-body, text-data, text-label, text-caption, ...; see index.css @theme).`,
+          })
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  out.sort((a, b) => a.line - b.line)
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// The role-override guard.
+//
+// A role only stops drift if the same kind of text asks for it the same way on
+// every screen. The primitives in `components/ui` pick the role for their kind
+// of text — a table cell is `text-data`, a tab or button `text-label`, a
+// key-value key `text-label` — and a screen that passes a different role in
+// `className` puts that primitive at a second size on one screen. So a size
+// role in the `className` of a role-owning primitive is banned outside
+// `components/ui` (where primitives compose each other deliberately). A
+// primitive that is the wrong size everywhere is fixed in its own file.
+//
+// Sees literals anywhere in the attribute (`cn(...)`, templates, ternaries),
+// constants declared in the same file, and constants imported by name from a
+// relative module (`import { SELECT_CLASS } from "./selectStyles.js"`), which
+// `lintFileSet` resolves through a `ConstantIndex` of every guarded file. A
+// constant reached through a package import or a re-export is not followed.
+// ---------------------------------------------------------------------------
+
+/** One file's class-constant scope: its `const` initializers by name, and its
+ *  named imports from relative modules, resolved to the exporting module. */
+export interface ConstantScope {
+  readonly constants: ReadonlyMap<string, Node>
+  readonly imports: ReadonlyMap<string, { readonly module: string; readonly name: string }>
+}
+
+/** Scopes keyed by module: the absolute path without its extension, which is
+ *  what a `./x.js` specifier and the `x.ts`/`x.tsx` it names have in common. */
+export type ConstantIndex = ReadonlyMap<string, ConstantScope>
+
+export const moduleKey = (filePath: string): string => filePath.replace(/\.[jt]sx?$/, "")
+
+export function constantScopeOf(sourceFile: SourceFile, filePath: string): ConstantScope {
+  const constants = new Map<string, Node>()
+  const imports = new Map<string, { readonly module: string; readonly name: string }>()
+  const visit = (node: Node): void => {
+    if (isVariableDeclaration(node) && isIdentifier(node.name) && node.initializer !== undefined) {
+      constants.set(node.name.text, node.initializer)
+    }
+    if (isImportDeclaration(node)) {
+      const declaration = node as ImportDeclaration
+      const specifier = declaration.moduleSpecifier
+      const bindings = declaration.importClause?.namedBindings
+      if (
+        isStringLiteral(specifier) &&
+        specifier.text.startsWith(".") &&
+        bindings !== undefined &&
+        isNamedImports(bindings)
+      ) {
+        const module = moduleKey(join(dirname(filePath), specifier.text))
+        for (const element of bindings.elements) {
+          const exported =
+            element.propertyName !== undefined && isIdentifier(element.propertyName)
+              ? element.propertyName.text
+              : element.name.text
+          imports.set(element.name.text, { module, name: exported })
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  return { constants, imports }
+}
+
+/** The primitives whose own classes set a size role. `KeyValueValue` is left
+ *  out on purpose: a value may be a standalone figure (`text-figure`). */
+const ROLE_OWNING_PRIMITIVES = new Set([
+  "Badge",
+  "Button",
+  "Input",
+  "Kbd",
+  "KeyValueKey",
+  "KeyValueList",
+  "Label",
+  "SelectTrigger",
+  "Table",
+  "TableCell",
+  "TableHead",
+  "TabsTrigger",
+  "Textarea",
+  "Toggle",
+])
+
+/**
+ * Repo-relative POSIX path → the primitive allowed a role override there, and why. A hard-coded
+ * allowlist with the reason at the site, like `FILE_LENGTH_EXEMPTIONS`: an entry is a primitive
+ * deliberately drawn as a different kind of control, not a size someone preferred.
+ */
+const ROLE_OVERRIDE_EXEMPTIONS: Readonly<Record<string, { readonly primitive: string; readonly reason: string }>> = {
+  // The Sort select sits in the squad actions row among flat text buttons and is drawn as one of
+  // them (`ACTIONS_ROW_BUTTON_CLASS`), so its trigger takes the buttons' `text-label` rather than
+  // a form field's `text-data`.
+  "apps/desktop/src/renderer/squad/SquadSortSelect.tsx": {
+    primitive: "SelectTrigger",
+    reason: "a select drawn as one of the actions row's text buttons",
+  },
+}
+
+const isRoleOverrideExempt = (filePath: string, primitive: string): boolean => {
+  const posix = filePath.replace(/\\/g, "/")
+  return Object.entries(ROLE_OVERRIDE_EXEMPTIONS).some(
+    ([path, exemption]) => posix.endsWith(`/${path}`) && exemption.primitive === primitive,
+  )
+}
+
+/** A type-scale role, under any variant. A colour such as `text-text-secondary` does not match. */
+const TEXT_ROLE_PATTERN =
+  /(?<![a-zA-Z0-9-])text-(?:display|title|figure|heading|body|data|label|caption|overline)(?![a-zA-Z0-9-])/g
+
+const COMPONENTS_UI_DIR = join(RENDERER_DIR, "components", "ui")
+
+export function isRoleOverrideGuarded(filePath: string): boolean {
+  return isSlateGuarded(filePath) && !filePath.includes(COMPONENTS_UI_DIR)
+}
+
+export function lintRoleOverride(
+  sourceFile: SourceFile,
+  filePath: string,
+  index: ConstantIndex = new Map(),
+): LintViolation[] {
+  const ownModule = moduleKey(filePath)
+  const ownScope = constantScopeOf(sourceFile, filePath)
+  const scopeOf = (module: string): ConstantScope | undefined =>
+    module === ownModule ? ownScope : index.get(module)
+
+  /** Every string an expression can contribute, following identifiers to the
+   *  constant they name in `module` or, through an import, in another module.
+   *  `seen` holds `module#name` keys so a cyclic reference ends. */
+  const literalTexts = (node: Node, module: string, seen: ReadonlySet<string>): string[] => {
+    if (isStringLiteral(node) || isTemplateLiteralLikeNode(node)) {
+      const text = (node as Node & { text?: string }).text
+      return typeof text === "string" ? [text] : []
+    }
+    if (isIdentifier(node)) {
+      const scope = scopeOf(module)
+      if (scope === undefined) return []
+      const imported = scope.imports.get(node.text)
+      const target =
+        scope.constants.has(node.text) || imported === undefined
+          ? { module, name: node.text }
+          : imported
+      const key = `${target.module}#${target.name}`
+      const initializer = scopeOf(target.module)?.constants.get(target.name)
+      if (initializer === undefined || seen.has(key)) return []
+      return literalTexts(initializer, target.module, new Set([...seen, key]))
+    }
+    const out: string[] = []
+    node.forEachChild((child) => {
+      out.push(...literalTexts(child, module, seen))
+    })
+    return out
+  }
+
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (
+      (isJsxOpeningElement(node) || isJsxSelfClosingElement(node)) &&
+      isIdentifier(node.tagName) &&
+      ROLE_OWNING_PRIMITIVES.has(node.tagName.text) &&
+      !isRoleOverrideExempt(filePath, node.tagName.text)
+    ) {
+      const primitive = node.tagName.text
+      for (const attribute of node.attributes.properties) {
+        if (!isJsxAttribute(attribute) || !isIdentifier(attribute.name)) continue
+        if (attribute.name.text !== "className" || attribute.initializer === undefined) continue
+        const { line } = sourceFile.getLineAndCharacterOfPosition(attribute.getStart(sourceFile))
+        for (const text of literalTexts(attribute.initializer, ownModule, new Set())) {
+          for (const hit of text.match(TEXT_ROLE_PATTERN) ?? []) {
+            out.push({
+              file: filePath,
+              line: line + 1,
+              rule: "no-role-override",
+              message: `\`${hit}\` on <${primitive}> overrides the role that primitive owns, so it reads at a different size here than on every other screen. Drop it, or change the role in components/ui if it is wrong everywhere.`,
+            })
+          }
+        }
+      }
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  out.sort((a, b) => a.line - b.line)
+  return out
+}
+
 /** True when the file must go through the RPC seam: renderer files outside `rpc.ts`/`rpc/`,
  *  and the keyboard-binding seam `hotkeys.ts`. All other renderer files are enforced. */
 export function isBoundaryEnforced(filePath: string): boolean {
@@ -245,6 +591,273 @@ export function isBoundaryEnforced(filePath: string): boolean {
   if (!filePath.includes(RENDERER_DIR)) return false
   const rel = filePath.slice(filePath.indexOf(RENDERER_DIR) + RENDERER_DIR.length).replace(/\\/g, "/")
   return !rel.startsWith("/rpc.") && !rel.startsWith("/rpc/") && !rel.startsWith("/hotkeys.")
+}
+
+// ---------------------------------------------------------------------------
+// The file-length rule (main-process decomposition, `.scratch/main-process-decomposition/`).
+//
+// Thirteen tickets split every oversized file in this tree; the largest thing left that *could*
+// be split sits at 598 lines. Without a gate the next feature crosses 600 silently and the whole
+// effort erodes one commit at a time. Mechanical and grep-detectable, so per the repo's routing
+// discipline (AGENTS.md, "Routing repeat review findings") it lives in the linter.
+//
+// Exemptions are a hard-coded allowlist with the reason written at the exemption site, NOT a
+// baseline-ratchet like `slate-baseline.json`. A ratchet exists to burn down a backlog and force
+// the number toward zero; there is no backlog here, only two files that are permanently allowed
+// to be long. A ratchet would ask a future agent to keep tightening entries that will never move.
+// ---------------------------------------------------------------------------
+
+const MAX_FILE_LINES = 600
+
+/** Repo-relative POSIX path → why this file is permanently allowed past the line limit. */
+const FILE_LENGTH_EXEMPTIONS: Readonly<Record<string, string>> = {
+  // Its path is pinned by `drizzle.config.ts` (`schema: "./src/main/db/schema.ts"`), and its file
+  // docstring asserts whole-schema invariants — "the save carries exactly three indexes", the
+  // CHECK constraints that encode domain rules — which only hold when read against the whole
+  // declaration list. Splitting it would break the generator's entry point and scatter the
+  // invariants across files where none of them can be checked.
+  "apps/desktop/src/main/db/schema.ts":
+    "drizzle-pinned path + whole-schema invariants in its docstring; cannot be split",
+  // A build artifact: `pnpm db:generate` writes it from `schema.ts` and its header says "Do not
+  // edit". Its length is whatever the DDL happens to be; no human decision to gate.
+  "apps/desktop/src/main/db/migrations.generated.ts":
+    "generated by `pnpm db:generate`; header says do not edit",
+  // A route registry — one defineCareerChild per route, one createRoute per sub-route — that
+  // grows linearly with the number of screens. Splitting it would scatter the single route tree
+  // across files, making it harder to see the navigation structure at a glance.
+  "apps/desktop/src/renderer/router/index.tsx":
+    "route registry; grows linearly with screen count; structural value in a single tree",
+  "packages/contracts/src/rpc.ts":
+    "RPC method registry; grows linearly with endpoints; structural value as the single wire contract",
+  "apps/desktop/src/renderer/navigation/destinations.ts":
+    "destination registry; grows linearly with screen count; structural value as the single mapping",
+  // Vendored from the reui registry (`@reui/data-grid`), edited only where this repo's gates
+  // require it. Splitting them would turn every upstream re-sync into a hand merge.
+  "apps/desktop/src/renderer/components/reui/data-grid/data-grid.tsx":
+    "vendored reui data grid; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/data-grid/data-grid-table.tsx":
+    "vendored reui data grid; kept whole so it can be re-synced against upstream",
+  // Vendored from the reui registry (`@reui/event-calendar`), same terms as the data grid above.
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-dnd.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-lib.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-month-view.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-nav.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-resource-view.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  "apps/desktop/src/renderer/components/reui/event-calendar/event-calendar-time-grid.tsx":
+    "vendored reui event calendar; kept whole so it can be re-synced against upstream",
+  // RPC handler registry — one `handle` per endpoint, growing linearly with the method count.
+  // Splitting it would scatter the single dispatch table across files, hiding the full endpoint
+  // surface from a glance. The famous prologue-per-handler boilerplate is gone, so this sits under
+  // the limit today; the exemption is for the linear growth, not the current line count.
+  "apps/desktop/src/main/rpc/rpcServer.ts":
+    "RPC handler registry; grows linearly with endpoint count; structural value as single dispatch table",
+  // The three-panel tactics screen: Set Instructions (tick-box-dropdown rows for team, player and
+  // set-piece instructions, set-to-preset templates, half-time instruction). Split would scatter
+  // a single coherent panel across files, making the per-slot instruction layout harder to audit.
+  "apps/desktop/src/renderer/tactics/SetInstructionsPanel.tsx":
+    "set-instructions panel; one coherent UI panel; layout readability in a single component",
+}
+
+/** The line count as `wc -l` reports it: newline-terminated files do not gain a phantom last line. */
+function countLines(text: string): number {
+  if (text.length === 0) return 0
+  return text.split("\n").length - (text.endsWith("\n") ? 1 : 0)
+}
+
+/**
+ * One violation when the file is longer than `maxLines` and is not on the exemption allowlist.
+ *
+ * `maxLines` is injectable so a spec can prove the rule fires without committing a 600-line
+ * fixture file to the repo.
+ */
+export function lintFileLength(
+  sourceFile: SourceFile,
+  filePath: string,
+  cwd: string,
+  maxLines: number = MAX_FILE_LINES,
+): LintViolation[] {
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  if (rel in FILE_LENGTH_EXEMPTIONS) return []
+  const lines = countLines(sourceFile.text)
+  if (lines <= maxLines) return []
+  return [
+    {
+      file: filePath,
+      line: maxLines + 1,
+      rule: "max-file-length",
+      message:
+        `${lines} lines (limit ${maxLines}). Split it along a seam — a module per responsibility, ` +
+        "re-exported from a barrel if callers must keep one import path. If it genuinely cannot be " +
+        "split, add it to FILE_LENGTH_EXEMPTIONS in scripts/effect-lint.ts with the reason.",
+    },
+  ]
+}
+
+// ---------------------------------------------------------------------------
+// The `@vitest-environment` pragma rule (gate-red-on-dev ticket 06).
+//
+// Ticket 04 moved the renderer/main environment split into
+// `apps/desktop/vitest.config.ts` and deleted all 105 per-file pragmas. Nothing stopped the 106th,
+// and the trap is sharper than a stray pragma: vitest scans a test file's leading comment block for
+// the string and matches it *wherever* it appears there — including inside prose explaining why the
+// file deliberately has none. Ticket 04's own regression guard was written that way, vitest matched
+// the quoted text, applied jsdom regardless of config, and the guard silently stopped guarding.
+//
+// So the rule forbids the literal anywhere in the file rather than only in the leading block: a
+// comment *about* the pragma is exactly the failure mode, and "is this comment leading?" is a
+// distinction the next reader should not have to make.
+//
+// Non-AST, like the file-length ceiling above. The pragma is comment trivia, so an AST rule would
+// have to reach into the same raw text anyway. `sourceDirs` is `["packages", "apps"]` and excludes
+// `scripts/`, so this file's own mentions of the string cannot self-trip.
+// ---------------------------------------------------------------------------
+
+/** `apps/<pkg>/test/...` — where the projects split in `vitest.config.ts` is authoritative. */
+const APP_TEST_PATH = /^apps\/[^/]+\/test\//
+
+/** Assembled rather than written out, so this module stays greppable for the literal it bans. */
+const VITEST_ENVIRONMENT_PRAGMA = `@vitest${"-"}environment`
+
+/**
+ * One violation per line mentioning the pragma, in any test file under an app.
+ *
+ * Every occurrence is reported, not just the first: a file that quotes it twice has two lines to
+ * fix, and a rule that stops at the first sends the author back around the loop.
+ */
+export function lintVitestEnvironmentPragma(
+  sourceFile: SourceFile,
+  filePath: string,
+  cwd: string,
+): LintViolation[] {
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  if (!APP_TEST_PATH.test(rel)) return []
+  const violations: LintViolation[] = []
+  const lines = sourceFile.text.split("\n")
+  for (const [index, line] of lines.entries()) {
+    if (!line.includes(VITEST_ENVIRONMENT_PRAGMA)) continue
+    violations.push({
+      file: filePath,
+      line: index + 1,
+      rule: "vitest-environment-pragma",
+      message:
+        `${VITEST_ENVIRONMENT_PRAGMA} does not belong in a test file. The renderer/main split lives ` +
+        "in apps/desktop/vitest.config.ts: a test gets a DOM because of where it sits on disk, not " +
+        "because of a pragma. This fires on a mention as well as a use, because vitest matches the " +
+        "string anywhere in the leading comment block — so a comment explaining the pragma silently " +
+        "re-applies it. Name it indirectly, or move the file.",
+    })
+  }
+  return violations
+}
+
+// ---------------------------------------------------------------------------
+// The locale-free-sort rule (group-g ticket 38).
+//
+// `localeCompare` with no locale argument reads the host's locale, and ICU collation disagrees with
+// code-unit order on case ("a" before "B") and on punctuation ("_" before digits). The engineering
+// contract keeps the system locale out of the pure packages, because a seeded tie-break that reads
+// it could pick a different XI or draw on another machine. The replacement is `compareCodeUnits`
+// from `@cm-clone/shared`. Display sorting, where the locale is wanted, belongs at the renderer
+// edge, so the rule is scoped to the two pure packages' sources and stays out of everything else.
+//
+// AST-based: any property access named `localeCompare` — a call or a bare reference passed to
+// `sort` — and not a mention in a comment or string. The fixture proves it on every gate run.
+// ---------------------------------------------------------------------------
+
+/** Repo-relative POSIX prefixes the rule polices: the pure packages' sources, not their tests. */
+const LOCALE_FREE_ROOTS = ["packages/shared/src/", "packages/game-engine/src/"]
+
+export function isLocaleFree(filePath: string, cwd: string): boolean {
+  if (filePath.includes(FIXTURE_ROOT)) return true
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  return LOCALE_FREE_ROOTS.some((root) => rel.startsWith(root))
+}
+
+export function lintLocaleCompare(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    if (isPropertyAccessExpression(node) && isIdentifier(node.name) && node.name.text === "localeCompare") {
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+      out.push({
+        file: filePath,
+        line: line + 1,
+        rule: "no-locale-compare",
+        message:
+          "localeCompare reads the host locale, which the pure packages must not (ENGINEERING-CONTRACT, " +
+          "Determinism). Use compareCodeUnits from @cm-clone/shared; sort display text at the renderer edge.",
+      })
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  return out
+}
+
+// ---------------------------------------------------------------------------
+// The game-clock rule (gate-red-on-dev ticket 09).
+//
+// A player's age used to be computed from `new Date()` in four main-process modules, so in-game ages
+// never advanced with the Seasons and the same seed developed and paid its players differently
+// depending on the year the game was run. The world's time is the Season's `game_date`
+// (`loadGameDate`); the machine's clock is not a game input. The rule bans the two ways of reading
+// "now" — a zero-argument `new Date()` and `Date.now()` — in the modules that hold game rules, and
+// in the pure packages, whose determinism the engineering contract already demands.
+//
+// Scoped rather than tree-wide: `world/` stamps `savedAt`/`createdAt` metadata with real time, and
+// `rpc/` measures request durations, and both are right to. `new Date(isoString)` and
+// `new Date(millis)` convert a value the caller already has, so they are left alone.
+// ---------------------------------------------------------------------------
+
+/** Repo-relative POSIX prefixes where reading the machine's clock is a defect. */
+const GAME_CLOCK_ROOTS = [
+  "apps/desktop/src/main/club/",
+  "apps/desktop/src/main/career/",
+  "apps/desktop/src/main/transfers/",
+  "apps/desktop/src/main/season/",
+  "apps/desktop/src/main/match/",
+  "packages/shared/src/",
+  "packages/game-engine/src/",
+]
+
+export function isGameClockOnly(filePath: string, cwd: string): boolean {
+  if (filePath.includes(FIXTURE_ROOT)) return true
+  const rel = relative(cwd, filePath).replaceAll("\\", "/")
+  return GAME_CLOCK_ROOTS.some((root) => rel.startsWith(root))
+}
+
+const isDateIdentifier = (node: Node): boolean => isIdentifier(node) && node.text === "Date"
+
+export function lintWallClock(sourceFile: SourceFile, filePath: string): LintViolation[] {
+  const out: LintViolation[] = []
+  const visit = (node: Node): void => {
+    const readsNow =
+      (isNewExpression(node) && isDateIdentifier(node.expression) && (node.arguments?.length ?? 0) === 0) ||
+      (isCallExpression(node) &&
+        isPropertyAccessExpression(node.expression) &&
+        isDateIdentifier(node.expression.expression) &&
+        node.expression.name.text === "now")
+    if (readsNow) {
+      const { line } = sourceFile.getLineAndCharacterOfPosition(node.getStart(sourceFile))
+      out.push({
+        file: filePath,
+        line: line + 1,
+        rule: "no-wall-clock",
+        message:
+          "Game rules must not read the machine's clock. Use the Season's game date (loadGameDate, or " +
+          "the date the caller already holds) — ages, prices and development are world state.",
+      })
+    }
+    node.forEachChild(visit)
+  }
+  visit(sourceFile)
+  return out
 }
 
 const sourceDirs = ["packages", "apps"]
@@ -255,7 +868,7 @@ const sourceDirs = ["packages", "apps"]
  */
 function findSourceFiles(root: string): string[] {
   const results: string[] = []
-  let entries: ReturnType<typeof readdirSync<{ withFileTypes: true }>>
+  let entries: Dirent[]
   try {
     entries = readdirSync(root, { withFileTypes: true })
   } catch (error) {
@@ -297,14 +910,33 @@ function lintSourceFile(sourceFile: SourceFile, filePath: string): LintViolation
   return violations
 }
 
-/** Every fixture must trip at least one renderer-boundary violation, on pain of the gate failing. */
-function assertBoundaryCoverage(found: Array<{ file: string; violations: LintViolation[] }>): void {
+/**
+ * Every fixture must still trip the rule it exists to prove, on pain of the gate
+ * failing. A fixture's file stem names that rule (`renderer-boundary.tsx` proves
+ * `renderer-boundary`), so adding a rule means adding a fixture and nothing else
+ * has to be kept in sync. A rule that stops firing is a rule nobody needs, and
+ * nobody notices until it is too late.
+ *
+ * The check is fixture-driven, not rule-driven: it asserts every fixture on disk still trips its
+ * namesake rule, and never enumerates `rules` to demand a fixture per rule. So `max-file-length`
+ * is deliberately out of scope here — proving it on disk would mean committing a 600-line fixture
+ * whose only content is padding. It is proved instead by injecting a small `maxFileLines` in
+ * `max-file-length-lint.test.ts`, which is a stronger test anyway: it exercises the threshold, the
+ * allowlist, and the message in one place. Adding no fixture cannot make this function fail.
+ */
+export function fixtureRuleName(filePath: string): string {
+  const base = filePath.replace(/\\/g, "/").split("/").pop() ?? filePath
+  return base.replace(/\.[jt]sx?$/, "")
+}
+
+function assertFixtureCoverage(found: Array<{ file: string; violations: LintViolation[] }>): void {
   for (const entry of found) {
-    const hits = entry.violations.filter((v) => v.rule === "renderer-boundary")
+    const rule = fixtureRuleName(entry.file)
+    const hits = entry.violations.filter((v) => v.rule === rule)
     if (hits.length === 0) {
       throw new Error(
-        `effect-lint: boundary fixture ${entry.file} did NOT trip any renderer-boundary rule. ` +
-          "If the seam boundary moved, update the fixture before relaxing the rule.",
+        `effect-lint: fixture ${entry.file} did NOT trip the ${rule} rule. ` +
+          "If the rule moved, update the fixture before relaxing the rule.",
       )
     }
   }
@@ -313,14 +945,25 @@ function assertBoundaryCoverage(found: Array<{ file: string; violations: LintVio
 export interface LintFileSetResult {
   readonly treeViolations: LintViolation[]
   readonly fixtureBoundaries: Array<{ file: string; violations: LintViolation[] }>
+  /** Remaining `slate-*` sites per repo-relative path, for the backlog ratchet. */
+  readonly slateCounts: ReadonlyMap<string, number>
 }
 
 /**
  * Lint an explicit set of file paths (absolute). Kept separate from `main` so tests can drive
  * the exact same rules against fixtures and real files without re-implementing the harness.
  */
-export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
-  const fixtureFiles = files.filter((f) => f.includes(FIXTURE_ROOT))
+export interface LintFileSetOptions {
+  /** Override the file-length limit, so a spec can prove that rule with a small fixture. */
+  readonly maxFileLines?: number
+}
+
+export function lintFileSet(
+  cwd: string,
+  files: string[],
+  options: LintFileSetOptions = {},
+): LintFileSetResult {
+  const fixtureFiles = new Set(files.filter((f) => f.includes(FIXTURE_ROOT)))
   const scratchDir = mkdtempSync(join(tmpdir(), "effect-lint-"))
   const configPath = join(scratchDir, "tsconfig.json")
   writeFileSync(
@@ -343,6 +986,7 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
   const api = new API({ cwd })
   const treeViolations: LintViolation[] = []
   const fixtureBoundaries: Array<{ file: string; violations: LintViolation[] }> = []
+  const slateCounts = new Map<string, number>()
   try {
     const project = api.updateSnapshot({ openProjects: [configPath] }).getProjects()[0]
     if (!project) {
@@ -352,8 +996,15 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
     if (parseErrors.length > 0) {
       const first = parseErrors[0]!
       throw new Error(
-        `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.file?.fileName ?? "<unknown>"} — ${String(first.messageText)}`,
+        `effect-lint: ${parseErrors.length} parse error(s); refusing to pass. First: ${first.fileName ?? "<unknown>"} — ${first.text}`,
       )
+    }
+    // The role-override guard follows class constants across relative imports,
+    // so every guarded file's scope is indexed before any file is linted.
+    const constantIndex = new Map<string, ConstantScope>()
+    for (const file of files) {
+      const sourceFile = isSlateGuarded(file) ? project.program.getSourceFile(file) : undefined
+      if (sourceFile) constantIndex.set(moduleKey(file), constantScopeOf(sourceFile, file))
     }
     for (const file of files) {
       const sourceFile = project.program.getSourceFile(file)
@@ -362,10 +1013,27 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
       }
       const standard = lintSourceFile(sourceFile, file)
       const boundary = isBoundaryEnforced(file) ? lintBoundary(sourceFile, file) : []
-      if (fixtureFiles.includes(file)) {
-        fixtureBoundaries.push({ file, violations: [...standard, ...boundary] })
+      const slate = isSlateGuarded(file) ? lintSlateClassNames(sourceFile, file) : []
+      const typeScale = isSlateGuarded(file) ? lintRawTextSize(sourceFile, file) : []
+      const roleOverride = isRoleOverrideGuarded(file) ? lintRoleOverride(sourceFile, file, constantIndex) : []
+      const length = lintFileLength(sourceFile, file, cwd, options.maxFileLines)
+      const pragma = lintVitestEnvironmentPragma(sourceFile, file, cwd)
+      const locale = isLocaleFree(file, cwd) ? lintLocaleCompare(sourceFile, file) : []
+      const clock = isGameClockOnly(file, cwd) ? lintWallClock(sourceFile, file) : []
+      if (fixtureFiles.has(file)) {
+        fixtureBoundaries.push({
+          file,
+          violations: [...standard, ...boundary, ...slate, ...typeScale, ...roleOverride, ...length, ...pragma, ...locale, ...clock],
+        })
       } else {
-        treeViolations.push(...standard, ...boundary)
+        // Slate sites are counted, not reported here: the backlog ratchet in
+        // `main` decides which of them are a regression and which are the
+        // recorded migration debt. Reporting each one would drown the gate in
+        // 391 known violations.
+        treeViolations.push(...standard, ...boundary, ...typeScale, ...roleOverride, ...length, ...pragma, ...locale, ...clock)
+        if (slate.length > 0) {
+          slateCounts.set(relative(cwd, file).replaceAll("\\", "/"), slate.length)
+        }
       }
     }
   } finally {
@@ -373,7 +1041,7 @@ export function lintFileSet(cwd: string, files: string[]): LintFileSetResult {
     rmSync(scratchDir, { force: true, recursive: true })
   }
   treeViolations.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
-  return { treeViolations, fixtureBoundaries }
+  return { treeViolations, fixtureBoundaries, slateCounts }
 }
 
 export function main(): number {
@@ -383,23 +1051,31 @@ export function main(): number {
     allFiles.push(...findSourceFiles(join(cwd, dir)))
   }
   const fixtureFiles = findFixtureFiles(cwd)
-  const { treeViolations, fixtureBoundaries } = lintFileSet(cwd, [...allFiles, ...fixtureFiles])
+  const { treeViolations, fixtureBoundaries, slateCounts } = lintFileSet(cwd, [
+    ...allFiles,
+    ...fixtureFiles,
+  ])
+  const slateDrift = reconcileSlateBaseline(cwd, readSlateBaseline(cwd), slateCounts)
+  treeViolations.push(...slateDrift)
+  treeViolations.sort((a, b) => a.file.localeCompare(b.file) || a.line - b.line)
 
   for (const violation of treeViolations) {
     console.error(`  ${violation.file}:${violation.line}`)
     console.error(`  ${violation.rule}: ${violation.message}`)
   }
 
-  // The fixtures must keep tripping the boundary rules — a rule that stops firing is a rule
-  // nobody needs, and nobody notices until it is too late.
-  assertBoundaryCoverage(fixtureBoundaries)
+  assertFixtureCoverage(fixtureBoundaries)
 
   if (treeViolations.length > 0) {
     console.error(`\neffect-lint: ${treeViolations.length} violation(s) found.`)
     return 1
   }
 
-  console.log(`effect-lint: no violations found (${allFiles.length} files).`)
+  const backlog = [...slateCounts.values()].reduce((sum, n) => sum + n, 0)
+  console.log(
+    `effect-lint: no violations found (${allFiles.length} files). ` +
+      `slate migration backlog: ${backlog} site(s) across ${slateCounts.size} file(s).`,
+  )
   return 0
 }
 

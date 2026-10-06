@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { FORMATION_SLOTS, POSITION_ROLES, type PlayerAttributes } from "@cm-clone/shared";
+import { builtInTemplate, DEFAULT_TEAM_INSTRUCTIONS, DEFAULT_PLAYER_INSTRUCTIONS, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, type PlayerAttributes } from "@cm-clone/shared";
 import type { MatchCommand } from "../../src/match/commands.js";
 import type { InjuryEvent } from "../../src/match/events.js";
 import {
@@ -7,9 +7,9 @@ import {
   simulateMatchWithCondition,
   simulateMatchWithCounts,
   type SimulateMatchInput,
-} from "../../src/match/simulate.js";
+} from "../../src/match/simulate/index.js";
 import type { MatchPlayerInput, MatchTeamSetup } from "../../src/match/types.js";
-import { buildTeam, clubId as makeClubId, playerId as makePlayerId } from "./fixtures.js";
+import { buildTeam, clubId as makeClubId, playerId as makePlayerId, withNamedBench } from "./fixtures.js";
 
 import type { ClubId, PlayerId } from "@cm-clone/contracts";
 const baseInput = (seed: number): SimulateMatchInput => ({
@@ -32,21 +32,23 @@ const craftAttributes = (overrides: Partial<Record<keyof PlayerAttributes, numbe
   return { ...(base as PlayerAttributes), ...overrides };
 };
 
-const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, formation: keyof typeof FORMATION_SLOTS = "4-4-2"): MatchTeamSetup => {
-  const squad: Array<MatchPlayerInput> = FORMATION_SLOTS[formation].map((position, index) => ({
+const craftTeam = (clubId: ClubId, attributes: PlayerAttributes, template = "4-4-2"): MatchTeamSetup => {
+  const cells = builtInTemplate(template)!.slots.map((slot) => slot.cell);
+  const squad: Array<MatchPlayerInput> = cells.map((_, index) => ({
     id: makePlayerId(`${clubId}-${index}`),
     attributes: { ...attributes },
+    positionalRatings: {
+      lines: { GK: 10, SW: 10, D: 10, DM: 10, M: 10, AM: 10, F: 10, WB: 10 },
+      sides: { R: 10, L: 10, C: 10 },
+      freeRole: 10,
+    },
   }));
   const tactic = {
-    formation,
-    slots: FORMATION_SLOTS[formation].map((position, index) => ({
-      position,
-      role: POSITION_ROLES[position],
-      playerId: makePlayerId(`${clubId}-${index}`),
-    })),
-    mentality: "balanced" as const,
-    tempo: "normal" as const,
-    pressing: "high" as const,
+    slots: cells.map((cell, index) => ({ cell, playerId: makePlayerId(`${clubId}-${index}`), run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } })),
+    bench: [null, null, null, null, null, null, null],
+    team: { ...DEFAULT_TEAM_INSTRUCTIONS },
+    teamSetPieces: DEFAULT_TEAM_SET_PIECES,
+    takers: EMPTY_TAKERS,
   };
   return { clubId, squad, tactic };
 };
@@ -64,6 +66,26 @@ describe("simulateMatch", () => {
     expect(halfTimeIndices).toHaveLength(1);
     const fullTimeIndex = events.findIndex((e) => e._tag === "FullTimeWhistle");
     expect(halfTimeIndices[0]).toBeLessThan(fullTimeIndex);
+  });
+
+  it("stamps the playing half onto every half-bearing event, second-half chances included", () => {
+    const chanceTags = new Set<string>([
+      "Goal", "ShotOnTarget", "ShotMissed", "ThroughBall", "Cross",
+      "LongShot", "RunWithBall", "HoldUpLayOff", "Counter", "KeyPass",
+    ]);
+    let sawSecondHalfChance = false;
+    for (let seed = 300; seed < 320; seed++) {
+      const events = simulateMatch(baseInput(seed));
+      const halfTimeIndex = events.findIndex((e) => e._tag === "HalfTimeReached");
+      for (const [i, event] of events.entries()) {
+        if ("minute" in event) expect(event.minute).not.toBe(999);
+        if (!("half" in event)) continue;
+        const expected = i < halfTimeIndex ? 1 : 2;
+        expect(event.half).toBe(expected);
+        if (expected === 2 && chanceTags.has(event._tag)) sawSecondHalfChance = true;
+      }
+    }
+    expect(sawSecondHalfChance).toBe(true);
   });
 
   it("is fully deterministic: same seed and same commands reproduce an identical timeline", () => {
@@ -101,9 +123,17 @@ describe("simulateMatch", () => {
       "Goal",
       "ShotOnTarget",
       "ShotMissed",
-      "BigChance",
       "HalfTimeReached",
       "FullTimeWhistle",
+      "ThroughBall",
+      "Cross",
+      "LongShot",
+      "RunWithBall",
+      "HoldUpLayOff",
+      "Counter",
+      "Foul",
+      "Offside",
+      "KeyPass",
     ]) {
       expect(seenTags.has(tag)).toBe(true);
     }
@@ -136,7 +166,7 @@ describe("simulateMatch", () => {
       }
       // Fatigue happened on the pitch: at least one on-pitch player finished below full Condition.
       const onPitch = input.home.tactic.slots.map((slot) => slot.playerId);
-expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
+      expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       // Deterministic from the seed.
     });
 
@@ -167,13 +197,14 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       let redCount = 0;
       let forcedSubs = 0;
       for (let seed = 1; seed < 800; seed++) {
-        const events = simulateMatch(baseInput(seed));
+        const { home, away } = baseInput(seed);
+        const events = simulateMatch({ seed, home: withNamedBench(home), away: withNamedBench(away) });
         for (const event of events) {
           if (event._tag === "Injury" && event.tier === "red") redCount++;
           if (event._tag === "Substitution" && event.forcedByInjury) forcedSubs++;
         }
       }
-      // Red injuries always force the player off; a bench player fills the slot when one exists.
+      // Red injuries always force the player off; a named bench player fills the slot when one exists.
       expect(redCount).toBeGreaterThan(0);
       expect(forcedSubs).toBeGreaterThanOrEqual(redCount * 0.9);
     }, 20000);
@@ -198,17 +229,18 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
       const home = buildTeam(makeClubId("home-club"), 20);
       const away = buildTeam(makeClubId("away-club"), 21);
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
-        [50, [{ _tag: "ChangeTactics", clubId: makeClubId("home-club"), tactic: { ...home.setup.tactic, mentality: "attacking" } }]],
+        [50, [{ _tag: "ChangeTactics", clubId: makeClubId("home-club"), tactic: { ...home.setup.tactic, team: { ...home.setup.tactic.team, mentality: "attacking" } } }]],
       ]);
       const events = simulateMatch({ seed: 20, home: home.setup, away: away.setup, commandsByMinute });
       expect(events.some((e) => e._tag === "FullTimeWhistle")).toBe(true);
     });
 
     it("accepts a valid mid-match MakeSubstitution and emits a Substitution event", () => {
-      const home = buildTeam(makeClubId("home-club"), 30);
+      // A substitute comes off the named bench (decision request 04, ticket 35).
+      const home = { setup: withNamedBench(buildTeam(makeClubId("home-club"), 30).setup) };
       const away = buildTeam(makeClubId("away-club"), 31);
       const outPlayerId = home.setup.tactic.slots[0]!.playerId;
-      const inPlayerId = home.squad.find((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id))!.id;
+      const inPlayerId = home.setup.tactic.bench[0]!;
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>([
         [10, [{ _tag: "MakeSubstitution", clubId: makeClubId("home-club"), outPlayerId, inPlayerId }]],
       ]);
@@ -221,9 +253,10 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("rejects (silently drops) a substitution once the 5-sub cap is reached", () => {
-      const home = buildTeam(makeClubId("home-club"), 40);
+      // Substitutes come off the named bench (decision request 04, ticket 35).
+      const home = { setup: withNamedBench(buildTeam(makeClubId("home-club"), 40).setup) };
       const away = buildTeam(makeClubId("away-club"), 41);
-      const bench = home.squad.filter((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id));
+      const bench = home.setup.tactic.bench.flatMap((id) => (id === null ? [] : [{ id }]));
       const starters = home.setup.tactic.slots.map((s) => s.playerId);
 
       const commandsByMinute = new Map<number, ReadonlyArray<MatchCommand>>();
@@ -239,9 +272,10 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
     });
 
     it("rejects a 4th substitution window (halftime doesn't count as a window)", () => {
-      const home = buildTeam(makeClubId("home-club"), 50);
+      // Substitutes come off the named bench (decision request 04, ticket 35).
+      const home = { setup: withNamedBench(buildTeam(makeClubId("home-club"), 50).setup) };
       const away = buildTeam(makeClubId("away-club"), 51);
-      const bench = home.squad.filter((p) => !home.setup.tactic.slots.some((s) => s.playerId === p.id));
+      const bench = home.setup.tactic.bench.flatMap((id) => (id === null ? [] : [{ id }]));
       const starters = home.setup.tactic.slots.map((s) => s.playerId);
 
       // 3 distinct-minute windows mid-match, plus a halftime window (free), plus a 4th mid-match window.
@@ -339,7 +373,12 @@ expect(onPitch.some((id) => (conditions.get(id) ?? 100) < 100)).toBe(true);
         const orange = events.find(
           (e): e is InjuryEvent => e._tag === "Injury" && e.tier === "orange" && e.teamClubId === "home" && e.minute < 89,
         );
-        if (orange) {
+        // The knock must be the first thing to change the home count: an earlier red card or
+        // forced-off would already have the side at 10 when the knock lands.
+        const homeCountAtKnock = orange
+          ? simulateMatchWithCounts({ seed: s, home, away }).counts.find((c) => c.minute >= orange.minute)?.homeCount
+          : undefined;
+        if (orange && homeCountAtKnock === 11) {
           seed = s;
           orangeMinute = orange.minute;
           orangePlayerId = orange.playerId;

@@ -1,0 +1,171 @@
+import { cleanup, screen } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { SaveId } from "@cm-clone/contracts";
+import {
+  FAMILIARITY_TIERS,
+  GOALKEEPING_ATTRIBUTES,
+  HIDDEN_ATTRIBUTES,
+  OUTFIELD_ATTRIBUTES,
+  POSITIONS,
+  STATURE_TIERS,
+  BUILT_IN_TEMPLATES,
+} from "@cm-clone/shared";
+import { SquadScreen } from "../../src/renderer/squad/SquadScreen.js";
+import { RegistryProvider } from "../../src/renderer/rpc.js";
+import { renderInRouter } from "../setup/renderInRouter.js";
+import { positionSummaryFor } from "../setup/positionFixtures.js";
+
+const relaxedSaveId = (id: string) => SaveId.make(id);
+
+const attributes = (value: number): Record<string, number> => ({
+  ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, value])),
+  ...Object.fromEntries(GOALKEEPING_ATTRIBUTES.map((a) => [a, value])),
+  ...Object.fromEntries(HIDDEN_ATTRIBUTES.map((a) => [a, value])),
+});
+
+const squadView = (saveId: string, clubName: string) => ({
+  club: { id: relaxedSaveId(saveId), name: clubName, statureTier: STATURE_TIERS[0] },
+  players: [
+    {
+      id: relaxedSaveId(`p-${saveId}`),
+      firstName: "Alan",
+      lastName: "Shearer",
+      dateOfBirth: "1970-08-13",
+      age: 30,
+      attributes: attributes(12),
+      positions: [{ position: POSITIONS[2], familiarity: FAMILIARITY_TIERS[0] }],
+      ...positionSummaryFor(POSITIONS[2]),
+      overallRating: 90,
+      positionRatings: { WB: 12 },
+      cellRatings: {},
+      suitability: {},
+      retrainingTarget: null,
+      condition: 100,
+      trainingFocus: null,
+      nationality: "England",
+      birthplace: "London",
+      foreign: false,
+      contractWage: 9000,
+      contractExpiryDate: "2028-06-30",
+      transferValue: 1200000,
+    },
+  ],
+});
+
+const mockPreload = (impl: (method: string, payload: unknown) => Promise<unknown>) => {
+  (window as unknown as { cmClone: { call: unknown } }).cmClone = { call: impl };
+};
+
+const saveNotFound = { _tag: "SaveNotFoundError", id: relaxedSaveId("s1") };
+
+beforeEach(() => {
+  cleanup();
+});
+
+afterEach(() => {
+  cleanup();
+});
+
+describe("career screens go through the seam and render typed errors (AC-01, AC-03)", () => {
+  it("SquadScreen renders the typed SaveNotFoundError from the seam union", async () => {
+    mockPreload(async (method) => {
+      if (method === "getSquad") return { _tag: "Failure", error: saveNotFound };
+      return { _tag: "Failure", error: saveNotFound };
+    });
+    renderInRouter(
+      <RegistryProvider>
+        <SquadScreen saveId={relaxedSaveId("s1")} />
+      </RegistryProvider>,
+    );
+    expect(await screen.findByText("That save could not be found.")).toBeTruthy();
+  });
+
+  it("SquadScreen renders the transport failure message when IPC rejects", async () => {
+    mockPreload(async () => {
+      throw new Error("ipc down");
+    });
+    renderInRouter(
+      <RegistryProvider>
+        <SquadScreen saveId={relaxedSaveId("s1")} />
+      </RegistryProvider>,
+    );
+    expect(await screen.findByText("Unable to reach the game. Please try again.")).toBeTruthy();
+  });
+
+  it("SquadScreen renders the loaded squad on success", async () => {
+    mockPreload(async (method) => {
+      if (method === "getSquad") return { _tag: "Success", value: squadView("s1", "Test FC") };
+      if (method === "getTactics")
+        return {
+          _tag: "Success",
+          value: {
+            club: { id: relaxedSaveId("s1"), name: "Test FC", statureTier: STATURE_TIERS[0] },
+            squad: squadView("s1", "Test FC").players,
+            tactic: {
+              sourceTemplate: "4-4-2",
+              slots: BUILT_IN_TEMPLATES.find((t) => t.name === "4-4-2")!.slots.map((slot) => ({
+                cell: slot.cell,
+                run: null,
+                subRow: slot.subRow,
+                subCol: slot.subCol,
+                instructions: slot.instructions,
+                setPieceRoles: slot.setPieceRoles,
+              })),
+              team: {
+                passing: "mixed",
+                focusPassing: "mixed",
+                tackling: "normal",
+                closingDown: "default",
+                mentality: "normal",
+                offsideTrap: false,
+                zonalMarking: true,
+                counterAttack: false,
+                menBehindTheBall: false,
+              },
+              teamSetPieces: {
+                cornersLeft: "default",
+                cornersRight: "default",
+                freeKicksLeft: "default",
+                freeKicksRight: "default",
+                throwInsLeft: "default",
+                throwInsRight: "default",
+              },
+              assignments: Array.from({ length: 11 }, () => ""),
+              bench: [null, null, null, null, null, null, null],
+              takers: {
+                captain: [],
+                penalties: [],
+                freeKicksLeft: [],
+                freeKicksRight: [],
+                cornersLeft: [],
+                cornersRight: [],
+                throwInsLeft: [],
+                throwInsRight: [],
+              },
+            },
+            revision: 0,
+          },
+        };
+      return { _tag: "Failure", error: saveNotFound };
+    });
+    renderInRouter(
+      <RegistryProvider>
+        <SquadScreen saveId={relaxedSaveId("s1")} />
+      </RegistryProvider>,
+    );
+    // The heading is the section name; club identity moved to the career
+    // chrome's title bar, so the screen no longer repeats it.
+    expect(screen.queryByText("Test FC")).toBeNull();
+    // A fresh install opens on the position list, which names players the way
+    // the list does — surname first.
+
+    expect(await screen.findByText(/Shearer, Alan/)).toBeTruthy();
+  });
+
+  // Two tests stood here and drove the Calendar through the League table's own
+  // advance button. That control is gone: time advances from the chrome, on
+  // every career route. The invalidation half moved to
+  // `chrome/career-chrome.test.tsx` — same assertion, dispatched from the
+  // control that ships. The typed-error half has no home until the chrome
+  // renders a failed advance, which is this effort's next ticket.
+});

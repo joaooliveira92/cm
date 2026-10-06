@@ -1,0 +1,183 @@
+import { mkdtempSync } from "node:fs";
+import { rm } from "node:fs/promises";
+import os from "node:os";
+import path from "node:path";
+import { it } from "@effect/vitest";
+import { deepStrictEqual, ok, strictEqual } from "node:assert";
+import type { CommentaryLineView, MatchId, MatchSummary, ResumeSimulationView, SaveId } from "@cm-clone/contracts";
+import { SqliteClient } from "@effect/sql-sqlite-node";
+import { Effect } from "effect";
+import { afterEach, beforeEach } from "vitest";
+import { MATCH_STREAM_TYPE, deriveMatchEvents, matchStartedOf, pitchAsOf } from "@cm-clone/game-engine";
+import { resumeSimulation, submitMatchCommand } from "./revealedReads.js";
+import { loadStreamEvents, withExistingSave } from "../../../src/main/season/decider.js";
+import { atFirstFixture, humanClubOf, startSeededMatch } from "./seededMatch.js";
+
+let savesDir: string;
+
+beforeEach(() => {
+  savesDir = mkdtempSync(path.join(os.tmpdir(), "cm-clone-revealed-state-test-"));
+});
+
+afterEach(() => rm(savesDir, { recursive: true, force: true }));
+
+/**
+ * A match seed on the first Fixture of `WORLD_SEED` where the opening chunk (up to half time) holds
+ * the match's only Goal, and the human club's red card opens a chunk with both of the match's
+ * Injuries falling after it. Re-pinned 2026-09-29 when players gained CM line and side ratings, which regenerated this world's squads. A score or head-count read from the end
+ * of the chunk would show each before its line. The tests locate each line at runtime and re-check
+ * the property from the Commentary Lines, naming this constant when one no longer holds. Re-pinned 2026-10-01 when Regimen started scaling Condition decay and Injury severity. Re-pinned for formations-and-instructions ticket 35, when per-slot player instructions reached real matches.
+ */
+const SEED = 5933;
+
+const repin = `repin SEED (${SEED})`;
+
+const drainLines = (saveId: SaveId, matchId: MatchId) =>
+  Effect.gen(function* () {
+    const lines: Array<CommentaryLineView> = [];
+    let cursor = 0;
+    let isComplete = false;
+    while (!isComplete) {
+      const chunk = yield* resumeSimulation(savesDir, saveId, matchId, cursor, null);
+      lines.push(...chunk.lines);
+      cursor = chunk.cursor;
+      isComplete = chunk.isComplete;
+    }
+    return lines;
+  });
+
+/** Drain every chunk from `cursor`, concatenating its lines and injuries: a chunk holds at most 40
+ *  lines, so a match region can span more than one. */
+const drainChunks = (saveId: SaveId, matchId: MatchId, cursor: number, revealedEvents: number | null) =>
+  Effect.gen(function* () {
+    const lines: Array<CommentaryLineView> = [];
+    const injuries: Array<ResumeSimulationView["injuries"][number]> = [];
+    let next = cursor;
+    let isComplete = false;
+    while (!isComplete) {
+      const chunk = yield* resumeSimulation(savesDir, saveId, matchId, next, revealedEvents);
+      lines.push(...chunk.lines);
+      injuries.push(...chunk.injuries);
+      next = chunk.cursor;
+      isComplete = chunk.isComplete;
+    }
+    return { lines, injuries };
+  });
+
+const humanCount = (view: ResumeSimulationView, summary: MatchSummary): number =>
+  summary.isHome ? view.homeOnPitchCount : view.awayOnPitchCount;
+
+const humanPitchSize = (view: ResumeSimulationView, summary: MatchSummary): number =>
+  (summary.isHome ? view.homePitch : view.awayPitch).onPitch.length;
+
+const goals = (view: ResumeSimulationView): number => view.homeScore + view.awayScore;
+
+const seededMatch = Effect.gen(function* () {
+  const { save, fixtureId } = yield* atFirstFixture(savesDir);
+  const match = yield* startSeededMatch(savesDir, save.id, fixtureId, SEED);
+  const lines = yield* drainLines(save.id, match.matchId);
+  const goalLine = lines.findIndex((line) => line.tag === "Goal");
+  strictEqual(lines[goalLine]?.tag, "Goal", repin);
+  strictEqual(lines.filter((line) => line.tag === "Goal").length, 1, repin);
+  const halfTimeLine = lines.findIndex((line) => line.tag === "HalfTimeReached");
+  strictEqual(lines[halfTimeLine]?.tag, "HalfTimeReached", repin);
+  const redCardLine = lines.findIndex((line) => line.tag === "RedCard");
+  strictEqual(lines[redCardLine]?.tag, "RedCard", repin);
+  strictEqual(lines[redCardLine]!.clubId, match.isHome ? match.homeClubId : match.awayClubId, `the red card is the human club's — ${repin}`);
+  return { save, match, lines, goalLine, halfTimeLine, redCardLine };
+});
+
+it.effect("a response's score counts only the goals revealed, not those later in its chunk", () =>
+  Effect.gen(function* () {
+    const { save, match, lines, goalLine } = yield* seededMatch;
+    const at = (cursor: number, revealedEvents: number | null) =>
+      resumeSimulation(savesDir, save.id, match.matchId, cursor, revealedEvents);
+
+    // The opening chunk carries the goal's line, but the goal is not yet revealed.
+    const opening = yield* at(0, goalLine);
+    ok(opening.lines.length > goalLine, `the opening chunk holds the goal line — ${repin}`);
+    strictEqual(goals(opening), 0, "the score does not run ahead of the goal's line");
+
+    const afterGoal = yield* at(0, goalLine + 1);
+    strictEqual(goals(afterGoal), 1);
+
+    // Null is the whole match; every line revealed reads the same.
+    const whole = yield* at(0, null);
+    const allRevealed = yield* at(0, lines.length);
+    deepStrictEqual([whole.homeScore, whole.awayScore], [allRevealed.homeScore, allRevealed.awayScore]);
+    deepStrictEqual([whole.homeScore, whole.awayScore], [afterGoal.homeScore, afterGoal.awayScore]);
+
+    // A command response reads the same cut. A bring-off of a player not in the squad changes nothing.
+    const commanded = yield* submitMatchCommand(savesDir, save.id, match.matchId, 0, goalLine, 1, false, {
+      _tag: "ForceOff",
+      clubId: humanClubOf(match),
+      playerId: "not-a-player" as never,
+    });
+    strictEqual(commanded.lines[goalLine]?.tag, "Goal", `the no-op command leaves the goal in place — ${repin}`);
+    strictEqual(goals(commanded), 0, "a command response does not show the unrevealed goal either");
+  }),
+);
+
+it.effect("a response's on-pitch count reflects a red card only once revealed, whatever chunk it reads", () =>
+  Effect.gen(function* () {
+    const { save, match, redCardLine } = yield* seededMatch;
+
+    // Reading the second chunk, which opens with the red card, before revealing it.
+    const beforeRed = yield* resumeSimulation(savesDir, save.id, match.matchId, redCardLine, redCardLine);
+    ok(beforeRed.lines[0]?.tag === "RedCard", `the chunk holds the red card — ${repin}`);
+    strictEqual(humanCount(beforeRed, match), 11);
+    strictEqual(humanCount(beforeRed, match), humanPitchSize(beforeRed, match));
+
+    const afterRed = yield* resumeSimulation(savesDir, save.id, match.matchId, redCardLine, redCardLine + 1);
+    strictEqual(humanCount(afterRed, match), 10);
+    strictEqual(humanCount(afterRed, match), humanPitchSize(afterRed, match));
+
+    const opponent = match.isHome ? afterRed.awayOnPitchCount : afterRed.homeOnPitchCount;
+    strictEqual(opponent, 11);
+  }),
+);
+
+it.effect("a chunk's injuries are its own Injury lines, one per line in order, revealed or not", () =>
+  Effect.gen(function* () {
+    const { save, match, redCardLine } = yield* seededMatch;
+
+    // Injuries travel with the lines they belong to: the renderer pairs them and reveals both together.
+    const opening = yield* resumeSimulation(savesDir, save.id, match.matchId, 0, 0);
+    strictEqual(opening.lines.filter((line) => line.tag === "Injury").length, 0, repin);
+    deepStrictEqual(opening.injuries, []);
+    deepStrictEqual(opening.injuredClubIds, []);
+
+    const second = yield* drainChunks(save.id, match.matchId, redCardLine, redCardLine);
+    const injuryLines = second.lines.filter((line) => line.tag === "Injury");
+    strictEqual(injuryLines.length, 2, `the chunks after the red card hold two Injury lines — ${repin}`);
+    deepStrictEqual(second.injuries.map((injury) => injury.minute), injuryLines.map((line) => line.minute));
+  }),
+);
+
+it.effect("the pitch-derived head-count agrees with the engine's own count at full time", () =>
+  Effect.gen(function* () {
+    const { save, match } = yield* atFirstFixture(savesDir).pipe(
+      Effect.flatMap(({ save, fixtureId }) =>
+        startSeededMatch(savesDir, save.id, fixtureId, SEED).pipe(Effect.map((match) => ({ save, match }))),
+      ),
+    );
+    const stream = yield* withExistingSave(savesDir, save.id, (filename) =>
+      loadStreamEvents(MATCH_STREAM_TYPE, match.matchId).pipe(
+        Effect.provide(SqliteClient.layer({ filename, readonly: true })),
+        Effect.scoped,
+      ),
+    );
+    const started = matchStartedOf(stream);
+    let shorthanded = 0;
+    for (let seed = 1; seed <= 400; seed++) {
+      const reseeded = [{ ...stream[0]!, payload: { ...started, seed } }];
+      const { counts, frames, journal } = deriveMatchEvents(reseeded);
+      const final = counts[counts.length - 1]!;
+      const home = pitchAsOf(frames.get(started.homeClubId) ?? [], journal, null).onPitch.length;
+      const away = pitchAsOf(frames.get(started.awayClubId) ?? [], journal, null).onPitch.length;
+      deepStrictEqual([home, away], [final.homeCount, final.awayCount], `seed ${seed}`);
+      if (home < 11 || away < 11) shorthanded += 1;
+    }
+    ok(shorthanded > 0, "some seeds end a side short, so the comparison covers a drop");
+  }),
+);

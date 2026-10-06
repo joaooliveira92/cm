@@ -38,12 +38,15 @@ export const classifyTableParamAction = (
     };
   }
   if (typeof p.filter === "object" && p.filter !== null) {
-    const filter = p.filter as Readonly<{ _tag?: unknown; query?: unknown; position?: unknown }>;
+    const filter = p.filter as Readonly<{ _tag?: unknown; query?: unknown; position?: unknown; status?: unknown }>;
     if (filter._tag === "nameSearch" && typeof filter.query === "string") {
       return { kind: "set-filter", tableId, filter: { _tag: "nameSearch", query: filter.query } };
     }
     if (filter._tag === "position" && typeof filter.position === "string") {
       return { kind: "set-filter", tableId, filter: { _tag: "position", position: filter.position } };
+    }
+    if (filter._tag === "status" && typeof filter.status === "string") {
+      return { kind: "set-filter", tableId, filter: { _tag: "status", status: filter.status } };
     }
   }
   if (actionId.startsWith("clear-sort-")) return { kind: "clear-sort", tableId };

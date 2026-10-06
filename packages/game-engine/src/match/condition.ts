@@ -1,8 +1,7 @@
 import type { PlayerId } from "@cm-clone/contracts";
 /**
  * Per-player in-match Condition (%) model (ticket 02/04). Each on-pitch player's Condition starts
- * near 100 and decays each minute at a rate that rises with match work-rate — a low-Stamina player
- * and a high-Tempo game both drain it faster. Condition is the substrate the fatigue multiplier and
+ * near 100 and decays each minute at a rate that rises as Stamina falls. Condition is the substrate the fatigue multiplier and
  * the non-contact injury trigger read from: below the threshold (~75%) the muscular/fatigue risk
  * climbs steeply as Condition falls.
  */
@@ -13,12 +12,12 @@ export const NON_CONTACT_CONDITION_THRESHOLD = 75;
 
 const clamp = (value: number, min: number, max: number): number => Math.min(max, Math.max(min, value));
 
-/** Condition points lost by one player over one simulated minute. Stamina 1-20, tempo is the team's
- * Tempo instruction multiplier (slow/normal/fast). Tuned so a low-Stamina player drains toward the
- * ~75% risk threshold by late in a normal-tempo match, while a fitter player stays higher. */
-export const conditionDecayPerMinute = (stamina: number, tempo: number): number => {
+/** Condition points lost by one player over one simulated minute. Stamina 1-20. Tuned so a
+ * low-Stamina player drains toward the ~75% risk threshold by late in a match, while a fitter player
+ * stays higher. */
+export const conditionDecayPerMinute = (stamina: number): number => {
   const staminaFactor = clamp((21 - stamina) / 10, 0.3, 1.6);
-  return 0.22 * staminaFactor * tempo;
+  return 0.22 * staminaFactor;
 };
 
 /** A live per-team Condition ledger: playerId -> current Condition % (0-100). Players with a

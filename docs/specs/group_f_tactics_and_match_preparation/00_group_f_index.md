@@ -37,9 +37,3 @@ Tactics Overview
 - Knowledge-limited opposition and player suitability information.
 - Revision-bound drafts and idempotent submissions.
 - Non-drag keyboard alternatives and accessible tactical editors.
-
-## Suggested Git commit
-
-```text
-docs(game-ui): add tactics and match preparation specifications
-```

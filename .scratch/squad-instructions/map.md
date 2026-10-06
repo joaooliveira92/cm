@@ -1,0 +1,41 @@
+# Map: squad-instructions — the Squad screen instruction's remainder
+
+Label: `wayfinder:map`
+
+## Destination
+
+The parts of [`.scratch/squad-instructions.md`](../squad-instructions.md) that the shipped Squad
+screen does not meet, that rest on an existing model, and that no later decision supersedes. They
+are built on the existing `renderer/squad/` screen, never as a second one.
+
+## Decisions so far
+
+- [01 — Reconcile the instruction](issues/01-reconcile-the-loose-squad-instruction.md): charter a
+  remainder. The visual target and shell are superseded. Views, position list, lineup slots and
+  filters are satisfied. Squad status, offer options, the Team filter and the listed/wanted/loan
+  badges are deferred on absent models. Build three things: a Contract view (02), the match-day
+  column in the table (03), and a Sort control for the position list (04).
+
+- [02 — Contract view](issues/02-contract-view.md): shipped. Contract ends is derived as 31 May
+  of the Contract's last Season, the latest that Season can conclude. The View catalogue now uses CM's names; Selection
+  and Statistics are held (Agent Note 2026-09-07).
+
+- **05, empty lineup slot (human, 2026-09-28):** selecting an empty starter slot brings the players
+  who fit it to the top and marks them. It never hides anyone, Escape and a visible Clear undo it,
+  and the keyboard carry is unchanged. [05](issues/05-empty-slot-prioritises-fitting-players.md).
+
+- [04 — Sort control for the position list](issues/04-sort-control-for-the-position-list.md): shipped.
+  The toolbar's Sort is shown for the list layout only and runs the shared `cycleSort` through the
+  screen's own `onSortCycle` — the header's control relocated, not a second sort model. Table layouts
+  keep sorting from their headers alone, because a second control for one state would be one too many.
+  Option labels come from the shared header map rather than copy, so an option cannot disagree with
+  the header it mirrors. `Positions` orders alphabetically by the rendered string, which is pre-existing
+  and left alone pending the positional model. Corrects
+  [the squad view selector note](../../.agents/notes/proposed/feature/2026-09-07-squad-view-selector-and-position-list.md),
+  which had listed the control as deliberately omitted.
+
+## Out of scope
+
+- Anything resting on a model the engine does not produce: squad status, offer options,
+  reserves/youth teams, transfer-list and loan state.
+- The 2003-era visual treatment and a Squad-owned shell.

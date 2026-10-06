@@ -6,38 +6,35 @@ import {
 } from "@cm-clone/shared";
 import { describe, expect, it } from "vitest";
 import { AppRpcs } from "../src/rpc.js";
+import { club, completeTactic } from "./tacticFixtures.js";
 import {
+  AdvancedOptionsPayload,
   AdvanceCalendarResult,
+  AdvanceInProgressError,
   AttributesSchema,
   BidView,
   ClubSummary,
-  InjuryView,
-  InvalidTacticError,
   InsufficientTransferBudgetError,
-  MarketPlayerView,
-  PlayerId,
   MatchCommandPayload,
   NotYourPlayerError,
   NullableTrainingFocusSchema,
   PlayerDevelopedEvent,
+  SaveArchivedError,
   SaveNotFoundError,
   SaveSummary,
   SquadPlayerView,
   SquadView,
-  Tactic,
   TacticsScreenView,
   TrainingFocusSetEvent,
   TrainingFocusView,
   TransfersScreenView,
-} from "../src/schemas.js";
+} from "../src/schemas/index.js";
 
 const roundTrip = <A, I>(schema: Schema.ConstraintCodec<A, I>, wire: unknown): void => {
   const decoded = Schema.decodeUnknownSync(schema)(wire);
   const encoded = Schema.encodeSync(schema)(decoded);
   expect(encoded).toEqual(wire);
 };
-
-const club = { id: "c1", name: "Castlemere United", statureTier: "big" };
 
 const attributes = {
   ...Object.fromEntries(OUTFIELD_ATTRIBUTES.map((a) => [a, 12])),
@@ -53,15 +50,41 @@ const player = {
   age: 24,
   attributes,
   positions: [{ position: "ST", familiarity: "natural" }],
+  positionLabel: "S C",
+  canPlay: ["F C"],
+  positionOrder: 20,
   overallRating: 78,
   positionRatings: { ST: 80 },
+  cellRatings: { "F C": 80 },
+  suitability: { "F C": 19 },
+  retrainingTarget: null,
   condition: 95,
   trainingFocus: null,
+  nationality: "nation_eng_england",
+  birthplace: "London",
+  foreign: false,
+  contractWage: 9000,
+  contractExpiryDate: "2028-06-30",
+  transferValue: 1200000,
 };
 
 describe("simple view classes", () => {
   it("SaveSummary round-trips", () => {
-    roundTrip(SaveSummary, { id: "s1", name: "Test", createdAt: "2026-01-01" });
+    roundTrip(SaveSummary, {
+      id: "s1", name: "Test", createdAt: "2026-01-01T00:00:00.000Z",
+      archivedCause: null, managerName: "Joe", userClubName: "FC",
+      seasonNumber: 1, gameDate: "2026-08-15", lastModifiedAt: "2026-01-10T12:00:00.000Z",
+    });
+  });
+
+  it("SaveSummary round-trips each cause that archives a save", () => {
+    for (const archivedCause of ["sacked", "retired"] as const) {
+      roundTrip(SaveSummary, {
+        id: "s1", name: "Test", createdAt: "2026-01-01T00:00:00.000Z",
+        archivedCause, managerName: "Joe", userClubName: "FC",
+        seasonNumber: 1, gameDate: "2026-08-15", lastModifiedAt: "2026-01-10T12:00:00.000Z",
+      });
+    }
   });
 
   it("ClubSummary round-trips", () => {
@@ -98,42 +121,8 @@ describe("nested composition", () => {
   });
 });
 
-describe("literals and enums", () => {
-  it("Tactic rejects an invalid formation", () => {
-    expect(() =>
-      Schema.decodeUnknownSync(Tactic)({
-        formation: "4-2-3-1",
-        slots: [],
-        mentality: "balanced",
-        tempo: "normal",
-        pressing: "medium",
-      }),
-    ).toThrow();
-  });
-
-  it("InjuryView rejects an unknown trigger", () => {
-    expect(() =>
-      Schema.decodeUnknownSync(InjuryView)({
-        minute: 30,
-        teamClubId: "c1",
-        playerId: "p1",
-        trigger: "slide",
-        severity: "light",
-        tier: "orange",
-        type: "strain",
-      }),
-    ).toThrow();
-  });
-});
-
 describe("discriminated union command payload", () => {
-  const tactic = {
-    formation: "4-4-2",
-    slots: [{ position: "ST", role: "Poacher", playerId: PlayerId.make("p1") }],
-    mentality: "balanced",
-    tempo: "normal",
-    pressing: "medium",
-  } satisfies Tactic;
+  const tactic = completeTactic();
 
   it("round-trips ChangeTacticsCommandPayload and selects it by _tag", () => {
     const payload = { _tag: "ChangeTactics", clubId: "c1", tactic };
@@ -177,11 +166,60 @@ describe("tagged errors", () => {
     roundTrip(AppRpcs.loadSave.error, { _tag: "SaveNotFoundError", id: "s1" });
   });
 
-  it("InvalidTacticError round-trips its reason", () => {
-    roundTrip(InvalidTacticError, { _tag: "InvalidTacticError", reason: "bad slot" });
+  it("beginCareer's payload round-trips a SnapshotId (ticket 03)", () => {
+    roundTrip(AppRpcs.beginCareer.payload, { snapshotId: "snap-1" });
+  });
+
+  it("beginCareer's stale-snapshot failure round-trips through the method error schema (ticket 03)", () => {
+    roundTrip(AppRpcs.beginCareer.error, {
+      _tag: "PresetFingerprintMismatchError",
+      expected: "real-geography@1.0.0",
+      found: "some-other-database@9.9.9",
+    });
+  });
+
+  it("commitCareer's manager identity payload round-trips every personal-details field", () => {
+    const pillars = { tacticalAcumen: 3, influence: 3, regimen: 3, technicalCoaching: 3 };
+    const identity = {
+      id: "s1", name: "My Career", selectedClubId: "club_eng_01",
+      firstName: "Ada", lastName: "Lovelace", nationalityId: "nation_eng", dateOfBirth: "1980-01-01",
+      preferredFormation: "4-3-3",
+      avatarPortraitKey: "avatar_01", avatarPrimaryColor: "#1f2937", avatarSecondaryColor: "#f8fafc",
+      archetypeOrigin: "professor", pillars,
+    } as const;
+
+    roundTrip(AppRpcs.commitCareer.payload, { ...identity, favoriteClubId: "club_eng_02" });
+    roundTrip(AppRpcs.commitCareer.payload, {
+      ...identity, favoriteClubId: null, avatarPortraitKey: null,
+    });
+  });
+
+  it("commitCareer's unknown-club failure round-trips through the method error schema", () => {
+    roundTrip(AppRpcs.commitCareer.error, {
+      _tag: "ClubNotFoundError",
+      id: "club_eng_01",
+    });
+  });
+
+  it("SaveArchivedError round-trips the cause the renderer words its copy from", () => {
+    for (const cause of ["sacked", "retired"] as const) {
+      roundTrip(SaveArchivedError, { _tag: "SaveArchivedError", saveId: "s1", cause });
+    }
+  });
+
+  it("TacticRevisionConflictError round-trips through the changeTactics error union", () => {
+    roundTrip(AppRpcs.changeTactics.error, {
+      _tag: "TacticRevisionConflictError",
+      saveId: "s1",
+      currentRevision: 4,
+    });
   });
 
   it("InsufficientTransferBudgetError round-trips all numeric fields", () => {
+    roundTrip(AdvanceInProgressError, {
+      _tag: "AdvanceInProgressError",
+      saveId: "s1",
+    });
     roundTrip(InsufficientTransferBudgetError, {
       _tag: "InsufficientTransferBudgetError",
       clubId: "c1",
@@ -194,8 +232,8 @@ describe("tagged errors", () => {
 describe("optional and nullable fields", () => {
   it("AdvanceCalendarResult round-trips nulls and the verdict literal", () => {
     roundTrip(AdvanceCalendarResult, {
-      season: { seasonNumber: 1, currentMatchday: 38, phase: "season_complete" },
-      resolvedMatchday: 38,
+      season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2027-05-26", phase: "season_complete" },
+      resolvedDate: "2027-05-26",
       transferWindowClosed: null,
       transferWindowOpened: null,
       seasonConcluded: true,
@@ -209,6 +247,7 @@ describe("optional and nullable fields", () => {
       club,
       squad: [player],
       tactic: null,
+      revision: 3,
     });
   });
 });
@@ -217,7 +256,7 @@ describe("RPC screen views", () => {
   it("TransfersScreenView round-trips empty bid lists", () => {
     roundTrip(TransfersScreenView, {
       club,
-      season: { seasonNumber: 1, currentMatchday: 1, phase: "pre_season" },
+      season: { seasonNumber: 1, awaitingFixture: null, currentDate: "2026-08-01", phase: "pre_season" },
       windowOpen: true,
       transferBudgetRemaining: 8000000,
       wageBudget: 20000,
@@ -226,20 +265,6 @@ describe("RPC screen views", () => {
       outgoingBids: [],
       freeAgents: [],
       marketPlayers: [],
-    });
-  });
-
-  it("MarketPlayerView round-trips null club for a free agent", () => {
-    roundTrip(MarketPlayerView, {
-      id: "p1",
-      firstName: "Alex",
-      lastName: "Brown",
-      age: 24,
-      clubId: null,
-      clubName: null,
-      overallRating: 78,
-      transferValue: 500000,
-      positions: [{ position: "ST", familiarity: "natural" }],
     });
   });
 
@@ -260,11 +285,14 @@ describe("RPC screen views", () => {
 });
 
 describe("Player Development & Training Focus schemas", () => {
-  it("PlayerDevelopedEvent round-trips a club's player Attribute set", () => {
+  it("PlayerDevelopedEvent round-trips an outcome with and without a previous baseline", () => {
     roundTrip(PlayerDevelopedEvent, {
-      seasonNumber: 1,
-      clubId: "c1",
+      seasonNumber: 1, clubId: "c1",
       players: [{ playerId: "p1", attributes }],
+    });
+    roundTrip(PlayerDevelopedEvent, {
+      seasonNumber: 2, clubId: "c1",
+      players: [{ playerId: "p1", previousAttributes: attributes, attributes }],
     });
   });
 
@@ -275,6 +303,10 @@ describe("Player Development & Training Focus schemas", () => {
 
   it("TrainingFocusView round-trips its focus", () => {
     roundTrip(TrainingFocusView, { playerId: "p1", focus: "technical" });
+  });
+
+  it("SquadPlayerView round-trips a player with no active Contract", () => {
+    roundTrip(SquadPlayerView, { ...player, contractWage: null, contractExpiryDate: null });
   });
 
   it("SquadPlayerView round-trips a non-null trainingFocus", () => {
@@ -303,6 +335,39 @@ describe("Player Development & Training Focus schemas", () => {
     expect(
       Schema.decodeSync(payload)({ saveId: "s1", playerId: "p1", focus: null }),
     ).toEqual({ saveId: "s1", playerId: "p1", focus: null });
+  });
+});
+
+describe("the commentary file", () => {
+  it("round-trips a status, with and without problems and new sections, for every method", () => {
+    const clean = { files: ["events.cfg", "events_fr.cfg"], active: "events.cfg", problems: [], newSections: [] };
+    const older = {
+      ...clean,
+      problems: ["line 12: skipped, {player2} isn't available in [Foul]"],
+      newSections: ["KeyPass:solo", "Phrases"],
+    };
+    for (const method of [
+      "getCommentaryFileStatus",
+      "openCommentaryFile",
+      "resetCommentaryFile",
+      "chooseCommentaryFile",
+      "updateCommentaryFile",
+    ] as const) {
+      roundTrip(AppRpcs[method].success, clean);
+      roundTrip(AppRpcs[method].success, older);
+    }
+  });
+
+  it("round-trips the payloads and the error", () => {
+    roundTrip(AppRpcs.openCommentaryFile.payload, { target: "folder" });
+    roundTrip(AppRpcs.chooseCommentaryFile.payload, { name: "events_fr.cfg" });
+    roundTrip(AppRpcs.updateCommentaryFile.payload, { addNewSections: true });
+    roundTrip(AppRpcs.resetCommentaryFile.error, { _tag: "CommentaryFileError", action: "reset", reason: "EACCES" });
+  });
+
+  it("carries no filesystem path to the renderer", () => {
+    const fields = Object.keys(AppRpcs.getCommentaryFileStatus.success.fields);
+    expect(fields.sort()).toEqual(["active", "files", "newSections", "problems"]);
   });
 });
 
@@ -348,5 +413,51 @@ describe("key binding overrides — the four Stage 6 procedures (AC-34)", () => 
 
   it("resetAllKeyBindings success round-trips the empty map", () => {
     roundTrip(AppRpcs.resetAllKeyBindings.success, {});
+  });
+});
+
+describe("advanced options payload route", () => {
+  it("AdvancedOptionsPayload round-trips the shipped default", () => {
+    roundTrip(AdvancedOptionsPayload, {
+      version: 1,
+      matchSimulationDetail: "standard",
+      transferMarketActivity: "standard",
+      rosterGenerationDetail: "standard",
+      informationVisibility: "exact",
+    });
+  });
+
+  it("AdvancedOptionsPayload round-trips every legal value set", () => {
+    roundTrip(AdvancedOptionsPayload, {
+      version: 1,
+      matchSimulationDetail: "full",
+      transferMarketActivity: "active",
+      rosterGenerationDetail: "first_team",
+      informationVisibility: "ranged",
+    });
+  });
+
+  it("AdvancedOptionsPayload rejects an unsupported option value", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(AdvancedOptionsPayload)({
+        version: 1,
+        matchSimulationDetail: "turbo",
+        transferMarketActivity: "standard",
+        rosterGenerationDetail: "standard",
+        informationVisibility: "exact",
+      }),
+    ).toThrow();
+  });
+
+  it("AdvancedOptionsPayload rejects a future version", () => {
+    expect(() =>
+      Schema.decodeUnknownSync(AdvancedOptionsPayload)({
+        version: 2,
+        matchSimulationDetail: "standard",
+        transferMarketActivity: "standard",
+        rosterGenerationDetail: "standard",
+        informationVisibility: "exact",
+      }),
+    ).toThrow();
   });
 });

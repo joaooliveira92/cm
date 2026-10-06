@@ -4,12 +4,23 @@
     "typescript",
     "unicorn",
     "oxc",
-    "import"
+    "import",
+    "react"
+  ],
+  "jsPlugins": [
+    "@shadcn/lint"
   ],
   "categories": {
     "correctness": "error",
     "perf": "warn"
   },
+  // React Compiler support (Rules of React), adopted from the oxc announcement:
+  // https://oxc.rs/blog/2026-08-18-react-compiler-support
+  // Rules are "error" where the codebase is clean today and "warn" where adoption debt
+  // exists. The warn buckets are tracked in .scratch/react-compiler-adoption/ and should
+  // graduate to "error" as their findings are resolved. The classic (non-compiler) react/*
+  // and react-hooks/* rules that oxlint's correctness category would otherwise auto-enable
+  // are turned off below; the classic plugin is a separate, unevaluated adoption.
   "rules": {
     "no-eval": "error",
     "no-var": "error",
@@ -18,7 +29,12 @@
     "no-new-wrappers": "error",
     "no-param-reassign": "error",
     "no-console": "warn",
-    "typescript/no-unused-vars": ["error", { "argsIgnorePattern": "^_" }],
+    "typescript/no-unused-vars": [
+      "error",
+      {
+        "argsIgnorePattern": "^_"
+      }
+    ],
     "typescript/no-explicit-any": "error",
     "typescript/consistent-type-imports": "error",
     "typescript/prefer-as-const": "error",
@@ -28,14 +44,94 @@
     "unicorn/no-instanceof-array": "error",
     "unicorn/no-array-for-each": "warn",
     "unicorn/prefer-array-flat": "warn",
-    "import/no-duplicates": "error"
+    "import/no-duplicates": "error",
+    "react/error-boundaries": "error",
+    "react/invariant": "error",
+    "react/preserve-manual-memoization": "error",
+    "react/purity": "error",
+    "react/set-state-in-render": "error",
+    "react/syntax": "error",
+    "react/unsupported-syntax": "error",
+    "react/use-memo": "error",
+    "react/void-use-memo": "error",
+    "react/capitalized-calls": "error",
+    "react/refs": "error",
+    "react/set-state-in-effect": "error",
+    "react/exhaustive-effect-dependencies": "error",
+    "react/todo": "error",
+    "react/memo-dependencies": "error",
+    "react/hooks": "error",
+    "react/immutability": "warn",
+    "react/static-components": "warn",
+    "react/rule-suppression": "warn",
+    "react/no-deriving-state-in-effects": "warn",
+    "react/incompatible-library": "warn",
+    "react/globals": "warn",
+    "react/no-array-index-key": "off",
+    "react/jsx-no-constructed-context-values": "off",
+    "react/no-object-type-as-default-prop": "off",
+    "react/no-children-prop": "off",
+    "react-hooks/exhaustive-deps": "off"
   },
   "env": {
     "builtin": true
   },
+  "settings": {
+    "shadcn": {
+      "componentImports": [
+        "components/ui/"
+      ]
+    }
+  },
   "ignorePatterns": [
-    "reference-project/**",
+    "external-reference/**",
+    ".claude/**",
+    ".scratch/**",
     "**/dist/**",
     "**/node_modules/**"
-  ]
+  ],
+  "overrides": [
+    {
+      "files": [
+        "scripts/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/*/scripts/**",
+        "apps/**/prototype-scale-probe/**",
+        "apps/desktop/tmp-probe/**"
+      ],
+      "rules": {
+        "no-console": "off"
+      }
+    },
+    {
+      "files": [
+        "apps/desktop/src/renderer/**",
+        "packages/*/src/**"
+      ],
+      "rules": {
+        "no-console": "error"
+      }
+    },
+    {
+      // Vendored reui components are kept whole so every upstream re-sync is not a hand merge
+      // (scripts/effect-lint.ts FILE_LENGTH_EXEMPTIONS). The compiler-unsupported constructs they
+      // carry (a `??=` logical assignment, the `-next-line` suppressions ticket 07 owns, and the
+      // `react(memo-dependencies)` site in `event-calendar-event.tsx` — a memo whose deps name
+      // `viewConfig.renderAgendaEvent`/`renderEvent` where the compiler wants `viewConfig`) are
+      // accepted rather than edited back in; ticket 07 extends this block for its own vendored rule.
+      "files": [
+        "apps/desktop/src/renderer/components/reui/**"
+      ],
+      "rules": {
+        "react/todo": "off",
+        "react/memo-dependencies": "off"
+      }
+    }
+  ],
 }

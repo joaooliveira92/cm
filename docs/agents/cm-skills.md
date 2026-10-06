@@ -24,10 +24,10 @@ Run roughly in this order; each step downstream of `cm-wayfinder` depends on the
 
 | Skill | Purpose |
 |---|---|
-| [cm-wayfinder](../../.agents/skills/cm-wayfinder/SKILL.md) | Chart a large effort as a map of decision tickets and resolve them one at a time. Its resolution step is Agent-Notes-aware: a note-worthy answer gets a durable Agent Note written atomically with resolution. |
+| [cm-wayfinder](../../.agents/skills/cm-wayfinder/SKILL.md) | Chart a large effort as a map of decision tickets and resolve them one at a time. Its resolution step is Agent-Notes-aware: an answer a future contributor would plausibly undo gets a durable Agent Note written atomically with resolution. |
 | [cm-to-spec](../../.agents/skills/cm-to-spec/SKILL.md) | Turn the conversation into a spec. Implementation Decisions bullets carry forward gist+link references to the Agent Notes their source tickets produced. |
 | [cm-to-tickets](../../.agents/skills/cm-to-tickets/SKILL.md) | Break a spec or plan into tracer-bullet tickets. Each ticket gains a `## Decisions` section listing the Agent Notes it implements. |
-| [cm-implement](../../.agents/skills/cm-implement/SKILL.md) | Build the work. Between running the full test suite and committing, it follows the forward-links from the spec/tickets and promotes each fully-shipped Agent Note from `proposed/` to `implemented/`. |
+| [cm-implement](../../.agents/skills/cm-implement/SKILL.md) | Build the work, from a spec, tickets, or the conversation. It follows the forward-links from the spec/tickets and updates any Agent Note the work contradicts; promoting a shipped note from `proposed/` to `implemented/` is optional. |
 
 ## Auxiliary
 

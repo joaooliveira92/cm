@@ -30,21 +30,13 @@ The screen must preserve the active manager, career revision, navigation history
 
 ## 4. Conceptual layout
 
-```text
-+------------------------------------------------------------------------------+
-| ADVANCE TIME                                                                 |
-|------------------------------------------------------------------------------|
-| Current date: 12 February 2005                                               |
-| Next mandatory event: League match, 15 February                              |
-| Stop at: [Next required decision v]                                          |
-|                                                                              |
-| Blocking items                                                               |
-| [!] Submit team registration by 13 February                                  |
-| [!] Respond to contract offer                                                |
-|                                                                              |
-| [Cancel] [Resolve Blocking Items]                             [Advance Time] |
-+------------------------------------------------------------------------------+
-```
+ss
+
+![image](../../images/16626431-championship-manager-season-0304-windows-team-instructions.png)
+
+![image](../../images/16626416-championship-manager-season-0304-windows-reports-from-other-big-.png)
+
+![image](../../images/16626539-championship-manager-season-0304-windows-available-players.png)
 
 The diagram defines information hierarchy and behavior rather than exact pixel placement.
 

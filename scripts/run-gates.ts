@@ -22,6 +22,7 @@ const GATES: Record<Mode, ReadonlyArray<Gate>> = {
     { id: "lint", command: "pnpm", args: ["run", "lint"] },
     { id: "effect-lint", command: "pnpm", args: ["run", "effect-lint"] },
     { id: "verify-md-links", command: "pnpm", args: ["run", "verify-md-links"] },
+    { id: "verify-db-schema", command: "pnpm", args: ["run", "verify-db-schema"] },
     { id: "test", command: "pnpm", args: ["-r", "test"] },
   ],
   // Excludes test:e2e: that gate needs OS-level setup (xvfb, system libs) the
@@ -31,6 +32,7 @@ const GATES: Record<Mode, ReadonlyArray<Gate>> = {
     { id: "lint", command: "pnpm", args: ["run", "lint"] },
     { id: "effect-lint", command: "pnpm", args: ["run", "effect-lint"] },
     { id: "verify-md-links", command: "pnpm", args: ["run", "verify-md-links"] },
+    { id: "verify-db-schema", command: "pnpm", args: ["run", "verify-db-schema"] },
     { id: "test", command: "pnpm", args: ["-r", "test"] },
   ],
 }

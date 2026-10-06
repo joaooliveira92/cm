@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { builtInTemplate, DEFAULT_PLAYER_INSTRUCTIONS, DEFAULT_TEAM_SET_PIECES, EMPTY_TAKERS, tacticFromTemplate } from "@cm-clone/shared";
 import { computePhaseStrengths, resolveTacticalModifiers } from "../../src/match/tactical-modifiers.js";
-import { buildTeam, clubId as makeClubId } from "./fixtures.js";
+import { toMatchTactic } from "../../src/match/types.js";
+import { buildTeam, clubId as makeClubId, playerId } from "./fixtures.js";
 
 describe("computePhaseStrengths", () => {
   it("computes a positive rating for all three phases from a full XI", () => {
@@ -17,7 +19,7 @@ describe("computePhaseStrengths", () => {
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const fullOnPitch = new Set(team.setup.tactic.slots.map((s) => s.playerId));
     const withoutOne = new Set(fullOnPitch);
-    const removed = team.setup.tactic.slots.find((s) => s.position === "DC")!.playerId;
+    const removed = team.setup.tactic.slots.find((s) => s.cell.row === "D" && s.cell.column === "RC")!.playerId;
     withoutOne.delete(removed);
 
     const full = computePhaseStrengths(team.setup.tactic, playersById, fullOnPitch);
@@ -31,11 +33,11 @@ describe("resolveTacticalModifiers", () => {
     const team = buildTeam(makeClubId("home"), 3);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
     const attacking = resolveTacticalModifiers(
-      { ...team.setup.tactic, mentality: "attacking" },
+      { ...team.setup.tactic, team: { ...team.setup.tactic.team, mentality: "attacking" } },
       playersById,
     );
     const defensive = resolveTacticalModifiers(
-      { ...team.setup.tactic, mentality: "defensive" },
+      { ...team.setup.tactic, team: { ...team.setup.tactic.team, mentality: "defensive" } },
       playersById,
     );
     expect(attacking.attack).toBeGreaterThan(defensive.attack);
@@ -49,22 +51,55 @@ describe("resolveTacticalModifiers", () => {
     expect(modifiers.eventOddsBias).toBe(0);
   });
 
-  it("caps the Role Rating bump at ±0.05 on the relevant phase multiplier", () => {
+  it("leaves every phase multiplier at exactly 1 under the normal mentality (no Role bump, no Tempo or Pressing)", () => {
     const team = buildTeam(makeClubId("home"), 5);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
-    const modifiers = resolveTacticalModifiers(
-      { ...team.setup.tactic, mentality: "balanced" },
-      playersById,
-    );
-    expect(modifiers.midfield).toBeGreaterThanOrEqual(1 - 0.05);
-    expect(modifiers.midfield).toBeLessThanOrEqual(1 + 0.05);
+    const modifiers = resolveTacticalModifiers({ ...team.setup.tactic, team: { ...team.setup.tactic.team, mentality: "normal" } }, playersById);
+    expect(modifiers).toEqual({ attack: 1, midfield: 1, defense: 1, eventOddsBias: 0 });
   });
 
-  it("doubles the fatigue decay multiplier under High pressing", () => {
+  it("orders the five mentalities from ultra defensive to gung ho on attack and the reverse on defence", () => {
     const team = buildTeam(makeClubId("home"), 6);
     const playersById = new Map(team.squad.map((p) => [p.id, p]));
-    const high = resolveTacticalModifiers({ ...team.setup.tactic, pressing: "high" }, playersById);
-    const medium = resolveTacticalModifiers({ ...team.setup.tactic, pressing: "medium" }, playersById);
-    expect(high.fatigueDecayMultiplier).toBe(medium.fatigueDecayMultiplier * 2);
+    const ladder = (["ultraDefensive", "defensive", "normal", "attacking", "gungHo"] as const).map((mentality) =>
+      resolveTacticalModifiers({ ...team.setup.tactic, team: { ...team.setup.tactic.team, mentality } }, playersById),
+    );
+    for (let step = 1; step < ladder.length; step++) {
+      expect(ladder[step]!.attack).toBeGreaterThan(ladder[step - 1]!.attack);
+      expect(ladder[step]!.defense).toBeLessThan(ladder[step - 1]!.defense);
+    }
+  });
+
+  it("rates a slot at its cell: the same player scores differently in a defensive and an attacking cell", () => {
+    const team = buildTeam(makeClubId("home"), 8);
+    const playersById = new Map(team.squad.map((p) => [p.id, p]));
+    const player = team.setup.tactic.slots[5]!.playerId;
+    const at = (row: "D" | "F") =>
+      computePhaseStrengths(
+        { ...team.setup.tactic, slots: [{ playerId: player, cell: { row, column: "C" }, run: null, instructions: { ...DEFAULT_PLAYER_INSTRUCTIONS } }] },
+        playersById,
+      );
+    expect(at("D").defense).toBeGreaterThan(0);
+    expect(at("D").attack).toBe(0);
+    expect(at("F").attack).toBeGreaterThan(0);
+    expect(at("F").defense).toBe(0);
+  });
+});
+
+describe("toMatchTactic", () => {
+  it("keeps who starts where, the bench, the team instructions and each slot's instructions", () => {
+    const players = Array.from({ length: 18 }, (_, i) => playerId(`p${i}`));
+    const tactic = tacticFromTemplate(builtInTemplate("4-3-3")!, players.slice(0, 11), players.slice(11));
+    const complete = { ...tactic, team: { ...tactic.team, mentality: "gungHo", passing: "long", offsideTrap: true } } as const;
+    const adapted = toMatchTactic(complete);
+    expect(adapted.team.mentality).toBe("gungHo");
+    expect(adapted.slots.map((slot) => slot.playerId)).toEqual(players.slice(0, 11));
+    expect(adapted.slots.map((slot) => slot.cell)).toEqual(tactic.slots.map((slot) => slot.cell));
+    expect(adapted.slots.map((slot) => slot.instructions)).toEqual(tactic.slots.map((slot) => slot.instructions));
+    expect(adapted.bench).toEqual(players.slice(11));
+    // The new fields get their defaults since the adapter input omits them
+    expect(adapted.teamSetPieces).toEqual(DEFAULT_TEAM_SET_PIECES);
+    expect(adapted.takers).toEqual(EMPTY_TAKERS);
+    expect(Object.keys(adapted).sort()).toEqual(["bench", "slots", "takers", "team", "teamSetPieces"]);
   });
 });

@@ -2,8 +2,11 @@
 
 The orchestrator — the primary agent, launched by [.opencode/command/sprint.md](../.opencode/command/sprint.md)
 — drives every sprint through four subagent roles plus an orchestrator-owned validation gate. Roles
-live in [.opencode/agents/](../.opencode/agents/). The pipeline is **ticket-driven**: nothing gets
-implemented that is not a ticket on the [`.scratch/` tracker](../docs/agents/issue-tracker.md).
+live in [.opencode/agents/](../.opencode/agents/). The pipeline is **ticket-driven**, and it is for
+multi-step efforts only: work that meets the threshold in [AGENTS.md](../AGENTS.md) § When to use
+the process. Everything below that
+threshold is implemented, gated, and committed directly, with no ticket on the
+[`.scratch/` tracker](../docs/agents/issue-tracker.md).
 
 ## Skills the pipeline runs on
 
@@ -26,10 +29,13 @@ them **by name** through the skill tool, and the flag does not block that.
 
 ## Phases
 
+0. **Size it.** Below the threshold, implement, gate, and commit; none of the phases below apply.
+   Above it, chart or spec.
 1. **Chart (cm-wayfinder)** — when an effort spans more than one session or the way is foggy: name
    the destination, map the frontier, write `map.md` plus decision tickets
-   (`research`/`prototype`/`grilling`/`task`), wire `Blocked by:` edges, and work **one decision
-   ticket per session**. Resolving a ticket writes its Agent Note atomically with the answer. If the
+   (`research`/`prototype`/`grilling`/`task`), wire `Blocked by:` edges, and work the frontier
+   **ticket by ticket, auto-advancing until no open, unblocked, unclaimed tickets remain**.
+   Resolving a ticket writes an Agent Note with the answer when the decision is note-worthy. If the
    way is already clear and fits one session, skip to Spec.
 2. **Ground (research)** — for a sprint that needs facts it does not have (a real-world football
    rule, a library's actual API, a format), the research role reads primary sources in the background
@@ -45,7 +51,7 @@ them **by name** through the skill tool, and the flag does not block that.
    wins), one ticket at a time, claiming it before any work.
 6. **Review (reviewer)** — adversarially checks that ticket against its acceptance criteria, the
    spec, the contract, and this repo's standards.
-7. **Gate + commit (orchestrator)** — runs the validation gate, owns Git, ADRs, note promotion and
+7. **Gate + commit (orchestrator)** — runs the validation gate, owns Git and
    the sprint plan, then auto-advances.
 
 ## Roles
@@ -56,7 +62,7 @@ them **by name** through the skill tool, and the flag does not block that.
 | 2. research | [research.md](../.opencode/agents/research.md) | `research` | writes notes only | `docs/research/<effort>-<topic>.md` |
 | 3. implementator | [implementator.md](../.opencode/agents/implementator.md) | `cm-implement` | edit + run | one frontier ticket closed, with code, tests, exact results, changed-file list |
 | 4. reviewer | [reviewer.md](../.opencode/agents/reviewer.md) | `code-review` | read-only | severity-tagged findings + APPROVE / NEEDS_REWORK |
-| orchestrator | — | `cm-wayfinder`, `cm-to-tickets` | owns Git + gate | map, tickets, gate, commits, ADRs, plan updates |
+| orchestrator | — | `cm-wayfinder`, `cm-to-tickets` | owns Git + gate | map, tickets, gate, commits, plan updates |
 
 ## Handoff contract
 
@@ -65,8 +71,7 @@ them **by name** through the skill tool, and the flag does not block that.
   claims to have observed.
 - Write scope is role-locked. The spec-creator writes one spec file; research writes one note; the
   reviewer writes nothing at all. Anything else they think is needed gets reported to you instead.
-- One decision ticket per session (the wayfinder rule). Several small implementation tickets may
-  close in one session, but only if each one passes the gate on its own.
+- Several tickets — decision or implementation — may close in one session, as long as each one passes the gate on its own.
 - On `NEEDS_REWORK` (blocker or high), send the implementator back to repair that same ticket, then
   re-review. Never gate-and-commit over an unresolved blocker.
 - Keep each role's context small. The point of the split is that no single subagent accumulates the
@@ -75,7 +80,7 @@ them **by name** through the skill tool, and the flag does not block that.
 ## Orchestrator-owned validation gate
 
 Mandatory before any commit. Run it yourself — do not accept a subagent's word that it passed — and
-record the exact observed results in `.ai/reports/<effort>.md`:
+record the exact observed results in `.ai/reports/<effort>.md` when the change belongs to an effort:
 
 - **`pnpm check:all`** — typecheck, `oxlint`, `effect-lint`, `verify-md-links`, unit tests. This is
   the whole gate, defined once in [scripts/run-gates.ts](../scripts/run-gates.ts).
@@ -85,8 +90,6 @@ record the exact observed results in `.ai/reports/<effort>.md`:
   the seeded path twice and show the results are identical, and resimulate a chunked match.
 - **Save compatibility** — when the change touches persistence or a schema: save, load, continue,
   and show future outcomes are preserved; state the migration.
-- **Note promotion** — every Agent Note whose code shipped this sprint moved `proposed/` →
-  `implemented/` in the same commit.
 
 A green build is not acceptance (ENGINEERING-CONTRACT § Tests and acceptance).
 
@@ -98,8 +101,8 @@ A green build is not acceptance (ENGINEERING-CONTRACT § Tests and acceptance).
   way is clear.
 - Own all Git: small Conventional Commits directly on `dev`, no feature branches, no self-merge,
   clean tree.
-- Keep traceability current: the SPRINT-PLAN row, [TRACEABILITY.md](TRACEABILITY.md), the ticket
-  `Status:` lines, the map's Decisions-so-far, and the report under `.ai/reports/`.
+- For efforts run through this pipeline, keep traceability current: the SPRINT-PLAN row,
+  [TRACEABILITY.md](TRACEABILITY.md), the ticket `Status:` lines, the map's Decisions-so-far, and the report under `.ai/reports/`.
 - Resolve routine decisions yourself and record the constraining ones. Stop only on a genuine stop
   condition from [AUTONOMOUS-AGENT.md](AUTONOMOUS-AGENT.md).
 - **Resilience**: when a ticket blocks (NEEDS_REWORK on second review, stop condition, genuine

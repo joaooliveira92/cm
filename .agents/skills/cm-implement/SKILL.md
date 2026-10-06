@@ -1,14 +1,15 @@
 ---
 name: cm-implement
-description: "Implement a piece of work based on a spec or set of tickets, promoting each linked proposed Agent Note to implemented as part of the same commit."
+description: "Implement a piece of work based on a spec, a set of tickets, or the conversation, updating any Agent Note the work contradicts."
 disable-model-invocation: true
 ---
 
-Implement the work described by the user in the spec or tickets.
+Implement the work described by the user, in a spec, tickets, or the conversation. Work below the
+threshold in AGENTS.md § When to use the process needs no ticket and no Agent Note.
 
 Use /tdd where possible, at pre-agreed seams.
 
-Read `.agents/skills/effect-code/SKILL.md` **before writing code**, not after. No exceptions and no
+Read `.agents/skills/effect-code/SKILL.md` and `.agents/skills/effect-v4-migration/SKILL.md` **before writing code**, not after. No exceptions and no
 judgement call about whether the work "touches Effect" — that judgement needs the document it gates.
 
 It front-loads the decisions that are expensive to undo: what lives in the error channel versus what's
@@ -21,26 +22,18 @@ topic file. Never preload the set — it's ~60k tokens and belongs in the review
 
 Run typechecking regularly, single test files regularly, and the full test suite once at the end.
 
-Promote each linked Agent Note. Follow the explicit forward-links carried in the spec's
-"Implementation Decisions" bullets (from `cm-to-spec`) or the tickets' "Decisions" sections (from
-`cm-to-tickets`) to each `.agents/notes/proposed/{class}/yyyy-mm-dd-topic.md` note they reference.
-Never search `.agents/notes/proposed/` by keyword or date-range — only follow known links.
+If the work carries a spec or tickets, follow their forward-links (the spec's "Implementation
+Decisions" bullets, the tickets' "Decisions" sections) to each Agent Note they reference. Never
+search `.agents/notes/` by keyword or date-range; only follow known links, including the ones in
+source comments of the files you touch.
 
-For every linked note whose decision fully shipped, promotion is the default, not a judgment call:
-
-- Rewrite `## Proposal` into present-tense `## Decision`.
-- Fold `## Acceptance criteria`/`## Risks` into `## Consequences`.
-- Flip `Status: proposed` to `Status: implemented`.
-- Move the file from `.agents/notes/proposed/{class}/` to `.agents/notes/implemented/{class}/`.
-
-The one skip case is **partial** implementation: if the shipped code only partly realizes the
-proposal, leave the note in `proposed/` and note on the commit/PR which part remains unbuilt.
-Divergence between what was proposed and what actually shipped is NOT a skip case — it's exactly
-what the rewrite reconciles.
-
-This promotion rewrite happens in the same commit as the shipped code, atomic, not a deferred
-follow-up pass. There is no mechanical gate checking that promotion happened correctly (prose-only
-for v1, per `docs/agents/notes.md`) — this relies on the step being followed faithfully.
+- **Contradicted note.** If what shipped departs from a linked note, update the note in the same
+  change. A wrong note is worse than an unpromoted one.
+- **Promotion is optional.** When a linked note's decision fully shipped, you may promote it:
+  rewrite `## Proposal` as a present-tense `## Decision`, fold `## Acceptance criteria`/`## Risks`
+  into `## Consequences`, flip `Status: proposed` to `Status: implemented`, and move the file from
+  `proposed/{class}/` to `implemented/{class}/`. It need not share the commit that ships the code;
+  notes left in `proposed/` get reconciled in a `cm-archive-notes` pass.
 
 ## Review the work
 
@@ -62,10 +55,10 @@ The full suite once at the end is the rehearsal, not a per-commit habit. For the
 
 ## Resolve the ticket
 
-Once the diff is verified, mark the ticket resolved mechanically rather than hand-editing its
-checkboxes and `Status:` line: `pnpm resolve-ticket <path-to-ticket.md>`. It checks every
-acceptance-criterion box and flips `Status:` to `resolved`, idempotently. Skip it only for the
-**partial implementation** case above — a ticket with unbuilt scope stays open, boxes unchecked for
-the parts that didn't ship.
+When the work has a ticket, once the diff is verified, mark it resolved mechanically rather than
+hand-editing its checkboxes and `Status:` line: `pnpm resolve-ticket <path-to-ticket.md>`. It
+checks every acceptance-criterion box and flips `Status:` to `resolved`, idempotently. Skip it only
+for **partial implementation**: a ticket with unbuilt scope stays open, boxes unchecked for the
+parts that didn't ship, and the commit says which part remains.
 
 Commit your work to the current branch.

@@ -78,7 +78,7 @@
           //   newSchemaClass              83   strictEffectProvide       24
           //   asyncFunction               14   nodeBuiltinImport         11
           //   globalDate                   8   unnecessaryArrowBlock      5
-          //   anyUnknownInErrorContext     1 (apps/desktop/src/main/rpcServer.ts)
+          //   anyUnknownInErrorContext     1 (apps/desktop/src/main/rpc/rpcServer.ts)
         }
       }
     ]
