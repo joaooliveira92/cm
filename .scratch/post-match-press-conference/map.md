@@ -38,11 +38,18 @@ ticket here treats "Continue visible and enabled after Accept" as an invariant.
 - [02: What do real post-match press conferences ask?](issues/02-what-post-match-press-conferences-ask.md):
   eight trigger groups a recorded match can detect, twelve answer registers, and a list of topics
   real conferences raise that no match record can trigger. Frequencies are not sourced.
+- [03: What is in the question and answer catalogue?](issues/03-the-question-and-answer-catalogue.md):
+  seven trigger groups; a result opener, up to two incident questions by fixed priority, and a
+  closer only when the table is notable; three fixed tones; a typed table in code.
+- [05: What does the press-conference event record?](issues/05-what-the-press-conference-event-records.md):
+  rendered text plus template and tone ids per exchange, written once after the last answer by a
+  command that re-derives and checks the questions.
 
 ## Not yet specified
 
 - **The News Message for a conference**: subject and body copy, priority, and how a transcript of
-  two to four exchanges reads in the message pane. Waits on tickets 03 and 05.
+  two to four exchanges reads in the message pane. Specifiable now that 03 and 05 are settled; small
+  enough to decide in the spec.
 - **Keyboard and focus**: where focus lands when the panel appears after Accept, and how it coexists
   with the bottom bar's Continue. Waits on ticket 04.
 - **Test seams**: which e2e journeys gain a conference step, and how the advance helpers in
